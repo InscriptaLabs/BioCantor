@@ -1,0 +1,14 @@
+.idea
+.DS_Store
+__pycache__
+.coverage
+htmlcov/
+test_output/
+test-results/
+*.egg-info/
+docs/build
+*ipynb_checkpoints*
+docs/source/api/
+docs/source/apidocs/source/.ipynb_checkpoints/
+docs/source/.ipynb_checkpoints
+docs/source/api
