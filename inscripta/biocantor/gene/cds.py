@@ -66,6 +66,8 @@ class CDSFrame(Enum):
         return CDSFrame(value)
 
     def shift(self, shift: int) -> "CDSFrame":
+        if self is CDSFrame.NONE:
+            return self
         if shift > 0:
             return CDSFrame.from_int((self.value + shift) % 3)
         else:

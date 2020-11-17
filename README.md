@@ -25,7 +25,7 @@ BioCantor can be added to a Python environment as follows.
 Latest release from GitHub:
 
 ```
-pip install git+https://github.com/inscripta/BioCantor
+pip install git+https://github.com/InscriptaLabs/BioCantor
 ```
 
 From source code:
@@ -36,7 +36,7 @@ pip install .
 ```
 ## Documentation
 
-Full package documentation is available on [Read The Docs]().
+Full package documentation is available on [Read The Docs](https://biocantor.readthedocs.io/en/latest/).
 
 #### To build documentation HTML pages locally
 
@@ -68,7 +68,7 @@ dependent on available resources.
 
 ## Contributing
 
-Contributors implicitly agree to the terms in [Inscripta_Contributor_License_Agreement.pdf]().
+Contributors implicitly agree to the terms in [Inscripta_Contributor_License_Agreement.pdf](https://github.com/InscriptaLabs/biocantor/blob/master/Inscripta_Contributor_License_Agreement.pdf).
 
 Users are invited to submit pull requests. Maintainers reserve the right 
 to close PRs if the requested change is deemed inappropriate for the 
