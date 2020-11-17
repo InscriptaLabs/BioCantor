@@ -11,8 +11,7 @@ pipelines:
           - eval "$(conda shell.bash hook)" && conda activate test
           - pip install .[all]
           - conda install pandoc
-          - cd docs
-          - sphinx-build -M html source build
-          - cd ..
           - python -m pytest tests/ --junitxml=test-results/nosetests.xml
           - black -l 120 --check .
+          - cd docs
+          - sphinx-build -M html source build

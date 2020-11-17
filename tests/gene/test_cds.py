@@ -36,6 +36,7 @@ class TestCDSFrame:
             (CDSFrame.ZERO, 3, CDSFrame.ZERO),
             (CDSFrame.ONE, 1, CDSFrame.TWO),
             (CDSFrame.TWO, 5, CDSFrame.ONE),
+            (CDSFrame.NONE, 1, CDSFrame.NONE),
         ],
     )
     def test_shift(self, frame, shift, expected):
