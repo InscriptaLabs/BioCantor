@@ -502,6 +502,8 @@ class TestCompoundInterval:
                 Strand.MINUS,
                 CompoundInterval([15, 30, 50], [20, 40, 55], Strand.PLUS),
             ),
+            # Start == end
+            (CompoundInterval([10], [20], Strand.PLUS), 5, 5, Strand.PLUS, SingleInterval(15, 15, Strand.PLUS)),
         ],
     )
     def test_relative_interval_to_parent_location(self, location, start, end, strand, expected):
@@ -531,6 +533,14 @@ class TestCompoundInterval:
                 CompoundInterval([10, 15], [12, 17], Strand.PLUS),
                 0,
                 5,
+                Strand.MINUS,
+                InvalidPositionException,
+            ),
+            # Start > end
+            (
+                CompoundInterval([10, 15], [12, 17], Strand.PLUS),
+                2,
+                1,
                 Strand.MINUS,
                 InvalidPositionException,
             ),

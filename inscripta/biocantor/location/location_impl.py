@@ -548,10 +548,16 @@ class CompoundInterval(Location):
     def relative_interval_to_parent_location(
         self, relative_start: int, relative_end: int, relative_strand: Strand
     ) -> Location:
+        if relative_start > relative_end:
+            raise InvalidPositionException("Relative start must be <= relative end")
         start_on_parent = self.relative_to_parent_pos(relative_start)
-        end_on_parent_inclusive = self.relative_to_parent_pos(relative_end - 1)
-        parent_start = min(start_on_parent, end_on_parent_inclusive)
-        parent_end = max(start_on_parent, end_on_parent_inclusive) + 1
+        if relative_start == relative_end:
+            return SingleInterval(start_on_parent, start_on_parent, relative_strand.relative_to(self.strand),
+                                  parent=self.parent.strip_location_info() if self.parent else None)
+        else:
+            end_on_parent_inclusive = self.relative_to_parent_pos(relative_end - 1)
+            parent_start = min(start_on_parent, end_on_parent_inclusive)
+            parent_end = max(start_on_parent, end_on_parent_inclusive) + 1
         intersect_same_strand = self.intersection(
             SingleInterval(
                 parent_start,
