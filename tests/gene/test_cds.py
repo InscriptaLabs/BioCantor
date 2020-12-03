@@ -371,6 +371,25 @@ class TestCDS:
                     SingleInterval(11, 14, Strand.PLUS, parent=Sequence("AAACAAAAGGACCCAAAAAA", alphabet)),  # CCC
                 ],
             ),
+            # Discontiguous CDS, plus strand, frame=0,
+            # 1bp insertion inside exon 2 relative to some canonical genome and we want to maintain original frame
+            (
+                CDSInterval(
+                    CompoundInterval(
+                        [2, 8, 12],
+                        [5, 11, 18],
+                        Strand.PLUS,
+                        parent=Sequence("AAACAAAAGGGTACCCAAAAAA", alphabet),
+                    ),
+                    [CDSFrame.ZERO, CDSFrame.ZERO, CDSFrame.ZERO],
+                ),
+                [
+                    SingleInterval(2, 5, Strand.PLUS, parent=Sequence("AAACAAAAGGGTACCCAAAAAA", alphabet)),
+                    SingleInterval(8, 11, Strand.PLUS, parent=Sequence("AAACAAAAGGGTACCCAAAAAA", alphabet)),
+                    SingleInterval(12, 15, Strand.PLUS, parent=Sequence("AAACAAAAGGGTACCCAAAAAA", alphabet)),
+                    SingleInterval(15, 18, Strand.PLUS, parent=Sequence("AAACAAAAGGGTACCCAAAAAA", alphabet)),
+                ],
+            ),
             # Discontiguous CDS, plus strand, frame=1,
             # 1bp insertion inside exon 2 relative to some canonical genome and we want to maintain original frame
             (
@@ -391,6 +410,28 @@ class TestCDS:
                         [9, 12], [11, 13], Strand.PLUS, parent=Sequence("AAACAAAAGGGTACCCAAAAAA", alphabet)
                     ),  # GGA
                     SingleInterval(13, 16, Strand.PLUS, parent=Sequence("AAACAAAAGGGTACCCAAAAAA", alphabet)),  # CCC
+                ],
+            ),
+            # Discontiguous CDS, plus strand, frame=2,
+            # 1bp insertion inside exon 2 relative to some canonical genome and we want to maintain original frame
+            (
+                CDSInterval(
+                    CompoundInterval(
+                        [2, 8, 12],
+                        [5, 11, 18],
+                        Strand.PLUS,
+                        parent=Sequence("AAACAAAAGGGTACCCAAAAAA", alphabet),
+                    ),
+                    [CDSFrame.TWO, CDSFrame.ONE, CDSFrame.ONE],
+                ),
+                [
+                    CompoundInterval(
+                        [4, 8], [5, 10], Strand.PLUS, parent=Sequence("AAACAAAAGGGTACCCAAAAAA", alphabet)
+                    ),
+                    CompoundInterval(
+                        [10, 12], [11, 14], Strand.PLUS, parent=Sequence("AAACAAAAGGGTACCCAAAAAA", alphabet)
+                    ),
+                    SingleInterval(14, 17, Strand.PLUS, parent=Sequence("AAACAAAAGGGTACCCAAAAAA", alphabet)),
                 ],
             ),
             # Discontiguous CDS, minus strand, frame=2
