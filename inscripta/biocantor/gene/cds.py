@@ -235,8 +235,10 @@ class CDSInterval:
             cleaned_rel_ends.append(rel_end)
             # this is what we expect the next frame to be, if no frameshift occurred
             next_frame = next_frame.shift(rel_end - rel_start)
-        cleaned_blocks = [self.location.relative_interval_to_parent_location(
-            cleaned_rel_starts[i], cleaned_rel_ends[i], Strand.PLUS) for i in range(len(cleaned_rel_starts))]
+        cleaned_blocks = [
+            self.location.relative_interval_to_parent_location(cleaned_rel_starts[i], cleaned_rel_ends[i], Strand.PLUS)
+            for i in range(len(cleaned_rel_starts))
+        ]
         cleaned_location = CompoundInterval.from_single_intervals(cleaned_blocks)
         if len(cleaned_location) < 3:
             return

@@ -552,8 +552,12 @@ class CompoundInterval(Location):
             raise InvalidPositionException("Relative start must be <= relative end")
         start_on_parent = self.relative_to_parent_pos(relative_start)
         if relative_start == relative_end:
-            return SingleInterval(start_on_parent, start_on_parent, relative_strand.relative_to(self.strand),
-                                  parent=self.parent.strip_location_info() if self.parent else None)
+            return SingleInterval(
+                start_on_parent,
+                start_on_parent,
+                relative_strand.relative_to(self.strand),
+                parent=self.parent.strip_location_info() if self.parent else None,
+            )
         else:
             end_on_parent_inclusive = self.relative_to_parent_pos(relative_end - 1)
             parent_start = min(start_on_parent, end_on_parent_inclusive)

@@ -298,8 +298,9 @@ class TestCDS:
                     [CDSFrame.ONE, CDSFrame.TWO],
                 ),
                 [
-                    CompoundInterval([3, 8], [5, 9], Strand.PLUS,
-                                     parent=Sequence("AAACAAAAGGGACCCAAAAAA", alphabet)),  # CAG
+                    CompoundInterval(
+                        [3, 8], [5, 9], Strand.PLUS, parent=Sequence("AAACAAAAGGGACCCAAAAAA", alphabet)
+                    ),  # CAG
                     SingleInterval(9, 12, Strand.PLUS, parent=Sequence("AAACAAAAGGGACCCAAAAAA", alphabet)),  # GGA
                     SingleInterval(12, 15, Strand.PLUS, parent=Sequence("AAACAAAAGGGACCCAAAAAA", alphabet)),  # CCC
                 ],
@@ -333,10 +334,12 @@ class TestCDS:
                     [CDSFrame.ONE, CDSFrame.TWO, CDSFrame.TWO],
                 ),
                 [
-                    CompoundInterval([3, 8], [5, 9], Strand.PLUS,
-                                     parent=Sequence("AAACAAAAGGGTACCCAAAAAA", alphabet)),  # CAG
                     CompoundInterval(
-                        [9, 12], [11, 13], Strand.PLUS, parent=Sequence("AAACAAAAGGGTACCCAAAAAA", alphabet)),  # GGA
+                        [3, 8], [5, 9], Strand.PLUS, parent=Sequence("AAACAAAAGGGTACCCAAAAAA", alphabet)
+                    ),  # CAG
+                    CompoundInterval(
+                        [9, 12], [11, 13], Strand.PLUS, parent=Sequence("AAACAAAAGGGTACCCAAAAAA", alphabet)
+                    ),  # GGA
                     SingleInterval(13, 16, Strand.PLUS, parent=Sequence("AAACAAAAGGGTACCCAAAAAA", alphabet)),  # CCC
                 ],
             ),
@@ -354,8 +357,9 @@ class TestCDS:
                 [
                     SingleInterval(12, 15, Strand.MINUS, parent=Sequence("AAAGGAAAGTCCCTGAAAAAA", alphabet)),  # CAG
                     SingleInterval(9, 12, Strand.MINUS, parent=Sequence("AAAGGAAAGTCCCTGAAAAAA", alphabet)),  # GGA
-                    CompoundInterval([3, 8], [5, 9], Strand.MINUS,
-                                     parent=Sequence("AAAGGAAAGTCCCTGAAAAAA", alphabet)),  # CCC
+                    CompoundInterval(
+                        [3, 8], [5, 9], Strand.MINUS, parent=Sequence("AAAGGAAAGTCCCTGAAAAAA", alphabet)
+                    ),  # CCC
                 ],
             ),
             # Discontiguous CDS, minus strand, frame=2, with frameshift that leads to truncation
@@ -388,8 +392,9 @@ class TestCDS:
                 [
                     SingleInterval(2, 5, Strand.PLUS, parent=Sequence("AAAGGAAAGTCCCTGAAAAAA", alphabet)),  # AGG
                     SingleInterval(5, 8, Strand.PLUS, parent=Sequence("AAAGGAAAGTCCCTGAAAAAA", alphabet)),  # AAA
-                    CompoundInterval([8, 8], [9, 10], Strand.PLUS,
-                                     parent=Sequence("AAAGGAAAGTCCCTGAAAAAA", alphabet)),  # GGT, G gets repeated
+                    CompoundInterval(
+                        [8, 8], [9, 10], Strand.PLUS, parent=Sequence("AAAGGAAAGTCCCTGAAAAAA", alphabet)
+                    ),  # GGT, G gets repeated
                     SingleInterval(10, 13, Strand.PLUS, parent=Sequence("AAAGGAAAGTCCCTGAAAAAA", alphabet)),  # CCC
                     SingleInterval(13, 16, Strand.PLUS, parent=Sequence("AAAGGAAAGTCCCTGAAAAAA", alphabet)),  # TGA
                 ],
