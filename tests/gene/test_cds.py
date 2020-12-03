@@ -425,9 +425,7 @@ class TestCDS:
                     [CDSFrame.TWO, CDSFrame.ONE, CDSFrame.ONE],
                 ),
                 [
-                    CompoundInterval(
-                        [4, 8], [5, 10], Strand.PLUS, parent=Sequence("AAACAAAAGGGTACCCAAAAAA", alphabet)
-                    ),
+                    CompoundInterval([4, 8], [5, 10], Strand.PLUS, parent=Sequence("AAACAAAAGGGTACCCAAAAAA", alphabet)),
                     CompoundInterval(
                         [10, 12], [11, 14], Strand.PLUS, parent=Sequence("AAACAAAAGGGTACCCAAAAAA", alphabet)
                     ),
