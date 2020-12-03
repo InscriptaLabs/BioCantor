@@ -504,6 +504,9 @@ class TestCompoundInterval:
             ),
             # Start == end
             (CompoundInterval([10], [20], Strand.PLUS), 5, 5, Strand.PLUS, SingleInterval(15, 15, Strand.PLUS)),
+            # Overlapping blocks
+            (CompoundInterval([0, 9], [10, 20], Strand.PLUS), 8, 12, Strand.PLUS,
+             CompoundInterval([8, 9], [10, 11], Strand.PLUS)),
         ],
     )
     def test_relative_interval_to_parent_location(self, location, start, end, strand, expected):
@@ -637,6 +640,16 @@ class TestCompoundInterval:
                 1,
                 4,
                 [SingleInterval(12, 13, Strand.PLUS)],
+            ),
+            # Overlapping blocks
+            (
+                CompoundInterval([0, 4], [5, 10], Strand.PLUS),
+                3, 3, 0,
+                [
+                    SingleInterval(0, 3, Strand.PLUS),
+                    CompoundInterval([3, 4], [5, 5], Strand.PLUS),
+                    SingleInterval(5, 8, Strand.PLUS),
+                ]
             ),
         ],
     )
@@ -780,7 +793,7 @@ class TestCompoundInterval:
             # Overlapping and adjacent blocks
             (
                 CompoundInterval([5, 8, 10, 20], [9, 10, 12, 30], Strand.PLUS),
-                CompoundInterval([5, 20], [12, 30], Strand.PLUS),
+                CompoundInterval([5, 8, 20], [9, 12, 30], Strand.PLUS),
             ),
         ],
     )
