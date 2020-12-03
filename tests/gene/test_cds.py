@@ -154,7 +154,8 @@ class TestCDS:
                 ),
                 [Codon.GGA, Codon.CCC],  # GP
             ),
-            # Discontiguous CDS, plus strand, frame=1, 1bp insertion inside exon 2 (programmed frameshift)
+            # Discontiguous CDS, plus strand, frame=1,
+            # 1bp insertion inside exon 2 relative to some canonical genome and we want to maintain original frame
             (
                 CDSInterval(
                     CompoundInterval(
@@ -315,11 +316,12 @@ class TestCDS:
                     [CDSFrame.ONE, CDSFrame.ZERO],
                 ),
                 [
-                    SingleInterval(8, 11, Strand.PLUS, parent=Sequence("AAACAAAAGGGACCCAAAAAA", alphabet)),  # GGA
-                    SingleInterval(11, 14, Strand.PLUS, parent=Sequence("AAACAAAAGGGACCCAAAAAA", alphabet)),  # CCC
+                    SingleInterval(8, 11, Strand.PLUS, parent=Sequence("AAACAAAAGGACCCAAAAAA", alphabet)),  # GGA
+                    SingleInterval(11, 14, Strand.PLUS, parent=Sequence("AAACAAAAGGACCCAAAAAA", alphabet)),  # CCC
                 ],
             ),
-            # Discontiguous CDS, plus strand, frame=1, 1bp insertion inside exon 2 (programmed frameshift)
+            # Discontiguous CDS, plus strand, frame=1,
+            # 1bp insertion inside exon 2 relative to some canonical genome and we want to maintain original frame
             (
                 CDSInterval(
                     CompoundInterval(
@@ -333,8 +335,8 @@ class TestCDS:
                 [
                     CompoundInterval([3, 8], [5, 9], Strand.PLUS,
                                      parent=Sequence("AAACAAAAGGGTACCCAAAAAA", alphabet)),  # CAG
-                    CompoundInterval([8, 12], [10, 13], Strand.PLUS,
-                                     parent=Sequence("AAACAAAAGGGTACCCAAAAAA", alphabet)),  # GGA
+                    CompoundInterval(
+                        [9, 12], [11, 13], Strand.PLUS, parent=Sequence("AAACAAAAGGGTACCCAAAAAA", alphabet)),  # GGA
                     SingleInterval(13, 16, Strand.PLUS, parent=Sequence("AAACAAAAGGGTACCCAAAAAA", alphabet)),  # CCC
                 ],
             ),
@@ -384,12 +386,29 @@ class TestCDS:
                     [CDSFrame.ZERO, CDSFrame.ONE],
                 ),
                 [
-                    SingleInterval(2, 5, Strand.MINUS, parent=Sequence("AAAGGAAAGTCCCTGAAAAAA", alphabet)),  # AGG
-                    SingleInterval(5, 8, Strand.MINUS, parent=Sequence("AAAGGAAAGTCCCTGAAAAAA", alphabet)),  # AAA
-                    SingleInterval(8, 10, Strand.MINUS,
+                    SingleInterval(2, 5, Strand.PLUS, parent=Sequence("AAAGGAAAGTCCCTGAAAAAA", alphabet)),  # AGG
+                    SingleInterval(5, 8, Strand.PLUS, parent=Sequence("AAAGGAAAGTCCCTGAAAAAA", alphabet)),  # AAA
+                    SingleInterval(8, 10, Strand.PLUS,
                                    parent=Sequence("AAAGGAAAGTCCCTGAAAAAA", alphabet)),  # GGT, G gets repeated
-                    SingleInterval(10, 13, Strand.MINUS, parent=Sequence("AAAGGAAAGTCCCTGAAAAAA", alphabet)),  # CCC
-                    SingleInterval(13, 16, Strand.MINUS, parent=Sequence("AAAGGAAAGTCCCTGAAAAAA", alphabet)),  # TGA
+                    SingleInterval(10, 13, Strand.PLUS, parent=Sequence("AAAGGAAAGTCCCTGAAAAAA", alphabet)),  # CCC
+                    SingleInterval(13, 16, Strand.PLUS, parent=Sequence("AAAGGAAAGTCCCTGAAAAAA", alphabet)),  # TGA
+                ],
+            ),
+            # A deletion frameshift that skips over a 1nt exon
+            (
+                CDSInterval(
+                    CompoundInterval(
+                        [2, 6, 8],
+                        [5, 7, 16],
+                        Strand.PLUS,
+                        parent=Sequence("AAACAAAAGGACCCAAAAAA", alphabet),
+                    ),
+                    [CDSFrame.ZERO, CDSFrame.ZERO, CDSFrame.ZERO],
+                ),
+                [
+                    SingleInterval(2, 5, Strand.PLUS, parent=Sequence("AAACAAAAGGACCCAAAAAA", alphabet)),  # GGA
+                    SingleInterval(8, 11, Strand.PLUS, parent=Sequence("AAACAAAAGGACCCAAAAAA", alphabet)),  # GGA
+                    SingleInterval(11, 14, Strand.PLUS, parent=Sequence("AAACAAAAGGACCCAAAAAA", alphabet)),  # CCC
                 ],
             ),
         ],

@@ -1,10 +1,10 @@
 from enum import Enum
-from typing import Iterator, List, Union, Optional, AnyStr
+from typing import Iterator, List, Union, Optional, AnyStr, Tuple
 
 from inscripta.biocantor.exc import ValidationError, EmptyLocationException
 from inscripta.biocantor.gene.codon import Codon
 from inscripta.biocantor.location.location import Location, Strand
-from inscripta.biocantor.location.location_impl import SingleInterval
+from inscripta.biocantor.location.location_impl import SingleInterval, CompoundInterval
 from inscripta.biocantor.sequence.alphabet import Alphabet
 from inscripta.biocantor.sequence import Sequence
 
@@ -193,7 +193,7 @@ class CDSInterval:
         for exon, frame in zip(self.exon_iter(), self.frame_iter()):
             s = list(exon.extract_sequence())
             if next_frame != frame:
-                s = s[frame.value :]
+                s = s[frame.value:]
                 # remove trailing codon from previous sequence
                 shift = len(seq) % 3
                 if shift > 0:
@@ -223,6 +223,48 @@ class CDSInterval:
             yield c
             if truncate_at_in_frame_stop and c.is_stop_codon:
                 break
+
+    def scan_codon_locations(self) -> Iterator[Location]:
+        """
+        Returns an iterator over codon locations.
+
+        Any leading or trailing bases that are annotated as CDS but cannot form a full codon
+        are excluded. Additionally, any internal codons that are incomplete are excluded.
+
+        Incomplete internal codons are determined by comparing the CDSFrame of each exon
+        as annotated, to the expected value of the CDSFrame. This allows for an annotation
+        to model things like programmed frameshifts and indels that may be assembly errors.
+        """
+        next_frame = CDSFrame.ZERO
+        cleaned_rel_starts = []
+        cleaned_rel_ends = []
+        for exon, frame in zip(self.exon_iter(), self.frame_iter()):
+            start_to_rel = self.location.parent_to_relative_pos(exon.start)
+            end_to_rel = self.location.parent_to_relative_pos(exon.end - 1)
+            rel_start = min(start_to_rel, end_to_rel)
+            rel_end = max(start_to_rel, end_to_rel) + 1
+            if next_frame != frame:
+                rel_start += frame.value
+                # remove trailing codon from previous block
+                shift = self._total_block_len(cleaned_rel_starts, cleaned_rel_ends) % 3
+                if shift > 0:
+                    cleaned_rel_ends[-1] = cleaned_rel_ends[-1] - shift
+                # we are now inherently in frame
+                next_frame = CDSFrame(CDSFrame.ZERO)
+            cleaned_rel_starts.append(rel_start)
+            cleaned_rel_ends.append(rel_end)
+            # this is what we expect the next frame to be, if no frameshift occurred
+            next_frame = next_frame.shift(rel_end - rel_start)
+        cleaned_blocks = [self.location.relative_interval_to_parent_location(
+            cleaned_rel_starts[i], cleaned_rel_ends[i], Strand.PLUS) for i in range(len(cleaned_rel_starts))]
+        cleaned_location = CompoundInterval.from_single_intervals(cleaned_blocks)
+        if len(cleaned_location) < 3:
+            return
+        yield from cleaned_location.scan_windows(3, 3, 0)
+
+    @staticmethod
+    def _total_block_len(starts: List[int], ends: List[int]) -> int:
+        return sum([coords[1] - coords[0] for coords in zip(starts, ends)])
 
     def translate(self, truncate_at_in_frame_stop: Optional[bool] = False) -> Sequence:
         """
