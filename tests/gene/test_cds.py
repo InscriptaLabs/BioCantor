@@ -388,13 +388,13 @@ class TestCDS:
                 [
                     SingleInterval(2, 5, Strand.PLUS, parent=Sequence("AAAGGAAAGTCCCTGAAAAAA", alphabet)),  # AGG
                     SingleInterval(5, 8, Strand.PLUS, parent=Sequence("AAAGGAAAGTCCCTGAAAAAA", alphabet)),  # AAA
-                    SingleInterval(8, 10, Strand.PLUS,
-                                   parent=Sequence("AAAGGAAAGTCCCTGAAAAAA", alphabet)),  # GGT, G gets repeated
+                    CompoundInterval([8, 8], [9, 10], Strand.PLUS,
+                                     parent=Sequence("AAAGGAAAGTCCCTGAAAAAA", alphabet)),  # GGT, G gets repeated
                     SingleInterval(10, 13, Strand.PLUS, parent=Sequence("AAAGGAAAGTCCCTGAAAAAA", alphabet)),  # CCC
                     SingleInterval(13, 16, Strand.PLUS, parent=Sequence("AAAGGAAAGTCCCTGAAAAAA", alphabet)),  # TGA
                 ],
             ),
-            # A deletion frameshift that skips over a 1nt exon
+            # Discontiguous CDS, plus strand, with +1 programmed frameshift that skips over a 1nt exon
             (
                 CDSInterval(
                     CompoundInterval(

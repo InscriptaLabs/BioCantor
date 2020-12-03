@@ -187,30 +187,10 @@ class CDSInterval:
         as annotated, to the expected value of the CDSFrame. This allows for an annotation
         to model things like programmed frameshifts and indels that may be assembly errors.
         """
-        seq = []
-        # keeps track of what we expect the next frame to be
-        next_frame = CDSFrame(CDSFrame.ZERO)
-        for exon, frame in zip(self.exon_iter(), self.frame_iter()):
-            s = list(exon.extract_sequence())
-            if next_frame != frame:
-                s = s[frame.value:]
-                # remove trailing codon from previous sequence
-                shift = len(seq) % 3
-                if shift > 0:
-                    seq = seq[:-shift]
-                # we are now inherently in frame
-                next_frame = CDSFrame(CDSFrame.ZERO)
-            seq.extend(s)
-            # this is what we expect the next frame to be, if no frameshift occurred
-            next_frame = next_frame.shift(len(s))
-        # we may not have a complete 3' end
-        extra = len(seq) % 3
-        if extra > 0:
-            seq = "".join(str(s) for s in seq[:-extra])
-        else:
-            seq = "".join(str(s) for s in seq)
+        codons = [str(codon_location.extract_sequence()) for codon_location in self.scan_codon_locations()]
+        seq = "".join(c for c in codons)
         assert len(seq) % 3 == 0
-        return Sequence(seq, Alphabet.NT_EXTENDED)
+        return Sequence(seq, Alphabet.NT_STRICT)
 
     def scan_codons(self, truncate_at_in_frame_stop: Optional[bool] = False) -> Iterator[Codon]:
         """
