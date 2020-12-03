@@ -188,9 +188,9 @@ class CDSInterval:
         to model things like programmed frameshifts and indels that may be assembly errors.
         """
         codons = [str(codon_location.extract_sequence()) for codon_location in self.scan_codon_locations()]
-        seq = "".join(c for c in codons)
+        seq = "".join(codons)
         assert len(seq) % 3 == 0
-        return Sequence(seq, Alphabet.NT_STRICT)
+        return Sequence(seq, Alphabet.NT_EXTENDED)
 
     def scan_codons(self, truncate_at_in_frame_stop: Optional[bool] = False) -> Iterator[Codon]:
         """
@@ -220,9 +220,9 @@ class CDSInterval:
         cleaned_rel_ends = []
         for exon, frame in zip(self.exon_iter(), self.frame_iter()):
             start_to_rel = self.location.parent_to_relative_pos(exon.start)
-            end_to_rel = self.location.parent_to_relative_pos(exon.end - 1)
-            rel_start = min(start_to_rel, end_to_rel)
-            rel_end = max(start_to_rel, end_to_rel) + 1
+            end_to_rel_inclusive = self.location.parent_to_relative_pos(exon.end - 1)
+            rel_start = min(start_to_rel, end_to_rel_inclusive)
+            rel_end = max(start_to_rel, end_to_rel_inclusive) + 1
             if next_frame != frame:
                 rel_start += frame.value
                 # remove trailing codon from previous block
