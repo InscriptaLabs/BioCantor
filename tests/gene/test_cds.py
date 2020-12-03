@@ -120,6 +120,56 @@ class TestCDS:
     @pytest.mark.parametrize(
         "cds,expected",
         [
+            # 2bp CDS
+            (
+                CDSInterval(
+                    SingleInterval(0, 2, Strand.PLUS, parent=Sequence("ATACGATCA", alphabet)),
+                    [CDSFrame.ZERO],
+                ),
+                0,
+            ),
+            # Contiguous CDS, plus strand, frame=0
+            (
+                CDSInterval(
+                    SingleInterval(0, 9, Strand.PLUS, parent=Sequence("ATACGATCA", alphabet)),
+                    [CDSFrame.ZERO],
+                ),
+                3,
+            ),
+            # Discontiguous CDS, plus strand, frame=1, codons don't reach end of CDS
+            (
+                CDSInterval(
+                    CompoundInterval(
+                        [2, 8],
+                        [5, 17],
+                        Strand.PLUS,
+                        parent=Sequence("AAACAAAAGGGACCCAAAAAA", alphabet),
+                    ),
+                    [CDSFrame.ONE, CDSFrame.TWO],
+                ),
+                3,
+            ),
+            # Discontiguous CDS, plus strand, with -1 bp programmed frameshift (overlapping interval)
+            (
+                CDSInterval(
+                    CompoundInterval(
+                        [2, 8],
+                        [9, 17],
+                        Strand.PLUS,
+                        parent=Sequence("AAAGGAAAGTCCCTGAAAAAA", alphabet),
+                    ),
+                    [CDSFrame.ZERO, CDSFrame.ONE],
+                ),
+                5,
+            ),
+        ],
+    )
+    def test_num_codons(self, cds, expected):
+        assert cds.num_codons() == expected
+
+    @pytest.mark.parametrize(
+        "cds,expected",
+        [
             # Contiguous CDS, plus strand, frame=0
             (
                 CDSInterval(

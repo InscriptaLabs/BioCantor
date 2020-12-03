@@ -192,6 +192,19 @@ class CDSInterval:
         assert len(seq) % 3 == 0
         return Sequence(seq, Alphabet.NT_EXTENDED)
 
+    def num_codons(self) -> int:
+        """
+        Returns the number of codons.
+
+        Any leading or trailing bases that are annotated as CDS but cannot form a full codon
+        are excluded. Additionally, any internal codons that are incomplete are excluded.
+
+        Incomplete internal codons are determined by comparing the CDSFrame of each exon
+        as annotated, to the expected value of the CDSFrame. This allows for an annotation
+        to model things like programmed frameshifts and indels that may be assembly errors.
+        """
+        return len(list(self.scan_codon_locations()))
+
     def scan_codons(self, truncate_at_in_frame_stop: Optional[bool] = False) -> Iterator[Codon]:
         """
         Iterator along codons. If truncate_at_in_frame_stop is True,
