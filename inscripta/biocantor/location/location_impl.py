@@ -548,10 +548,20 @@ class CompoundInterval(Location):
     def relative_interval_to_parent_location(
         self, relative_start: int, relative_end: int, relative_strand: Strand
     ) -> Location:
+        if relative_start > relative_end:
+            raise InvalidPositionException("Relative start must be <= relative end")
         start_on_parent = self.relative_to_parent_pos(relative_start)
-        end_on_parent_inclusive = self.relative_to_parent_pos(relative_end - 1)
-        parent_start = min(start_on_parent, end_on_parent_inclusive)
-        parent_end = max(start_on_parent, end_on_parent_inclusive) + 1
+        if relative_start == relative_end:
+            return SingleInterval(
+                start_on_parent,
+                start_on_parent,
+                relative_strand.relative_to(self.strand),
+                parent=self.parent.strip_location_info() if self.parent else None,
+            )
+        else:
+            end_on_parent_inclusive = self.relative_to_parent_pos(relative_end - 1)
+            parent_start = min(start_on_parent, end_on_parent_inclusive)
+            parent_end = max(start_on_parent, end_on_parent_inclusive) + 1
         intersect_same_strand = self.intersection(
             SingleInterval(
                 parent_start,
@@ -566,7 +576,22 @@ class CompoundInterval(Location):
         return any([interval.has_overlap(other, match_strand) for interval in self._single_intervals])
 
     def optimize_blocks(self) -> Location:
-        return self._combine_blocks()._remove_empty_blocks()._to_single_interval_if_one_block()
+        """
+        - Removes empty blocks
+        - Combines adjacent blocks, preserving strictly overlapping blocks
+        - Converts to SingleInterval if has only one block
+        """
+        return self._combine_blocks(preserve_overlappers=True)._remove_empty_blocks()._to_single_interval_if_one_block()
+
+    def optimize_and_combine_blocks(self) -> Location:
+        """
+        - Removes empty blocks
+        - Combines adjacent and overlapping blocks
+        - Converts to SingleInterval if has only one block
+        """
+        return (
+            self._combine_blocks(preserve_overlappers=False)._remove_empty_blocks()._to_single_interval_if_one_block()
+        )
 
     def gap_list(self) -> List["Location"]:
         optimized = self.optimize_blocks()
@@ -592,13 +617,23 @@ class CompoundInterval(Location):
     def _to_single_interval_if_one_block(self) -> Location:
         return self if self.num_blocks > 1 else self._single_intervals[0]
 
-    def _combine_blocks(self) -> "CompoundInterval":
+    def _combine_blocks(self, preserve_overlappers: bool) -> "CompoundInterval":
+        """Combine adjacent and (optionally) overlapping blocks
+
+        Parameters
+        ----------
+        preserve_overlappers
+            Do not combine strictly overlapping blocks
+        """
         new_blocks = []
         curr_block = self._single_intervals[0]
         i = 1
         while i < self.num_blocks:
             next_block = self._single_intervals[i]
-            if curr_block.end >= next_block.start:
+            combine = (
+                (curr_block.end == next_block.start) if preserve_overlappers else (curr_block.end >= next_block.start)
+            )
+            if combine:
                 new_parent = curr_block.parent.strip_location_info() if curr_block.parent else None
                 curr_block = SingleInterval(
                     curr_block.start,

@@ -824,6 +824,7 @@ class TestSingleInterval:
                 Strand.PLUS,
                 SingleInterval(10, 20, Strand.MINUS, None),
             ),
+            (SingleInterval(10, 20, Strand.PLUS), 5, 5, Strand.PLUS, SingleInterval(15, 15, Strand.PLUS)),
         ],
     )
     def test_relative_interval_to_parent_location(
@@ -844,6 +845,19 @@ class TestSingleInterval:
                 ),
                 3,
                 5,
+                Strand.PLUS,
+                ValueError,
+            ),
+            # Start > end
+            (
+                SingleInterval(
+                    0,
+                    4,
+                    Strand.PLUS,
+                    SingleInterval(0, 4, Strand.PLUS),
+                ),
+                2,
+                1,
                 Strand.PLUS,
                 ValueError,
             ),
