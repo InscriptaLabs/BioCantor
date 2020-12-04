@@ -589,8 +589,9 @@ class CompoundInterval(Location):
         - Combines adjacent and overlapping blocks
         - Converts to SingleInterval if has only one block
         """
-        return self._combine_blocks(preserve_overlappers=False)._remove_empty_blocks().\
-            _to_single_interval_if_one_block()
+        return (
+            self._combine_blocks(preserve_overlappers=False)._remove_empty_blocks()._to_single_interval_if_one_block()
+        )
 
     def gap_list(self) -> List["Location"]:
         optimized = self.optimize_blocks()
@@ -629,8 +630,9 @@ class CompoundInterval(Location):
         i = 1
         while i < self.num_blocks:
             next_block = self._single_intervals[i]
-            combine = (curr_block.end == next_block.start) if preserve_overlappers \
-                else (curr_block.end >= next_block.start)
+            combine = (
+                (curr_block.end == next_block.start) if preserve_overlappers else (curr_block.end >= next_block.start)
+            )
             if combine:
                 new_parent = curr_block.parent.strip_location_info() if curr_block.parent else None
                 curr_block = SingleInterval(
