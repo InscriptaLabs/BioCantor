@@ -165,7 +165,7 @@ class TestCDS:
         ],
     )
     def test_num_codons(self, cds, expected):
-        assert cds.num_codons() == expected
+        assert cds.num_codons == expected
 
     @pytest.mark.parametrize(
         "cds,expected",

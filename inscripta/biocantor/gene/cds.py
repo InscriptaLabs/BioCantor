@@ -192,6 +192,7 @@ class CDSInterval:
         assert len(seq) % 3 == 0
         return Sequence(seq, Alphabet.NT_EXTENDED)
 
+    @property
     def num_codons(self) -> int:
         """
         Returns the number of codons.
