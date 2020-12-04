@@ -576,7 +576,21 @@ class CompoundInterval(Location):
         return any([interval.has_overlap(other, match_strand) for interval in self._single_intervals])
 
     def optimize_blocks(self) -> Location:
-        return self._combine_adjacent_blocks()._remove_empty_blocks()._to_single_interval_if_one_block()
+        """
+        - Removes empty blocks
+        - Combines adjacent blocks, preserving strictly overlapping blocks
+        - Converts to SingleInterval if has only one block
+        """
+        return self._combine_blocks(preserve_overlappers=True)._remove_empty_blocks()._to_single_interval_if_one_block()
+
+    def optimize_and_combine_blocks(self) -> Location:
+        """
+        - Removes empty blocks
+        - Combines adjacent and overlapping blocks
+        - Converts to SingleInterval if has only one block
+        """
+        return self._combine_blocks(preserve_overlappers=False)._remove_empty_blocks().\
+            _to_single_interval_if_one_block()
 
     def gap_list(self) -> List["Location"]:
         optimized = self.optimize_blocks()
@@ -602,13 +616,22 @@ class CompoundInterval(Location):
     def _to_single_interval_if_one_block(self) -> Location:
         return self if self.num_blocks > 1 else self._single_intervals[0]
 
-    def _combine_adjacent_blocks(self) -> "CompoundInterval":
+    def _combine_blocks(self, preserve_overlappers: bool) -> "CompoundInterval":
+        """Combine adjacent and (optionally) overlapping blocks
+
+        Parameters
+        ----------
+        preserve_overlappers
+            Do not combine strictly overlapping blocks
+        """
         new_blocks = []
         curr_block = self._single_intervals[0]
         i = 1
         while i < self.num_blocks:
             next_block = self._single_intervals[i]
-            if curr_block.end == next_block.start:
+            combine = (curr_block.end == next_block.start) if preserve_overlappers \
+                else (curr_block.end >= next_block.start)
+            if combine:
                 new_parent = curr_block.parent.strip_location_info() if curr_block.parent else None
                 curr_block = SingleInterval(
                     curr_block.start,

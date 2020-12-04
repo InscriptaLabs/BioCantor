@@ -813,6 +813,39 @@ class TestCompoundInterval:
             # One block
             (
                 CompoundInterval([5], [8], Strand.PLUS),
+                SingleInterval(5, 8, Strand.PLUS),
+            ),
+            # Two sets of two adjacent blocks, one non-adjacent
+            (
+                CompoundInterval([5, 8, 15, 25, 30], [8, 10, 20, 30, 32], Strand.PLUS),
+                CompoundInterval([5, 15, 25], [10, 20, 32], Strand.PLUS),
+            ),
+            # Has an empty block
+            (
+                CompoundInterval([0, 10, 20], [5, 10, 25], Strand.PLUS),
+                CompoundInterval([0, 20], [5, 25], Strand.PLUS),
+            ),
+            # No adjacent blocks
+            (
+                CompoundInterval([0, 10], [5, 15], Strand.PLUS),
+                CompoundInterval([0, 10], [5, 15], Strand.PLUS),
+            ),
+            # Overlapping and adjacent blocks
+            (
+                CompoundInterval([5, 8, 10, 20], [9, 10, 12, 30], Strand.PLUS),
+                CompoundInterval([5, 20], [12, 30], Strand.PLUS),
+            ),
+        ],
+    )
+    def test_optimize_and_combine_blocks(self, location, expected):
+        assert location.optimize_and_combine_blocks() == expected
+
+    @pytest.mark.parametrize(
+        "location,expected",
+        [
+            # One block
+            (
+                CompoundInterval([5], [8], Strand.PLUS),
                 [],
             ),
             # Two blocks
