@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Behavior of `CompoundInterval.relative_interval_to_parent_location()` in the case of overlapping blocks
 ### Added
 - `CDSInterval.scan_codon_locations()` method
+### Removed
+- `CDSInterval.intersect()` method
 
 ## [0.1.1] 2020-11-17
 ### Fixed
