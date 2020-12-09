@@ -332,6 +332,13 @@ class TestCompoundInterval:
             (CompoundInterval([0, 6, 20], [3, 8, 25], Strand.PLUS), 9, 24),
             # Last position before an intron; minus strand
             (CompoundInterval([0, 6, 20], [3, 8, 25], Strand.MINUS), 5, 7),
+            # Overlapping blocks
+            (CompoundInterval([10, 15], [16, 20], Strand.PLUS), 5, 15),
+            (CompoundInterval([10, 15], [16, 20], Strand.PLUS), 6, 15),
+            (CompoundInterval([10, 15], [16, 20], Strand.PLUS), 7, 16),
+            (CompoundInterval([10, 15], [16, 20], Strand.MINUS), 4, 15),
+            (CompoundInterval([10, 15], [16, 20], Strand.MINUS), 5, 15),
+            (CompoundInterval([10, 15], [16, 20], Strand.MINUS), 6, 14),
         ],
     )
     def test_relative_to_parent_pos(self, location, relative_pos, expected):
@@ -470,7 +477,7 @@ class TestCompoundInterval:
     @pytest.mark.parametrize(
         "location,start,end,strand,expected",
         [
-            # Unstranded; location has parent
+            # 0. Unstranded; location has parent
             (
                 CompoundInterval(
                     [10, 30],
@@ -486,7 +493,7 @@ class TestCompoundInterval:
                 Strand.UNSTRANDED,
                 CompoundInterval([11, 30], [13, 33], Strand.UNSTRANDED, parent="parent"),
             ),
-            # Entire length of location; opposite strands
+            # 1. Entire length of location; opposite strands
             (
                 CompoundInterval([10, 15], [12, 17], Strand.PLUS),
                 0,
@@ -494,7 +501,7 @@ class TestCompoundInterval:
                 Strand.MINUS,
                 CompoundInterval([10, 15], [12, 17], Strand.MINUS),
             ),
-            # Spanning multiple blocks; both minus strand
+            # 2. Spanning multiple blocks; both minus strand
             (
                 CompoundInterval([10, 30, 50], [20, 40, 60], Strand.MINUS),
                 5,
@@ -502,15 +509,63 @@ class TestCompoundInterval:
                 Strand.MINUS,
                 CompoundInterval([15, 30, 50], [20, 40, 55], Strand.PLUS),
             ),
-            # Start == end
+            # 3. Start == end
             (CompoundInterval([10], [20], Strand.PLUS), 5, 5, Strand.PLUS, SingleInterval(15, 15, Strand.PLUS)),
-            # Overlapping blocks
+            # 4. Overlapping blocks, requested interval overlaps both blocks, plus strand
             (
                 CompoundInterval([0, 9], [10, 20], Strand.PLUS),
                 8,
                 12,
                 Strand.PLUS,
                 CompoundInterval([8, 9], [10, 11], Strand.PLUS),
+            ),
+            # 5. Overlapping blocks, requested interval overlaps both blocks, minus strand
+            (
+                CompoundInterval([0, 9], [10, 20], Strand.MINUS),
+                9,
+                12,
+                Strand.PLUS,
+                CompoundInterval([9, 9], [10, 11], Strand.MINUS),
+            ),
+            # 6. Overlapping blocks, requested interval ends at end of first block, plus strand
+            (
+                CompoundInterval([10, 15], [16, 22], Strand.PLUS),
+                3,
+                6,
+                Strand.PLUS,
+                SingleInterval(13, 16, Strand.PLUS),
+            ),
+            # 7. Overlapping blocks, requested interval ends at end of first block, minus strand
+            (
+                CompoundInterval([10, 15], [16, 22], Strand.MINUS),
+                4,
+                7,
+                Strand.PLUS,
+                SingleInterval(15, 18, Strand.MINUS),
+            ),
+            # 8. Overlapping blocks, requested interval starts at start of second block, plus strand
+            (
+                CompoundInterval([10, 15], [16, 22], Strand.PLUS),
+                6,
+                9,
+                Strand.PLUS,
+                SingleInterval(15, 18, Strand.PLUS),
+            ),
+            # 9. Overlapping blocks, requested interval starts at start of second block, minus strand
+            (
+                CompoundInterval([10, 15], [16, 22], Strand.MINUS),
+                7,
+                10,
+                Strand.PLUS,
+                SingleInterval(13, 16, Strand.MINUS),
+            ),
+            # 10. Overlapping blocks, requested interval starts adjacent to overlap region, plus strand
+            (
+                CompoundInterval([10, 15], [16, 22], Strand.PLUS),
+                7,
+                10,
+                Strand.PLUS,
+                SingleInterval(16, 19, Strand.PLUS),
             ),
         ],
     )
@@ -561,7 +616,7 @@ class TestCompoundInterval:
     @pytest.mark.parametrize(
         "location,window_size,step_size,start_pos,expected",
         [
-            # Step size greater than window size, windows go to end of location
+            # 0. Step size greater than window size, windows go to end of location
             (
                 CompoundInterval([0, 20, 40], [10, 27, 53], Strand.PLUS),
                 2,
@@ -576,7 +631,7 @@ class TestCompoundInterval:
                     SingleInterval(51, 53, Strand.PLUS),
                 ],
             ),
-            # Start pos is in second exon; minus strand
+            # 1. Start pos is in second exon; minus strand
             (
                 CompoundInterval([0, 20, 40], [10, 27, 54], Strand.MINUS),
                 5,
@@ -588,7 +643,7 @@ class TestCompoundInterval:
                     SingleInterval(2, 7, Strand.MINUS),
                 ],
             ),
-            # Step size = 1; plus strand
+            # 2. Step size = 1; plus strand
             (
                 CompoundInterval([0, 7], [3, 10], Strand.PLUS),
                 2,
@@ -602,7 +657,7 @@ class TestCompoundInterval:
                     SingleInterval(8, 10, Strand.PLUS),
                 ],
             ),
-            # Step size = 2; minus strand
+            # 3. Step size = 2; minus strand
             (
                 CompoundInterval([10, 30], [20, 37], Strand.MINUS),
                 5,
@@ -616,7 +671,7 @@ class TestCompoundInterval:
                     SingleInterval(10, 15, Strand.MINUS),
                 ],
             ),
-            # Window size = 1, step size = 1; minus strand
+            # 4. Window size = 1, step size = 1; minus strand
             (
                 CompoundInterval([3, 10], [5, 13], Strand.MINUS),
                 1,
@@ -630,7 +685,7 @@ class TestCompoundInterval:
                     SingleInterval(3, 4, Strand.MINUS),
                 ],
             ),
-            # Window size is equal to location length
+            # 5. Window size is equal to location length
             (
                 CompoundInterval([3, 10], [5, 13], Strand.PLUS),
                 5,
@@ -638,7 +693,7 @@ class TestCompoundInterval:
                 0,
                 [CompoundInterval([3, 10], [5, 13], Strand.PLUS)],
             ),
-            # Start pos is last position of location, window size 1
+            # 6. Start pos is last position of location, window size 1
             (
                 CompoundInterval([3, 10], [5, 13], Strand.PLUS),
                 1,
@@ -646,7 +701,7 @@ class TestCompoundInterval:
                 4,
                 [SingleInterval(12, 13, Strand.PLUS)],
             ),
-            # Overlapping blocks
+            # 7. Overlapping blocks
             (
                 CompoundInterval([0, 4], [5, 10], Strand.PLUS),
                 3,
@@ -658,6 +713,19 @@ class TestCompoundInterval:
                     SingleInterval(5, 8, Strand.PLUS),
                 ],
             ),
+            # 8. Overlapping blocks, first block has length divisible by window size
+            (
+                CompoundInterval([10, 15], [16, 22], Strand.PLUS),
+                3,
+                3,
+                0,
+                [
+                    SingleInterval(10, 13, Strand.PLUS),
+                    SingleInterval(13, 16, Strand.PLUS),
+                    SingleInterval(15, 18, Strand.PLUS),
+                    SingleInterval(18, 21, Strand.PLUS),
+                ]
+            )
         ],
     )
     def test_scan_windows(self, location, window_size, step_size, start_pos, expected):
