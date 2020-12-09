@@ -566,22 +566,29 @@ class CompoundInterval(Location):
     def _rel_interval_to_parent_location_overlapping(
         self, relative_start: int, relative_end: int, relative_strand: Strand
     ) -> Location:
-
-        def compile_blocks(remaining_len_till_start: int, remaining_len_till_end: int,
-                           remaining_blocks: List[SingleInterval], existing_blocks: List[SingleInterval]) \
-                -> List[SingleInterval]:
+        def compile_blocks(
+            remaining_len_till_start: int,
+            remaining_len_till_end: int,
+            remaining_blocks: List[SingleInterval],
+            existing_blocks: List[SingleInterval],
+        ) -> List[SingleInterval]:
             """Returns the contiguous blocks that comprise the returned Location of the enclosing method"""
             if remaining_len_till_end < 1:
                 return existing_blocks
             block0 = remaining_blocks[0]
             if len(block0) <= remaining_len_till_start:
-                return compile_blocks(remaining_len_till_start - len(block0), remaining_len_till_end,
-                                      remaining_blocks[1:], existing_blocks)
+                return compile_blocks(
+                    remaining_len_till_start - len(block0),
+                    remaining_len_till_end,
+                    remaining_blocks[1:],
+                    existing_blocks,
+                )
             new_sub_block_start = remaining_len_till_start
             new_sub_block_end = min(len(block0), remaining_len_till_start + remaining_len_till_end)
             sub_block = block0.relative_interval_to_parent_location(new_sub_block_start, new_sub_block_end, Strand.PLUS)
-            return compile_blocks(0, remaining_len_till_end - len(sub_block),
-                                  remaining_blocks[1:], existing_blocks + [sub_block])
+            return compile_blocks(
+                0, remaining_len_till_end - len(sub_block), remaining_blocks[1:], existing_blocks + [sub_block]
+            )
 
         blocks = compile_blocks(relative_start, relative_end - relative_start, list(self.scan_blocks()), [])
         new_strand = relative_strand.relative_to(self.strand)

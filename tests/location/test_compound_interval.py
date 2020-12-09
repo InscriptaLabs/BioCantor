@@ -724,8 +724,8 @@ class TestCompoundInterval:
                     SingleInterval(13, 16, Strand.PLUS),
                     SingleInterval(15, 18, Strand.PLUS),
                     SingleInterval(18, 21, Strand.PLUS),
-                ]
-            )
+                ],
+            ),
         ],
     )
     def test_scan_windows(self, location, window_size, step_size, start_pos, expected):
