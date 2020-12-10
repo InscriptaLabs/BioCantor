@@ -956,6 +956,11 @@ class TestCompoundInterval:
                 CompoundInterval([0, 10, 20], [5, 10, 25], Strand.PLUS),
                 [SingleInterval(5, 20, Strand.PLUS)],
             ),
+            # Overlapping blocks
+            (
+                CompoundInterval([50, 70, 74], [65, 75, 85], Strand.PLUS),
+                [SingleInterval(65, 70, Strand.PLUS)],
+            ),
         ],
     )
     def test_gap_list(self, location, expected):

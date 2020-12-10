@@ -633,7 +633,7 @@ class CompoundInterval(Location):
         )
 
     def gap_list(self) -> List["Location"]:
-        optimized = self.optimize_blocks()
+        optimized = self.optimize_and_combine_blocks()
         block_iter = optimized.scan_blocks()
         gaps = []
         block1 = next(block_iter)
