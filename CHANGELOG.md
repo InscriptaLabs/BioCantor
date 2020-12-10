@@ -6,7 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 ### Fixed
-- Behavior of `CompoundInterval.relative_interval_to_parent_location()` in the case of overlapping blocks
+- `CompoundInterval.relative_interval_to_parent_location()` in the case of overlapping blocks
+- `CompoundInterval.gap_list()` in the case of overlapping blocks
 ### Added
 - `CDSInterval.scan_codon_locations()` method
 ### Removed
