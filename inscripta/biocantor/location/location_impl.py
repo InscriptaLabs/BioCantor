@@ -570,6 +570,7 @@ class CompoundInterval(Location):
     ) -> Location:
         """Implementation of relative_interval_to_parent_location() in the case of overlapping blocks; less
         efficient than the alternative non-overlap version"""
+
         def compile_blocks(
             remaining_len_till_start: int,
             remaining_len_till_end: int,
