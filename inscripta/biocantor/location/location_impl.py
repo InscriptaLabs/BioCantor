@@ -410,6 +410,8 @@ class CompoundInterval(Location):
             raise ValueError("Lists of start end end positions must be nonempty and have same length")
         starts_sorted = sorted(starts)
         ends_sorted = sorted(ends)
+        self._starts = tuple(starts_sorted)
+        self._ends = tuple(ends_sorted)
         parent_obj = make_parent(parent) if parent else None
         self._parent = parent_obj.reset_location(CompoundInterval(starts, ends, strand)) if parent_obj else None
         self._strand = strand
@@ -450,6 +452,9 @@ class CompoundInterval(Location):
         if type(other) is not CompoundInterval:
             return False
         return self.blocks == other.blocks
+
+    def __hash__(self):
+        return hash((self._starts, self._ends, self.strand, self.parent))
 
     def __repr__(self):
         return f"CompoundInterval <{str(self)}>"

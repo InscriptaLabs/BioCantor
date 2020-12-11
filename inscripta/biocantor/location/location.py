@@ -28,6 +28,10 @@ class Location(ABC):
         """Returns True iff this Location is equal to other object"""
 
     @abstractmethod
+    def __hash__(self):
+        """Returns a hash code satisfying location1 == location2 => hash(location1) == hash(location2)"""
+
+    @abstractmethod
     def __repr__(self):
         """Returns the 'official' string representation of this Location"""
 

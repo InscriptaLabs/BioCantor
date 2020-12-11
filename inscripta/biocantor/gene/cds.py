@@ -114,6 +114,9 @@ class CDSInterval:
             return False
         return self.location == other.location
 
+    def __hash__(self):
+        return hash((self.location, self.frames[0]))
+
     def __len__(self) -> int:
         return len(self.location)
 

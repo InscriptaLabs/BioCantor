@@ -194,6 +194,38 @@ class TestCompoundInterval:
         assert (object1 == object2) is expected
 
     @pytest.mark.parametrize(
+        "object1,object2,exp_equal",
+        [
+            # One interval has different start
+            (
+                CompoundInterval([0, 5], [3, 7], Strand.PLUS),
+                CompoundInterval([0, 4], [3, 7], Strand.PLUS),
+                False,
+            ),
+            # Different strand
+            (
+                CompoundInterval([0, 5], [3, 7], Strand.PLUS),
+                CompoundInterval([0, 5], [3, 7], Strand.MINUS),
+                False,
+            ),
+            # Different parent
+            (
+                CompoundInterval([0, 5], [3, 7], Strand.PLUS, parent="parent1"),
+                CompoundInterval([0, 5], [3, 7], Strand.PLUS, parent="parent2"),
+                False,
+            ),
+            # Equal
+            (
+                CompoundInterval([0, 5], [3, 7], Strand.PLUS, parent="parent"),
+                CompoundInterval([0, 5], [3, 7], Strand.PLUS, parent="parent"),
+                True,
+            ),
+        ],
+    )
+    def test_hash(self, object1, object2, exp_equal):
+        assert (hash(object1) == hash(object2)) is exp_equal
+
+    @pytest.mark.parametrize(
         "location,expected",
         [
             # One interval minus strand

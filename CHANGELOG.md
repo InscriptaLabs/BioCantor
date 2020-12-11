@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - `CompoundInterval.gap_list()` in the case of overlapping blocks
 ### Added
 - `CDSInterval.scan_codon_locations()` method
+- Implement `__hash__()` for `CompoundInterval` and `CDSInterval`
 ### Removed
 - `CDSInterval.intersect()` method
 
