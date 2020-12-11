@@ -408,18 +408,17 @@ class CompoundInterval(Location):
         """
         if not len(starts) == len(ends) > 0:
             raise ValueError("Lists of start end end positions must be nonempty and have same length")
-        starts_sorted = sorted(starts)
-        ends_sorted = sorted(ends)
         parent_obj = make_parent(parent) if parent else None
         self._parent = parent_obj.reset_location(CompoundInterval(starts, ends, strand)) if parent_obj else None
         self._strand = strand
         single_interval_parent = self.parent.strip_location_info() if self.parent else None
-        single_intervals_no_parent = [
-            SingleInterval(starts_sorted[i], ends_sorted[i], self.strand) for i in range(len(starts_sorted))
-        ]
-        self._single_intervals = [
+        single_intervals_no_parent = [SingleInterval(starts[i], ends[i], self.strand) for i in range(len(starts))]
+        single_intervals_unsorted = [
             interval.reset_parent(single_interval_parent) for interval in single_intervals_no_parent
         ]
+        self._single_intervals = sorted(single_intervals_unsorted)
+        self._starts = tuple([interval.start for interval in self._single_intervals])
+        self._ends = tuple([interval.end for interval in self._single_intervals])
         self._start = self._single_intervals[0].start
         self._end = self._single_intervals[-1].end
 
@@ -450,6 +449,9 @@ class CompoundInterval(Location):
         if type(other) is not CompoundInterval:
             return False
         return self.blocks == other.blocks
+
+    def __hash__(self):
+        return hash((self._starts, self._ends, self.strand, self.parent))
 
     def __repr__(self):
         return f"CompoundInterval <{str(self)}>"
@@ -550,18 +552,61 @@ class CompoundInterval(Location):
     ) -> Location:
         if relative_start > relative_end:
             raise InvalidPositionException("Relative start must be <= relative end")
-        start_on_parent = self.relative_to_parent_pos(relative_start)
         if relative_start == relative_end:
+            start_on_parent = self.relative_to_parent_pos(relative_start)
             return SingleInterval(
                 start_on_parent,
                 start_on_parent,
                 relative_strand.relative_to(self.strand),
                 parent=self.parent.strip_location_info() if self.parent else None,
             )
+        if self.is_overlapping:
+            return self._rel_interval_to_parent_location_overlapping(relative_start, relative_end, relative_strand)
         else:
-            end_on_parent_inclusive = self.relative_to_parent_pos(relative_end - 1)
-            parent_start = min(start_on_parent, end_on_parent_inclusive)
-            parent_end = max(start_on_parent, end_on_parent_inclusive) + 1
+            return self._rel_interval_to_parent_location_nonoverlapping(relative_start, relative_end, relative_strand)
+
+    def _rel_interval_to_parent_location_overlapping(
+        self, relative_start: int, relative_end: int, relative_strand: Strand
+    ) -> Location:
+        """Implementation of relative_interval_to_parent_location() in the case of overlapping blocks; less
+        efficient than the alternative non-overlap version"""
+
+        def compile_blocks(
+            remaining_len_till_start: int,
+            remaining_len_till_end: int,
+            remaining_blocks: List[SingleInterval],
+            existing_blocks: List[SingleInterval],
+        ) -> List[SingleInterval]:
+            """Returns the contiguous blocks that comprise the returned Location of the enclosing method"""
+            if remaining_len_till_end < 1:
+                return existing_blocks
+            block0 = remaining_blocks[0]
+            if len(block0) <= remaining_len_till_start:
+                return compile_blocks(
+                    remaining_len_till_start - len(block0),
+                    remaining_len_till_end,
+                    remaining_blocks[1:],
+                    existing_blocks,
+                )
+            new_sub_block_start = remaining_len_till_start
+            new_sub_block_end = min(len(block0), remaining_len_till_start + remaining_len_till_end)
+            sub_block = block0.relative_interval_to_parent_location(new_sub_block_start, new_sub_block_end, Strand.PLUS)
+            return compile_blocks(
+                0, remaining_len_till_end - len(sub_block), remaining_blocks[1:], existing_blocks + [sub_block]
+            )
+
+        blocks = compile_blocks(relative_start, relative_end - relative_start, list(self.scan_blocks()), [])
+        new_strand = relative_strand.relative_to(self.strand)
+        return CompoundInterval.from_single_intervals(blocks).reset_strand(new_strand).optimize_blocks()
+
+    def _rel_interval_to_parent_location_nonoverlapping(
+        self, relative_start: int, relative_end: int, relative_strand: Strand
+    ) -> Location:
+        """Implementation of relative_interval_to_parent_location() assuming no overlapping blocks"""
+        start_on_parent = self.relative_to_parent_pos(relative_start)
+        end_on_parent_inclusive = self.relative_to_parent_pos(relative_end - 1)
+        parent_start = min(start_on_parent, end_on_parent_inclusive)
+        parent_end = max(start_on_parent, end_on_parent_inclusive) + 1
         intersect_same_strand = self.intersection(
             SingleInterval(
                 parent_start,
@@ -594,7 +639,7 @@ class CompoundInterval(Location):
         )
 
     def gap_list(self) -> List["Location"]:
-        optimized = self.optimize_blocks()
+        optimized = self.optimize_and_combine_blocks()
         block_iter = optimized.scan_blocks()
         gaps = []
         block1 = next(block_iter)

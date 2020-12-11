@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+### Fixed
+- `CompoundInterval.relative_interval_to_parent_location()` in the case of overlapping blocks. Had previously been double counting overlap region.
+- `CompoundInterval.gap_list()` in the case of overlapping blocks. Had been raising an error in that case.
+### Added
+- `CDSInterval.scan_codon_locations()` method. Returns an iterator over codon locations.
+- Implement `__hash__()` for `CompoundInterval` and `CDSInterval`
+### Removed
+- `CDSInterval.intersect()` method. Frame math was incorrect for complex CDSs and was deemed too difficult to implement correctly.
+
 ## [0.1.1] 2020-11-17
 ### Fixed
 - Remove duplicated code that had been created by a merge issue

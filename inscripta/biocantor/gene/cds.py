@@ -114,6 +114,9 @@ class CDSInterval:
             return False
         return self.location == other.location
 
+    def __hash__(self):
+        return hash((self.location, self.frames[0]))
+
     def __len__(self) -> int:
         return len(self.location)
 
@@ -138,29 +141,6 @@ class CDSInterval:
     def end(self) -> int:
         """Pass up the end of this CDS's Location"""
         return self.location.end
-
-    def intersect(self, location: Location) -> "CDSInterval":
-        """
-        Returns a new CDS representing the intersection of this CDS's location with the other location.
-        Strand of the other location is ignored; returned CDS is on the same strand as this CDS.
-        """
-        intersection = self.location.intersection(location, match_strand=False)
-
-        if intersection.is_empty:
-            raise EmptyLocationException("Can't intersect disjoint intervals")
-
-        frames = []
-        if self.location.strand == Strand.PLUS or self.location.strand == Strand.UNSTRANDED:
-            frame_shift = self.location.start - intersection.start
-        else:
-            frame_shift = intersection.end - self.location.end
-
-        # adjust original frames by the new frame shift value
-        for block, frame in zip(self.location.blocks, self.frames):
-            if block.has_overlap(intersection):
-                frames.append(frame.shift(frame_shift))
-
-        return CDSInterval(intersection, frames)
 
     def frame_iter(self) -> Iterator[CDSFrame]:
         """Iterate over frames taking strand into account"""

@@ -1,6 +1,5 @@
 import pytest
 
-from inscripta.biocantor.exc import EmptyLocationException
 from inscripta.biocantor.gene.cds import CDSPhase, CDSFrame, CDSInterval
 from inscripta.biocantor.gene.codon import Codon
 from inscripta.biocantor.location.location_impl import CompoundInterval, SingleInterval
@@ -43,79 +42,9 @@ class TestCDSFrame:
         assert frame.shift(shift) == expected
 
 
-class TestCDS:
+class TestCDSInterval:
 
     alphabet = Alphabet.NT_STRICT
-
-    @pytest.mark.parametrize(
-        "cds,location,expected",
-        [
-            (  # remove the first 2bp and last 2bp
-                CDSInterval(SingleInterval(0, 10, Strand.PLUS), [CDSFrame.ZERO]),
-                SingleInterval(2, 8, Strand.MINUS),
-                CDSInterval(SingleInterval(2, 8, Strand.PLUS), [CDSFrame.ONE]),
-            ),
-            (  # remove the first 2bp and last 2bp; CDS on minus strand
-                CDSInterval(SingleInterval(0, 10, Strand.MINUS), [CDSFrame.ZERO]),
-                SingleInterval(2, 8, Strand.MINUS),
-                CDSInterval(SingleInterval(2, 8, Strand.MINUS), [CDSFrame.ONE]),
-            ),
-            (  # strand doesn't matter
-                CDSInterval(SingleInterval(5, 10, Strand.MINUS), [CDSFrame.TWO]),
-                SingleInterval(0, 10, Strand.UNSTRANDED),
-                CDSInterval(SingleInterval(5, 10, Strand.MINUS), [CDSFrame.TWO]),
-            ),
-            (  # slice off the first base
-                CDSInterval(
-                    CompoundInterval([4, 7, 12], [6, 10, 15], Strand.PLUS),
-                    [CDSFrame.ZERO, CDSFrame.TWO, CDSFrame.TWO],
-                ),
-                SingleInterval(5, 15, Strand.UNSTRANDED),
-                CDSInterval(
-                    CompoundInterval([5, 7, 12], [6, 10, 15], Strand.PLUS),
-                    [CDSFrame.TWO, CDSFrame.ONE, CDSFrame.ONE],
-                ),
-            ),
-            (  # slice off the first exon
-                CDSInterval(
-                    CompoundInterval([4, 7, 12], [6, 10, 15], Strand.PLUS),
-                    [CDSFrame.ZERO, CDSFrame.TWO, CDSFrame.TWO],
-                ),
-                SingleInterval(7, 15, Strand.UNSTRANDED),
-                CDSInterval(
-                    CompoundInterval([7, 12], [10, 15], Strand.PLUS),
-                    [CDSFrame.TWO, CDSFrame.TWO],
-                ),
-            ),
-            (  # slice off the last exon + 1bp
-                CDSInterval(
-                    CompoundInterval([4, 7, 12], [6, 10, 15], Strand.PLUS),
-                    [CDSFrame.ZERO, CDSFrame.TWO, CDSFrame.TWO],
-                ),
-                SingleInterval(0, 8, Strand.UNSTRANDED),
-                CDSInterval(
-                    CompoundInterval([4, 7], [6, 8], Strand.PLUS),
-                    [CDSFrame.ZERO, CDSFrame.TWO],
-                ),
-            ),
-        ],
-    )
-    def test_intersect(self, cds, location, expected):
-        assert cds.intersect(location) == expected
-
-    @pytest.mark.parametrize(
-        "cds,location,expected_exception",
-        [
-            (
-                CDSInterval(SingleInterval(5, 10, Strand.PLUS), [CDSFrame.TWO]),
-                SingleInterval(10, 15, Strand.PLUS),
-                EmptyLocationException,
-            ),
-        ],
-    )
-    def test_intersect_error(self, cds, location, expected_exception):
-        with pytest.raises(expected_exception):
-            cds.intersect(location)
 
     @pytest.mark.parametrize(
         "cds,expected",
