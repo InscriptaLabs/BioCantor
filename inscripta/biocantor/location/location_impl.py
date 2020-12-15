@@ -8,6 +8,7 @@ from inscripta.biocantor.exc import (
     InvalidPositionException,
     UnsupportedOperationException,
     EmptyLocationException,
+    LocationException,
 )
 from inscripta.biocantor.location.distance import DistanceType
 from inscripta.biocantor.location.location import Location
@@ -407,7 +408,9 @@ class CompoundInterval(Location):
             cannot be performed. If parent has a location attribute, it is ignored and reset to this location.
         """
         if not len(starts) == len(ends) > 0:
-            raise ValueError("Lists of start end end positions must be nonempty and have same length")
+            raise LocationException("Lists of start end end positions must be nonempty and have same length")
+        starts_sorted = sorted(starts)
+        ends_sorted = sorted(ends)
         parent_obj = make_parent(parent) if parent else None
         self._parent = parent_obj.reset_location(CompoundInterval(starts, ends, strand)) if parent_obj else None
         self._strand = strand
@@ -500,7 +503,7 @@ class CompoundInterval(Location):
     def blocks(self) -> List[Location]:
         return self._single_intervals
 
-    def scan_blocks(self) -> Iterator[Location]:
+    def scan_blocks(self) -> Iterator[SingleInterval]:
         self.strand.assert_directional()
         if self.strand == Strand.PLUS:
             for block in self.blocks:
@@ -638,7 +641,7 @@ class CompoundInterval(Location):
             self._combine_blocks(preserve_overlappers=False)._remove_empty_blocks()._to_single_interval_if_one_block()
         )
 
-    def gap_list(self) -> List["Location"]:
+    def gap_list(self) -> List[SingleInterval]:
         optimized = self.optimize_and_combine_blocks()
         block_iter = optimized.scan_blocks()
         gaps = []

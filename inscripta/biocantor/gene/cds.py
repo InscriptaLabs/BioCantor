@@ -1,12 +1,12 @@
 from enum import Enum
-from typing import Iterator, List, Union, Optional, AnyStr, Tuple
+from typing import Iterator, List, Union, Optional, AnyStr
 
-from inscripta.biocantor.exc import ValidationError, EmptyLocationException
+from inscripta.biocantor.exc import LocationException
 from inscripta.biocantor.gene.codon import Codon
 from inscripta.biocantor.location.location import Location, Strand
 from inscripta.biocantor.location.location_impl import SingleInterval, CompoundInterval
-from inscripta.biocantor.sequence.alphabet import Alphabet
 from inscripta.biocantor.sequence import Sequence
+from inscripta.biocantor.sequence.alphabet import Alphabet
 
 
 class CDSPhase(Enum):
@@ -91,7 +91,7 @@ class CDSInterval:
     def __init__(self, location: Location, frames: List[Union[CDSFrame, CDSPhase]]):
         self.location = location
         if len(frames) != location.num_blocks:
-            raise ValidationError("Number of frame entries must match number of exons")
+            raise LocationException("Number of frame entries must match number of exons")
         # internally we work with Frame, but support Phase
         # this will make parsing GFF3 easier
         for i, frame in enumerate(frames):

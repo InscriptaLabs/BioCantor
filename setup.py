@@ -19,11 +19,12 @@ dependencies = []
 
 extra_dependencies = {
     "libraries": ["biopython"],
+    "models": ["marshmallow_dataclass[enum]", "marshmallow"],
     "test": ["black", "flake8", "pytest", "pytest-cov", "pytest-flake8"],
     "docs": [
         "Sphinx",
         "sphinx_rtd_theme",
-        "sphinx-automodapi",
+        "sphinx-autoapi",
         "graphviz",
         "nbconvert",
         "nbsphinx",

@@ -6,6 +6,7 @@ from inscripta.biocantor.exc import (
     NoSuchAncestorException,
     EmptySequenceFastaError,
     InvalidStrandException,
+    ParentException,
 )
 from inscripta.biocantor.location.location_impl import SingleInterval, CompoundInterval
 from inscripta.biocantor.parent import Parent
@@ -88,7 +89,7 @@ class TestSequence:
                 None,
                 None,
                 SingleInterval(0, 4, Strand.PLUS),
-                ValueError,
+                ParentException,
             ),
             (
                 "ATT",
@@ -97,7 +98,7 @@ class TestSequence:
                 None,
                 None,
                 SingleInterval(0, 3, Strand.PLUS, parent="parent2"),
-                ValueError,
+                ParentException,
             ),
             (
                 "GGG",
@@ -106,7 +107,7 @@ class TestSequence:
                 None,
                 Strand.MINUS,
                 SingleInterval(0, 3, Strand.PLUS),
-                ValueError,
+                InvalidStrandException,
             ),
             (
                 "GGG",
@@ -120,7 +121,7 @@ class TestSequence:
                     Strand.PLUS,
                     parent=Parent(sequence_type="seqtype_3"),
                 ),
-                ValueError,
+                ParentException,
             ),
         ],
     )

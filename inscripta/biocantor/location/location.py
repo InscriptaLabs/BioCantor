@@ -3,7 +3,7 @@ from typing import Iterator, List, Union
 
 from Bio.SeqFeature import FeatureLocation, CompoundLocation
 
-from inscripta.biocantor.exc import NoSuchAncestorException
+from inscripta.biocantor.exc import NoSuchAncestorException, NullParentException
 from inscripta.biocantor.location.distance import DistanceType
 from inscripta.biocantor.location.strand import Strand
 from inscripta.biocantor.parent import Parent
@@ -143,7 +143,7 @@ class Location(ABC):
             return other
         if self.parent or other.parent:
             if not self.parent and other.parent:
-                raise ValueError(
+                raise NullParentException(
                     "Parents must be both null or both non-null:\n{}\n  !=\n{}".format(self.parent, other.parent)
                 )
             ObjectValidation.require_parents_equal_except_location(self.parent, other.parent)

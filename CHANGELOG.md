@@ -8,9 +8,21 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Fixed
 - `CompoundInterval.relative_interval_to_parent_location()` in the case of overlapping blocks. Had previously been double counting overlap region.
 - `CompoundInterval.gap_list()` in the case of overlapping blocks. Had been raising an error in that case.
+
 ### Added
 - `CDSInterval.scan_codon_locations()` method. Returns an iterator over codon locations.
 - Implement `__hash__()` for `CompoundInterval` and `CDSInterval`
+- Implemented data structures for `TranscriptInterval` and `FeatureInterval` that model transcribed and non-transcribed genomic features.
+- Implemented data structures for `GeneInterval` and `FeatureIntervalCollection`, that model groups of intervals as genes or generic feature groups.
+- Implemented a wrapper data structure `AnnotationCollection` that contains groups of genes and non-transcribed feature groups.
+- Implemented the ability to export the above data structures as GFF3 and BED formats.
+- Implemented Marshmallow dataclasses that allow for serialization and deserialization of the above data structures.
+- Copied the bins implementation from gffutils to avoid needing the full dependency set in a minimal install.
+- Added a Biotype enumeration that tracks known biotypes. 
+
+### Changed
+- Migrated sphinx documentation from `automodapi` to `autoapi`. 
+
 ### Removed
 - `CDSInterval.intersect()` method. Frame math was incorrect for complex CDSs and was deemed too difficult to implement correctly.
 

@@ -4,6 +4,10 @@ from inscripta.biocantor.exc import (
     NoSuchAncestorException,
     InvalidStrandException,
     InvalidPositionException,
+    NullParentException,
+    MismatchedParentException,
+    ParentException,
+    LocationException,
 )
 from inscripta.biocantor.location.location_impl import (
     SingleInterval,
@@ -100,24 +104,10 @@ class TestParent:
         )
 
     @pytest.mark.parametrize(
-        "id,sequence_type,strand,location,sequence,parent",
+        "id,sequence_type,strand,location,sequence,parent,expected_exception",
         [
-            (
-                "id1",
-                None,
-                None,
-                SingleInterval(0, 5, Strand.PLUS, parent="id2"),
-                None,
-                None,
-            ),
-            (
-                "id1",
-                None,
-                None,
-                None,
-                Sequence("AAA", Alphabet.NT_STRICT, id="id2"),
-                None,
-            ),
+            ("id1", None, None, SingleInterval(0, 5, Strand.PLUS, parent="id2"), None, None, ParentException),
+            ("id1", None, None, None, Sequence("AAA", Alphabet.NT_STRICT, id="id2"), None, ParentException),
             (
                 None,
                 None,
@@ -125,6 +115,7 @@ class TestParent:
                 SingleInterval(0, 5, Strand.PLUS, parent="id1"),
                 Sequence("AAC", Alphabet.NT_STRICT, id="id2"),
                 None,
+                ParentException,
             ),
             (
                 None,
@@ -133,15 +124,9 @@ class TestParent:
                 SingleInterval(0, 5, Strand.PLUS, parent=Parent(sequence_type="unknown")),
                 None,
                 None,
+                ParentException,
             ),
-            (
-                None,
-                "seqtype",
-                None,
-                None,
-                Sequence("AAT", Alphabet.NT_STRICT, type="unknown"),
-                None,
-            ),
+            (None, "seqtype", None, None, Sequence("AAT", Alphabet.NT_STRICT, type="unknown"), None, ParentException),
             (
                 None,
                 None,
@@ -149,8 +134,9 @@ class TestParent:
                 SingleInterval(0, 5, Strand.PLUS, parent=Parent(sequence_type="unknown")),
                 Sequence("AAG", Alphabet.NT_STRICT, type="seqtype"),
                 None,
+                ParentException,
             ),
-            (None, None, Strand.MINUS, SingleInterval(0, 5, Strand.PLUS), None, None),
+            (None, None, Strand.MINUS, SingleInterval(0, 5, Strand.PLUS), None, None, InvalidStrandException),
             (
                 None,
                 None,
@@ -158,6 +144,7 @@ class TestParent:
                 SingleInterval(0, 10, Strand.PLUS),
                 Sequence("A", Alphabet.NT_STRICT),
                 None,
+                LocationException,
             ),
             (
                 None,
@@ -166,8 +153,9 @@ class TestParent:
                 None,
                 Sequence("AA", Alphabet.NT_STRICT),
                 Parent(sequence=Sequence("A", Alphabet.NT_STRICT)),
+                LocationException,
             ),
-            (None, None, Strand.PLUS, SingleInterval(5, 10, Strand.MINUS), None, None),
+            (None, None, Strand.PLUS, SingleInterval(5, 10, Strand.MINUS), None, None, InvalidStrandException),
             (
                 None,
                 None,
@@ -175,11 +163,12 @@ class TestParent:
                 None,
                 Sequence("AA", Alphabet.NT_STRICT, parent="id1"),
                 Parent(id="id2"),
+                MismatchedParentException,
             ),
         ],
     )
-    def test_init_error(self, id, sequence_type, strand, location, sequence, parent):
-        with pytest.raises(ValueError):
+    def test_init_error(self, id, sequence_type, strand, location, sequence, parent, expected_exception):
+        with pytest.raises(expected_exception):
             Parent(
                 id=id,
                 sequence_type=sequence_type,
@@ -772,7 +761,7 @@ class TestParent:
             # No location
             (
                 Parent(parent=SingleInterval(5, 10, Strand.PLUS)),
-                ValueError,
+                NullParentException,
             ),
             # Parent has no location
             (
@@ -780,7 +769,7 @@ class TestParent:
                     location=SingleInterval(5, 10, Strand.PLUS),
                     parent="grandparent",
                 ),
-                ValueError,
+                NullParentException,
             ),
             # Location on parent can't be unstranded
             (
@@ -995,11 +984,12 @@ class TestParent:
         assert parent.reset_location(location) == expected
 
     @pytest.mark.parametrize(
-        "parent,location",
+        "parent,location,expected_exception",
         [
             (
                 Parent(sequence=Sequence("AAA", Alphabet.NT_STRICT)),
                 SingleInterval(0, 5, Strand.PLUS),
+                LocationException,
             ),
             (
                 Parent(id="id1", sequence=Sequence("AAA", Alphabet.NT_STRICT)),
@@ -1009,11 +999,12 @@ class TestParent:
                     Strand.PLUS,
                     parent=Parent(id="id2", sequence=Sequence("AAA", Alphabet.NT_STRICT)),
                 ),
+                ParentException,
             ),
         ],
     )
-    def test_reset_location_error(self, parent, location):
-        with pytest.raises(ValueError):
+    def test_reset_location_error(self, parent, location, expected_exception):
+        with pytest.raises(expected_exception):
             parent.reset_location(location)
 
     @pytest.mark.parametrize(

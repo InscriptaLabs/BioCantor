@@ -1,11 +1,13 @@
 import pytest
-
 from Bio.SeqFeature import FeatureLocation, ExactPosition
 
 from inscripta.biocantor.exc import (
     InvalidStrandException,
     NoSuchAncestorException,
     InvalidPositionException,
+    MismatchedParentException,
+    LocationOverlapException,
+    NullParentException,
 )
 from inscripta.biocantor.location.distance import DistanceType
 from inscripta.biocantor.location.location_impl import (
@@ -13,10 +15,10 @@ from inscripta.biocantor.location.location_impl import (
     CompoundInterval,
     EmptyLocation,
 )
+from inscripta.biocantor.location.strand import Strand
 from inscripta.biocantor.parent import Parent
 from inscripta.biocantor.sequence import Sequence
 from inscripta.biocantor.sequence.alphabet import Alphabet
-from inscripta.biocantor.location.strand import Strand
 
 
 class TestSingleInterval:
@@ -404,7 +406,7 @@ class TestSingleInterval:
 
     def test_extract_sequence_error(self):
         # No parent
-        with pytest.raises(ValueError):
+        with pytest.raises(NullParentException):
             SingleInterval(5, 10, Strand.PLUS, None).extract_sequence()
         # Unstranded
         with pytest.raises(InvalidStrandException):
@@ -611,37 +613,37 @@ class TestSingleInterval:
             (
                 SingleInterval(5, 5, Strand.PLUS),
                 SingleInterval(0, 10, Strand.PLUS),
-                ValueError,
+                LocationOverlapException,
             ),
             # Parent location is empty
             (
                 SingleInterval(0, 10, Strand.PLUS),
                 SingleInterval(5, 5, Strand.PLUS),
-                ValueError,
+                LocationOverlapException,
             ),
             # Interval has no parent, parent location has a parent
             (
                 SingleInterval(1, 2, Strand.PLUS),
                 SingleInterval(0, 5, Strand.PLUS, parent="parent"),
-                ValueError,
+                MismatchedParentException,
             ),
             # Interval has a parent, parent location doesn't
             (
                 SingleInterval(1, 2, Strand.PLUS, parent="parent"),
                 SingleInterval(0, 5, Strand.PLUS),
-                ValueError,
+                NullParentException,
             ),
             # Parents are different
             (
                 SingleInterval(1, 2, Strand.PLUS, parent="parent1"),
                 SingleInterval(0, 5, Strand.PLUS, parent="parent2"),
-                ValueError,
+                MismatchedParentException,
             ),
             # No overlap
             (
                 SingleInterval(0, 3, Strand.PLUS),
                 SingleInterval(5, 10, Strand.PLUS),
-                ValueError,
+                LocationOverlapException,
             ),
         ],
     )
@@ -724,37 +726,37 @@ class TestSingleInterval:
             (
                 SingleInterval(5, 5, Strand.PLUS),
                 CompoundInterval([0], [10], Strand.PLUS),
-                ValueError,
+                LocationOverlapException,
             ),
             # Parent location is empty
             (
                 SingleInterval(0, 10, Strand.PLUS),
                 CompoundInterval([5], [5], Strand.PLUS),
-                ValueError,
+                LocationOverlapException,
             ),
             # Interval has no parent, parent location has a parent
             (
                 SingleInterval(1, 2, Strand.PLUS),
                 CompoundInterval([0], [5], Strand.PLUS, parent="parent"),
-                ValueError,
+                MismatchedParentException,
             ),
             # Interval has a parent, parent location doesn't
             (
                 SingleInterval(1, 2, Strand.PLUS, parent="parent"),
                 CompoundInterval([0], [5], Strand.PLUS),
-                ValueError,
+                NullParentException,
             ),
             # Parents are different
             (
                 SingleInterval(1, 2, Strand.PLUS, parent="parent1"),
                 CompoundInterval([0], [5], Strand.PLUS, parent="parent2"),
-                ValueError,
+                MismatchedParentException,
             ),
             # No overlap
             (
                 SingleInterval(0, 3, Strand.PLUS),
                 CompoundInterval([5], [10], Strand.PLUS),
-                ValueError,
+                LocationOverlapException,
             ),
         ],
     )
@@ -970,37 +972,37 @@ class TestSingleInterval:
             (
                 SingleInterval(5, 5, Strand.PLUS),
                 SingleInterval(0, 10, Strand.PLUS),
-                ValueError,
+                LocationOverlapException,
             ),
             # Other location is empty
             (
                 SingleInterval(0, 10, Strand.PLUS),
                 SingleInterval(5, 5, Strand.PLUS),
-                ValueError,
+                LocationOverlapException,
             ),
             # Interval has no parent, other location has a parent
             (
                 SingleInterval(1, 2, Strand.PLUS),
                 SingleInterval(0, 5, Strand.PLUS, parent="parent"),
-                ValueError,
+                NullParentException,
             ),
             # Interval has a parent, other location doesn't
             (
                 SingleInterval(1, 2, Strand.PLUS, parent="parent"),
                 SingleInterval(0, 5, Strand.PLUS),
-                ValueError,
+                MismatchedParentException,
             ),
             # Parents are different
             (
                 SingleInterval(1, 2, Strand.PLUS, parent="parent1"),
                 SingleInterval(0, 5, Strand.PLUS, parent="parent2"),
-                ValueError,
+                MismatchedParentException,
             ),
             # No overlap
             (
                 SingleInterval(0, 3, Strand.PLUS),
                 SingleInterval(5, 10, Strand.PLUS),
-                ValueError,
+                LocationOverlapException,
             ),
         ],
     )
@@ -1059,13 +1061,13 @@ class TestSingleInterval:
             (
                 CompoundInterval([0, 10], [5, 15], Strand.PLUS),
                 SingleInterval(20, 25, Strand.PLUS),
-                ValueError,
+                LocationOverlapException,
             ),
             # Location is in "intron"
             (
                 CompoundInterval([0, 10], [5, 15], Strand.PLUS),
                 SingleInterval(7, 8, Strand.PLUS),
-                ValueError,
+                LocationOverlapException,
             ),
         ],
     )
@@ -2120,7 +2122,7 @@ class TestSingleInterval:
                     ),
                 ),
                 "chr",
-                ValueError,
+                NullParentException,
             ),
             # Parent has no location on grandparent
             (
@@ -2143,7 +2145,7 @@ class TestSingleInterval:
                     ),
                 ),
                 "unknown",
-                ValueError,
+                NullParentException,
             ),
         ],
     )
@@ -2356,7 +2358,7 @@ class TestSingleInterval:
             (
                 SingleInterval(5, 10, Strand.PLUS, parent="parent1"),
                 SingleInterval(5, 10, Strand.PLUS, parent="parent2"),
-                ValueError,
+                MismatchedParentException,
             ),
             (
                 SingleInterval(
@@ -2371,12 +2373,12 @@ class TestSingleInterval:
                     Strand.PLUS,
                     parent=Parent(id="parent", sequence_type="unknown"),
                 ),
-                ValueError,
+                MismatchedParentException,
             ),
             (
                 SingleInterval(5, 10, Strand.PLUS, parent="parent1"),
                 SingleInterval(5, 10, Strand.PLUS),
-                ValueError,
+                MismatchedParentException,
             ),
         ],
     )
@@ -2542,13 +2544,13 @@ class TestSingleInterval:
             (
                 SingleInterval(5, 10, Strand.PLUS, parent="parent1"),
                 CompoundInterval([20], [30], Strand.PLUS, parent="parent2"),
-                ValueError,
+                MismatchedParentException,
             ),
             # One has no parent
             (
                 SingleInterval(5, 10, Strand.PLUS, parent="parent1"),
                 CompoundInterval([20], [30], Strand.PLUS),
-                ValueError,
+                MismatchedParentException,
             ),
         ],
     )

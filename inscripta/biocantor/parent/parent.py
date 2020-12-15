@@ -2,7 +2,7 @@ from functools import reduce
 from typing import TypeVar, Optional
 
 import inscripta.biocantor
-from inscripta.biocantor.exc import NoSuchAncestorException
+from inscripta.biocantor.exc import NoSuchAncestorException, LocationException, InvalidStrandException, ParentException
 from inscripta.biocantor.location.strand import Strand
 from inscripta.biocantor.util.object_validation import ObjectValidation
 
@@ -47,7 +47,7 @@ class Parent:
         sequence_id = sequence.id if sequence else None
         non_null_ids = set([x for x in [id, location_parent_id, sequence_id] if x is not None])
         if len(non_null_ids) > 1:
-            raise ValueError(
+            raise ParentException(
                 "ID, location parent ID, and sequence ID do not match: {}, {}, {}".format(
                     id, location_parent_id, sequence_id
                 )
@@ -57,7 +57,7 @@ class Parent:
         sequence_seqtype = sequence.sequence_type if sequence else None
         non_null_types = set([x for x in [sequence_type, location_parent_type, sequence_seqtype] if x is not None])
         if len(non_null_types) > 1:
-            raise ValueError(
+            raise ParentException(
                 "Sequence type, location parent type, and sequence do not match: {}, {}, {}".format(
                     sequence_type, location_parent_type, sequence_seqtype
                 )
@@ -65,15 +65,15 @@ class Parent:
 
         if location:
             if strand and location.strand and strand != location.strand:
-                raise ValueError("Strand does not match location: {} != {}".format(strand, location.strand))
+                raise InvalidStrandException("Strand does not match location: {} != {}".format(strand, location.strand))
             if sequence and location.end > len(sequence):
-                raise ValueError(
+                raise LocationException(
                     "Location end ({}) is greater than sequence length ({})".format(location.end, len(sequence))
                 )
 
         parent_obj = inscripta.biocantor.parent.make_parent(parent) if parent else None
         if sequence and parent_obj and parent_obj.sequence and len(sequence) > len(parent_obj.sequence):
-            raise ValueError(
+            raise LocationException(
                 "Parent ({}) is longer than parent of parent ({})".format(len(sequence), len(parent_obj.sequence))
             )
 

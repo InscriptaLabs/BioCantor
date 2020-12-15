@@ -1,4 +1,10 @@
-from inscripta.biocantor.exc import LocationException, LocationOverlapException
+from inscripta.biocantor.exc import (
+    LocationException,
+    LocationOverlapException,
+    NullParentException,
+    NullSequenceException,
+    MismatchedParentException,
+)
 
 
 class ObjectValidation:
@@ -10,38 +16,40 @@ class ObjectValidation:
     @staticmethod
     def require_location_has_parent(location):
         if not location.parent:
-            raise LocationException("Location must have non-null parent attribute:\n{}".format(repr(location)))
+            raise NullParentException("Location must have non-null parent attribute:\n{}".format(repr(location)))
 
     @staticmethod
     def require_location_has_parent_with_sequence(location):
         ObjectValidation.require_location_has_parent(location)
         if not location.parent.sequence:
-            raise ValueError(
+            raise NullSequenceException(
                 "Parent of location must have non-null sequence attribute:\n{}".format(repr(location.parent))
             )
 
     @staticmethod
     def require_parent_has_location(parent):
         if not parent.location:
-            raise ValueError("Parent must have non-null location attribute:\n{}".format(repr(parent)))
+            raise NullParentException("Parent must have non-null location attribute:\n{}".format(repr(parent)))
 
     @staticmethod
     def require_parent_has_parent(parent):
         if not parent.parent:
-            raise ValueError("Parent must have non-null parent attribute:\n{}".format(repr(parent)))
+            raise NullParentException("Parent must have non-null parent attribute:\n{}".format(repr(parent)))
 
     @staticmethod
     def require_parent_has_parent_with_location(parent):
         ObjectValidation.require_parent_has_parent(parent)
         if not parent.parent.location:
-            raise ValueError(
+            raise NullParentException(
                 "Parent must have parent attribute with non-null location attribute:\n{}".format(repr(parent))
             )
 
     @staticmethod
     def require_parents_equal_except_location(parent1, parent2):
         if not parent1.equals_except_location(parent2):
-            raise ValueError("Parents must be equal except location info:\n{}\n  !=\n{}".format(parent1, parent2))
+            raise MismatchedParentException(
+                "Parents must be equal except location info:\n{}\n  !=\n{}".format(parent1, parent2)
+            )
 
     @staticmethod
     def require_locations_have_same_nonempty_parent(location1, location2):

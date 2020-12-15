@@ -1,8 +1,13 @@
-from enum import Enum
 from typing import TypeVar, Optional, Union
 
 from Bio.Seq import Seq
-from inscripta.biocantor.exc import AlphabetError, NoSuchAncestorException, EmptySequenceFastaError
+
+from inscripta.biocantor.exc import (
+    AlphabetError,
+    NoSuchAncestorException,
+    EmptySequenceFastaError,
+    MismatchedParentException,
+)
 from inscripta.biocantor.location.strand import Strand
 from inscripta.biocantor.parent import Parent, make_parent
 from inscripta.biocantor.sequence.alphabet import (
@@ -52,7 +57,7 @@ class Sequence:
         self.parent = make_parent(parent) if parent else None
         self._len = len(self.sequence)
         if self.parent and self.parent.location and len(self.parent.location) != len(self):
-            raise ValueError(
+            raise MismatchedParentException(
                 "Sequence length ({}) does not equal parent location length ({})".format(
                     len(self), len(self.parent.location)
                 )
