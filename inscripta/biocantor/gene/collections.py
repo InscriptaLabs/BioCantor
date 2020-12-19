@@ -35,8 +35,8 @@ from inscripta.biocantor.location.strand import Strand
 from inscripta.biocantor.parent.parent import Parent
 from inscripta.biocantor.sequence import Sequence
 from inscripta.biocantor.util.bins import bins
-from inscripta.biocantor.util.gff3.constants import GFF_SOURCE, NULL_COLUMN, BioCantorQualifiers, BioCantorFeatureTypes
-from inscripta.biocantor.util.gff3.rows import GFFRow, GFFAttributes
+from inscripta.biocantor.io.gff3.constants import GFF_SOURCE, NULL_COLUMN, BioCantorQualifiers, BioCantorFeatureTypes
+from inscripta.biocantor.io.gff3.rows import GFFRow, GFFAttributes
 from inscripta.biocantor.util.hashing import digest_object
 from inscripta.biocantor.util.object_validation import ObjectValidation
 
@@ -50,7 +50,7 @@ class AbstractFeatureIntervalCollection(ABC):
     """
 
     _sequence_guid: UUID
-    _sequence_symbol: str
+    _sequence_name: str
     _location: SingleInterval
     _bin: int
 
@@ -94,9 +94,9 @@ class AbstractFeatureIntervalCollection(ABC):
         return self._sequence_guid
 
     @property
-    def sequence_symbol(self) -> Union[str, None]:
+    def sequence_name(self) -> Union[str, None]:
         """Returns symbol of the sequence for this interval"""
-        return self._sequence_symbol
+        return self._sequence_name
 
     @property
     def start(self) -> int:
@@ -133,7 +133,7 @@ class AbstractFeatureIntervalCollection(ABC):
         # see if we were given a primary feature
         primary_feature = None
         for i, interval in enumerate(intervals):
-            if interval._is_primary_feature:
+            if interval.is_primary_feature:
                 if primary_feature:
                     raise ValidationException("Multiple primary features/transcripts found")
                 primary_feature = intervals[i]
@@ -153,7 +153,7 @@ class AbstractFeatureIntervalCollection(ABC):
 
 class GeneInterval(AbstractFeatureIntervalCollection):
     """
-    A GeneInterval is a collection of :class:`TranscriptIntervals` for a specific locus.
+    A GeneInterval is a collection of :class:`~biocantor.gene.transcript.TranscriptInterval` for a specific locus.
 
     This is a traditional gene model. By this, I mean that there is one continuous region that defines the gene.
     This region then contains 1 to N subregions that are transcripts. These transcripts may or may not be coding,
@@ -177,7 +177,7 @@ class GeneInterval(AbstractFeatureIntervalCollection):
         gene_type: Optional[Biotype] = None,
         locus_tag: Optional[str] = None,
         qualifiers: Optional[dict] = None,
-        sequence_symbol: Optional[str] = None,
+        sequence_name: Optional[str] = None,
         sequence_guid: Optional[UUID] = None,
         parent: Optional[Parent] = None,
     ):
@@ -187,7 +187,7 @@ class GeneInterval(AbstractFeatureIntervalCollection):
         self.gene_symbol = gene_symbol
         self.gene_type = gene_type
         self.locus_tag = locus_tag
-        self._sequence_symbol = sequence_symbol
+        self._sequence_name = sequence_name
         self._sequence_guid = sequence_guid
         self.qualifiers = qualifiers
 
@@ -223,7 +223,7 @@ class GeneInterval(AbstractFeatureIntervalCollection):
         return {x.guid for x in self.transcripts if x.guid is not None}
 
     def to_dict(self) -> Dict[Any, str]:
-        """Convert to a dict usable by :class:`GeneIntervalModel`."""
+        """Convert to a dict usable by :class:`~biocantor.io.models.GeneIntervalModel`."""
         return dict(
             transcripts=[tx.to_dict() for tx in self.transcripts],
             gene_id=self.gene_id,
@@ -231,7 +231,7 @@ class GeneInterval(AbstractFeatureIntervalCollection):
             gene_type=self.gene_type.name if self.gene_type else None,
             locus_tag=self.locus_tag,
             qualifiers=self.qualifiers,
-            sequence_symbol=self.sequence_symbol,
+            sequence_name=self.sequence_name,
             sequence_guid=self.sequence_guid,
             gene_guid=self.guid,
         )
@@ -273,15 +273,15 @@ class GeneInterval(AbstractFeatureIntervalCollection):
             loc,
             qualifiers=self.qualifiers,
             sequence_guid=self.sequence_guid,
-            sequence_symbol=self.sequence_symbol,
+            sequence_name=self.sequence_name,
             feature_type=self.gene_type.name,
-            feature_symbol=self.gene_symbol,
+            feature_name=self.gene_symbol,
             feature_id=self.gene_id,
             guid=self.guid,
         )
 
     def get_merged_transcript(self) -> FeatureInterval:
-        """Generate a single :class:`FeatureInterval` that merges all exons together.
+        """Generate a single :class:`~biocantor.gene.feature.FeatureInterval` that merges all exons together.
 
         This inherently has no translation and so is returned as a generic feature, not a transcript.
         """
@@ -292,7 +292,7 @@ class GeneInterval(AbstractFeatureIntervalCollection):
         return self._produce_merged_feature(intervals)
 
     def get_merged_cds(self) -> FeatureInterval:
-        """Generate a single :class:`FeatureInterval` that merges all CDS intervals."""
+        """Generate a single :class:`~biocantor.gene.feature.FeatureInterval` that merges all CDS intervals."""
         intervals = []
         for tx in self.transcripts:
             if tx.is_coding:
@@ -303,10 +303,10 @@ class GeneInterval(AbstractFeatureIntervalCollection):
         return self._produce_merged_feature(intervals)
 
     def to_gff(self) -> Iterable[GFFRow]:
-        """Produces iterable of :class:`GFFRow` for this gene and its children.
+        """Produces iterable of :class:`~biocantor.io.gff3.rows.GFFRow` for this gene and its children.
 
         Yields:
-            :class:`GFFRow`
+            :class:`~biocantor.io.gff3.rows.GFFRow`
         """
         qualifiers = {}
         gene_id = str(self.guid) if self.guid else digest_object(self)
@@ -320,7 +320,7 @@ class GeneInterval(AbstractFeatureIntervalCollection):
 
         attributes = GFFAttributes(id=gene_id, name=self.gene_symbol, parent=None, **qualifiers)
         row = GFFRow(
-            self.sequence_symbol,
+            self.sequence_name,
             GFF_SOURCE,
             BioCantorFeatureTypes.GENE,
             self.start + 1,
@@ -342,7 +342,7 @@ class FeatureIntervalCollection(AbstractFeatureIntervalCollection):
     features that are grouped in some fashion. An example is transcription factor
     binding sites for a specific transcription factor.
 
-    The ``Strand`` of this feature interval collection is always the *plus* strand.
+    The :class:`~biocantor.location.strand.Strand` of this feature interval collection is always the *plus* strand.
 
     This cannot be empty; it must have at least one feature interval.
     """
@@ -350,22 +350,22 @@ class FeatureIntervalCollection(AbstractFeatureIntervalCollection):
     def __init__(
         self,
         feature_intervals: List[FeatureInterval],
-        feature_symbol: Optional[str] = None,
+        feature_name: Optional[str] = None,
         feature_id: Optional[str] = None,
         feature_type: Optional[str] = None,
         locus_tag: Optional[str] = None,
-        sequence_symbol: Optional[str] = None,
+        sequence_name: Optional[str] = None,
         sequence_guid: Optional[UUID] = None,
         guid: Optional[UUID] = None,
         qualifiers: Optional[dict] = None,
         parent: Optional[Parent] = None,
     ):
         self.feature_intervals = feature_intervals
-        self.feature_symbol = feature_symbol
+        self.feature_name = feature_name
         self.feature_id = feature_id
         self.feature_type = feature_type
         self.locus_tag = locus_tag
-        self._sequence_symbol = sequence_symbol
+        self._sequence_name = sequence_name
         self._sequence_guid = sequence_guid
         self.guid = guid
         self.qualifiers = qualifiers
@@ -397,7 +397,7 @@ class FeatureIntervalCollection(AbstractFeatureIntervalCollection):
 
     @property
     def _identifiers(self) -> List[Union[str, UUID]]:
-        return ["feature_id", "feature_symbol", "locus_tag", "guid"]
+        return ["feature_id", "feature_name", "locus_tag", "guid"]
 
     @property
     def children_guids(self) -> Set[UUID]:
@@ -409,36 +409,36 @@ class FeatureIntervalCollection(AbstractFeatureIntervalCollection):
         return self.primary_feature
 
     def to_dict(self) -> Dict[str, Any]:
-        """Convert to a dict usable by :class:`FeatureIntervalCollectionModel`."""
+        """Convert to a dict usable by :class:`~biocantor.io.models.FeatureIntervalCollectionModel`."""
         return dict(
             feature_intervals=[feat.to_dict() for feat in self.feature_intervals],
-            feature_symbol=self.feature_symbol,
+            feature_name=self.feature_name,
             feature_id=self.feature_id,
             feature_type=self.feature_type,
             qualifiers=self.qualifiers,
-            sequence_symbol=self.sequence_symbol,
+            sequence_name=self.sequence_name,
             sequence_guid=self.sequence_guid,
             feature_collection_guid=self.guid,
         )
 
     def to_gff(self) -> Iterable[GFFRow]:
-        """Produces iterable of :class:`GFFRow` for this feature and its children.
+        """Produces iterable of :class:`~biocantor.io.gff3.rows.GFFRow` for this feature and its children.
 
         Yields:
-            :class:`GFFRow`
+            :class:`~biocantor.io.gff3.rows.GFFRow`
         """
         qualifiers = {}
         feat_group_id = str(self.guid) if self.guid else digest_object(self)
         if self.feature_id:
             qualifiers[BioCantorQualifiers.FEATURE_ID.value] = self.feature_id
-        if self.feature_symbol:
-            qualifiers[BioCantorQualifiers.FEATURE_SYMBOL.value] = self.feature_symbol
+        if self.feature_name:
+            qualifiers[BioCantorQualifiers.FEATURE_SYMBOL.value] = self.feature_name
         if self.feature_type:
             qualifiers[BioCantorQualifiers.FEATURE_TYPE.value] = self.feature_type
 
-        attributes = GFFAttributes(id=feat_group_id, name=self.feature_symbol, parent=None, **qualifiers)
+        attributes = GFFAttributes(id=feat_group_id, name=self.feature_name, parent=None, **qualifiers)
         row = GFFRow(
-            self.sequence_symbol,
+            self.sequence_name,
             GFF_SOURCE,
             BioCantorFeatureTypes.GENE,
             self.start + 1,
@@ -454,8 +454,8 @@ class FeatureIntervalCollection(AbstractFeatureIntervalCollection):
 
 
 class AnnotationCollection(AbstractFeatureIntervalCollection):
-    """An AnnotationCollection is a container to contain :class:`GeneIntervals` and
-    :class:`FeatureIntervalCollections`.
+    """An AnnotationCollection is a container to contain :class:`GeneInterval`s and
+    :class:`FeatureIntervalCollection`s.
 
     Encapsulates all possible annotations for a given interval on a specific source.
 
@@ -470,7 +470,7 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
         feature_collections: Optional[List[FeatureIntervalCollection]] = None,
         genes: Optional[List[GeneInterval]] = None,
         name: Optional[str] = None,
-        sequence_symbol: Optional[str] = None,
+        sequence_name: Optional[str] = None,
         sequence_guid: Optional[UUID] = None,
         qualifiers: Optional[dict] = None,
         start: Optional[int] = None,
@@ -481,7 +481,7 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
 
         self.feature_collections = feature_collections if feature_collections else []
         self.genes = genes if genes else []
-        self._sequence_symbol = sequence_symbol
+        self._sequence_name = sequence_name
         self._sequence_guid = sequence_guid
         self.name = name
         self.qualifiers = qualifiers
@@ -544,13 +544,13 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
         yield from sort_iter
 
     def to_dict(self) -> Dict[str, Any]:
-        """Convert to a dict usable by :class:`AnnotationCollectionModel`."""
+        """Convert to a dict usable by :class:`~biocantor.io.models.AnnotationCollectionModel`."""
         return dict(
             genes=[gene.to_dict() for gene in self.genes],
             feature_collections=[feature.to_dict() for feature in self.feature_collections],
             name=self.name,
             qualifiers=self.qualifiers,
-            sequence_symbol=self.sequence_symbol,
+            sequence_name=self.sequence_name,
             sequence_guid=self.sequence_guid,
             start=self.start,
             end=self.end,
@@ -614,7 +614,7 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
             feature_collections=features_to_keep,
             genes=genes_to_keep,
             name=self.name,
-            sequence_symbol=self.sequence_symbol,
+            sequence_name=self.sequence_name,
             sequence_guid=self.sequence_guid,
             qualifiers=self.qualifiers,
             start=start,
@@ -661,7 +661,7 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
             feature_collections=features_to_keep,
             genes=genes_to_keep,
             name=self.name,
-            sequence_symbol=self.sequence_symbol,
+            sequence_name=self.sequence_name,
             sequence_guid=self.sequence_guid,
             qualifiers=self.qualifiers,
             start=self.start,
@@ -699,7 +699,7 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
             feature_collections=features_to_keep,
             genes=genes_to_keep,
             name=self.name,
-            sequence_symbol=self.sequence_symbol,
+            sequence_name=self.sequence_name,
             sequence_guid=self.sequence_guid,
             qualifiers=self.qualifiers,
             start=self.start,
@@ -709,10 +709,10 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
         )
 
     def to_gff(self, ordered: Optional[bool] = False) -> Iterable[GFFRow]:
-        """Produces iterable of :class:`GFFRow` for this feature and its children.
+        """Produces iterable of :class:`~biocantor.io.gff3.rows.GFFRow` for this feature and its children.
 
         Yields:
-            :class:`GFFRow`
+            :class:`~biocantor.io.gff3.rows.GFFRow`
         """
         for item in self.iter_children():
             yield from item.to_gff()

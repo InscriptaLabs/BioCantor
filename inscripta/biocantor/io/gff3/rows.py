@@ -6,7 +6,7 @@ from warnings import warn
 from typing import Union, Optional, Any
 from dataclasses import dataclass
 
-from inscripta.biocantor.util.gff3.constants import (
+from inscripta.biocantor.io.gff3.constants import (
     ENCODING_MAP,
     ENCODING_PATTERN,
     BioCantorGFF3ReservedQualifiers,
@@ -15,7 +15,7 @@ from inscripta.biocantor.util.gff3.constants import (
 )
 from inscripta.biocantor.location import Strand
 from inscripta.biocantor.gene.cds import CDSPhase
-from inscripta.biocantor.util.gff3.exc import GFF3ExportException, ReservedKeyWarning
+from inscripta.biocantor.io.gff3.exc import GFF3ExportException, ReservedKeyWarning
 
 
 class GFFAttributes:

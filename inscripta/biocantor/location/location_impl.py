@@ -409,8 +409,6 @@ class CompoundInterval(Location):
         """
         if not len(starts) == len(ends) > 0:
             raise LocationException("Lists of start end end positions must be nonempty and have same length")
-        starts_sorted = sorted(starts)
-        ends_sorted = sorted(ends)
         parent_obj = make_parent(parent) if parent else None
         self._parent = parent_obj.reset_location(CompoundInterval(starts, ends, strand)) if parent_obj else None
         self._strand = strand

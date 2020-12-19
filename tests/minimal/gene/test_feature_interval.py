@@ -3,7 +3,7 @@ import pytest
 from inscripta.biocantor.exc import ValidationException, EmptyLocationException, NullSequenceException
 from inscripta.biocantor.location.location_impl import SingleInterval, CompoundInterval
 from inscripta.biocantor.location.strand import Strand
-from inscripta.biocantor.models import FeatureIntervalModel
+from inscripta.biocantor.io.models import FeatureIntervalModel
 from inscripta.biocantor.parent.parent import Parent
 from inscripta.biocantor.sequence.alphabet import Alphabet
 from inscripta.biocantor.sequence.sequence import Sequence
@@ -272,11 +272,11 @@ class TestFeatureInterval:
 
     def test_identifiers(self):
         feat = self.se_unspliced.to_feature_interval()
-        feat.feature_symbol = "test"
+        feat.feature_name = "test"
         feat.feature_id = "testid"
         feat.guid = "abc"
         assert feat.identifiers == {"test", "abc", "testid"}
-        assert feat.identifiers_dict == {"feature_symbol": "test", "feature_id": "testid", "guid": "abc"}
+        assert feat.identifiers_dict == {"feature_name": "test", "feature_id": "testid", "guid": "abc"}
 
     def test_intersection_exception(self):
         schema = FeatureIntervalModel.Schema().load(

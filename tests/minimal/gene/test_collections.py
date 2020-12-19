@@ -6,7 +6,7 @@ from inscripta.biocantor.gene.biotype import Biotype
 from inscripta.biocantor.gene.cds import CDSFrame
 from inscripta.biocantor.location.location_impl import SingleInterval
 from inscripta.biocantor.location.strand import Strand
-from inscripta.biocantor.models import (
+from inscripta.biocantor.io.models import (
     GeneIntervalModel,
     AnnotationCollectionModel,
     FeatureIntervalCollectionModel,

@@ -5,11 +5,10 @@ A Python library that integrates flexible feature arithmetic with sequences and 
 These core data models are then built upon to build in-memory representations of genomic intervals, including
 genes, transcripts and non-coding features.
 
-These data structures can be built from common file types like GenBank and GFF3, and exported to common file types
-like GenBank, GFF3 and BED.
+These data structures can be parsed from GenBank and GFF3, and exported to GenBank, GFF3 and BED.
 
-Usage examples
-=======================
+BioCantor arithmetic usage examples
+===================================
 
 .. toctree::
     :maxdepth: 1
@@ -21,6 +20,19 @@ Usage examples
     location_operations.ipynb
     sequence_operations.ipynb
     parent_operations.ipynb
+
+BioCantor annotation model examples
+===================================
+
+.. toctree::
+    :maxdepth: 1
+    :caption: Contents:
+
+    annotation_data_structures.rst
+    file_parsing.rst
+    parsing_genbank.ipynb
+    parsing_gff3.ipynb
+    exporting_to_files.ipynb
 
 API documentation
 =================

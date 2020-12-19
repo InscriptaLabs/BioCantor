@@ -1,7 +1,8 @@
+from inscripta.biocantor.io.exc import InvalidInputError
 from inscripta.biocantor.exc import BioCantorException
 
 
-class GFF3FastaException(BioCantorException):
+class GFF3FastaException(InvalidInputError):
     """
     Raised when sequence export fails, or there is an attempt to export sequence without sequence information.
     """
@@ -25,7 +26,7 @@ class ReservedKeyWarning(UserWarning):
     pass
 
 
-class Gff3ParserError(BioCantorException):
+class Gff3ParserError(InvalidInputError):
     """
     Raised when there is a parsing exception.
     """
@@ -33,7 +34,7 @@ class Gff3ParserError(BioCantorException):
     pass
 
 
-class EmptyGff3Exception(BioCantorException):
+class EmptyGff3Exception(InvalidInputError):
     """
     Raised when parsing produces an empty GFF3.
     """

@@ -54,6 +54,7 @@ extensions = [
     "sphinx.ext.githubpages",
     "IPython.sphinxext.ipython_console_highlighting",
     "sphinx_rtd_theme",
+    "recommonmark",
 ]
 
 # Add any paths that contain templates here, relative to this directory.

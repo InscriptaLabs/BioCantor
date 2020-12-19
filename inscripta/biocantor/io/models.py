@@ -1,10 +1,11 @@
 """
-Data models. These models allow for validation of inputs to a BioCantor model.
+Data models. These models allow for validation of inputs to a BioCantor model, acting as a JSON schema for serializing
+and deserializing the models.
 """
 from typing import List, Optional, ClassVar, Type
 from uuid import UUID
 
-from marshmallow import Schema
+from marshmallow import Schema  # noqa: F401
 from marshmallow_dataclass import dataclass
 
 from inscripta.biocantor.exc import InvalidCDSIntervalError, LocationException, ValidationException
@@ -13,9 +14,7 @@ from inscripta.biocantor.gene.cds import CDSFrame, CDSInterval
 from inscripta.biocantor.gene.collections import GeneInterval, FeatureIntervalCollection, AnnotationCollection
 from inscripta.biocantor.gene.feature import FeatureInterval
 from inscripta.biocantor.gene.transcript import TranscriptInterval
-from inscripta.biocantor.location.location_impl import (
-    CompoundInterval,
-)
+from inscripta.biocantor.location.location_impl import CompoundInterval
 from inscripta.biocantor.location.strand import Strand
 from inscripta.biocantor.parent import Parent
 
@@ -38,11 +37,11 @@ class FeatureIntervalModel(BaseModel):
     interval_ends: List[int]
     strand: Strand
     qualifiers: Optional[dict] = None
-    sequence_symbol: Optional[str] = None
+    sequence_name: Optional[str] = None
     sequence_guid: Optional[UUID] = None
     guid: Optional[UUID] = None
     feature_type: Optional[str] = None
-    feature_symbol: Optional[str] = None
+    feature_name: Optional[str] = None
     feature_id: Optional[str] = None
     is_primary_feature: Optional[bool] = None
 
@@ -69,9 +68,9 @@ class FeatureIntervalModel(BaseModel):
             location=location,
             qualifiers=self.qualifiers,
             sequence_guid=self.sequence_guid,
-            sequence_symbol=self.sequence_symbol,
+            sequence_name=self.sequence_name,
             feature_type=self.feature_type,
-            feature_symbol=self.feature_symbol,
+            feature_name=self.feature_name,
             feature_id=self.feature_id,
             guid=self.guid,
             is_primary_feature=self.is_primary_feature,
@@ -102,7 +101,7 @@ class TranscriptIntervalModel(BaseModel):
     protein_id: Optional[str] = None
     transcript_symbol: Optional[str] = None
     transcript_type: Optional[Biotype] = None
-    sequence_symbol: Optional[str] = None
+    sequence_name: Optional[str] = None
     sequence_guid: Optional[UUID] = None
     guid: Optional[UUID] = None
     transcript_guid: Optional[UUID] = None
@@ -155,7 +154,7 @@ class TranscriptIntervalModel(BaseModel):
             transcript_id=self.transcript_id,
             transcript_symbol=self.transcript_symbol,
             transcript_type=self.transcript_type if self.transcript_type else None,
-            sequence_symbol=self.sequence_symbol,
+            sequence_name=self.sequence_name,
             sequence_guid=self.sequence_guid,
             protein_id=self.protein_id,
         )
@@ -183,14 +182,14 @@ class GeneIntervalModel(BaseModel):
     gene_type: Optional[Biotype] = None
     locus_tag: Optional[str] = None
     qualifiers: Optional[dict] = None
-    sequence_symbol: Optional[str] = None
+    sequence_name: Optional[str] = None
     sequence_guid: Optional[UUID] = None
     gene_guid: Optional[UUID] = None
 
     def to_gene_interval(self, parent: Optional[Parent] = None) -> GeneInterval:
-        """Produce a :class:`GeneInterval` from a :class:`~biocantor.models.GeneIntervalModel`.
+        """Produce a :class:`GeneInterval` from a :class:`~biocantor.io.models.GeneIntervalModel`.
 
-        This is the primary method of constructing a :class:`GeneInterval`.
+        This is the primary method of constructing a :class:`biocantor.gene.collections.GeneInterval`.
         """
 
         transcripts = [tx.to_transcript_interval(parent) for tx in self.transcripts]
@@ -203,7 +202,7 @@ class GeneIntervalModel(BaseModel):
             gene_type=self.gene_type,
             locus_tag=self.locus_tag,
             qualifiers=self.qualifiers,
-            sequence_symbol=self.sequence_symbol,
+            sequence_name=self.sequence_name,
             sequence_guid=self.sequence_guid,
             parent=parent,
         )
@@ -225,10 +224,10 @@ class FeatureIntervalCollectionModel(BaseModel):
     """
 
     feature_intervals: List[FeatureIntervalModel]
-    feature_symbol: Optional[str] = None
+    feature_name: Optional[str] = None
     feature_id: Optional[str] = None
     feature_type: Optional[str] = None
-    sequence_symbol: Optional[str] = None
+    sequence_name: Optional[str] = None
     sequence_guid: Optional[UUID] = None
     feature_collection_guid: Optional[UUID] = None
     qualifiers: Optional[dict] = None
@@ -240,10 +239,10 @@ class FeatureIntervalCollectionModel(BaseModel):
 
         return FeatureIntervalCollection(
             feature_intervals=feature_intervals,
-            feature_symbol=self.feature_symbol,
+            feature_name=self.feature_name,
             feature_id=self.feature_id,
             feature_type=self.feature_type,
-            sequence_symbol=self.sequence_symbol,
+            sequence_name=self.sequence_name,
             sequence_guid=self.sequence_guid,
             qualifiers=self.qualifiers,
             guid=self.feature_collection_guid,
@@ -276,7 +275,7 @@ class AnnotationCollectionModel(BaseModel):
     feature_collections: Optional[List[FeatureIntervalCollectionModel]] = None
     genes: Optional[List[GeneIntervalModel]] = None
     name: Optional[str] = None
-    sequence_symbol: Optional[str] = None
+    sequence_name: Optional[str] = None
     sequence_guid: Optional[UUID] = None
     sequence_path: Optional[str] = None
     qualifiers: Optional[dict] = None
@@ -285,7 +284,7 @@ class AnnotationCollectionModel(BaseModel):
     completely_within: Optional[bool] = None
 
     def to_annotation_collection(self, parent: Optional[Parent] = None) -> "AnnotationCollection":
-        """Produce an :class:`AnnotationCollection` directly from lists of data."""
+        """Produce an :class:`~biocantor.gene.collections.AnnotationCollection` directly from lists of data."""
         if self.genes:
             genes = [gene.to_gene_interval(parent) for gene in self.genes]
         else:
@@ -301,7 +300,7 @@ class AnnotationCollectionModel(BaseModel):
             genes=genes,
             name=self.name,
             qualifiers=self.qualifiers,
-            sequence_symbol=self.sequence_symbol,
+            sequence_name=self.sequence_name,
             sequence_guid=self.sequence_guid,
             start=self.start,
             end=self.end,
@@ -311,6 +310,6 @@ class AnnotationCollectionModel(BaseModel):
 
     @staticmethod
     def from_annotation_collection(annotation_collection: AnnotationCollection) -> "AnnotationCollectionModel":
-        """Convert back to :class:`AnnotationCollectionModel`."""
+        """Convert back to :class:`~AnnotationCollectionModel`."""
 
         return AnnotationCollectionModel.Schema().load(annotation_collection.to_dict())

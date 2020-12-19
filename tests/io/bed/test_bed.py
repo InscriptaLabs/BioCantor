@@ -3,14 +3,14 @@ FeatureIntervals have the ability to write to BED.
 
 """
 import pytest
-from inscripta.biocantor.gene.cds import CDSFrame
-from inscripta.biocantor.location.strand import Strand
 
-from inscripta.biocantor.models import (
+from inscripta.biocantor.gene.cds import CDSFrame
+from inscripta.biocantor.io.bed import RGB
+from inscripta.biocantor.io.models import (
     TranscriptIntervalModel,
     FeatureIntervalModel,
 )
-from inscripta.biocantor.util.bed import RGB
+from inscripta.biocantor.location.strand import Strand
 from inscripta.biocantor.util.hashing import digest_object
 
 
@@ -22,7 +22,7 @@ class TestBedWriter:
         cds_starts=[5],
         cds_ends=[9],
         cds_frames=[CDSFrame.ZERO.name],
-        sequence_symbol="chr1",
+        sequence_name="chr1",
     )
     tx2 = dict(
         exon_starts=[2, 7, 12],
@@ -34,7 +34,7 @@ class TestBedWriter:
         guid=digest_object(123),
         transcript_symbol="name",
     )
-    feat1 = dict(interval_starts=[2], interval_ends=[5], strand=Strand.PLUS.name, sequence_symbol="chr10")
+    feat1 = dict(interval_starts=[2], interval_ends=[5], strand=Strand.PLUS.name, sequence_name="chr10")
     feat2 = dict(interval_starts=[2, 7, 12], interval_ends=[6, 10, 15], strand=Strand.PLUS.name)
     feat3 = dict(interval_starts=[25], interval_ends=[30], strand=Strand.MINUS.name)
 
@@ -48,7 +48,7 @@ class TestBedWriter:
                     "None",
                     "2",
                     "15",
-                    "202cb962-ac59-075b-964b-07152d234b70",
+                    "name",
                     "0",
                     "+",
                     "4",

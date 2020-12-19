@@ -12,32 +12,28 @@ from inscripta.biocantor.exc import (
     EmptyLocationException,
 )
 from inscripta.biocantor.gene.cds import CDSPhase
+from inscripta.biocantor.io.bed import BED12, RGB
+from inscripta.biocantor.io.gff3.constants import GFF_SOURCE, NULL_COLUMN, BioCantorFeatureTypes
+from inscripta.biocantor.io.gff3.rows import GFFAttributes, GFFRow
 from inscripta.biocantor.location.location import Location
-from inscripta.biocantor.location.location_impl import (
-    SingleInterval,
-)
+from inscripta.biocantor.location.location_impl import SingleInterval
 from inscripta.biocantor.location.strand import Strand
 from inscripta.biocantor.parent.parent import Parent
 from inscripta.biocantor.sequence.sequence import Sequence
-from inscripta.biocantor.util.bed import BED12, RGB
 from inscripta.biocantor.util.bins import bins
-from inscripta.biocantor.util.gff3.constants import GFF_SOURCE, NULL_COLUMN, BioCantorFeatureTypes
-from inscripta.biocantor.util.gff3.rows import (
-    GFFAttributes,
-    GFFRow,
-)
 from inscripta.biocantor.util.hashing import digest_object
 from inscripta.biocantor.util.object_validation import ObjectValidation
 
 
 class AbstractFeatureInterval(ABC):
-    """This is a wrapper over Location that adds metadata coordinate transformation QOL functions."""
+    """This is a wrapper over :class:`~biocantor.location.Location` that adds metadata coordinate transformation
+    QOL functions."""
 
     location: Location
     _identifiers: List[Union[str, UUID]]
     guid: Optional[UUID] = None
     sequence_guid: Optional[UUID] = None
-    sequence_symbol: Optional[str] = None
+    sequence_name: Optional[str] = None
     _is_primary_feature: Optional[bool] = None
 
     @property
@@ -65,6 +61,11 @@ class AbstractFeatureInterval(ABC):
         """Returns the identifiers and their keys for this FeatureInterval, if they exist"""
         return {key: getattr(self, key) for key in self._identifiers if getattr(self, key) is not None}
 
+    @property
+    def is_primary_feature(self) -> bool:
+        """Is this the primary feature?"""
+        return self._is_primary_feature is True
+
     def __len__(self):
         return len(self.location)
 
@@ -79,7 +80,7 @@ class AbstractFeatureInterval(ABC):
 
     @abstractmethod
     def to_bed12(
-        self, score: Optional[int] = 0, rgb: Optional[RGB] = RGB(0, 0, 0), name: Optional[str] = "guid"
+        self, score: Optional[int] = 0, rgb: Optional[RGB] = RGB(0, 0, 0), name: Optional[str] = "feature_name"
     ) -> BED12:
         """Write a BED12 format representation of this :class:`AbstractFeatureInterval`.
 
@@ -89,11 +90,11 @@ class AbstractFeatureInterval(ABC):
             score: An optional score associated with a interval. UCSC requires an integer between 0 and 1000.
             rgb: An optional RGB string for visualization on a browser. This allows you to have multiple colors
                 on a single UCSC track.
-            name: Which identifier in this record to use as 'name'. Defaults to guid. If the supplied string
+            name: Which identifier in this record to use as 'name'. feature_name to guid. If the supplied string
                 is not a valid attribute, it is used directly.
 
         Return:
-            A :class:`BED12` object.
+            A :class:`~biocantor.io.bed.BED12` object.
         """
 
     @abstractmethod
@@ -108,7 +109,7 @@ class AbstractFeatureInterval(ABC):
             parent_qualifiers: Directly pull qualifiers in from this dictionary.
 
         Yields:
-            :class:`GFFRow`
+            :class:`~biocantor.io.gff3.rows.GFFRow`
         """
 
     def sequence_pos_to_feature(self, pos: int) -> int:
@@ -150,16 +151,16 @@ class FeatureInterval(AbstractFeatureInterval):
     open chromatin sites, etc.
     """
 
-    _identifiers = ["feature_symbol", "feature_id", "guid"]
+    _identifiers = ["feature_name", "feature_id", "guid"]
 
     def __init__(
         self,
         location: Location,  # exons
         qualifiers: Optional[dict] = None,  # arbitrary key-value store
         sequence_guid: Optional[UUID] = None,
-        sequence_symbol: Optional[str] = None,
+        sequence_name: Optional[str] = None,
         feature_type: Optional[str] = None,
-        feature_symbol: Optional[str] = None,
+        feature_name: Optional[str] = None,
         feature_id: Optional[str] = None,
         guid: Optional[UUID] = None,
         is_primary_feature: Optional[bool] = None,
@@ -167,9 +168,9 @@ class FeatureInterval(AbstractFeatureInterval):
         self.location = location  # genomic CompoundInterval
         self.guid = guid
         self.sequence_guid = sequence_guid
-        self.sequence_symbol = sequence_symbol
+        self.sequence_name = sequence_name
         self.feature_type = feature_type
-        self.feature_symbol = feature_symbol
+        self.feature_name = feature_name
         self.feature_id = feature_id
         self.qualifiers = qualifiers
         self.bin = bins(self.start, self.end, fmt="bed")
@@ -184,11 +185,6 @@ class FeatureInterval(AbstractFeatureInterval):
     def __repr__(self):
         return "<{}>".format(str(self))
 
-    @property
-    def is_primary_feature(self) -> bool:
-        """Is this the primary feature?"""
-        return self._is_primary_feature is True
-
     def to_dict(self) -> Dict[str, Any]:
         """Convert to a dict usable by :class:`FeatureIntervalModel`."""
         exon_starts, exon_ends = list(zip(*([x.start, x.end] for x in self.location.blocks)))
@@ -198,9 +194,9 @@ class FeatureInterval(AbstractFeatureInterval):
             strand=self.strand.name,
             qualifiers=self.qualifiers,
             feature_id=self.feature_id,
-            feature_symbol=self.feature_symbol,
+            feature_name=self.feature_name,
             feature_type=self.feature_type,
-            sequence_symbol=self.sequence_symbol,
+            sequence_name=self.sequence_name,
             sequence_guid=self.sequence_guid,
             guid=self.guid,
             is_primary_feature=self._is_primary_feature,
@@ -243,7 +239,7 @@ class FeatureInterval(AbstractFeatureInterval):
             parent_qualifiers: Directly pull qualifiers in from this dictionary.
 
         Yields:
-            :class:`GFFRow`
+            :class:`~biocantor.io.gff3.rows.GFFRow`
         """
         qualifiers = {}
         if parent_qualifiers:
@@ -251,11 +247,11 @@ class FeatureInterval(AbstractFeatureInterval):
 
         feature_id = str(self.guid) if self.guid else str(digest_object(self))
 
-        attributes = GFFAttributes(id=feature_id, name=self.feature_symbol, parent=parent, **qualifiers)
+        attributes = GFFAttributes(id=feature_id, name=self.feature_name, parent=parent, **qualifiers)
 
         # transcript feature
         row = GFFRow(
-            self.sequence_symbol,
+            self.sequence_name,
             GFF_SOURCE,
             BioCantorFeatureTypes.TRANSCRIPT,
             self.start + 1,
@@ -271,10 +267,10 @@ class FeatureInterval(AbstractFeatureInterval):
         # re-use qualifiers, updating ID each time
         for i, block in enumerate(self.location.blocks, 1):
             attributes = GFFAttributes(
-                id=f"exon-{feature_id}-{i}", name=self.feature_symbol, parent=feature_id, **qualifiers
+                id=f"exon-{feature_id}-{i}", name=self.feature_name, parent=feature_id, **qualifiers
             )
             row = GFFRow(
-                self.sequence_symbol,
+                self.sequence_name,
                 GFF_SOURCE,
                 BioCantorFeatureTypes.EXON,
                 block.start + 1,
@@ -287,12 +283,12 @@ class FeatureInterval(AbstractFeatureInterval):
             yield row
 
     def to_bed12(
-        self, score: Optional[int] = 0, rgb: Optional[RGB] = RGB(0, 0, 0), name: Optional[str] = "guid"
+        self, score: Optional[int] = 0, rgb: Optional[RGB] = RGB(0, 0, 0), name: Optional[str] = "feature_name"
     ) -> BED12:
         block_sizes = [b.end - b.start for b in self.location.blocks]
         block_starts = [b.start - self.start for b in self.location.blocks]
         return BED12(
-            self.sequence_symbol,
+            self.sequence_name,
             self.start,
             self.end,
             getattr(self, name, name),

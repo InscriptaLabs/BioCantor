@@ -12,7 +12,7 @@ from inscripta.biocantor.gene.cds import CDSInterval, CDSFrame
 from inscripta.biocantor.gene.transcript import TranscriptInterval
 from inscripta.biocantor.location.location_impl import SingleInterval, CompoundInterval, EmptyLocation
 from inscripta.biocantor.location.strand import Strand
-from inscripta.biocantor.models import TranscriptIntervalModel
+from inscripta.biocantor.io.models import TranscriptIntervalModel
 from inscripta.biocantor.parent.parent import Parent
 from inscripta.biocantor.sequence.alphabet import Alphabet
 from inscripta.biocantor.sequence.sequence import Sequence

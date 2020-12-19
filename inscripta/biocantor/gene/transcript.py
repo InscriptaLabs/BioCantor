@@ -4,7 +4,7 @@ Object representation of Transcripts.
 Each object is capable of exporting itself to BED and GFF3.
 """
 from itertools import count
-from typing import Optional, Any, Union, Dict, List, Iterable
+from typing import Optional, Any, Dict, Iterable
 from uuid import UUID
 
 from inscripta.biocantor.exc import (
@@ -22,13 +22,10 @@ from inscripta.biocantor.location.location_impl import (
 from inscripta.biocantor.location.strand import Strand
 from inscripta.biocantor.parent.parent import Parent
 from inscripta.biocantor.sequence.sequence import Sequence
-from inscripta.biocantor.util.bed import BED12, RGB
+from inscripta.biocantor.io.bed import BED12, RGB
 from inscripta.biocantor.util.bins import bins
-from inscripta.biocantor.util.gff3.constants import GFF_SOURCE, NULL_COLUMN, BioCantorQualifiers, BioCantorFeatureTypes
-from inscripta.biocantor.util.gff3.rows import (
-    GFFAttributes,
-    GFFRow,
-)
+from inscripta.biocantor.io.gff3.constants import GFF_SOURCE, NULL_COLUMN, BioCantorQualifiers, BioCantorFeatureTypes
+from inscripta.biocantor.io.gff3.rows import GFFAttributes, GFFRow
 from inscripta.biocantor.util.hashing import digest_object
 from inscripta.biocantor.util.object_validation import ObjectValidation
 
@@ -57,7 +54,7 @@ class TranscriptInterval(AbstractFeatureInterval):
         transcript_symbol: Optional[str] = None,
         transcript_type: Optional[Biotype] = None,
         sequence_guid: Optional[UUID] = None,
-        sequence_symbol: Optional[str] = None,
+        sequence_name: Optional[str] = None,
         protein_id: Optional[str] = None,
         transcript_guid: Optional[UUID] = None,
     ):
@@ -69,7 +66,7 @@ class TranscriptInterval(AbstractFeatureInterval):
         self.transcript_type = transcript_type
         self.protein_id = protein_id
         self.sequence_guid = sequence_guid
-        self.sequence_symbol = sequence_symbol
+        self.sequence_name = sequence_name
         self.bin = bins(self.start, self.end, fmt="bed")
         self.qualifiers = qualifiers
 
@@ -88,7 +85,8 @@ class TranscriptInterval(AbstractFeatureInterval):
 
     @property
     def is_primary_tx(self) -> bool:
-        return self._is_primary_feature is True
+        """Is this the primary transcript?"""
+        return self.is_primary_feature
 
     def __len__(self):
         return len(self.location)
@@ -129,7 +127,7 @@ class TranscriptInterval(AbstractFeatureInterval):
         self.cds.location = self.cds.location.reset_parent(parent)
 
     def to_dict(self) -> Dict[str, Any]:
-        """Convert to a dict usable by :class:`biocantor.models.TranscriptIntervalModel`."""
+        """Convert to a dict usable by :class:`biocantor.io.models.TranscriptIntervalModel`."""
         exon_starts, exon_ends = list(zip(*([x.start, x.end] for x in self.location.blocks)))
         if self.cds:
             cds_starts, cds_ends = list(zip(*([x.start, x.end] for x in self.cds.location.blocks)))
@@ -150,7 +148,7 @@ class TranscriptInterval(AbstractFeatureInterval):
             transcript_id=self.transcript_id,
             transcript_symbol=self.transcript_symbol,
             transcript_type=self.transcript_type.name if self.transcript_type else None,
-            sequence_symbol=self.sequence_symbol,
+            sequence_name=self.sequence_name,
             sequence_guid=self.sequence_guid,
             protein_id=self.protein_id,
             transcript_guid=self.guid,
@@ -169,7 +167,7 @@ class TranscriptInterval(AbstractFeatureInterval):
             transcript_id=self.transcript_id,
             transcript_symbol=self.transcript_symbol,
             transcript_type=self.transcript_type,
-            sequence_symbol=self.sequence_symbol,
+            sequence_name=self.sequence_name,
             sequence_guid=self.sequence_guid,
             transcript_guid=self.guid,
         )
@@ -335,7 +333,7 @@ class TranscriptInterval(AbstractFeatureInterval):
 
         # transcript feature
         row = GFFRow(
-            self.sequence_symbol,
+            self.sequence_name,
             GFF_SOURCE,
             BioCantorFeatureTypes.TRANSCRIPT,
             self.start + 1,
@@ -352,7 +350,7 @@ class TranscriptInterval(AbstractFeatureInterval):
         for i, block in enumerate(self.location.blocks, 1):
             attributes = GFFAttributes(id=f"exon-{tx_id}-{i}", name=self.transcript_symbol, parent=tx_id, **qualifiers)
             row = GFFRow(
-                self.sequence_symbol,
+                self.sequence_name,
                 GFF_SOURCE,
                 BioCantorFeatureTypes.EXON,
                 block.start + 1,
@@ -371,7 +369,7 @@ class TranscriptInterval(AbstractFeatureInterval):
                     id=f"cds-{tx_id}-{i}", name=self.transcript_symbol, parent=tx_id, **qualifiers
                 )
                 row = GFFRow(
-                    self.sequence_symbol,
+                    self.sequence_name,
                     GFF_SOURCE,
                     BioCantorFeatureTypes.CDS,
                     block.start + 1,
@@ -384,12 +382,12 @@ class TranscriptInterval(AbstractFeatureInterval):
                 yield row
 
     def to_bed12(
-        self, score: Optional[int] = 0, rgb: Optional[RGB] = RGB(0, 0, 0), name: Optional[str] = "guid"
+        self, score: Optional[int] = 0, rgb: Optional[RGB] = RGB(0, 0, 0), name: Optional[str] = "transcript_symbol"
     ) -> BED12:
         block_sizes = [b.end - b.start for b in self.location.blocks]
         block_starts = [b.start - self.start for b in self.location.blocks]
         return BED12(
-            self.sequence_symbol,
+            self.sequence_name,
             self.start,
             self.end,
             getattr(self, name, name),
