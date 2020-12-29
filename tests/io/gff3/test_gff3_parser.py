@@ -347,9 +347,7 @@ class TestGff3ToModel:
     def test_gff3_with_embedded_fa_extra_contig(self, test_data_dir):
         """Handle FASTA with sequences not seen in the GFF3"""
         gff3 = test_data_dir / "Inscripta_BL21_embedded_extra_contig.gff3"
-        recs = list(
-            ParsedAnnotationRecord.parsed_annotation_records_to_model(parse_gff3_embedded_fasta(gff3))
-        )
+        recs = list(ParsedAnnotationRecord.parsed_annotation_records_to_model(parse_gff3_embedded_fasta(gff3)))
         assert len(recs) == 2
         assert recs[1].is_empty
         assert recs[0].sequence_name
