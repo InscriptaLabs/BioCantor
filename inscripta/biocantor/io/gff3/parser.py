@@ -320,7 +320,7 @@ def parse_gff3_fasta(
     db_fn: Optional[str] = ":memory:",
 ) -> Iterable[ParsedAnnotationRecord]:
     """
-    Parses a GFF3 with FASTA. Wraps :meth:`parse_gff()` to produce ``ParsedAnnotationRecord``.
+    Parses a GFF3 with a separate FASTA. Wraps :meth:`parse_gff()` to produce ``ParsedAnnotationRecord``.
 
     Args:
         gff3: Path to a GFF3 file.
@@ -373,11 +373,14 @@ def gff3_fasta_to_model(
         gff3_with_fasta_handle: Open handle to a GFF3 file with a FASTA suffix. Mutually exclusive with ``fasta``.
         alphabet: The alphabet to use.
 
+    Raises:
+        InvalidInputError: If both ``fasta_handle`` anad ``gff3_with_fasta_handle`` are specified.
+
     Yields:
-        :class:`~biocantor.gene.collections.AnnotationCollection` with or without sequence information.
+        :class:`~biocantor.gene.collections.AnnotationCollection` with sequence information.
     """
     if fasta_handle and gff3_with_fasta_handle:
-        raise InvalidInputError("Cannot pass both and gff3_with_fasta to the backend.")
+        raise InvalidInputError("Cannot pass both fasta_handle and gff3_with_fasta_handle at the same time.")
 
     if fasta_handle:
         parents = fasta_to_parents(fasta_handle, alphabet)
