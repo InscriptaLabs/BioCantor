@@ -214,7 +214,9 @@ class CDSTblFeature(TblFeature):
     FEATURE_TYPE = IntervalFeatures.CDS
     VALID_KEYS = MRNATblFeature.VALID_KEYS | {"product"}
 
-    def __init__(self, transcript: TranscriptInterval, gene_feature: GeneTblFeature, translation_table: TranslationTable):
+    def __init__(
+        self, transcript: TranscriptInterval, gene_feature: GeneTblFeature, translation_table: TranslationTable
+    ):
         qualifiers = gene_feature.qualifiers.copy()
 
         if "product" in transcript.qualifiers:
