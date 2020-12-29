@@ -8,9 +8,11 @@ from inscripta.biocantor.gene.biotype import Biotype
 from inscripta.biocantor.gene.cds import CDSFrame
 from inscripta.biocantor.io.gff3.exc import GFF3FastaException
 from inscripta.biocantor.io.gff3.parser import (
-    extract_seqrecords_from_gff3_fasta,
-    gff3_fasta_to_model,
+    parse_gff3_embedded_fasta,
+    parse_gff3_fasta,
+    ParsedAnnotationRecord,
     parse_standard_gff3,
+    extract_seqrecords_from_gff3_fasta,
 )
 from inscripta.biocantor.io.models import AnnotationCollectionModel
 from inscripta.biocantor.location.strand import Strand
@@ -22,7 +24,7 @@ class TestGff3Parser:
     def test_transitive(self, test_data_dir):
         """Test transitive loops"""
         for gff in ["SGCE.gff3", "FRG2B.gff3", "PEG10_minus1frameshift.gff3", "INSC1006_chrI.gff3"]:
-            gff = str(test_data_dir / gff)
+            gff = test_data_dir / gff
             recs = list(parse_standard_gff3(gff))
             c = recs[0].to_annotation_collection()
             assert (
@@ -33,13 +35,13 @@ class TestGff3Parser:
         """
         FRG2B is an example of a standard coding gene.
         """
-        gff = str(test_data_dir / "FRG2B.gff3")
+        gff = test_data_dir / "FRG2B.gff3"
         recs = list(parse_standard_gff3(gff))
         assert len(recs) == 1
         rec = recs[0]
-        genes = rec.genes
+        genes = rec.annotation.genes
         assert len(genes) == 1
-        assert rec.feature_collections is None
+        assert rec.annotation.feature_collections is None
         gene = genes[0]
         txs = gene.transcripts
         assert len(txs) == 1
@@ -86,23 +88,23 @@ class TestGff3Parser:
         """
         SGCE is an example of a protein coding gene with multiple isoforms, that is parsed using the RefSeq parser.
         """
-        gff = str(test_data_dir / "SGCE.gff3")
+        gff = test_data_dir / "SGCE.gff3"
         recs = list(parse_standard_gff3(gff))
         assert len(recs) == 1
         rec = recs[0]
-        genes = rec.genes
+        genes = rec.annotation.genes
         assert len(genes) == 1
         gene = genes[0]
         txs = gene.transcripts
         assert len(txs) == 22
         with open("tests/data/SGCE.json") as fh:
-            assert AnnotationCollectionModel.Schema().load(json.load(fh)) == rec
+            assert AnnotationCollectionModel.Schema().load(json.load(fh)) == rec.annotation
 
     def test_parse_peg10(self, test_data_dir):
         """
         PEG10 is a gene with a -1 frameshift in one isoform, that is paresd using the RefSeq parser.
         """
-        gff = str(test_data_dir / "PEG10_minus1frameshift.gff3")
+        gff = test_data_dir / "PEG10_minus1frameshift.gff3"
         recs = list(parse_standard_gff3(gff))
         c = recs[0].to_annotation_collection()
         assert c.to_dict() == {
@@ -278,9 +280,9 @@ class TestGff3Parser:
 
     def test_parse_insc1006(self, test_data_dir):
         """INSC1006_chrI is a 4-gene manually built file from INSC1006. It uses the default naive parser."""
-        gff = str(test_data_dir / "INSC1006_chrI.gff3")
+        gff = test_data_dir / "INSC1006_chrI.gff3"
         recs = list(parse_standard_gff3(gff))
-        c = recs[0]
+        c = recs[0].annotation
         with open("tests/data/INSC1006_chrI.json") as fh:
             assert AnnotationCollectionModel.Schema().load(json.load(fh)) == c
 
@@ -290,7 +292,7 @@ class TestGff3FastaParser:
 
     def test_gff3_with_fa(self, test_data_dir):
         """Parse the FASTA and compare to what we get from GenBank"""
-        gff3_with_fa = str(test_data_dir / "INSC1006_chrI.gff3")
+        gff3_with_fa = test_data_dir / "INSC1006_chrI.gff3"
         gbk = str(test_data_dir / "INSC1006_chrI.gbff")
         with open(gff3_with_fa, "r") as fh:
             recs = extract_seqrecords_from_gff3_fasta(fh)
@@ -303,11 +305,11 @@ class TestGff3FastaParser:
 
     def test_no_fa_exception(self, test_data_dir):
         """Inscripta_BL21.gff3 has no sequences"""
-        gff3_without_fasta = str(test_data_dir / "Inscripta_BL21.gff3")
+        gff3_without_fasta = test_data_dir / "Inscripta_BL21.gff3"
         with pytest.raises(GFF3FastaException):
-            with open(gff3_without_fasta, "r") as fh:
-                recs = extract_seqrecords_from_gff3_fasta(fh)
-            assert len(recs) == 1
+            _ = list(
+                ParsedAnnotationRecord.parsed_annotation_records_to_model(parse_gff3_embedded_fasta(gff3_without_fasta))
+            )
 
 
 class TestGff3ToModel:
@@ -319,10 +321,9 @@ class TestGff3ToModel:
     """
 
     def test_gff3(self, test_data_dir):
-        gff = str(test_data_dir / "Inscripta_BL21.gff3")
+        gff = test_data_dir / "Inscripta_BL21.gff3"
         fasta = test_data_dir / "Inscripta_BL21.fa"
-        with open(fasta, "r") as fh:
-            recs = list(gff3_fasta_to_model(parse_standard_gff3(gff), fh))
+        recs = list(ParsedAnnotationRecord.parsed_annotation_records_to_model(parse_gff3_fasta(gff, fasta)))
         for rec in recs:
             for gene in rec.genes:
                 for tx in gene.transcripts:
@@ -332,13 +333,25 @@ class TestGff3ToModel:
 
     def test_gff3_with_fa_extra_contig(self, test_data_dir):
         """Handle FASTA with sequences not seen in the GFF3"""
-        gff3_without_fasta = str(test_data_dir / "Inscripta_BL21.gff3")
+        gff3_without_fasta = test_data_dir / "Inscripta_BL21.gff3"
         fasta = test_data_dir / "Inscripta_BL21_extra_contig.fa"
-        with open(fasta, "r") as fh:
-            recs = list(gff3_fasta_to_model(parse_standard_gff3(gff3_without_fasta), fh))
+        recs = list(
+            ParsedAnnotationRecord.parsed_annotation_records_to_model(parse_gff3_fasta(gff3_without_fasta, fasta))
+        )
         assert len(recs) == 2
         assert recs[1].is_empty
         assert recs[0].sequence_name
         assert recs[0].sequence
         assert recs[1].sequence
-        assert recs[1].sequence_name
+        assert recs[1].sequence_name == "extraseq"
+
+    def test_gff3_with_embedded_fa_extra_contig(self, test_data_dir):
+        """Handle FASTA with sequences not seen in the GFF3"""
+        gff3 = test_data_dir / "Inscripta_BL21_embedded_extra_contig.gff3"
+        recs = list(ParsedAnnotationRecord.parsed_annotation_records_to_model(parse_gff3_embedded_fasta(gff3)))
+        assert len(recs) == 2
+        assert recs[1].is_empty
+        assert recs[0].sequence_name
+        assert recs[0].sequence
+        assert recs[1].sequence
+        assert recs[1].sequence_name == "extraseq"

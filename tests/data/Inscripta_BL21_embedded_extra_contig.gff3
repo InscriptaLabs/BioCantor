@@ -1,3 +1,31 @@
+##gff-version 3
+FEPOIHMA_1	BioCantor	gene	335	2797	.	+	.	ID=cc89ef79-f86a-95f6-99db-dea06923a61b;Name=thrA;gene_name=thrA;gene_biotype=protein_coding
+FEPOIHMA_1	BioCantor	transcript	335	2797	.	+	.	ID=a478dfcf-39aa-01a1-07f8-d46d3646619b;Parent=cc89ef79-f86a-95f6-99db-dea06923a61b;Name=thrA;gene_name=thrA;gene_biotype=protein_coding;transcript_name=thrA;transcript_biotype=protein_coding;protein_id=X:FEPOIHMA_00001
+FEPOIHMA_1	BioCantor	exon	335	2797	.	+	.	ID=exon-a478dfcf-39aa-01a1-07f8-d46d3646619b-1;Parent=a478dfcf-39aa-01a1-07f8-d46d3646619b;Name=thrA;gene_name=thrA;gene_biotype=protein_coding;transcript_name=thrA;transcript_biotype=protein_coding;protein_id=X:FEPOIHMA_00001
+FEPOIHMA_1	BioCantor	CDS	335	2797	.	+	0	ID=cds-a478dfcf-39aa-01a1-07f8-d46d3646619b-1;Parent=a478dfcf-39aa-01a1-07f8-d46d3646619b;Name=thrA;gene_name=thrA;gene_biotype=protein_coding;transcript_name=thrA;transcript_biotype=protein_coding;protein_id=X:FEPOIHMA_00001
+FEPOIHMA_1	BioCantor	gene	2799	3731	.	+	.	ID=f3d51d01-4092-a681-451d-1830620df69d;Name=thrB;gene_name=thrB;gene_biotype=protein_coding
+FEPOIHMA_1	BioCantor	transcript	2799	3731	.	+	.	ID=79b72b24-63fa-5259-e0e4-5ae7656db1f7;Parent=f3d51d01-4092-a681-451d-1830620df69d;Name=thrB;gene_name=thrB;gene_biotype=protein_coding;transcript_name=thrB;transcript_biotype=protein_coding;protein_id=X:FEPOIHMA_00002
+FEPOIHMA_1	BioCantor	exon	2799	3731	.	+	.	ID=exon-79b72b24-63fa-5259-e0e4-5ae7656db1f7-1;Parent=79b72b24-63fa-5259-e0e4-5ae7656db1f7;Name=thrB;gene_name=thrB;gene_biotype=protein_coding;transcript_name=thrB;transcript_biotype=protein_coding;protein_id=X:FEPOIHMA_00002
+FEPOIHMA_1	BioCantor	CDS	2799	3731	.	+	0	ID=cds-79b72b24-63fa-5259-e0e4-5ae7656db1f7-1;Parent=79b72b24-63fa-5259-e0e4-5ae7656db1f7;Name=thrB;gene_name=thrB;gene_biotype=protein_coding;transcript_name=thrB;transcript_biotype=protein_coding;protein_id=X:FEPOIHMA_00002
+FEPOIHMA_1	BioCantor	gene	3732	5018	.	+	.	ID=8c081a86-6036-7c4c-ec25-fb8574d4f0b2;Name=thrC;gene_name=thrC;gene_biotype=protein_coding
+FEPOIHMA_1	BioCantor	transcript	3732	5018	.	+	.	ID=b1a329e0-8c24-d1e1-0872-470d193d566f;Parent=8c081a86-6036-7c4c-ec25-fb8574d4f0b2;Name=thrC;gene_name=thrC;gene_biotype=protein_coding;transcript_name=thrC;transcript_biotype=protein_coding;protein_id=X:FEPOIHMA_00003
+FEPOIHMA_1	BioCantor	exon	3732	5018	.	+	.	ID=exon-b1a329e0-8c24-d1e1-0872-470d193d566f-1;Parent=b1a329e0-8c24-d1e1-0872-470d193d566f;Name=thrC;gene_name=thrC;gene_biotype=protein_coding;transcript_name=thrC;transcript_biotype=protein_coding;protein_id=X:FEPOIHMA_00003
+FEPOIHMA_1	BioCantor	CDS	3732	5018	.	+	0	ID=cds-b1a329e0-8c24-d1e1-0872-470d193d566f-1;Parent=b1a329e0-8c24-d1e1-0872-470d193d566f;Name=thrC;gene_name=thrC;gene_biotype=protein_coding;transcript_name=thrC;transcript_biotype=protein_coding;protein_id=X:FEPOIHMA_00003
+FEPOIHMA_1	BioCantor	gene	5231	5527	.	+	.	ID=531dd3a0-6f57-bee5-cabb-43e7799bbfa1;Name=yaaX;gene_name=yaaX;gene_biotype=protein_coding
+FEPOIHMA_1	BioCantor	transcript	5231	5527	.	+	.	ID=1c0e3cb0-957c-0654-3ccc-ab093e59a3c3;Parent=531dd3a0-6f57-bee5-cabb-43e7799bbfa1;Name=yaaX;gene_name=yaaX;gene_biotype=protein_coding;transcript_name=yaaX;transcript_biotype=protein_coding;protein_id=X:FEPOIHMA_00004
+FEPOIHMA_1	BioCantor	exon	5231	5527	.	+	.	ID=exon-1c0e3cb0-957c-0654-3ccc-ab093e59a3c3-1;Parent=1c0e3cb0-957c-0654-3ccc-ab093e59a3c3;Name=yaaX;gene_name=yaaX;gene_biotype=protein_coding;transcript_name=yaaX;transcript_biotype=protein_coding;protein_id=X:FEPOIHMA_00004
+FEPOIHMA_1	BioCantor	CDS	5231	5527	.	+	0	ID=cds-1c0e3cb0-957c-0654-3ccc-ab093e59a3c3-1;Parent=1c0e3cb0-957c-0654-3ccc-ab093e59a3c3;Name=yaaX;gene_name=yaaX;gene_biotype=protein_coding;transcript_name=yaaX;transcript_biotype=protein_coding;protein_id=X:FEPOIHMA_00004
+FEPOIHMA_1	BioCantor	gene	5680	6456	.	+	.	ID=b3a6ff4a-b728-8631-3b32-710c08b5deb7;Name=yaaA;gene_name=yaaA;gene_biotype=protein_coding
+FEPOIHMA_1	BioCantor	transcript	5680	6456	.	-	.	ID=bf65fc90-b968-7c6a-8aeb-c1242b21e015;Parent=b3a6ff4a-b728-8631-3b32-710c08b5deb7;Name=yaaA;gene_name=yaaA;gene_biotype=protein_coding;transcript_name=yaaA;transcript_biotype=protein_coding;protein_id=X:FEPOIHMA_00005
+FEPOIHMA_1	BioCantor	exon	5680	6456	.	-	.	ID=exon-bf65fc90-b968-7c6a-8aeb-c1242b21e015-1;Parent=bf65fc90-b968-7c6a-8aeb-c1242b21e015;Name=yaaA;gene_name=yaaA;gene_biotype=protein_coding;transcript_name=yaaA;transcript_biotype=protein_coding;protein_id=X:FEPOIHMA_00005
+FEPOIHMA_1	BioCantor	CDS	5680	6456	.	-	0	ID=cds-bf65fc90-b968-7c6a-8aeb-c1242b21e015-1;Parent=bf65fc90-b968-7c6a-8aeb-c1242b21e015;Name=yaaA;gene_name=yaaA;gene_biotype=protein_coding;transcript_name=yaaA;transcript_biotype=protein_coding;protein_id=X:FEPOIHMA_00005
+FEPOIHMA_1	BioCantor	gene	6756	6843	.	+	.	ID=c07b487c-280f-162f-1fa9-6a26597b5b87;gene_biotype=tRNA
+FEPOIHMA_1	BioCantor	transcript	6756	6843	.	+	.	ID=250c2633-6803-d308-375d-0ee398560199;Parent=c07b487c-280f-162f-1fa9-6a26597b5b87;gene_biotype=tRNA;transcript_biotype=tRNA
+FEPOIHMA_1	BioCantor	exon	6756	6843	.	+	.	ID=exon-250c2633-6803-d308-375d-0ee398560199-1;Parent=250c2633-6803-d308-375d-0ee398560199;gene_biotype=tRNA;transcript_biotype=tRNA
+FEPOIHMA_1	BioCantor	gene	6956	7066	.	+	.	ID=c5b7461f-dff8-9385-d7d5-f7403982c678;gene_biotype=rRNA
+FEPOIHMA_1	BioCantor	transcript	6956	7066	.	-	.	ID=f07138d8-46c9-c3b7-6869-ff835144f77f;Parent=c5b7461f-dff8-9385-d7d5-f7403982c678;gene_biotype=rRNA;transcript_biotype=rRNA
+FEPOIHMA_1	BioCantor	exon	6956	7066	.	-	.	ID=exon-f07138d8-46c9-c3b7-6869-ff835144f77f-1;Parent=f07138d8-46c9-c3b7-6869-ff835144f77f;gene_biotype=rRNA;transcript_biotype=rRNA
+##FASTA
 >FEPOIHMA_1 Genus species strain strain
 GCTTTTCATTCTGACTGCAACGGGCAATATGTCTCTGTGTGGATTAAAAAAAGAGTGTCT
 GATAGCAGCTTCTGAACTGGTTACCTGCCGTGAGTAAATTAAAATTTTATTGACTTAGGT
