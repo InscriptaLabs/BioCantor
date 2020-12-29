@@ -320,6 +320,15 @@ class TblGene:
         translation_table: Optional[TranslationTable] = TranslationTable.DEFAULT,
     ):
         self.gene = gene
+
+        # the location of the transcripts and its CDS intervals must be merged because NCBI does not like
+        # adjacent blocks. This must be performed before we instantiate GeneTblFeature because performing this process
+        # may break translations.
+        for tx in gene.transcripts:
+            tx.location = tx.location.optimize_blocks()
+            if gene.is_coding:
+                tx.cds.location = tx.cds.location.optimize_blocks()
+
         self.gene_tbl = GeneTblFeature(self.gene, locus_tag)
 
         # now build the transcript level feature(s). NCBI assumes that all transcripts have the same biotype
