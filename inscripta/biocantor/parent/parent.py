@@ -1,13 +1,10 @@
 from functools import reduce
-from typing import TypeVar, Optional
+from typing import Optional
 
 import inscripta.biocantor
 from inscripta.biocantor.exc import NoSuchAncestorException, LocationException, InvalidStrandException, ParentException
 from inscripta.biocantor.location.strand import Strand
 from inscripta.biocantor.util.object_validation import ObjectValidation
-
-Parent = TypeVar("Parent")
-ParentInputType = TypeVar("ParentInputType")
 
 
 class Parent:
@@ -24,7 +21,7 @@ class Parent:
         strand: Optional[Strand] = None,
         location: Optional = None,
         sequence: Optional = None,
-        parent: Optional[ParentInputType] = None,
+        parent: Optional["Parent"] = None,
     ):
         """
         Parameters
@@ -45,7 +42,7 @@ class Parent:
 
         location_parent_id = location.parent_id if location else None
         sequence_id = sequence.id if sequence else None
-        non_null_ids = set([x for x in [id, location_parent_id, sequence_id] if x is not None])
+        non_null_ids = {x for x in (id, location_parent_id, sequence_id) if x is not None}
         if len(non_null_ids) > 1:
             raise ParentException(
                 "ID, location parent ID, and sequence ID do not match: {}, {}, {}".format(
@@ -55,7 +52,7 @@ class Parent:
 
         location_parent_type = location.parent_type if location else None
         sequence_seqtype = sequence.sequence_type if sequence else None
-        non_null_types = set([x for x in [sequence_type, location_parent_type, sequence_seqtype] if x is not None])
+        non_null_types = {x for x in (sequence_type, location_parent_type, sequence_seqtype) if x is not None}
         if len(non_null_types) > 1:
             raise ParentException(
                 "Sequence type, location parent type, and sequence do not match: {}, {}, {}".format(
@@ -156,7 +153,7 @@ class Parent:
             return self.location.strand
         return None
 
-    def strip_location_info(self) -> Parent:
+    def strip_location_info(self) -> "Parent":
         """Returns a new Parent object representing this Parent with information about child
         location removed"""
         return Parent(
@@ -166,7 +163,7 @@ class Parent:
             parent=self.parent,
         )
 
-    def first_ancestor_of_type(self, sequence_type, include_self: bool = True) -> Parent:
+    def first_ancestor_of_type(self, sequence_type, include_self: bool = True) -> "Parent":
         """Returns the Parent object representing the closest ancestor (parent, parent of parent, etc.)
         of this Parent which has the given sequence type. If include_self is True and this Parent
         has the given type, returns this object. Raises NoSuchAncestorException if no ancestor with the given
