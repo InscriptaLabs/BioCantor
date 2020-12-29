@@ -3,6 +3,7 @@ Object representation of Transcripts.
 
 Each object is capable of exporting itself to BED and GFF3.
 """
+from functools import lru_cache
 from itertools import count
 from typing import Optional, Any, Dict, Iterable
 from uuid import UUID
@@ -14,6 +15,9 @@ from inscripta.biocantor.exc import NoncodingTranscriptError
 from inscripta.biocantor.gene.biotype import Biotype
 from inscripta.biocantor.gene.cds import CDSInterval, CDSPhase
 from inscripta.biocantor.gene.feature import AbstractFeatureInterval
+from inscripta.biocantor.io.bed import BED12, RGB
+from inscripta.biocantor.io.gff3.constants import GFF_SOURCE, NULL_COLUMN, BioCantorQualifiers, BioCantorFeatureTypes
+from inscripta.biocantor.io.gff3.rows import GFFAttributes, GFFRow
 from inscripta.biocantor.location.location import Location
 from inscripta.biocantor.location.location_impl import (
     SingleInterval,
@@ -22,10 +26,7 @@ from inscripta.biocantor.location.location_impl import (
 from inscripta.biocantor.location.strand import Strand
 from inscripta.biocantor.parent.parent import Parent
 from inscripta.biocantor.sequence.sequence import Sequence
-from inscripta.biocantor.io.bed import BED12, RGB
 from inscripta.biocantor.util.bins import bins
-from inscripta.biocantor.io.gff3.constants import GFF_SOURCE, NULL_COLUMN, BioCantorQualifiers, BioCantorFeatureTypes
-from inscripta.biocantor.io.gff3.rows import GFFAttributes, GFFRow
 from inscripta.biocantor.util.hashing import digest_object
 from inscripta.biocantor.util.object_validation import ObjectValidation
 
@@ -56,10 +57,9 @@ class TranscriptInterval(AbstractFeatureInterval):
         sequence_guid: Optional[UUID] = None,
         sequence_name: Optional[str] = None,
         protein_id: Optional[str] = None,
-        transcript_guid: Optional[UUID] = None,
+        guid: Optional[UUID] = None,
     ):
         self.location = location  # genomic CompoundInterval
-        self.guid = transcript_guid
         self._is_primary_feature = is_primary_tx
         self.transcript_id = transcript_id
         self.transcript_symbol = transcript_symbol
@@ -71,6 +71,21 @@ class TranscriptInterval(AbstractFeatureInterval):
         self.qualifiers = qualifiers
 
         self.cds = cds
+
+        if guid is None:
+            self.guid = digest_object(
+                self.location,
+                self.cds,
+                self.qualifiers,
+                self.transcript_id,
+                self.transcript_symbol,
+                self.transcript_type,
+                self.protein_id,
+                self.sequence_name,
+                self.is_primary_tx,
+            )
+        else:
+            self.guid = guid
 
         if self.location.parent:
             ObjectValidation.require_location_has_parent_with_sequence(self.location)
@@ -169,7 +184,7 @@ class TranscriptInterval(AbstractFeatureInterval):
             transcript_type=self.transcript_type,
             sequence_name=self.sequence_name,
             sequence_guid=self.sequence_guid,
-            transcript_guid=self.guid,
+            guid=self.guid,
         )
         return tx
 
@@ -197,7 +212,7 @@ class TranscriptInterval(AbstractFeatureInterval):
 
         return TranscriptInterval(
             location=intersection,
-            transcript_guid=new_guid,
+            guid=new_guid,
             qualifiers=new_qualifiers,
         )
 
@@ -285,16 +300,19 @@ class TranscriptInterval(AbstractFeatureInterval):
             raise NoncodingTranscriptError("No coding interval on non-coding transcript")
         return self.cds.location
 
+    @lru_cache(maxsize=1)
     def get_transcript_sequence(self) -> Sequence:
         """Returns the mRNA sequence."""
         return self.get_spliced_sequence()
 
+    @lru_cache(maxsize=1)
     def get_cds_sequence(self) -> Sequence:
         """Returns the in-frame CDS sequence (always multiple of 3)."""
         if not self.is_coding:
             raise NoncodingTranscriptError("No CDS sequence on non-coding transcript")
         return self.cds.extract_sequence()
 
+    @lru_cache(maxsize=2)
     def get_protein_sequence(self, truncate_at_in_frame_stop: Optional[bool] = False) -> Sequence:
         """Return the translation of this transcript, if possible."""
         if not self.is_coding:

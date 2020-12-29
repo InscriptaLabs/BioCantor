@@ -11,6 +11,7 @@ from uuid import UUID
 from inscripta.biocantor.exc import (
     EmptyLocationException,
 )
+from functools import lru_cache
 from inscripta.biocantor.gene.cds import CDSPhase
 from inscripta.biocantor.io.bed import BED12, RGB
 from inscripta.biocantor.io.gff3.constants import GFF_SOURCE, NULL_COLUMN, BioCantorFeatureTypes
@@ -74,6 +75,10 @@ class AbstractFeatureInterval(ABC):
             return False
         return self.__dict__ == other.__dict__
 
+    def __hash__(self):
+        """Produces a hash, which is the GUID."""
+        return hash(self.guid)
+
     @abstractmethod
     def update_parent(self, parent: Parent):
         """Update parent"""
@@ -128,15 +133,18 @@ class AbstractFeatureInterval(ABC):
         """Converts a contiguous interval relative to this feature to a spliced location on the sequence."""
         return self.location.relative_interval_to_parent_location(rel_start, rel_end, rel_strand)
 
+    @lru_cache(maxsize=1)
     def get_spliced_sequence(self) -> Sequence:
         """Returns the feature's *spliced*, *stranded* sequence."""
         return self.location.extract_sequence()
 
+    @lru_cache(maxsize=1)
     def get_reference_sequence(self) -> Sequence:
         """Returns the feature's *unspliced*, *positive strand* genomic sequence."""
         ObjectValidation.require_location_has_parent_with_sequence(self.location)
         return self.location.parent.sequence[self.location.start : self.location.end]
 
+    @lru_cache(maxsize=1)
     def get_genomic_sequence(self) -> Sequence:
         """Returns the feature's *unspliced*, *stranded* (transcription orientation) genomic sequence."""
         seq = self.location.parent.sequence[self.location.start : self.location.end]
@@ -166,7 +174,6 @@ class FeatureInterval(AbstractFeatureInterval):
         is_primary_feature: Optional[bool] = None,
     ):
         self.location = location  # genomic CompoundInterval
-        self.guid = guid
         self.sequence_guid = sequence_guid
         self.sequence_name = sequence_name
         self.feature_type = feature_type
@@ -175,6 +182,19 @@ class FeatureInterval(AbstractFeatureInterval):
         self.qualifiers = qualifiers
         self.bin = bins(self.start, self.end, fmt="bed")
         self._is_primary_feature = is_primary_feature
+
+        if guid is None:
+            self.guid = digest_object(
+                self.location,
+                self.qualifiers,
+                self.sequence_name,
+                self.feature_type,
+                self.feature_name,
+                self.feature_id,
+                self.is_primary_feature,
+            )
+        else:
+            self.guid = guid
 
         if self.location.parent:
             ObjectValidation.require_location_has_parent_with_sequence(self.location)
@@ -198,7 +218,7 @@ class FeatureInterval(AbstractFeatureInterval):
             feature_type=self.feature_type,
             sequence_name=self.sequence_name,
             sequence_guid=self.sequence_guid,
-            guid=self.guid,
+            feature_interval_guid=self.guid,
             is_primary_feature=self._is_primary_feature,
         )
 

@@ -1,4 +1,5 @@
 import json
+from uuid import UUID
 
 import pytest
 from Bio import SeqIO
@@ -129,7 +130,7 @@ class TestGff3Parser:
                             "sequence_name": "chr7",
                             "sequence_guid": None,
                             "protein_id": "NP_001035242.1",
-                            "transcript_guid": None,
+                            "transcript_guid": UUID("ff5a1dd3-ff65-f4f1-83ee-2f77e5a3efba"),
                         },
                         {
                             "exon_starts": (94656324, 94663333),
@@ -152,7 +153,7 @@ class TestGff3Parser:
                             "sequence_name": "chr7",
                             "sequence_guid": None,
                             "protein_id": "NP_001165908.1",
-                            "transcript_guid": None,
+                            "transcript_guid": UUID("1a0f7774-0c9c-82b7-4395-32effc2a47bc"),
                         },
                         {
                             "exon_starts": (94656369, 94663333),
@@ -175,7 +176,7 @@ class TestGff3Parser:
                             "sequence_name": "chr7",
                             "sequence_guid": None,
                             "protein_id": "NP_001165909.1",
-                            "transcript_guid": None,
+                            "transcript_guid": UUID("33585b05-5f56-2896-8ab5-e25b4a58f635"),
                         },
                         {
                             "exon_starts": (94656324, 94663333),
@@ -199,7 +200,7 @@ class TestGff3Parser:
                             "sequence_name": "chr7",
                             "sequence_guid": None,
                             "protein_id": "NP_001171890.1",
-                            "transcript_guid": None,
+                            "transcript_guid": UUID("c8f29ed4-18d3-2c89-205c-4e60e64b3c1f"),
                         },
                         {
                             "exon_starts": (94656369, 94663333),
@@ -222,7 +223,7 @@ class TestGff3Parser:
                             "sequence_name": "chr7",
                             "sequence_guid": None,
                             "protein_id": "NP_001171891.1",
-                            "transcript_guid": None,
+                            "transcript_guid": UUID("816fe1ce-d854-3b35-038c-6cf2b2f6e6ec"),
                         },
                         {
                             "exon_starts": (94656324, 94663333),
@@ -245,7 +246,7 @@ class TestGff3Parser:
                             "sequence_name": "chr7",
                             "sequence_guid": None,
                             "protein_id": "NP_055883.2",
-                            "transcript_guid": None,
+                            "transcript_guid": UUID("faed1257-db04-b629-bb91-b601e8853494"),
                         },
                     ],
                     "gene_id": None,
@@ -262,7 +263,7 @@ class TestGff3Parser:
                     },
                     "sequence_name": "chr7",
                     "sequence_guid": None,
-                    "gene_guid": None,
+                    "gene_guid": UUID("e8dca64b-0c05-5cdb-d113-421fe0f9abbe"),
                 }
             ],
             "feature_collections": [],

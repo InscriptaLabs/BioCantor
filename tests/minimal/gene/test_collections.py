@@ -1,17 +1,19 @@
+from uuid import UUID
+
 import pytest
 
 from inscripta.biocantor.exc import InvalidAnnotationError, NoncodingTranscriptError, InvalidQueryError
 from inscripta.biocantor.exc import ValidationException
 from inscripta.biocantor.gene.biotype import Biotype
 from inscripta.biocantor.gene.cds import CDSFrame
-from inscripta.biocantor.location.location_impl import SingleInterval
-from inscripta.biocantor.location.strand import Strand
 from inscripta.biocantor.io.models import (
     GeneIntervalModel,
     AnnotationCollectionModel,
     FeatureIntervalCollectionModel,
     TranscriptIntervalModel,
 )
+from inscripta.biocantor.location.location_impl import SingleInterval
+from inscripta.biocantor.location.strand import Strand
 from inscripta.biocantor.parent.parent import Parent
 from inscripta.biocantor.sequence.alphabet import Alphabet
 from inscripta.biocantor.sequence.sequence import Sequence
@@ -138,6 +140,10 @@ class TestFeatureIntervalCollection:
     def test_feature_collection(self):
         obj = self.collection1.to_feature_collection()
         model = FeatureIntervalCollectionModel.from_feature_collection(obj)
+        # remove guids to make comparison work
+        for item in model.feature_intervals:
+            item.feature_interval_guid = None
+        model.feature_collection_guid = None
         assert model == self.collection1
 
     def test_empty(self):
@@ -205,6 +211,19 @@ class TestAnnotationCollection:
     def test_annotation(self):
         obj = self.annot.to_annotation_collection()
         model = AnnotationCollectionModel.from_annotation_collection(obj)
+
+        # remove guids to make comparison work
+        for feat_grp in model.feature_collections:
+            for item in feat_grp.feature_intervals:
+                item.feature_interval_guid = None
+            feat_grp.feature_collection_guid = None
+
+        # remove guids to make comparison work
+        for gene in model.genes:
+            for item in gene.transcripts:
+                item.transcript_guid = None
+            gene.gene_guid = None
+
         assert model == self.annot
 
     def test_annot_no_range(self):
@@ -226,17 +245,66 @@ class TestAnnotationCollection:
     @pytest.mark.parametrize(
         "start,end,coding_only,completely_within,expected",
         [
-            (None, None, False, True, {"featgrp1", "featgrp2", "gene1"}),
-            (0, None, False, True, {"featgrp1", "featgrp2", "gene1"}),
-            (None, 30, False, True, {"featgrp1", "featgrp2", "gene1"}),
+            (
+                None,
+                None,
+                False,
+                True,
+                # {"featgrp1", "featgrp2", "gene1"}
+                {
+                    UUID("f8b2ad18-b86b-441c-ee07-144e9e5affff"),
+                    UUID("52f241d1-29a1-f1a8-e0ab-2aadf401f3f6"),
+                    UUID("c79e500a-6521-99d6-07f9-568b9bf4e478"),
+                },
+            ),
+            (
+                0,
+                None,
+                False,
+                True,  # {"featgrp1", "featgrp2", "gene1"}
+                {
+                    UUID("f8b2ad18-b86b-441c-ee07-144e9e5affff"),
+                    UUID("52f241d1-29a1-f1a8-e0ab-2aadf401f3f6"),
+                    UUID("c79e500a-6521-99d6-07f9-568b9bf4e478"),
+                },
+            ),
+            (
+                None,
+                30,
+                False,
+                True,  # {"featgrp1", "featgrp2", "gene1"}
+                {
+                    UUID("f8b2ad18-b86b-441c-ee07-144e9e5affff"),
+                    UUID("52f241d1-29a1-f1a8-e0ab-2aadf401f3f6"),
+                    UUID("c79e500a-6521-99d6-07f9-568b9bf4e478"),
+                },
+            ),
             (0, 0, False, True, {}),
-            (0, 20, False, True, {"featgrp1", "gene1"}),
-            (None, 20, False, True, {"featgrp1", "gene1"}),
-            (25, None, False, True, {"featgrp2"}),
+            (
+                0,
+                20,
+                False,
+                True,  # {"featgrp1", "gene1"}
+                {UUID("f8b2ad18-b86b-441c-ee07-144e9e5affff"), UUID("52f241d1-29a1-f1a8-e0ab-2aadf401f3f6")},
+            ),
+            (
+                None,
+                20,
+                False,
+                True,  # {"featgrp1", "gene1"}
+                {UUID("f8b2ad18-b86b-441c-ee07-144e9e5affff"), UUID("52f241d1-29a1-f1a8-e0ab-2aadf401f3f6")},
+            ),
+            (25, None, False, True, {UUID("c79e500a-6521-99d6-07f9-568b9bf4e478")}),  # {"featgrp2"}
             (26, None, False, True, {}),
-            (26, None, False, False, {"featgrp2"}),
-            (0, 3, False, False, {"featgrp1", "gene1"}),
-            (0, None, True, False, {"gene1"}),
+            (26, None, False, False, {UUID("c79e500a-6521-99d6-07f9-568b9bf4e478")}),  # {"featgrp2"}
+            (
+                0,
+                3,
+                False,
+                False,  # {"featgrp1", "gene1"}
+                {UUID("f8b2ad18-b86b-441c-ee07-144e9e5affff"), UUID("52f241d1-29a1-f1a8-e0ab-2aadf401f3f6")},
+            ),
+            (0, None, True, False, {UUID("f8b2ad18-b86b-441c-ee07-144e9e5affff")}),  # {"gene1"}
         ],
     )
     def test_position_queries(self, start, end, completely_within, coding_only, expected):
@@ -245,7 +313,7 @@ class TestAnnotationCollection:
         if r.is_empty:
             assert len(expected) == 0
         else:
-            assert set.union(*[x.identifiers for x in r]) == expected
+            assert r.hierarchical_children_guids.keys() == expected
 
     @pytest.mark.parametrize(
         "start,end,coding_only,completely_within,expected",
@@ -275,7 +343,11 @@ class TestAnnotationCollection:
 
     @pytest.mark.parametrize(
         "ids",
-        [["gene1"], ["featgrp1", "gene1"], []],
+        (
+            {UUID("f8b2ad18-b86b-441c-ee07-144e9e5affff")},
+            {UUID("f8b2ad18-b86b-441c-ee07-144e9e5affff"), UUID("52f241d1-29a1-f1a8-e0ab-2aadf401f3f6")},
+            {},
+        ),
     )
     def test_query_by_identifiers(self, ids):
         obj = self.annot.to_annotation_collection()
@@ -283,7 +355,7 @@ class TestAnnotationCollection:
         if r.is_empty:
             assert len(ids) == 0
         else:
-            assert set.union(*[x.identifiers for x in r]) == set(ids)
+            assert r.hierarchical_children_guids.keys() == ids
 
     def test_extract_sequence(self):
         obj = self.annot.to_annotation_collection(parent=parent_genome)

@@ -265,9 +265,11 @@ class TestFeatureInterval:
         for model in [self.se_unspliced, self.e3_spliced_minus, self.e3_spliced]:
             obj = model.to_feature_interval()
             new_model = FeatureIntervalModel.from_feature_interval(obj)
+            new_model.feature_interval_guid = None
             assert model == new_model
             obj = model.to_feature_interval(parent=parent)
             new_model = FeatureIntervalModel.from_feature_interval(obj)
+            new_model.feature_interval_guid = None
             assert model == new_model
 
     def test_identifiers(self):

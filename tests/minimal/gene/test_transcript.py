@@ -759,9 +759,11 @@ class TestTranscript:
         ]:
             obj = model.to_transcript_interval()
             new_model = TranscriptIntervalModel.from_transcript_interval(obj)
+            new_model.transcript_guid = None
             assert model == new_model
             obj = model.to_transcript_interval(parent=parent)
             new_model = TranscriptIntervalModel.from_transcript_interval(obj)
+            new_model.transcript_guid = None
             assert model == new_model
 
     @pytest.mark.parametrize(

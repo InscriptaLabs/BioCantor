@@ -20,13 +20,10 @@ from Bio.SeqRecord import SeqRecord
 
 from inscripta.biocantor.gene.collections import AnnotationCollection, GeneInterval
 from inscripta.biocantor.gene.transcript import TranscriptInterval
+from inscripta.biocantor.io.exc import StrandViolationWarning
 from inscripta.biocantor.io.genbank.constants import GeneFeatures, TranscriptFeatures, IntervalFeatures, GenbankFlavor
 from inscripta.biocantor.io.genbank.exc import GenBankExportError
 from inscripta.biocantor.location.strand import Strand
-
-
-class StrandViolationWarning(UserWarning):
-    pass
 
 
 def collection_to_genbank(

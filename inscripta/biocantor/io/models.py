@@ -39,7 +39,7 @@ class FeatureIntervalModel(BaseModel):
     qualifiers: Optional[dict] = None
     sequence_name: Optional[str] = None
     sequence_guid: Optional[UUID] = None
-    guid: Optional[UUID] = None
+    feature_interval_guid: Optional[UUID] = None
     feature_type: Optional[str] = None
     feature_name: Optional[str] = None
     feature_id: Optional[str] = None
@@ -72,7 +72,7 @@ class FeatureIntervalModel(BaseModel):
             feature_type=self.feature_type,
             feature_name=self.feature_name,
             feature_id=self.feature_id,
-            guid=self.guid,
+            guid=self.feature_interval_guid,
             is_primary_feature=self.is_primary_feature,
         )
 
@@ -148,7 +148,7 @@ class TranscriptIntervalModel(BaseModel):
         return TranscriptInterval(
             location=location,
             cds=cds,
-            transcript_guid=self.guid,
+            guid=self.transcript_guid,
             qualifiers=self.qualifiers,
             is_primary_tx=self.is_primary_tx,
             transcript_id=self.transcript_id,
