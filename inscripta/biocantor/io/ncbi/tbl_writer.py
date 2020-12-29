@@ -129,7 +129,7 @@ class TblFeature(ABC):
         return "\n".join(s)
 
 
-class GeneFeature(TblFeature):
+class GeneTblFeature(TblFeature):
     """
     A gene feature should have a single interval only. It also should have a fairly limited set of qualifiers.
 
@@ -183,18 +183,18 @@ class GeneFeature(TblFeature):
         )
 
 
-class MRnaFeature(TblFeature):
+class MRNATblFeature(TblFeature):
     """
     A mRNA feature.
     """
 
     FEATURE_TYPE = TranscriptFeatures.CODING_TRANSCRIPT
-    VALID_KEYS = GeneFeature.VALID_KEYS | {"protein_id", "transcript_id"}
+    VALID_KEYS = GeneTblFeature.VALID_KEYS | {"protein_id", "transcript_id"}
 
     def __init__(
         self,
         transcript: TranscriptInterval,
-        cds_feature: "CDSFeature",
+        cds_feature: "CDSTblFeature",
     ):
         super().__init__(
             transcript.location,
@@ -206,15 +206,15 @@ class MRnaFeature(TblFeature):
         )
 
 
-class CDSFeature(TblFeature):
+class CDSTblFeature(TblFeature):
     """
     A mRNA feature.
     """
 
     FEATURE_TYPE = IntervalFeatures.CDS
-    VALID_KEYS = MRnaFeature.VALID_KEYS | {"product"}
+    VALID_KEYS = MRNATblFeature.VALID_KEYS | {"product"}
 
-    def __init__(self, transcript: TranscriptInterval, gene_feature: GeneFeature, translation_table: TranslationTable):
+    def __init__(self, transcript: TranscriptInterval, gene_feature: GeneTblFeature, translation_table: TranslationTable):
         qualifiers = gene_feature.qualifiers.copy()
 
         if "product" in transcript.qualifiers:
@@ -244,15 +244,15 @@ class CDSFeature(TblFeature):
         )
 
 
-class NcRnaFeature(TblFeature):
+class NcRNATblFeature(TblFeature):
     """
     A more specific ncRNA feature. Has a ncrna_class that must also be discerned.
     """
 
     FEATURE_TYPE = TranscriptFeatures.NONCODING_TRANSCRIPT
-    VALID_KEYS = GeneFeature.VALID_KEYS | {"transcript_id", "ncRNA_class"}
+    VALID_KEYS = GeneTblFeature.VALID_KEYS | {"transcript_id", "ncRNA_class"}
 
-    def __init__(self, transcript: TranscriptInterval, gene_feature: GeneFeature):
+    def __init__(self, transcript: TranscriptInterval, gene_feature: GeneTblFeature):
         qualifiers = gene_feature.qualifiers.copy()
         qualifiers["transcript_id"] = [transcript.transcript_id]
         qualifiers["ncRNA_class"] = [transcript.transcript_type.name]
@@ -266,15 +266,15 @@ class NcRnaFeature(TblFeature):
         )
 
 
-class MiscRnaFeature(TblFeature):
+class MiscRNATblFeature(TblFeature):
     """
     A generic ncRNA feature. Also provides a shared constructor for all non-coding transcripts.
     """
 
     FEATURE_TYPE = TranscriptFeatures.MISC_RNA
-    VALID_KEYS = GeneFeature.VALID_KEYS | {"transcript_id", "product"}
+    VALID_KEYS = GeneTblFeature.VALID_KEYS | {"transcript_id", "product"}
 
-    def __init__(self, transcript: TranscriptInterval, gene_feature: GeneFeature):
+    def __init__(self, transcript: TranscriptInterval, gene_feature: GeneTblFeature):
         qualifiers = gene_feature.qualifiers.copy()
         qualifiers["transcript_id"] = [transcript.transcript_id]
 
@@ -292,7 +292,7 @@ class MiscRnaFeature(TblFeature):
         )
 
 
-class TRnaFeature(MiscRnaFeature):
+class TRNATblFeature(MiscRNATblFeature):
     """
     A tRNA feature.
     """
@@ -300,7 +300,7 @@ class TRnaFeature(MiscRnaFeature):
     FEATURE_TYPE = TranscriptFeatures.TRANSFER_RNA
 
 
-class RRnaFeature(MiscRnaFeature):
+class RRNATblFeature(MiscRNATblFeature):
     """
     A rRNA feature.
     """
@@ -320,7 +320,7 @@ class TblGene:
         translation_table: Optional[TranslationTable] = TranslationTable.DEFAULT,
     ):
         self.gene = gene
-        self.gene_tbl = GeneFeature(self.gene, locus_tag)
+        self.gene_tbl = GeneTblFeature(self.gene, locus_tag)
 
         # now build the transcript level feature(s). NCBI assumes that all transcripts have the same biotype
         # as the gene feature, and so we just apply that assumption here.
@@ -329,16 +329,16 @@ class TblGene:
         for tx in gene.transcripts:
             if gene.is_coding:
                 # the CDS feature is built first so that the end-completeness status can be assessed
-                cds_tbl = CDSFeature(tx, self.gene_tbl, translation_table)
-                tx_tbl = MRnaFeature(tx, cds_tbl)
+                cds_tbl = CDSTblFeature(tx, self.gene_tbl, translation_table)
+                tx_tbl = MRNATblFeature(tx, cds_tbl)
             # try to figure out if this biotype is one of the INSDC biotypes we support, otherwise fall back
             # to just a generic misc_RNA feature
             elif gene.gene_type == Biotype.rRNA:
-                tx_tbl = RRnaFeature(tx, self.gene_tbl)
+                tx_tbl = RRNATblFeature(tx, self.gene_tbl)
             elif gene.gene_type == Biotype.tRNA:
-                tx_tbl = TRnaFeature(tx, self.gene_tbl)
+                tx_tbl = TRNATblFeature(tx, self.gene_tbl)
             else:
-                tx_tbl = NcRnaFeature(tx, self.gene_tbl)
+                tx_tbl = NcRNATblFeature(tx, self.gene_tbl)
             self.gene_tbl.children.append(tx_tbl)
 
     def __iter__(self):
@@ -388,6 +388,6 @@ def collection_to_tbl(
 
             tblgene = TblGene(gene, locus_tag, translation_table)
             for obj in tblgene:
-                if genbank_flavor == GenbankFlavor.PROKARYOTIC and type(obj) == MRnaFeature:
+                if genbank_flavor == GenbankFlavor.PROKARYOTIC and type(obj) == MRNATblFeature:
                     continue
                 print(str(obj), file=tbl_file_handle)
