@@ -1,7 +1,7 @@
 """
 Prove that we can handle -1 frameshifts properly when modeled in the input data.
 """
-from inscripta.biocantor.io.gff3.parser import parse_standard_gff3, gff3_fasta_to_model
+from inscripta.biocantor.io.gff3.parser import parse_gff3_embedded_fasta
 from inscripta.biocantor.io.genbank.parser import parse_genbank
 from inscripta.biocantor.io.parser import ParsedAnnotationRecord
 
@@ -15,8 +15,7 @@ class TestParseFrameshifts:
         with open(gbk, "r") as fh:
             gbk_rec = list(ParsedAnnotationRecord.parsed_annotation_records_to_model(parse_genbank(fh)))[0]
 
-        with open(gff3, "r") as fh:
-            gff3_rec = list(gff3_fasta_to_model(parse_standard_gff3(str(gff3)), gff3_with_fasta_handle=fh))[0]
+        gff3_rec = list(ParsedAnnotationRecord.parsed_annotation_records_to_model(parse_gff3_embedded_fasta(gff3)))[0]
 
         expected_protein = (
             "MKKRNFSAEFKRESAQLVVDQKYTVADAAKAMDVGLSTMTRWVKQLRDERQGKTPKASPITPEQIEIRKLRKKLQRIEMENEILKKNRP"
@@ -47,9 +46,7 @@ class TestParseFrameshifts:
 
     def test_parse_peg10(self, test_data_dir):
         """PEG10 is a human gene with a -1 frameshift"""
-        gff = test_data_dir / "PEG10_offset_gff3_fasta.gff3"
-        with open(gff, "r") as fh:
-            rec = list(gff3_fasta_to_model(parse_standard_gff3(str(gff)), gff3_with_fasta_handle=fh))[0]
-
-        tx = rec.genes[0].transcripts[0]
+        gff3 = test_data_dir / "PEG10_offset_gff3_fasta.gff3"
+        gff3_rec = list(ParsedAnnotationRecord.parsed_annotation_records_to_model(parse_gff3_embedded_fasta(gff3)))[0]
+        tx = gff3_rec.genes[0].transcripts[0]
         assert not tx.has_in_frame_stop

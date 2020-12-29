@@ -13,25 +13,21 @@ dataclass to adjust the arguments passed to :mod:`gffutils`.
 import logging
 from dataclasses import dataclass
 from io import StringIO
-from typing import Iterable, List, Optional, Callable, TextIO
+from pathlib import Path
+from typing import Iterable, List, Optional, Callable, TextIO, Dict, Set
 
 import gffutils
 from Bio import SeqIO
 from Bio.SeqRecord import SeqRecord
 from gffutils.feature import Feature
 from gffutils.interface import FeatureDB
-
 from inscripta.biocantor.gene.biotype import Biotype
 from inscripta.biocantor.gene.cds import CDSPhase
-from inscripta.biocantor.gene.collections import AnnotationCollection
-from inscripta.biocantor.io.exc import InvalidInputError
-from inscripta.biocantor.io.fasta.fasta import fasta_to_parents, seq_to_parent
 from inscripta.biocantor.io.gff3.constants import GFF3Headers, BioCantorGFF3ReservedQualifiers, GFF3FeatureTypes
 from inscripta.biocantor.io.gff3.exc import GFF3FastaException, EmptyGff3Exception
 from inscripta.biocantor.io.models import AnnotationCollectionModel
 from inscripta.biocantor.io.parser import ParsedAnnotationRecord
 from inscripta.biocantor.location.strand import Strand
-from inscripta.biocantor.sequence.alphabet import Alphabet
 
 logger = logging.getLogger(__name__)
 
@@ -196,58 +192,11 @@ def default_parse_func(db: FeatureDB, chroms: List[str]) -> Iterable[AnnotationC
         yield annot
 
 
-def parse_standard_gff3(
-    gff: str,
-    gffutil_parse_args: Optional[GffutilsParseArgs] = GffutilsParseArgs(),
-    parse_func: Optional[Callable[[FeatureDB, List[str]], Iterable[AnnotationCollectionModel]]] = default_parse_func,
-    gffutil_transform_func: Optional[Callable[[Feature], Feature]] = None,
-    db_fn: Optional[str] = ":memory:",
-) -> Iterable[AnnotationCollectionModel]:
-    """Parses a GFF3 file using gffutils.
-
-    The parameters parse_func, gffutil_parse_args are implemented separately for each data source. A default
-    implementation exists in this module.
-
-    Args:
-        gff: Path to a GFF. Must be local or HTTPS.
-        parse_func: Function that actually converts gffutils to Inscripta representation.
-        gffutil_transform_func: Function that transforms feature keys. Can be necessary in
-            cases where IDs are not unique.
-        gffutil_parse_args: Parsing arguments to pass to gffutils.
-        db_fn: Location to write a gffutils database. Defaults to `:memory:`, which means the database will be built
-            transiently. This value can be set to a file location if memory is a concern, or if you want to retain
-            the gffutils database. It will not be cleaned up.
-
-    Yields:
-        :class:`~biocantor.io.models.AnnotationCollectionModel`
-    """
-    db = gffutils.create_db(gff, db_fn, transform=gffutil_transform_func, **gffutil_parse_args.__dict__)
-    if sum(db.count_features_of_type(i) for i in db.featuretypes()) == 0:
-        raise EmptyGff3Exception("Parsing this GFF3 led to zero features. Is it empty or corrupted?")
-    logger.info(f"Parsed {gff}")
-    for i in db.featuretypes():
-        logger.info(f"Found feature type {i} with {db.count_features_of_type(i)} features")
-    # get the sequences
-    chrom_query = db.execute("SELECT DISTINCT seqid FROM features")
-    chroms = [x["seqid"] for x in chrom_query]
-    logger.info(f"Found {len(chroms)} sequences")
-    yield from parse_func(db, chroms)
-
-
 def extract_seqrecords_from_gff3_fasta(gff3_with_fasta_handle: TextIO) -> List[SeqRecord]:
     """This function is **NOT** a function to apply FASTA information to a GFF3. This function is purely intended
-    to extract the FASTA from a combined file and produce SeqRecords. If you want to parse a GFF3 into memory with
-    sequences from a combined file, you would do this:
-
-    .. code:: python
-
-        from inscripta.biocantor.io.gff3.parser import gff3_fasta_to_model, parse_gff
-        q = list(gff3_fasta_to_model(parse_gff("tests/data/insO_frameshift.gff3"),
-            gff3_with_fasta="tests/data/insO_frameshift.gff3"))
+    to extract the FASTA from a combined file and produce SeqRecords.
 
     Parses a GFF3 with a FASTA suffix. Will raise an exception if such a suffix is not found.
-
-    This function is specifically for extracting the FASTA information from the GFF3; it does not parse the GFF3 itself.
 
     Args:
         gff3_with_fasta_handle: Open file handle in text mode to a GFF3 file with a FASTA suffix.
@@ -273,8 +222,68 @@ def extract_seqrecords_from_gff3_fasta(gff3_with_fasta_handle: TextIO) -> List[S
     return recs
 
 
+def parse_standard_gff3(
+    gff: Path,
+    gffutil_parse_args: Optional[GffutilsParseArgs] = GffutilsParseArgs(),
+    parse_func: Optional[Callable[[FeatureDB, List[str]], Iterable[AnnotationCollectionModel]]] = default_parse_func,
+    gffutil_transform_func: Optional[Callable[[Feature], Feature]] = None,
+    db_fn: Optional[str] = ":memory:",
+) -> Iterable[ParsedAnnotationRecord]:
+    """Parses a GFF3 file using gffutils.
+
+    The parameters parse_func, gffutil_parse_args are implemented separately for each data source. A default
+    implementation exists in this module.
+
+    Args:
+        gff: Path to a GFF. Must be local or HTTPS.
+        parse_func: Function that actually converts gffutils to BioCantor representation.
+        gffutil_transform_func: Function that transforms feature keys. Can be necessary in cases where IDs are not
+            unique.
+        gffutil_parse_args: Parsing arguments to pass to gffutils.
+        db_fn: Location to write a gffutils database. Defaults to `:memory:`, which means the database will be built
+            transiently. This value can be set to a file location if memory is a concern, or if you want to retain
+            the gffutils database. It will not be cleaned up.
+
+    Yields:
+        Iterable of ``ParsedAnnotationRecord`` objects.
+    """
+    db = gffutils.create_db(str(gff), db_fn, transform=gffutil_transform_func, **gffutil_parse_args.__dict__)
+    if sum(db.count_features_of_type(i) for i in db.featuretypes()) == 0:
+        raise EmptyGff3Exception("Parsing this GFF3 led to zero features. Is it empty or corrupted?")
+    logger.info(f"Parsed {gff}")
+    for i in db.featuretypes():
+        logger.info(f"Found feature type {i} with {db.count_features_of_type(i)} features")
+    # get the sequences
+    chrom_query = db.execute("SELECT DISTINCT seqid FROM features")
+    chroms = [x["seqid"] for x in chrom_query]
+    logger.info(f"Found {len(chroms)} sequences")
+    for annnot in parse_func(db, chroms):
+        yield ParsedAnnotationRecord(annnot)
+
+
+def _produce_empty_records(
+    seqrecords_dict: Dict[str, SeqRecord], seen_seqs: Set[str]
+) -> Iterable[ParsedAnnotationRecord]:
+    """
+    Convenience function shared by :meth:`parse_gff3_embedded_fasta()` and :meth:`parse_gff3_fasta()` that appends
+    empty ``ParsedAnnotationRecord`` objects to the end. This ensures that every sequence in the FASTA is still
+    represented in the final object set, even if it has zero annotations.
+
+    Args:
+        seqrecords_dict: Dictionary mapping sequence names to SeqRecord objects.
+        seen_seqs: Set of sequences that were found when parsing the GFF3.
+
+    Yields:
+        Iterable of ``ParsedAnnotationRecord`` objects with empty annotations.
+    """
+    for sequence_name in seqrecords_dict.keys() - seen_seqs:
+        seqrecord = seqrecords_dict[sequence_name]
+        annot = AnnotationCollectionModel.Schema().load(dict(sequence_name=seqrecord.id, start=0, end=len(seqrecord)))
+        yield ParsedAnnotationRecord(annotation=annot, seqrecord=seqrecord)
+
+
 def parse_gff3_embedded_fasta(
-    gff3_with_fasta: str,
+    gff3_with_fasta: Path,
     gffutil_parse_args: Optional[GffutilsParseArgs] = GffutilsParseArgs(),
     parse_func: Optional[Callable[[FeatureDB, List[str]], Iterable[AnnotationCollectionModel]]] = default_parse_func,
     gffutil_transform_func: Optional[Callable[[Feature], Feature]] = None,
@@ -284,8 +293,8 @@ def parse_gff3_embedded_fasta(
     Parses a GFF3 with an embedded FASTA. Wraps :meth:`parse_gff()` to produce ``ParsedAnnotationRecord``.
 
     Args:
-        gff3_with_fasta: Path to a GFF3 file with a FASTA suffix.
-        parse_func: Function that actually converts gffutils to Inscripta representation.
+        gff3_with_fasta: Path to a GFF3 file with a FASTA suffix. Must be local or HTTPS.
+        parse_func: Function that actually converts gffutils to BioCantor representation.
         gffutil_transform_func: Function that transforms feature keys. Can be necessary in
             cases where IDs are not unique.
         gffutil_parse_args: Parsing arguments to pass to gffutils.
@@ -303,17 +312,21 @@ def parse_gff3_embedded_fasta(
         seqrecords = extract_seqrecords_from_gff3_fasta(fh)
     seqrecords_dict = {x.id: x for x in seqrecords}
 
-    for annot_collection in parse_standard_gff3(
+    # keep track of sequences we see in the GFF3 so we can append empty records (contigs with no annotations)
+    seen_seqs = set()
+
+    for annot_record in parse_standard_gff3(
         gff3_with_fasta, gffutil_parse_args, parse_func, gffutil_transform_func, db_fn
     ):
-        yield ParsedAnnotationRecord(
-            annotation=annot_collection, seqrecord=seqrecords_dict[annot_collection.sequence_name]
-        )
+        annot_record.seqrecord = seqrecords_dict[annot_record.annotation.sequence_name]
+        yield annot_record
+        seen_seqs.add(annot_record.annotation.sequence_name)
+    yield from _produce_empty_records(seqrecords_dict, seen_seqs)
 
 
 def parse_gff3_fasta(
-    gff3: str,
-    fasta: str,
+    gff3: Path,
+    fasta: Path,
     gffutil_parse_args: Optional[GffutilsParseArgs] = GffutilsParseArgs(),
     parse_func: Optional[Callable[[FeatureDB, List[str]], Iterable[AnnotationCollectionModel]]] = default_parse_func,
     gffutil_transform_func: Optional[Callable[[Feature], Feature]] = None,
@@ -323,13 +336,13 @@ def parse_gff3_fasta(
     Parses a GFF3 with a separate FASTA. Wraps :meth:`parse_gff()` to produce ``ParsedAnnotationRecord``.
 
     Args:
-        gff3: Path to a GFF3 file.
-        fasta: Path to a FASTA file.
-        parse_func: Function that actually converts gffutils to Inscripta representation.
+        gff3: Path to a GFF3 file. Must be local or HTTPS.
+        fasta: Path to a FASTA file. Must be local or HTTPS.
+        parse_func: Function that actually converts gffutils to BioCantor representation.
         gffutil_transform_func: Function that transforms feature keys. Can be necessary in
             cases where IDs are not unique.
         gffutil_parse_args: Parsing arguments to pass to gffutils.
-        db_fn: Location to write a gffutils database. Defaults to `:memory:`, which means the database will be built
+        db_fn: Location to write a gffutils database. Defaults to ``:memory:``, which means the database will be built
             transiently. This value can be set to a file location if memory is a concern, or if you want to retain
             the gffutils database. It will not be cleaned up.
 
@@ -341,70 +354,19 @@ def parse_gff3_fasta(
     """
     seqrecords_dict = {x.id: x for x in SeqIO.parse(fasta, format="fasta")}
 
-    for annot_collection in parse_standard_gff3(gff3, gffutil_parse_args, parse_func, gffutil_transform_func, db_fn):
+    # keep track of sequences we see in the GFF3 so we can append empty records (contigs with no annotations)
+    seen_seqs = set()
+
+    for annot_record in parse_standard_gff3(gff3, gffutil_parse_args, parse_func, gffutil_transform_func, db_fn):
         try:
-            seqrecord = seqrecords_dict[annot_collection.sequence_name]
+            seqrecord = seqrecords_dict[annot_record.annotation.sequence_name]
         except KeyError:
             logger.warning(
-                f"Sequence symbol {annot_collection.sequence_name} found in GFF3 but not in FASTA. "
+                f"Sequence symbol {annot_record.annotation.sequence_name} found in GFF3 but not in FASTA. "
                 f"These annotation records will be ignored."
             )
             continue
-        yield ParsedAnnotationRecord(annotation=annot_collection, seqrecord=seqrecord)
-
-
-def gff3_fasta_to_model(
-    annotations: Iterable[AnnotationCollectionModel],
-    fasta_handle: Optional[TextIO] = None,
-    gff3_with_fasta_handle: Optional[TextIO] = None,
-    alphabet: Optional[Alphabet] = Alphabet.NT_EXTENDED_GAPPED,
-) -> Iterable[AnnotationCollection]:
-    """Convert a parsed GFF3 file to object model.
-
-    Take a iterator of :class:`~biocantor.io.models.AnnotationCollectionModel` and yield an
-    iterable of :class:`~biocantor.gene.collections.AnnotationCollection`.
-
-    This incorporates sequence information on to each :class:`~biocantor.gene.transcript.TranscriptInterval`
-    and :class:`~biocantor.gene.feature.FeatureInterval` object, if a ``fasta`` is provided.
-
-    Args:
-        annotations: Iterable that comes from a parser function.
-        fasta_handle: Open handle to a FASTA file. Mutually exclusive with ``gff3_with_fasta_handle``.
-        gff3_with_fasta_handle: Open handle to a GFF3 file with a FASTA suffix. Mutually exclusive with ``fasta``.
-        alphabet: The alphabet to use.
-
-    Raises:
-        InvalidInputError: If both ``fasta_handle`` anad ``gff3_with_fasta_handle`` are specified.
-
-    Yields:
-        :class:`~biocantor.gene.collections.AnnotationCollection` with sequence information.
-    """
-    if fasta_handle and gff3_with_fasta_handle:
-        raise InvalidInputError("Cannot pass both fasta_handle and gff3_with_fasta_handle at the same time.")
-
-    if fasta_handle:
-        parents = fasta_to_parents(fasta_handle, alphabet)
-    elif gff3_with_fasta_handle:
-        parents = {}
-        for rec in extract_seqrecords_from_gff3_fasta(gff3_with_fasta_handle):
-            parents[rec.id] = seq_to_parent(str(rec.seq), alphabet=alphabet, seq_id=rec.id)
-    else:
-        parents = None
-
-    # keep track of seqs we saw in order to handle empty sequences
-    seen_seqs = set()
-    for annotation in annotations:
-        if parents:
-            parent = parents[annotation.sequence_name]
-            seen_seqs.add(annotation.sequence_name)
-        else:
-            parent = None
-        annot_obj = annotation.to_annotation_collection(parent=parent)
-        yield annot_obj
-
-    # build empty objects to store sequences that have no annotations
-    if parents:
-        for sequence_name in parents.keys() - seen_seqs:
-            parent = parents[sequence_name]
-            annot_obj = AnnotationCollection(sequence_name=sequence_name, parent=parent)
-            yield annot_obj
+        annot_record.seqrecord = seqrecord
+        yield annot_record
+        seen_seqs.add(annot_record.annotation.sequence_name)
+    yield from _produce_empty_records(seqrecords_dict, seen_seqs)
