@@ -1,0 +1,72 @@
+LOCUS       NC_001148.4             2000 bp    DNA              UNK 01-JAN-1980
+DEFINITION  GenBank produced by BioCantor.
+ACCESSION   NC_001148
+VERSION     NC_001148.4
+KEYWORDS    .
+SOURCE      None
+  ORGANISM  .
+            .
+FEATURES             Location/Qualifiers
+     gene            152..1702
+                     /gene="RPL7B"
+                     /locus_tag="YPL198W"
+                     /db_xref="GeneID:855903"
+                     /gene_symbol="RPL7B"
+                     /gene_biotype="protein_coding"
+     CDS             join(152..162,572..665,1073..1702)
+                     /gene="RPL7B"
+                     /locus_tag="YPL198W"
+                     /product="ribosomal 60S subunit protein L7B"
+                     /transcript_id="NM_001184012.1"
+                     /db_xref="GeneID:855903"
+                     /transcript_symbol="RPL7B"
+     gene            152..1702
+                     /gene="RPL7B"
+                     /locus_tag="YPL198W"
+                     /db_xref="GeneID:855903"
+                     /gene_symbol="RPL7B"
+                     /gene_biotype="protein_coding"
+     CDS             join(152..162,572..665,1073..1702)
+                     /gene="RPL7B"
+                     /locus_tag="YPL198W"
+                     /product="ribosomal 60S subunit protein L7B"
+                     /transcript_id="NM_001184012.1"
+                     /db_xref="GeneID:855903"
+                     /transcript_symbol="RPL7B"
+                     /codon_start=1
+ORIGIN
+        1 tattacagtt gaggtaccca cacgcgcact tgaaaagtat ataaaagtga aatatttcag
+       61 agctcttcct attgcttttt caatagaggc ttaaatcttc ctcgtttgta gagtaagtag
+      121 acccatatta caaatctcca tcaacgtcat aatgtccact gagtatgtca aaaactacaa
+      181 atacgacctt atttggtaac tagtttgttg tcggttacat ctgaatttga agtacccaaa
+      241 ttgataatac ttcaggaaaa gttaacgcac attcaaaacg tgttttttta caataaccta
+      301 tggtgatcga acctaattat aaaaagaagc acttgaagta gtttatcttc ttcaagtacc
+      361 tttcgtaggg gattttcatt tttaatgaac aaaggcattg tttgttagta tctattactt
+      421 gtaatacacc gataatttca ttgatagata tttccagcat gtctctgcat ctcccttcca
+      481 tcgaatgaaa agtggtgttt tcaattcgat gtaactgaat ctttgttctt aatatgactt
+      541 ctttgctaac atttttttca tttttgaata gaaaaatctt gactcctgaa tctcaattga
+      601 agaagactaa agctcaacaa aagactgcag aacaaattgc tgcagagaga gctgcccgta
+      661 aagccgtatg ttcatttacc atgtttgaaa gatattatat cattcctttt acagtgagtt
+      721 cacaaaaata taatactttg ttaaagagat cttttctcgg ttttacattt ccttggcatt
+      781 tgttagtcgc gaacaatttt cactttttgc aacgtttttt ttctttctta atgatgaaaa
+      841 ctattcctta ttctcgacta gtctttgaca atgctgtcgt ttaatcacca tctttcggct
+      901 gactagtaaa gaaaatgcaa gagtgagaat atgccaagaa tctgcaagat tgagttaagt
+      961 tttcttagaa agttttatcg tgcatatttt tcactaaatt ggaatgacgt taaaaccaaa
+     1021 agtactgatc ttactaacat taatcaaaaa ttcttgatga atattatttt aggctaacaa
+     1081 ggaaaaaaga gctattattt tggaaagaaa cgccgcttac caaaaggaat acgaaactgc
+     1141 tgaaagaaac atcattcaag ctaagcgtga tgccaaggct gctggttcct actacgtcga
+     1201 agctcaacac aagttggtct tcgttgtcag aatcaagggt attaacaaga ttccacctaa
+     1261 gccaagaaag gttctacaat tgctaagatt gacaagaatc aactctggta cattcgtcaa
+     1321 agttaccaag gctactttgg aactattgaa gttgattgaa ccatacgttg cttacggtta
+     1381 cccatcctac tctactatta gacaattggt ctacaagaga ggtttcggta agatcaacaa
+     1441 gcaaagagtt ccattgtccg acaatgctat catcgaagcc aacttgggta agtatggtat
+     1501 cttgtccatt gacgatttga ttcacgaaat catcactgtt ggtccacact tcaagcaagc
+     1561 taacaacttt ttgtggccat tcaagttgtc caacccatct ggtggttggg gtgtcccaag
+     1621 aaagttcaag catttcatcc aaggtggttc tttcggtaac cgtgaagaat tcatcaataa
+     1681 attggttaag gctatgaact aacattattc cgtgtggcaa taatctcaat gtataataaa
+     1741 taatatttct cttcatatat atgaccggac tcgtaataga ataattgact ggaacaatag
+     1801 cgcatattgc tttgcttcta tacgtagttg agttttcact cacgtacagc tagagaatct
+     1861 cacataggag tatccctgta gttagttccg cgcggttcga tcacggatat actttcaaca
+     1921 atggcagtat gaaagcctgt tataaaaaag aaggaaacaa taaacgaagt gcttttttgc
+     1981 ctcctaaatt attcaatttg
+//
