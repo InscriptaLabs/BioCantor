@@ -5,7 +5,7 @@ and can include child features.
 """
 
 from inscripta.biocantor.parent import make_parent, Parent
-from inscripta.biocantor.sequence.alphabet import Alphabet
+from inscripta.biocantor.sequence.alphabet import Alphabet  # noqa: F401
 from inscripta.biocantor.sequence.sequence import Sequence
 
 

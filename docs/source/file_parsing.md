@@ -18,7 +18,7 @@ header line `##gff-version 3`. The FASTA section comes at the end, and is delimi
 This version of GFF3 could be constructed from two separate files with the command:
 
 ```
-(cat ${GFF3}; echo -e "###FASTA\n"; cat ${FASTA}) > gff3_with_fasta.gff3
+(cat ${GFF3}; echo -e "##FASTA\n"; cat ${FASTA}) > gff3_with_fasta.gff3
 ```
 
 To enable GFF3 parsing, BioCantor leverages the library [gffutils](http://daler.github.io/gffutils/). 
