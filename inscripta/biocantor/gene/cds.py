@@ -225,6 +225,10 @@ class CDSInterval:
                     cleaned_rel_ends[-1] = cleaned_rel_ends[-1] - shift
                 # we are now inherently in frame
                 next_frame = CDSFrame(CDSFrame.ZERO)
+            # it may be the case that the removal of the trailing codon from the previous block entirely
+            # eliminates that block. In that case, skip it.
+            if rel_start >= rel_end:
+                continue
             cleaned_rel_starts.append(rel_start)
             cleaned_rel_ends.append(rel_end)
             # this is what we expect the next frame to be, if no frameshift occurred

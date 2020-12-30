@@ -1,9 +1,10 @@
 from uuid import UUID
 
 import pytest
-
 from inscripta.biocantor.gene.biotype import Biotype
-from inscripta.biocantor.io.genbank.parser import parse_genbank
+from inscripta.biocantor.gene.cds import CDSFrame
+from inscripta.biocantor.io.genbank.exc import GenBankValidationError
+from inscripta.biocantor.io.genbank.parser import parse_genbank, GenBankParserType
 from inscripta.biocantor.io.parser import ParsedAnnotationRecord
 from inscripta.biocantor.location.location_impl import SingleInterval, CompoundInterval, Strand
 from inscripta.biocantor.util.hashing import digest_object
@@ -352,3 +353,105 @@ class TestProkaryoticGenBank:
                 if tx.is_coding:
                     # check that protein equals what Prokka thought it was
                     assert str(tx.get_protein_sequence())[:-1] == tx.qualifiers["translation"][0]
+
+
+class TestFrameGenBank:
+    """
+    Frame has to be inferred from GenBank files because there is no Frame/Phase field. There is a /codon_start field,
+    which works for offset start codons, but cannot model indels or programmed frameshifts. This set of tests
+    makes sure that GenBank parsing properly handles building the frames, especially on the negative strand.
+    """
+
+    def test_negative_strand(self, test_data_dir):
+        """
+        This file has the same transcript in three versions:
+        1. No /codon_start (infer /codon_start=1)
+        2. Explicit /codon_start (infer /codon_start=1)
+        3. /codon_start=2. This leads to the first codon being removed.
+
+        This transcript is extra funky because it has exactly 1 base of the start codon present on the 2nd, 1bp, exon.
+
+        In this case, because the /codon_start=2 truncates the 2nd exon entirely, the frame ends up undisturbed
+        in the main exon.
+        """
+        gbk = test_data_dir / "negative_strand_frame.gbk"
+        with open(gbk, "r") as fh:
+            annot_collection = list(ParsedAnnotationRecord.parsed_annotation_records_to_model(parse_genbank(fh)))[0]
+
+        prot_str = (
+            "MAHFKEYQVIGRRLPTESVPEPKLFRMRIFASNEVIAKSRYWYFLQKLHKVKKASGEIVSINQINEAHPTKVKNFGVWVRYDSRSGTHNMYKEIRD"
+            "VSRVAAVETLYQDMAARHRARFRSIHILKVAEIEKTADVKRQYVKQFLTKDLKFPLPHRVQKSTKTFSYKRPSTFY*"
+        )
+
+        assert (
+            str(annot_collection.genes[0].get_primary_protein())
+            == str(annot_collection.genes[1].get_primary_protein())
+            == prot_str
+        )
+        assert (
+            annot_collection.genes[0].get_primary_cds().frames
+            == annot_collection.genes[1].get_primary_cds().frames
+            == [CDSFrame.ONE, CDSFrame.ZERO]
+        )
+
+        assert str(annot_collection.genes[2].get_primary_protein()) == prot_str[1:]
+        assert annot_collection.genes[2].get_primary_cds().frames == [CDSFrame.TWO, CDSFrame.ONE]
+
+    def test_positive_strand(self, test_data_dir):
+        """
+        This file has the same transcript in three versions:
+        1. No /codon_start (infer /codon_start=1)
+        2. Explicit /codon_start (infer /codon_start=1)
+        3. /codon_start=2. This will lead to a different frame set and the first codon being removed.
+        """
+        gbk = test_data_dir / "positive_strand_frame.gbk"
+        with open(gbk, "r") as fh:
+            annot_collection = list(ParsedAnnotationRecord.parsed_annotation_records_to_model(parse_genbank(fh)))[0]
+
+        prot_str = (
+            "MSTEKILTPESQLKKTKAQQKTAEQIAAERAARKAANKEKRAIILERNAAYQKEYETAERNIIQAKRDAKAAGSYYVEAQHKLVFVVRIKGINKIPPKPRKV"
+            "LQLLRLTRINSGTFVKVTKATLELLKLIEPYVAYGYPSYSTIRQLVYKRGFGKINKQRVPLSDNAIIEANLGKYGILSIDDLIHEIITVGPHFKQANNFLWP"
+            "FKLSNPSGGWGVPRKFKHFIQGGSFGNREEFINKLVKAMN*"
+        )
+
+        assert (
+            str(annot_collection.genes[0].get_primary_protein())
+            == str(annot_collection.genes[1].get_primary_protein())
+            == prot_str
+        )
+        assert (
+            annot_collection.genes[0].get_primary_cds().frames
+            == annot_collection.genes[1].get_primary_cds().frames
+            == [CDSFrame.ZERO, CDSFrame.TWO, CDSFrame.ZERO]
+        )
+
+        assert (
+            str(annot_collection.genes[2].get_primary_protein())
+            == "CPLKNLDS*ISIEED*SSTKDCRTNCCRESCP*SR*QGKKSYYFGKKRRLPKGIRNC*KKHHSS*A*CQGCWFLLRRSSTQVGLRCQNQGY*QDST*AKKG"
+            "STIAKIDKNQLWYIRQSYQGYFGTIEVD*TIRCLRLPILLYY*TIGLQERFR*DQQAKSSIVRQCYHRSQLG*VWYLVH*RFDSRNHHCWSTLQAS*QLFV"
+            "AIQVVQPIWWLGCPKKVQAFHPRWFFR*P*RIHQ*IG*GYEL"
+        )
+
+        assert (
+            str(annot_collection.genes[3].get_primary_protein())
+            == "VH*KILTPESQLKKTKAQQKTAEQIAAERAARKA*QGKKSYYFGKKRRLPKGIRNC*KKHHSS*A*CQGCWFLLRRSSTQVGLRCQNQGY*QDST*AKKG"
+            "STIAKIDKNQLWYIRQSYQGYFGTIEVD*TIRCLRLPILLYY*TIGLQERFR*DQQAKSSIVRQCYHRSQLG*VWYLVH*RFDSRNHHCWSTLQAS*QLF"
+            "VAIQVVQPIWWLGCPKKVQAFHPRWFFR*P*RIHQ*IG*GYEL"
+        )
+
+
+class TestGenBankErrors:
+    def test_locus_tag_unique(self, test_data_dir):
+        """If using the default locus_tag way of detecting groupings, locus tags must be unique"""
+        gbk = test_data_dir / "locus_tag_collision.gbk"
+        with pytest.raises(GenBankValidationError):
+            with open(gbk, "r") as fh:
+                _ = list(ParsedAnnotationRecord.parsed_annotation_records_to_model(parse_genbank(fh)))[0]
+        # works fine in sorted mode
+        with open(gbk, "r") as fh:
+            rec = list(
+                ParsedAnnotationRecord.parsed_annotation_records_to_model(
+                    parse_genbank(fh, gbk_type=GenBankParserType.SORTED)
+                )
+            )[0]
+            assert rec.genes[0].locus_tag == rec.genes[1].locus_tag

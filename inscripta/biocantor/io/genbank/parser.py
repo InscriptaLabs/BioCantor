@@ -232,9 +232,12 @@ class TranscriptFeature(Feature):
         frame = int(self.children[0].feature.qualifiers.get("codon_start", [1])[0]) - 1
         frame = CDSFrame.from_int(frame)
         frames = []
-        for block in cds_interval.blocks:
+        blocks = cds_interval.blocks if cds_interval.strand == Strand.PLUS else reversed(cds_interval.blocks)
+        for block in blocks:
             frames.append(frame.name)
             frame = frame.shift(len(block))
+        if cds_interval.strand == Strand.MINUS:
+            frames = frames[::-1]
         return frames
 
     @property

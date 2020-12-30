@@ -434,6 +434,16 @@ class TestCDSInterval:
                     SingleInterval(11, 14, Strand.PLUS, parent=Sequence("AAACAAAAGGACCCAAAAAA", alphabet)),  # CCC
                 ],
             ),
+            # 1bp exon on the negative strand gets removed due to being a partial codon
+            (
+                CDSInterval(
+                    CompoundInterval([0, 7], [5, 8], Strand.MINUS, parent=Sequence("ATACGATCA", alphabet)),
+                    [CDSFrame.ZERO, CDSFrame.TWO],
+                ),
+                [
+                    SingleInterval(2, 5, Strand.MINUS, parent=Sequence("ATACGATCA", alphabet)),  # CGT
+                ],
+            ),
         ],
     )
     def test_scan_codon_locations(self, cds, expected):

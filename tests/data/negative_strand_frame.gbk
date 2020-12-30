@@ -1,0 +1,92 @@
+LOCUS       NC_001145.3             2000 bp    DNA              UNK 01-JAN-1980
+DEFINITION  GenBank produced by BioCantor.
+ACCESSION   NC_001145
+VERSION     NC_001145.3
+KEYWORDS    .
+SOURCE      None
+  ORGANISM  .
+            .
+FEATURES             Location/Qualifiers
+     gene            complement(225..1220)
+                     /gene="RPL20A"
+                     /locus_tag="YMR242C_A"
+                     /gene_synonym="RPL18A2"
+                     /db_xref="GeneID:855283"
+                     /gene_symbol="RPL20A"
+                     /gene_biotype="protein_coding"
+     CDS             complement(join(1220,225..742))
+                     /gene="RPL20A"
+                     /locus_tag="YMR242C_A"
+                     /gene_synonym="RPL18A2"
+                     /product="ribosomal 60S subunit protein L20A"
+                     /transcript_id="NM_001182749.1"
+                     /db_xref="GeneID:855283"
+                     /transcript_symbol="RPL20A"
+     gene            complement(225..1220)
+                     /gene="RPL20A"
+                     /locus_tag="YMR242C_B"
+                     /gene_synonym="RPL18A2"
+                     /db_xref="GeneID:855283"
+                     /gene_symbol="RPL20A"
+                     /gene_biotype="protein_coding"
+     CDS             complement(join(1220,225..742))
+                     /gene="RPL20A"
+                     /locus_tag="YMR242C_B"
+                     /gene_synonym="RPL18A2"
+                     /product="ribosomal 60S subunit protein L20A"
+                     /transcript_id="NM_001182749.1"
+                     /db_xref="GeneID:855283"
+                     /transcript_symbol="RPL20A"
+                     /codon_start=1
+     gene            complement(225..1220)
+                     /gene="RPL20A"
+                     /locus_tag="YMR242C_C"
+                     /gene_synonym="RPL18A2"
+                     /db_xref="GeneID:855283"
+                     /gene_symbol="RPL20A"
+                     /gene_biotype="protein_coding"
+     CDS             complement(join(1220,225..742))
+                     /gene="RPL20A"
+                     /locus_tag="YMR242C_C"
+                     /gene_synonym="RPL18A2"
+                     /product="ribosomal 60S subunit protein L20A"
+                     /transcript_id="NM_001182749.1"
+                     /db_xref="GeneID:855283"
+                     /transcript_symbol="RPL20A"
+                     /codon_start=2
+ORIGIN
+        1 tcctatttgt ctcaacttgt tctaattgta ctaaggttat cagctattta cttcatgcaa
+       61 accttaatat ctatagattc tttgaaagga agccttaccc atttacctct ggccgttcat
+      121 gaaatgttga aattattaaa ttctacagaa ttgataatac ataaaaataa actattaaag
+      181 tatcagaaaa atattttata tcttaaaatt caaatatgca cagttcagta gaaagtggaa
+      241 ggtctcttgt aggagaaagt cttggtggat ttttggactc tgtgaggcaa tgggaatttc
+      301 aagtccttgg tcaaaaattg cttaacgtat tgtctcttga cgtcagcagt cttttcaatt
+      361 tcagcaacct tcaagatgtg aatagatcta aatctagctc tgtgtctggc agccatgtct
+      421 tggtataagg tttcgacggc agcaactctg gagacgtctc tgatttcctt gtacatattg
+      481 tgagtaccag atctggagtc gtatctaacc cagacaccga agttcttgac cttggttgga
+      541 tgagcttcgt tgatttggtt gatggaaaca atttcaccag aagccttctt aaccttgtgc
+      601 aacttttgca agaaatacca gtaacgagac ttggcaataa cttcatttga agcaaagatt
+      661 ctcattctga acaactttgg ttctggaaca gattcagttg gcaaacgacg gccaataact
+      721 tggtattctt taaagtgagc cactgataaa ataacaagga ttttcatgaa aaatcacaaa
+      781 tttgaatgtt agtatgaagt ccatgtgaca catgagaaaa gggaagcttt tatggaggag
+      841 ttattatcac attcgcaagg tcaggtaata gccttttaga catttgaaag atccatgaaa
+      901 gtttaactca ggtgtttcgt cattgaacca aaaagaacct atacacttct tttgcaatcg
+      961 tatttctagg atggatggga tcatattatt cagcatggta caattaacgt cgttcatttc
+     1021 ttttcggtcg taacaaactc gctgttttcc ttgacatatt tagagtgtaa tcctagttga
+     1081 actattttag tggtgatagt agcttaagtt ttaaacgcag tgtggtcatt catttcatga
+     1141 tcgctccgag cctagttctg cgatgtagat ggcattactc ttccattttt gtggcatagt
+     1201 ttagtaggta tttactcact ttttccgcac tgtttttcct taaaagactt gaggaactat
+     1261 atagatgctt atgattgtcc aaattcttca acctcaatgt ttaaaatgaa atttggcgat
+     1321 accttgccac ggtcagattt tggtacagga gggaacaagc aggcgcccgg cttagagttg
+     1381 ggctaagagc atcaaatgtg cgctggattc tgcctcaatg cacttagtaa attgcagcag
+     1441 ggtttagagg ggaacgctta ttgagaagcg gtattcctgg gctggtacca caccgaagtg
+     1501 agcttaattt gtttcctgct ctgcgcgcgc tgaaaaaagt taactatttg agacataaaa
+     1561 acgctattct ggatgtatgg gggtatttta tgtttgggtt aaaagtctca aaaaaaagat
+     1621 gaggaaggat tgtggcacat attgcataca aatttttaat ggagatttat agctaaaaga
+     1681 tagcgtattc atacattgaa taacgcagtt cttgagttag gaagaactgc cttcttccta
+     1741 tacgtctaag aattaattat gtaaatagta tatagtttat gttctctgta gaaccatggg
+     1801 ataaattcac cgacggcttc agccctttat atctttatta caggcaattg gaagtattgc
+     1861 agtttacagc gtcatctaca atacaattag atgatgctgt agtagcacca taggcagtag
+     1921 gtgaacgctt ttttctacca tgctcagtgt ttccatggct gtcaaaggct tcttgagacg
+     1981 aagatggtga accacctgct
+//
