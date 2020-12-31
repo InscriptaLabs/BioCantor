@@ -29,7 +29,7 @@ BioCantor annotation model examples
     :caption: Contents:
 
     annotation_data_structures.rst
-    file_parsing.rst
+    file_parsing.md
     parsing_genbank.ipynb
     parsing_gff3.ipynb
     exporting_to_files.ipynb
