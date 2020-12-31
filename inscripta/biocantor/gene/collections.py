@@ -159,7 +159,7 @@ class GeneInterval(AbstractFeatureIntervalCollection):
         gene_symbol: Optional[str] = None,
         gene_type: Optional[Biotype] = None,
         locus_tag: Optional[str] = None,
-        qualifiers: Optional[dict] = None,
+        qualifiers: Optional[Dict[Any, List[Any]]] = None,
         sequence_name: Optional[str] = None,
         sequence_guid: Optional[UUID] = None,
         parent: Optional[Parent] = None,
@@ -299,15 +299,15 @@ class GeneInterval(AbstractFeatureIntervalCollection):
         Yields:
             :class:`~biocantor.io.gff3.rows.GFFRow`
         """
-        qualifiers = {}
+        qualifiers = self.qualifiers.copy() if self.qualifiers else {}
         gene_id = str(self.guid) if self.guid else digest_object(self)
 
         if self.gene_id:
-            qualifiers[BioCantorQualifiers.GENE_ID.value] = self.gene_id
+            qualifiers[BioCantorQualifiers.GENE_ID.value] = [self.gene_id]
         if self.gene_symbol:
-            qualifiers[BioCantorQualifiers.GENE_NAME.value] = self.gene_symbol
+            qualifiers[BioCantorQualifiers.GENE_NAME.value] = [self.gene_symbol]
         if self.gene_type:
-            qualifiers[BioCantorQualifiers.GENE_TYPE.value] = self.gene_type.name
+            qualifiers[BioCantorQualifiers.GENE_TYPE.value] = [self.gene_type.name]
 
         attributes = GFFAttributes(id=gene_id, name=self.gene_symbol, parent=None, **qualifiers)
         row = GFFRow(
@@ -350,7 +350,7 @@ class FeatureIntervalCollection(AbstractFeatureIntervalCollection):
         sequence_name: Optional[str] = None,
         sequence_guid: Optional[UUID] = None,
         guid: Optional[UUID] = None,
-        qualifiers: Optional[dict] = None,
+        qualifiers: Optional[Dict[Any, List[Any]]] = None,
         parent: Optional[Parent] = None,
     ):
         self.feature_intervals = feature_intervals
@@ -428,14 +428,14 @@ class FeatureIntervalCollection(AbstractFeatureIntervalCollection):
         Yields:
             :class:`~biocantor.io.gff3.rows.GFFRow`
         """
-        qualifiers = {}
+        qualifiers = self.qualifiers.copy() if self.qualifiers else {}
         feat_group_id = str(self.guid) if self.guid else digest_object(self)
         if self.feature_id:
-            qualifiers[BioCantorQualifiers.FEATURE_ID.value] = self.feature_id
+            qualifiers[BioCantorQualifiers.FEATURE_ID.value] = [self.feature_id]
         if self.feature_name:
-            qualifiers[BioCantorQualifiers.FEATURE_SYMBOL.value] = self.feature_name
+            qualifiers[BioCantorQualifiers.FEATURE_SYMBOL.value] = [self.feature_name]
         if self.feature_type:
-            qualifiers[BioCantorQualifiers.FEATURE_TYPE.value] = self.feature_type
+            qualifiers[BioCantorQualifiers.FEATURE_TYPE.value] = [self.feature_type]
 
         attributes = GFFAttributes(id=feat_group_id, name=self.feature_name, parent=None, **qualifiers)
         row = GFFRow(
@@ -475,7 +475,7 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
         name: Optional[str] = None,
         sequence_name: Optional[str] = None,
         sequence_guid: Optional[UUID] = None,
-        qualifiers: Optional[dict] = None,
+        qualifiers: Optional[Dict[Any, List[Any]]] = None,
         start: Optional[int] = None,
         end: Optional[int] = None,
         completely_within: Optional[bool] = None,

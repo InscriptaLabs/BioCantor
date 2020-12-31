@@ -332,20 +332,24 @@ class TranscriptInterval(AbstractFeatureInterval):
         Yields:
             :class:`~biocantor.util.gff3.rows.GFFRow`
         """
-        qualifiers = {}
+        qualifiers = self.qualifiers.copy() if self.qualifiers else {}
         if parent_qualifiers:
-            qualifiers.update(parent_qualifiers)
+            for key, val in parent_qualifiers.items():
+                if key in qualifiers:
+                    qualifiers[key].extend(val)
+                else:
+                    qualifiers[key] = val
 
         tx_id = str(self.guid) if self.guid else str(digest_object(self))
 
         if self.transcript_id:
-            qualifiers[BioCantorQualifiers.TRANSCRIPT_ID.value] = self.transcript_id
+            qualifiers[BioCantorQualifiers.TRANSCRIPT_ID.value] = [self.transcript_id]
         if self.transcript_symbol:
-            qualifiers[BioCantorQualifiers.TRANSCRIPT_NAME.value] = self.transcript_symbol
+            qualifiers[BioCantorQualifiers.TRANSCRIPT_NAME.value] = [self.transcript_symbol]
         if self.transcript_type:
-            qualifiers[BioCantorQualifiers.TRANSCRIPT_TYPE.value] = self.transcript_type.name
+            qualifiers[BioCantorQualifiers.TRANSCRIPT_TYPE.value] = [self.transcript_type.name]
         if self.protein_id:
-            qualifiers[BioCantorQualifiers.PROTEIN_ID.value] = self.protein_id
+            qualifiers[BioCantorQualifiers.PROTEIN_ID.value] = [self.protein_id]
 
         attributes = GFFAttributes(id=tx_id, name=self.transcript_symbol, parent=parent, **qualifiers)
 

@@ -3,10 +3,22 @@ from enum import Enum
 from inscripta.biocantor.util.enum import HasMemberMixin
 
 # in all GFF3 key-value pairs, we escape equals, semicolon, whitespace, ">" and commas
-ENCODING_MAP = {"\\\t": "%09", ";": "%3B", "=": "%3D", "\\\n": "%0A", "\\\r": "%0D", ",": "%2C", ">": "%3E", " ": "%20"}
+ENCODING_MAP = {"\\\t": "%09", ";": "%3B", "=": "%3D", "\\\n": "%0A", "\\\r": "%0D", ">": "%3E", " ": "%20"}
+ENCODING_MAP_WITH_COMMA = {
+    "\\\t": "%09",
+    ";": "%3B",
+    "=": "%3D",
+    "\\\n": "%0A",
+    "\\\r": "%0D",
+    ",": "%2C",
+    ">": "%3E",
+    " ": "%20",
+}
 ENCODING_PATTERN = r"({})".format("|".join(k for k in ENCODING_MAP))
+ENCODING_PATTERN_WITH_COMMA = r"({})".format("|".join(k for k in ENCODING_MAP_WITH_COMMA))
 GFF_SOURCE = "BioCantor"
 NULL_COLUMN = "."
+ATTRIBUTE_SEPARATOR = ","
 
 
 class GFF3Headers(Enum):

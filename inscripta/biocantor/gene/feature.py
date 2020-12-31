@@ -164,7 +164,7 @@ class FeatureInterval(AbstractFeatureInterval):
     def __init__(
         self,
         location: Location,  # exons
-        qualifiers: Optional[dict] = None,  # arbitrary key-value store
+        qualifiers: Optional[Dict[Any, List[Any]]] = None,
         sequence_guid: Optional[UUID] = None,
         sequence_name: Optional[str] = None,
         feature_type: Optional[str] = None,
@@ -261,9 +261,13 @@ class FeatureInterval(AbstractFeatureInterval):
         Yields:
             :class:`~biocantor.io.gff3.rows.GFFRow`
         """
-        qualifiers = {}
+        qualifiers = self.qualifiers.copy() if self.qualifiers else {}
         if parent_qualifiers:
-            qualifiers.update(parent_qualifiers)
+            for key, val in parent_qualifiers.items():
+                if key in qualifiers:
+                    qualifiers[key].extend(val)
+                else:
+                    qualifiers[key] = val
 
         feature_id = str(self.guid) if self.guid else str(digest_object(self))
 

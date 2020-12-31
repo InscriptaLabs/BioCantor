@@ -35,10 +35,10 @@ class TestGff3Writer:
     def test_to_gff(self, test_data_dir, tmp_path):
         """Parse GFF, write to disk, parse, compare"""
         gff = test_data_dir / "INSC1006_chrI.gff3"
-        parsed = list(parse_standard_gff3(str(gff)))
+        parsed = list(parse_standard_gff3(gff))
         a = [x.to_annotation_collection() for x in parsed]
 
-        tmp_gff = str(tmp_path / "tmp.gff")
+        tmp_gff = tmp_path / "tmp.gff"
         with open(tmp_gff, "w") as fh:
             collection_to_gff3(a, fh)
         gff2 = list(parse_standard_gff3(tmp_gff))

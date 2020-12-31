@@ -9,6 +9,9 @@ from dataclasses import dataclass
 from inscripta.biocantor.io.gff3.constants import (
     ENCODING_MAP,
     ENCODING_PATTERN,
+    ENCODING_MAP_WITH_COMMA,
+    ENCODING_PATTERN_WITH_COMMA,
+    ATTRIBUTE_SEPARATOR,
     BioCantorGFF3ReservedQualifiers,
     GFF3ReservedQualifiers,
     BioCantorFeatureTypes,
@@ -79,6 +82,10 @@ class GFFAttributes:
         self.parent = parent
         self.attributes = kwargs
 
+        for val in self.attributes.values():
+            if not isinstance(val, list) or isinstance(val, tuple):
+                raise GFF3ExportException("Attributes dictionary must be a dictionary of lists or tuples.")
+
     def __str__(self):
         """
         Builds a string representation. Handles fixing case where applicable.
@@ -89,15 +96,24 @@ class GFFAttributes:
         The GFF3 spec allows commas, and only has you escape ">" and whitespace in Name/ID/Parent, but for simplicity
         and for integration with downstream tools we escape all of them equally here.
         """
-        attrs_list = [[BioCantorGFF3ReservedQualifiers.ID.value, GFFAttributes.escape_value(self.id)]]
+        attrs_list = [
+            [BioCantorGFF3ReservedQualifiers.ID.value, GFFAttributes.escape_value(self.id, escape_comma=True)]
+        ]
 
         if self.parent is not None:
-            attrs_list.append([BioCantorGFF3ReservedQualifiers.PARENT.value, GFFAttributes.escape_value(self.parent)])
+            attrs_list.append(
+                [
+                    BioCantorGFF3ReservedQualifiers.PARENT.value,
+                    GFFAttributes.escape_value(self.parent, escape_comma=True),
+                ]
+            )
 
         if self.name is not None:
-            attrs_list.append([BioCantorGFF3ReservedQualifiers.NAME.value, GFFAttributes.escape_value(self.name)])
+            attrs_list.append(
+                [BioCantorGFF3ReservedQualifiers.NAME.value, GFFAttributes.escape_value(self.name, escape_comma=True)]
+            )
 
-        for key, value in self.attributes.items():
+        for key, value_list in self.attributes.items():
             if BioCantorGFF3ReservedQualifiers.has_value(key):
                 raise GFF3ExportException(f"Found {key} in an attributes dictionary; this is reserved for internal use")
             elif GFF3ReservedQualifiers.has_value(key):
@@ -105,7 +121,8 @@ class GFFAttributes:
                 escaped_key = GFFAttributes.escape_key(key, lower=False)
             else:
                 escaped_key = GFFAttributes.escape_key(key, lower=True)
-            escaped_val = GFFAttributes.escape_value(value)
+            escaped_vals = [GFFAttributes.escape_value(value) for value in value_list]
+            escaped_val = ATTRIBUTE_SEPARATOR.join(escaped_vals)
             attrs_list.append([escaped_key, escaped_val])
         return ";".join(["=".join(pair) for pair in attrs_list])
 
@@ -114,16 +131,27 @@ class GFFAttributes:
         return re.sub(ENCODING_PATTERN, lambda m: ENCODING_MAP.get(m.group(0)), item)
 
     @staticmethod
+    def _escape_str_with_comma(item: str) -> str:
+        return re.sub(ENCODING_PATTERN_WITH_COMMA, lambda m: ENCODING_MAP_WITH_COMMA.get(m.group(0)), item)
+
+    @staticmethod
     def escape_key(key: str, lower: Optional[bool] = False) -> str:
-        """Key must be escaped for '=;\t'"""
+        """Key must be escaped for ``[=;\t]``"""
         r = GFFAttributes._escape_str(key)
         return r.lower() if lower else r
 
     @staticmethod
-    def escape_value(value: Any) -> str:
-        """Value must be escaped for '=;\t'; make sure value is also not empty"""
+    def escape_value(value: Any, escape_comma: Optional[bool] = False) -> str:
+        """
+        Value must be escaped for ``[=;\t]``; make sure value is also not empty.
+
+        Commas must be escaped for reserved attributes like ID and Name.
+        """
         value_str = str(value)
-        return GFFAttributes._escape_str(value_str) if len(value_str) > 0 else "nan"
+        if escape_comma:
+            return GFFAttributes._escape_str_with_comma(value_str) if len(value_str) > 0 else "nan"
+        else:
+            return GFFAttributes._escape_str(value_str) if len(value_str) > 0 else "nan"
 
 
 @dataclass

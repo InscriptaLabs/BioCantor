@@ -823,7 +823,7 @@ class TestTranscript:
                         cds_starts=[0],
                         cds_ends=[18],
                         cds_frames=[CDSFrame.ZERO.name],
-                        qualifiers={"test": 1},
+                        qualifiers={"test": [1]},
                     )
                 ),
                 False,
