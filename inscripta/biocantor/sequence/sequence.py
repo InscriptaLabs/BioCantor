@@ -76,8 +76,10 @@ class Sequence:
             return False
         if self.parent != other.parent:
             return False
-        return self.sequence == other.sequence
-
+        if self.sequence != other.sequence:
+            return False
+        return True
+    
     def __hash__(self):
         return hash((self.id, self.sequence_type, self.alphabet, self.parent, self.sequence))
 
