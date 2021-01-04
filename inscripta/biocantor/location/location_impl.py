@@ -417,12 +417,23 @@ class CompoundInterval(Location):
         if not len(starts) == len(ends) > 0:
             raise LocationException("Lists of start end end positions must be nonempty and have same length")
         parent_obj = make_parent(parent) if parent else None
-        self._parent = parent_obj.reset_location(CompoundInterval(starts, ends, strand)) if parent_obj else None
+        if parent_obj:
+            if parent_obj.location:
+                single_interval_parent = Parent(
+                    id=parent_obj.id,
+                    sequence_type=parent_obj.sequence_type,
+                    sequence=parent_obj.sequence,
+                    parent=parent_obj.parent,
+                )
+            else:
+                single_interval_parent = parent_obj
+            self._parent = single_interval_parent.reset_location(CompoundInterval(starts, ends, strand))
+        else:
+            self._parent = None
+            single_interval_parent = None
         self._strand = strand
-        single_interval_parent = self.parent.strip_location_info() if self.parent else None
-        single_intervals_no_parent = [SingleInterval(starts[i], ends[i], self.strand) for i in range(len(starts))]
-        self._single_intervals = [
-            interval.reset_parent(single_interval_parent) for interval in sorted(single_intervals_no_parent)]
+        self._single_intervals = sorted(
+            [SingleInterval(starts[i], ends[i], self.strand, single_interval_parent) for i in range(len(starts))])
         self._starts = tuple([interval.start for interval in self._single_intervals])
         self._ends = tuple([interval.end for interval in self._single_intervals])
         self._start = self._single_intervals[0].start
