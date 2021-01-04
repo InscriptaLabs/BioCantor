@@ -137,15 +137,22 @@ class SingleInterval(Location):
         return hash((self.start, self.end, self.strand, self.parent))
 
     def __lt__(self, other: Location):
+        return self.compare(other) < 0
+
+    def compare(self, other: Location) -> int:
+        """Returns a negative integer if this Location is less than the other Location, positive integer if it is
+        greater, and zero otherwise."""
         self_parent_id = self.parent.id if self.parent is not None else ""
         other_parent_id = other.parent.id if other.parent is not None else ""
         if self_parent_id != other_parent_id:
-            return self_parent_id < other_parent_id
+            return -1 if self_parent_id < other_parent_id else 1
         if self.start != other.start:
-            return self.start < other.start
+            return -1 if self.start < other.start else 1
         if self.end != other.end:
-            return self.end < other.end
-        return self.strand < other.strand
+            return -1 if self.end < other.end else 1
+        if self.strand != other.strand:
+            return -1 if self.strand < other.strand else 1
+        return 0
 
     def extract_sequence(self) -> Sequence:
         if self._sequence is None:
