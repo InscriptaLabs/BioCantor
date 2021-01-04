@@ -75,8 +75,8 @@ class TestGene:
 
     def test_merged_interval(self):
         obj = self.gene.to_gene_interval()
-        assert str(obj.get_merged_transcript()) == "FeatureInterval((2-18:+), qualifiers={})"
-        assert str(obj.get_merged_cds()) == "FeatureInterval((4-10:+, 12-13:+), qualifiers={})"
+        assert str(obj.get_merged_transcript()) == "FeatureInterval((2-18:+), name=None)"
+        assert str(obj.get_merged_cds()) == "FeatureInterval((4-10:+, 12-13:+), name=None)"
 
     def test_failed_merge_interval(self):
         obj = self.gene_noncoding.to_gene_interval()
@@ -252,9 +252,9 @@ class TestAnnotationCollection:
                 True,
                 # {"featgrp1", "featgrp2", "gene1"}
                 {
-                    UUID("f8b2ad18-b86b-441c-ee07-144e9e5affff"),
-                    UUID("52f241d1-29a1-f1a8-e0ab-2aadf401f3f6"),
-                    UUID("c79e500a-6521-99d6-07f9-568b9bf4e478"),
+                    UUID("6a1e7d72-e02d-8c00-af71-a1f916462642"),
+                    UUID("c2f81b52-aebb-8de3-3488-bdaa53a7e102"),
+                    UUID("bf5c1145-f895-0f66-b5ef-74f48e5550b7"),
                 },
             ),
             (
@@ -263,9 +263,9 @@ class TestAnnotationCollection:
                 False,
                 True,  # {"featgrp1", "featgrp2", "gene1"}
                 {
-                    UUID("f8b2ad18-b86b-441c-ee07-144e9e5affff"),
-                    UUID("52f241d1-29a1-f1a8-e0ab-2aadf401f3f6"),
-                    UUID("c79e500a-6521-99d6-07f9-568b9bf4e478"),
+                    UUID("6a1e7d72-e02d-8c00-af71-a1f916462642"),
+                    UUID("c2f81b52-aebb-8de3-3488-bdaa53a7e102"),
+                    UUID("bf5c1145-f895-0f66-b5ef-74f48e5550b7"),
                 },
             ),
             (
@@ -274,9 +274,9 @@ class TestAnnotationCollection:
                 False,
                 True,  # {"featgrp1", "featgrp2", "gene1"}
                 {
-                    UUID("f8b2ad18-b86b-441c-ee07-144e9e5affff"),
-                    UUID("52f241d1-29a1-f1a8-e0ab-2aadf401f3f6"),
-                    UUID("c79e500a-6521-99d6-07f9-568b9bf4e478"),
+                    UUID("6a1e7d72-e02d-8c00-af71-a1f916462642"),
+                    UUID("c2f81b52-aebb-8de3-3488-bdaa53a7e102"),
+                    UUID("bf5c1145-f895-0f66-b5ef-74f48e5550b7"),
                 },
             ),
             (0, 0, False, True, {}),
@@ -285,26 +285,26 @@ class TestAnnotationCollection:
                 20,
                 False,
                 True,  # {"featgrp1", "gene1"}
-                {UUID("f8b2ad18-b86b-441c-ee07-144e9e5affff"), UUID("52f241d1-29a1-f1a8-e0ab-2aadf401f3f6")},
+                {UUID("6a1e7d72-e02d-8c00-af71-a1f916462642"), UUID("bf5c1145-f895-0f66-b5ef-74f48e5550b7")},
             ),
             (
                 None,
                 20,
                 False,
                 True,  # {"featgrp1", "gene1"}
-                {UUID("f8b2ad18-b86b-441c-ee07-144e9e5affff"), UUID("52f241d1-29a1-f1a8-e0ab-2aadf401f3f6")},
+                {UUID("6a1e7d72-e02d-8c00-af71-a1f916462642"), UUID("bf5c1145-f895-0f66-b5ef-74f48e5550b7")},
             ),
-            (25, None, False, True, {UUID("c79e500a-6521-99d6-07f9-568b9bf4e478")}),  # {"featgrp2"}
+            (25, None, False, True, {UUID("c2f81b52-aebb-8de3-3488-bdaa53a7e102")}),  # {"featgrp2"}
             (26, None, False, True, {}),
-            (26, None, False, False, {UUID("c79e500a-6521-99d6-07f9-568b9bf4e478")}),  # {"featgrp2"}
+            (26, None, False, False, {UUID("c2f81b52-aebb-8de3-3488-bdaa53a7e102")}),  # {"featgrp2"}
             (
                 0,
                 3,
                 False,
                 False,  # {"featgrp1", "gene1"}
-                {UUID("f8b2ad18-b86b-441c-ee07-144e9e5affff"), UUID("52f241d1-29a1-f1a8-e0ab-2aadf401f3f6")},
+                {UUID("6a1e7d72-e02d-8c00-af71-a1f916462642"), UUID("bf5c1145-f895-0f66-b5ef-74f48e5550b7")},
             ),
-            (0, None, True, False, {UUID("f8b2ad18-b86b-441c-ee07-144e9e5affff")}),  # {"gene1"}
+            (0, None, True, False, {UUID("bf5c1145-f895-0f66-b5ef-74f48e5550b7")}),  # {"gene1"}
         ],
     )
     def test_position_queries(self, start, end, completely_within, coding_only, expected):
@@ -344,8 +344,8 @@ class TestAnnotationCollection:
     @pytest.mark.parametrize(
         "ids",
         (
-            {UUID("f8b2ad18-b86b-441c-ee07-144e9e5affff")},
-            {UUID("f8b2ad18-b86b-441c-ee07-144e9e5affff"), UUID("52f241d1-29a1-f1a8-e0ab-2aadf401f3f6")},
+            {"gene1"},
+            {"gene1", "featgrp1"},
             {},
         ),
     )
@@ -355,7 +355,12 @@ class TestAnnotationCollection:
         if r.is_empty:
             assert len(ids) == 0
         else:
-            assert r.hierarchical_children_guids.keys() == ids
+            assert {x.gene_id for x in r.genes} | {x.feature_id for x in r.feature_collections} == ids
+
+    def test_query_by_identifiers_with_extraneous(self):
+        obj = self.annot.to_annotation_collection()
+        r = obj.query_by_feature_identifier(["gene1", "abc"])
+        assert len(r.genes) == 1 and r.genes[0].gene_id == "gene1"
 
     def test_extract_sequence(self):
         obj = self.annot.to_annotation_collection(parent=parent_genome)
@@ -364,12 +369,7 @@ class TestAnnotationCollection:
 
     def test_query_by_ids(self):
         obj = self.annot.to_annotation_collection()
-        # add  GUIDs, since we are not using the database
-        my_ids = []
-        for o in obj:
-            u = digest_object(o)
-            o.guid = u
-            my_ids.append(u)
+        my_ids = list(obj.hierarchical_children_guids.keys())
 
         # query them all
         assert obj.query_by_guids(my_ids).children_guids == set(my_ids)

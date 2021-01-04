@@ -54,12 +54,11 @@ class TestGff3Parser:
             "cds_ends": [133625604, 133625999, 133626303, 133626742],
             "cds_frames": [CDSFrame.ONE, CDSFrame.ONE, CDSFrame.ONE, CDSFrame.ZERO],
             "qualifiers": {
-                "Dbxref": ["Ensembl:ENST00000425520.2", "GeneID:441581", "Genbank:NM_001080998.2", "HGNC:HGNC:33518"],
-                "gbkey": ["mRNA"],
-                "gene": ["FRG2B"],
-                "product": ["FSHD region gene 2 family member B"],
-                "tag": ["MANE Select"],
-                "transcript_id": ["NM_001080998.2"],
+                "Dbxref": {"Ensembl:ENST00000425520.2", "Genbank:NM_001080998.2", "GeneID:441581", "HGNC:HGNC:33518"},
+                "gbkey": {"mRNA"},
+                "gene": {"FRG2B"},
+                "product": {"FSHD region gene 2 family member B"},
+                "tag": {"MANE Select"},
             },
             "is_primary_tx": False,
             "transcript_id": "NM_001080998.2",
@@ -70,18 +69,6 @@ class TestGff3Parser:
             "sequence_guid": None,
             "guid": None,
             "transcript_guid": None,
-        }
-        assert tx.exon_starts == [133623894, 133625921, 133626228, 133626564]
-        assert tx.exon_ends == [133625604, 133625999, 133626303, 133626795]
-        assert tx.cds_starts == [133625098, 133625921, 133626228, 133626564]
-        assert tx.cds_ends == [133625604, 133625999, 133626303, 133626742]
-        assert tx.qualifiers == {
-            "Dbxref": ["Ensembl:ENST00000425520.2", "GeneID:441581", "Genbank:NM_001080998.2", "HGNC:HGNC:33518"],
-            "gbkey": ["mRNA"],
-            "gene": ["FRG2B"],
-            "product": ["FSHD region gene 2 family member B"],
-            "tag": ["MANE Select"],
-            "transcript_id": ["NM_001080998.2"],
         }
 
     def test_parse_sgce(self, test_data_dir):
@@ -105,178 +92,9 @@ class TestGff3Parser:
         PEG10 is a gene with a -1 frameshift in one isoform, that is paresd using the RefSeq parser.
         """
         gff = test_data_dir / "PEG10_minus1frameshift.gff3"
-        recs = list(parse_standard_gff3(gff))
-        c = recs[0].to_annotation_collection()
-        assert c.to_dict() == {
-            "genes": [
-                {
-                    "transcripts": [
-                        {
-                            "exon_starts": (94656369, 94663333),
-                            "exon_ends": (94656580, 94669695),
-                            "strand": "PLUS",
-                            "cds_starts": (94663556,),
-                            "cds_ends": (94664534,),
-                            "cds_frames": ["ZERO"],
-                            "qualifiers": {
-                                "Dbxref": ["GeneID:23089", "Genbank:NM_001040152.2", "HGNC:HGNC:14005", "MIM:609810"],
-                                "gbkey": ["mRNA"],
-                                "gene": ["PEG10"],
-                                "product": ["paternally expressed 10, transcript variant 1"],
-                                "transcript_id": ["NM_001040152.2"],
-                            },
-                            "is_primary_tx": False,
-                            "transcript_id": "NM_001040152.2",
-                            "transcript_symbol": None,
-                            "transcript_type": "protein_coding",
-                            "sequence_name": "chr7",
-                            "sequence_guid": None,
-                            "protein_id": "NP_001035242.1",
-                            "transcript_guid": UUID("ff5a1dd3-ff65-f4f1-83ee-2f77e5a3efba"),
-                        },
-                        {
-                            "exon_starts": (94656324, 94663333),
-                            "exon_ends": (94656591, 94669695),
-                            "strand": "PLUS",
-                            "cds_starts": (94656586, 94663333, 94664512),
-                            "cds_ends": (94656591, 94664513, 94665682),
-                            "cds_frames": ["ZERO", "TWO", "ZERO"],
-                            "qualifiers": {
-                                "Dbxref": ["GeneID:23089", "Genbank:NM_001172437.2", "HGNC:HGNC:14005", "MIM:609810"],
-                                "gbkey": ["mRNA"],
-                                "gene": ["PEG10"],
-                                "product": ["paternally expressed 10, transcript variant 2"],
-                                "transcript_id": ["NM_001172437.2"],
-                            },
-                            "is_primary_tx": False,
-                            "transcript_id": "NM_001172437.2",
-                            "transcript_symbol": None,
-                            "transcript_type": "protein_coding",
-                            "sequence_name": "chr7",
-                            "sequence_guid": None,
-                            "protein_id": "NP_001165908.1",
-                            "transcript_guid": UUID("1a0f7774-0c9c-82b7-4395-32effc2a47bc"),
-                        },
-                        {
-                            "exon_starts": (94656369, 94663333),
-                            "exon_ends": (94656591, 94669695),
-                            "strand": "PLUS",
-                            "cds_starts": (94656586, 94663333),
-                            "cds_ends": (94656591, 94664534),
-                            "cds_frames": ["ZERO", "TWO"],
-                            "qualifiers": {
-                                "Dbxref": ["GeneID:23089", "Genbank:NM_001172438.3", "HGNC:HGNC:14005", "MIM:609810"],
-                                "gbkey": ["mRNA"],
-                                "gene": ["PEG10"],
-                                "product": ["paternally expressed 10, transcript variant 2"],
-                                "transcript_id": ["NM_001172438.3"],
-                            },
-                            "is_primary_tx": False,
-                            "transcript_id": "NM_001172438.3",
-                            "transcript_symbol": None,
-                            "transcript_type": "protein_coding",
-                            "sequence_name": "chr7",
-                            "sequence_guid": None,
-                            "protein_id": "NP_001165909.1",
-                            "transcript_guid": UUID("33585b05-5f56-2896-8ab5-e25b4a58f635"),
-                        },
-                        {
-                            "exon_starts": (94656324, 94663333),
-                            "exon_ends": (94656580, 94669695),
-                            "strand": "PLUS",
-                            "cds_starts": (94663454, 94664512),
-                            "cds_ends": (94664513, 94665682),
-                            "cds_frames": ["ZERO", "ZERO"],
-                            "qualifiers": {
-                                "Dbxref": ["GeneID:23089", "Genbank:NM_001184961.1", "HGNC:HGNC:14005", "MIM:609810"],
-                                "gbkey": ["mRNA"],
-                                "gene": ["PEG10"],
-                                "product": ["paternally expressed 10, transcript variant 1"],
-                                "tag": ["RefSeq Select"],
-                                "transcript_id": ["NM_001184961.1"],
-                            },
-                            "is_primary_tx": False,
-                            "transcript_id": "NM_001184961.1",
-                            "transcript_symbol": None,
-                            "transcript_type": "protein_coding",
-                            "sequence_name": "chr7",
-                            "sequence_guid": None,
-                            "protein_id": "NP_001171890.1",
-                            "transcript_guid": UUID("c8f29ed4-18d3-2c89-205c-4e60e64b3c1f"),
-                        },
-                        {
-                            "exon_starts": (94656369, 94663333),
-                            "exon_ends": (94656580, 94669695),
-                            "strand": "PLUS",
-                            "cds_starts": (94663454,),
-                            "cds_ends": (94664534,),
-                            "cds_frames": ["ZERO"],
-                            "qualifiers": {
-                                "Dbxref": ["GeneID:23089", "Genbank:NM_001184962.2", "HGNC:HGNC:14005", "MIM:609810"],
-                                "gbkey": ["mRNA"],
-                                "gene": ["PEG10"],
-                                "product": ["paternally expressed 10, transcript variant 1"],
-                                "transcript_id": ["NM_001184962.2"],
-                            },
-                            "is_primary_tx": False,
-                            "transcript_id": "NM_001184962.2",
-                            "transcript_symbol": None,
-                            "transcript_type": "protein_coding",
-                            "sequence_name": "chr7",
-                            "sequence_guid": None,
-                            "protein_id": "NP_001171891.1",
-                            "transcript_guid": UUID("816fe1ce-d854-3b35-038c-6cf2b2f6e6ec"),
-                        },
-                        {
-                            "exon_starts": (94656324, 94663333),
-                            "exon_ends": (94656580, 94669695),
-                            "strand": "PLUS",
-                            "cds_starts": (94663556, 94664512),
-                            "cds_ends": (94664513, 94665682),
-                            "cds_frames": ["ZERO", "ZERO"],
-                            "qualifiers": {
-                                "Dbxref": ["GeneID:23089", "Genbank:NM_015068.3", "HGNC:HGNC:14005", "MIM:609810"],
-                                "gbkey": ["mRNA"],
-                                "gene": ["PEG10"],
-                                "product": ["paternally expressed 10, transcript variant 1"],
-                                "transcript_id": ["NM_015068.3"],
-                            },
-                            "is_primary_tx": False,
-                            "transcript_id": "NM_015068.3",
-                            "transcript_symbol": None,
-                            "transcript_type": "protein_coding",
-                            "sequence_name": "chr7",
-                            "sequence_guid": None,
-                            "protein_id": "NP_055883.2",
-                            "transcript_guid": UUID("faed1257-db04-b629-bb91-b601e8853494"),
-                        },
-                    ],
-                    "gene_id": None,
-                    "gene_symbol": None,
-                    "gene_type": "protein_coding",
-                    "locus_tag": None,
-                    "qualifiers": {
-                        "Dbxref": ["GeneID:23089", "HGNC:HGNC:14005", "MIM:609810"],
-                        "description": ["paternally expressed 10"],
-                        "gbkey": ["Gene"],
-                        "gene": ["PEG10"],
-                        "gene_biotype": ["protein_coding"],
-                        "gene_synonym": ["EDR", "HB-1", "Mar2", "Mart2", "MEF3L", "RGAG3", "RTL2", "SIRH1"],
-                    },
-                    "sequence_name": "chr7",
-                    "sequence_guid": None,
-                    "gene_guid": UUID("e8dca64b-0c05-5cdb-d113-421fe0f9abbe"),
-                }
-            ],
-            "feature_collections": [],
-            "name": None,
-            "qualifiers": None,
-            "sequence_name": "chr7",
-            "sequence_guid": None,
-            "start": 94656324,
-            "end": 94669695,
-            "completely_within": None,
-        }
+        rec = list(parse_standard_gff3(gff))[0]
+        with open("tests/data/PEG10_minus1frameshift.json") as fh:
+            assert AnnotationCollectionModel.Schema().load(json.load(fh)) == rec.annotation
 
     def test_parse_insc1006(self, test_data_dir):
         """INSC1006_chrI is a 4-gene manually built file from INSC1006. It uses the default naive parser."""

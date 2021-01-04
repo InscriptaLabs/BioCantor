@@ -2,11 +2,9 @@
 Data models. These models allow for validation of inputs to a BioCantor model, acting as a JSON schema for serializing
 and deserializing the models.
 """
-from typing import List, Optional, ClassVar, Type, Dict, Any
+from collections import defaultdict
+from typing import List, Optional, ClassVar, Type, Any, Dict
 from uuid import UUID
-
-from marshmallow import Schema  # noqa: F401
-from marshmallow_dataclass import dataclass
 
 from inscripta.biocantor.exc import InvalidCDSIntervalError, LocationException, ValidationException
 from inscripta.biocantor.gene.biotype import Biotype
@@ -17,6 +15,8 @@ from inscripta.biocantor.gene.transcript import TranscriptInterval
 from inscripta.biocantor.location.location_impl import CompoundInterval
 from inscripta.biocantor.location.strand import Strand
 from inscripta.biocantor.parent import Parent
+from marshmallow import Schema, pre_load, post_load, pre_dump  # noqa: F401
+from marshmallow_dataclass import dataclass
 
 
 @dataclass
@@ -28,6 +28,41 @@ class BaseModel:
     class Meta:
         ordered = True
 
+    @pre_load
+    def convert_qualifiers(self, data, **kwargs):
+        """
+        Qualifiers may exist in the inputs to any of these models, and as they are generally coming from the biopython
+        or gffutils parsers, they will be of the form:
+
+        ```
+        Dict[Hashable, List[Any]]
+        ```
+
+        However, in order to handle these data internally, it is better to convert this to the form:
+
+        ```
+        DefaultDict[Hashable, Set[Hashable]]
+        ```
+
+        This function performs this transformation, and will raise appropriate exceptions if data are not hashable.
+        """
+        if "qualifiers" in data and data["qualifiers"]:
+            qualifiers = defaultdict(set)
+            for key, vals in data["qualifiers"].items():
+                if isinstance(vals, list) or isinstance(vals, set) or isinstance(vals, tuple):
+                    qualifiers[key].update(vals)
+                else:
+                    qualifiers[key].add(vals)
+            data["qualifiers"] = qualifiers
+        return data
+
+    @pre_dump
+    def serialize_qualifiers(self, in_data, **kwargs):
+        """Convert the sets back to lists for JSON serialization"""
+        if in_data.qualifiers:
+            in_data.qualifiers = {key: list(vals) for key, vals in in_data.qualifiers.items()}
+        return in_data
+
 
 @dataclass
 class FeatureIntervalModel(BaseModel):
@@ -36,7 +71,7 @@ class FeatureIntervalModel(BaseModel):
     interval_starts: List[int]
     interval_ends: List[int]
     strand: Strand
-    qualifiers: Optional[Dict[Any, List[Any]]] = None
+    qualifiers: Optional[Dict[str, Any]] = None
     sequence_name: Optional[str] = None
     sequence_guid: Optional[UUID] = None
     feature_interval_guid: Optional[UUID] = None
@@ -95,7 +130,7 @@ class TranscriptIntervalModel(BaseModel):
     cds_starts: Optional[List[int]] = None
     cds_ends: Optional[List[int]] = None
     cds_frames: Optional[List[CDSFrame]] = None
-    qualifiers: Optional[Dict[Any, List[Any]]] = None
+    qualifiers: Optional[Dict[str, Any]] = None
     is_primary_tx: Optional[bool] = None
     transcript_id: Optional[str] = None
     protein_id: Optional[str] = None
@@ -181,7 +216,7 @@ class GeneIntervalModel(BaseModel):
     gene_symbol: Optional[str] = None
     gene_type: Optional[Biotype] = None
     locus_tag: Optional[str] = None
-    qualifiers: Optional[Dict[Any, List[Any]]] = None
+    qualifiers: Optional[Dict[str, Any]] = None
     sequence_name: Optional[str] = None
     sequence_guid: Optional[UUID] = None
     gene_guid: Optional[UUID] = None
@@ -230,7 +265,7 @@ class FeatureIntervalCollectionModel(BaseModel):
     sequence_name: Optional[str] = None
     sequence_guid: Optional[UUID] = None
     feature_collection_guid: Optional[UUID] = None
-    qualifiers: Optional[Dict[Any, List[Any]]] = None
+    qualifiers: Optional[Dict[str, Any]] = None
 
     def to_feature_collection(self, parent: Optional[Parent] = None) -> FeatureIntervalCollection:
         """Produce a feature collection from a :class:`~biocantor.models.FeatureIntervalCollectionModel`."""
@@ -278,7 +313,7 @@ class AnnotationCollectionModel(BaseModel):
     sequence_name: Optional[str] = None
     sequence_guid: Optional[UUID] = None
     sequence_path: Optional[str] = None
-    qualifiers: Optional[Dict[Any, List[Any]]] = None
+    qualifiers: Optional[Dict[str, Any]] = None
     start: Optional[int] = None
     end: Optional[int] = None
     completely_within: Optional[bool] = None

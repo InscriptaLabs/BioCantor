@@ -15,8 +15,7 @@ Each object is capable of exporting itself to BED and GFF3.
 import itertools
 from abc import ABC, abstractmethod
 from functools import reduce
-from typing import List, Iterable, Any, Dict, Set
-from typing import Optional, Union
+from typing import List, Iterable, Any, Dict, Set, Hashable, Optional, Union
 from uuid import UUID
 
 from inscripta.biocantor.exc import (
@@ -29,14 +28,14 @@ from inscripta.biocantor.gene.biotype import Biotype
 from inscripta.biocantor.gene.cds import CDSInterval, CDSPhase
 from inscripta.biocantor.gene.feature import FeatureInterval
 from inscripta.biocantor.gene.transcript import TranscriptInterval
+from inscripta.biocantor.io.gff3.constants import GFF_SOURCE, NULL_COLUMN, BioCantorQualifiers, BioCantorFeatureTypes
+from inscripta.biocantor.io.gff3.rows import GFFRow, GFFAttributes
 from inscripta.biocantor.location import Location
 from inscripta.biocantor.location.location_impl import SingleInterval, CompoundInterval, EmptyLocation
 from inscripta.biocantor.location.strand import Strand
 from inscripta.biocantor.parent.parent import Parent
 from inscripta.biocantor.sequence import Sequence
 from inscripta.biocantor.util.bins import bins
-from inscripta.biocantor.io.gff3.constants import GFF_SOURCE, NULL_COLUMN, BioCantorQualifiers, BioCantorFeatureTypes
-from inscripta.biocantor.io.gff3.rows import GFFRow, GFFAttributes
 from inscripta.biocantor.util.hashing import digest_object
 from inscripta.biocantor.util.object_validation import ObjectValidation
 
@@ -55,6 +54,7 @@ class AbstractFeatureIntervalCollection(ABC):
     bin: int
     guid: UUID
     _identifiers: List[str]
+    qualifiers: Dict[Hashable, Set[Hashable]]
 
     def __hash__(self):
         """Produces a hash, which is the GUID."""
@@ -149,7 +149,7 @@ class GeneInterval(AbstractFeatureIntervalCollection):
     longest isoform.
     """
 
-    _identifiers = ["gene_id", "gene_symbol", "locus_tag", "guid"]
+    _identifiers = ["gene_id", "gene_symbol", "locus_tag"]
 
     def __init__(
         self,
@@ -159,7 +159,7 @@ class GeneInterval(AbstractFeatureIntervalCollection):
         gene_symbol: Optional[str] = None,
         gene_type: Optional[Biotype] = None,
         locus_tag: Optional[str] = None,
-        qualifiers: Optional[Dict[Any, List[Any]]] = None,
+        qualifiers: Optional[Dict[Hashable, Set[Hashable]]] = None,
         sequence_name: Optional[str] = None,
         sequence_guid: Optional[UUID] = None,
         parent: Optional[Parent] = None,
@@ -171,7 +171,11 @@ class GeneInterval(AbstractFeatureIntervalCollection):
         self.locus_tag = locus_tag
         self.sequence_name = sequence_name
         self.sequence_guid = sequence_guid
-        self.qualifiers = qualifiers
+
+        if qualifiers:
+            self.qualifiers = qualifiers
+        else:
+            self.qualifiers = {}
 
         if not self.transcripts:
             raise InvalidAnnotationError("GeneInterval must have transcripts")
@@ -221,7 +225,7 @@ class GeneInterval(AbstractFeatureIntervalCollection):
             gene_symbol=self.gene_symbol,
             gene_type=self.gene_type.name if self.gene_type else None,
             locus_tag=self.locus_tag,
-            qualifiers=self.qualifiers,
+            qualifiers=self.qualifiers if self.qualifiers else None,
             sequence_name=self.sequence_name,
             sequence_guid=self.sequence_guid,
             gene_guid=self.guid,
@@ -293,23 +297,33 @@ class GeneInterval(AbstractFeatureIntervalCollection):
             raise NoncodingTranscriptError("No CDS transcripts found on this gene")
         return self._produce_merged_feature(intervals)
 
+    def export_qualifiers(self) -> Dict[Hashable, Set[Hashable]]:
+        """Exports qualifiers for GFF3/GenBank export"""
+        qualifiers = self.qualifiers.copy()
+        for key, val in [
+            [BioCantorQualifiers.GENE_ID.value, self.gene_id],
+            [BioCantorQualifiers.GENE_NAME.value, self.gene_symbol],
+            [BioCantorQualifiers.GENE_TYPE.value, self.gene_type.name],
+            [BioCantorQualifiers.LOCUS_TAG.value, self.locus_tag],
+        ]:
+            if not val:
+                continue
+            if key not in qualifiers:
+                qualifiers[key] = set()
+            qualifiers[key].add(val)
+        return qualifiers
+
     def to_gff(self) -> Iterable[GFFRow]:
         """Produces iterable of :class:`~biocantor.io.gff3.rows.GFFRow` for this gene and its children.
 
         Yields:
             :class:`~biocantor.io.gff3.rows.GFFRow`
         """
-        qualifiers = self.qualifiers.copy() if self.qualifiers else {}
-        gene_id = str(self.guid) if self.guid else digest_object(self)
+        qualifiers = self.export_qualifiers()
 
-        if self.gene_id:
-            qualifiers[BioCantorQualifiers.GENE_ID.value] = [self.gene_id]
-        if self.gene_symbol:
-            qualifiers[BioCantorQualifiers.GENE_NAME.value] = [self.gene_symbol]
-        if self.gene_type:
-            qualifiers[BioCantorQualifiers.GENE_TYPE.value] = [self.gene_type.name]
+        gene_guid = str(self.guid) if self.guid else digest_object(self)
 
-        attributes = GFFAttributes(id=gene_id, name=self.gene_symbol, parent=None, **qualifiers)
+        attributes = GFFAttributes(id=gene_guid, qualifiers=qualifiers, name=self.gene_symbol, parent=None)
         row = GFFRow(
             self.sequence_name,
             GFF_SOURCE,
@@ -323,7 +337,7 @@ class GeneInterval(AbstractFeatureIntervalCollection):
         )
         yield row
         for tx in self.transcripts:
-            yield from tx.to_gff(gene_id, qualifiers)
+            yield from tx.to_gff(gene_guid, qualifiers)
 
 
 class FeatureIntervalCollection(AbstractFeatureIntervalCollection):
@@ -338,7 +352,7 @@ class FeatureIntervalCollection(AbstractFeatureIntervalCollection):
     This cannot be empty; it must have at least one feature interval.
     """
 
-    _identifiers = ["feature_id", "feature_name", "locus_tag", "guid"]
+    _identifiers = ["feature_id", "feature_name", "locus_tag"]
 
     def __init__(
         self,
@@ -350,7 +364,7 @@ class FeatureIntervalCollection(AbstractFeatureIntervalCollection):
         sequence_name: Optional[str] = None,
         sequence_guid: Optional[UUID] = None,
         guid: Optional[UUID] = None,
-        qualifiers: Optional[Dict[Any, List[Any]]] = None,
+        qualifiers: Optional[Dict[Hashable, Set[Hashable]]] = None,
         parent: Optional[Parent] = None,
     ):
         self.feature_intervals = feature_intervals
@@ -360,7 +374,11 @@ class FeatureIntervalCollection(AbstractFeatureIntervalCollection):
         self.locus_tag = locus_tag
         self.sequence_name = sequence_name
         self.sequence_guid = sequence_guid
-        self.qualifiers = qualifiers
+
+        if qualifiers:
+            self.qualifiers = qualifiers
+        else:
+            self.qualifiers = {}
 
         if not self.feature_intervals:
             raise InvalidAnnotationError("FeatureCollection must have features")
@@ -416,11 +434,27 @@ class FeatureIntervalCollection(AbstractFeatureIntervalCollection):
             feature_name=self.feature_name,
             feature_id=self.feature_id,
             feature_type=self.feature_type,
-            qualifiers=self.qualifiers,
+            qualifiers=self.qualifiers if self.qualifiers else None,
             sequence_name=self.sequence_name,
             sequence_guid=self.sequence_guid,
             feature_collection_guid=self.guid,
         )
+
+    def export_qualifiers(self) -> Dict[Hashable, Set[Hashable]]:
+        """Exports qualifiers for GFF3/GenBank export"""
+        qualifiers = self.qualifiers.copy()
+        for key, val in [
+            [BioCantorQualifiers.FEATURE_ID.value, self.feature_id],
+            [BioCantorQualifiers.FEATURE_SYMBOL.value, self.feature_name],
+            [BioCantorQualifiers.FEATURE_TYPE.value, self.feature_type],
+            [BioCantorQualifiers.LOCUS_TAG.value, self.locus_tag],
+        ]:
+            if not val:
+                continue
+            if key not in qualifiers:
+                qualifiers[key] = set()
+            qualifiers[key].add(val)
+        return qualifiers
 
     def to_gff(self) -> Iterable[GFFRow]:
         """Produces iterable of :class:`~biocantor.io.gff3.rows.GFFRow` for this feature and its children.
@@ -428,16 +462,12 @@ class FeatureIntervalCollection(AbstractFeatureIntervalCollection):
         Yields:
             :class:`~biocantor.io.gff3.rows.GFFRow`
         """
-        qualifiers = self.qualifiers.copy() if self.qualifiers else {}
-        feat_group_id = str(self.guid) if self.guid else digest_object(self)
-        if self.feature_id:
-            qualifiers[BioCantorQualifiers.FEATURE_ID.value] = [self.feature_id]
-        if self.feature_name:
-            qualifiers[BioCantorQualifiers.FEATURE_SYMBOL.value] = [self.feature_name]
-        if self.feature_type:
-            qualifiers[BioCantorQualifiers.FEATURE_TYPE.value] = [self.feature_type]
+        qualifiers = self.export_qualifiers()
 
-        attributes = GFFAttributes(id=feat_group_id, name=self.feature_name, parent=None, **qualifiers)
+        feat_group_id = str(self.guid) if self.guid else digest_object(self)
+
+        attributes = GFFAttributes(id=feat_group_id, qualifiers=qualifiers, name=self.feature_name, parent=None)
+
         row = GFFRow(
             self.sequence_name,
             GFF_SOURCE,
@@ -450,6 +480,7 @@ class FeatureIntervalCollection(AbstractFeatureIntervalCollection):
             attributes,
         )
         yield row
+
         for feature in self.feature_intervals:
             yield from feature.to_gff(feat_group_id, qualifiers)
 
@@ -475,7 +506,7 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
         name: Optional[str] = None,
         sequence_name: Optional[str] = None,
         sequence_guid: Optional[UUID] = None,
-        qualifiers: Optional[Dict[Any, List[Any]]] = None,
+        qualifiers: Optional[Dict[Hashable, Set[Hashable]]] = None,
         start: Optional[int] = None,
         end: Optional[int] = None,
         completely_within: Optional[bool] = None,
@@ -487,7 +518,12 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
         self.sequence_name = sequence_name
         self.sequence_guid = sequence_guid
         self.name = name
-        self.qualifiers = qualifiers
+
+        if qualifiers:
+            self.qualifiers = qualifiers
+        else:
+            self.qualifiers = {}
+
         # we store the sequence explicitly, because this is how we can retain sequence information
         # for empty collections
         if parent and parent.sequence:
@@ -559,7 +595,7 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
             genes=[gene.to_dict() for gene in self.genes],
             feature_collections=[feature.to_dict() for feature in self.feature_collections],
             name=self.name,
-            qualifiers=self.qualifiers,
+            qualifiers=self.qualifiers if self.qualifiers else None,
             sequence_name=self.sequence_name,
             sequence_guid=self.sequence_guid,
             start=self.start,
@@ -638,7 +674,7 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
         If :meth:`AnnotationCollection.query_by_guids()` is called, then this function is called
         to populate the ``_guid_map`` member. Subsequent lookups are now ``O(1)``.
         """
-        self._guid_map = {x.guid: x for x in self.iter_children() if x.guid is not None}
+        self._guid_map = {x.guid: x for x in self.iter_children()}
         self._guid_cached = True
 
     def query_by_guids(self, ids: List[UUID]) -> "AnnotationCollection":

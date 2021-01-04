@@ -3,7 +3,7 @@ Contains information on how to manage GFF row data. Enforces GFF3 specification 
 """
 import re
 from warnings import warn
-from typing import Union, Optional, Any
+from typing import Union, Optional, Any, Hashable, Set, Dict
 from dataclasses import dataclass
 
 from inscripta.biocantor.io.gff3.constants import (
@@ -76,15 +76,22 @@ class GFFAttributes:
     using one or more unreserved (lowercase) tags.
     """
 
-    def __init__(self, id: str, name: Optional[str] = None, parent: Optional[str] = None, **kwargs):
+    def __init__(
+        self,
+        id: str,
+        qualifiers: Dict[Hashable, Set[Hashable]],
+        *,
+        name: Optional[str] = None,
+        parent: Optional[str] = None,
+    ):
         self.id = id
         self.name = name
         self.parent = parent
-        self.attributes = kwargs
+        self.attributes = qualifiers
 
         for val in self.attributes.values():
-            if not isinstance(val, list) or isinstance(val, tuple):
-                raise GFF3ExportException("Attributes dictionary must be a dictionary of lists or tuples.")
+            if not isinstance(val, set):
+                raise GFF3ExportException("Attributes dictionary must be a dictionary of sets.")
 
     def __str__(self):
         """
@@ -113,15 +120,17 @@ class GFFAttributes:
                 [BioCantorGFF3ReservedQualifiers.NAME.value, GFFAttributes.escape_value(self.name, escape_comma=True)]
             )
 
-        for key, value_list in self.attributes.items():
+        for key, value_set in self.attributes.items():
+            if not value_set:
+                continue
             if BioCantorGFF3ReservedQualifiers.has_value(key):
                 raise GFF3ExportException(f"Found {key} in an attributes dictionary; this is reserved for internal use")
             elif GFF3ReservedQualifiers.has_value(key):
                 warn(f"Attribute {key} was seen in the qualifiers, which is a reserved GFF3 key.", ReservedKeyWarning)
-                escaped_key = GFFAttributes.escape_key(key, lower=False)
+                escaped_key = GFFAttributes.escape_key(str(key), lower=False)
             else:
-                escaped_key = GFFAttributes.escape_key(key, lower=True)
-            escaped_vals = [GFFAttributes.escape_value(value) for value in value_list]
+                escaped_key = GFFAttributes.escape_key(str(key), lower=True)
+            escaped_vals = [GFFAttributes.escape_value(value, escape_comma=False) for value in value_set]
             escaped_val = ATTRIBUTE_SEPARATOR.join(escaped_vals)
             attrs_list.append([escaped_key, escaped_val])
         return ";".join(["=".join(pair) for pair in attrs_list])

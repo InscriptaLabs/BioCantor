@@ -3,18 +3,17 @@ Object representation of features. Includes an abstract feature class that is al
 
 Each object is capable of exporting itself to BED and GFF3.
 """
-
 from abc import ABC, abstractmethod
-from typing import Optional, Any, Union, Dict, List, Set, Iterable
+from functools import lru_cache
+from typing import Optional, Any, Union, Dict, List, Set, Iterable, Hashable
 from uuid import UUID
 
 from inscripta.biocantor.exc import (
     EmptyLocationException,
 )
-from functools import lru_cache
 from inscripta.biocantor.gene.cds import CDSPhase
 from inscripta.biocantor.io.bed import BED12, RGB
-from inscripta.biocantor.io.gff3.constants import GFF_SOURCE, NULL_COLUMN, BioCantorFeatureTypes
+from inscripta.biocantor.io.gff3.constants import GFF_SOURCE, NULL_COLUMN, BioCantorFeatureTypes, BioCantorQualifiers
 from inscripta.biocantor.io.gff3.rows import GFFAttributes, GFFRow
 from inscripta.biocantor.location.location import Location
 from inscripta.biocantor.location.location_impl import SingleInterval
@@ -32,10 +31,17 @@ class AbstractFeatureInterval(ABC):
 
     location: Location
     _identifiers: List[Union[str, UUID]]
+    qualifiers: Dict[Hashable, Set[Hashable]]
     guid: Optional[UUID] = None
     sequence_guid: Optional[UUID] = None
     sequence_name: Optional[str] = None
     _is_primary_feature: Optional[bool] = None
+
+    @abstractmethod
+    def export_qualifiers(
+        self, parent_qualifiers: Optional[Dict[Hashable, Set[Hashable]]] = None
+    ) -> Dict[Hashable, Set[Hashable]]:
+        """Exports qualifiers for GFF3 or GenBank export. This merges top level keys with the arbitrary values"""
 
     @property
     def start(self) -> int:
@@ -153,18 +159,30 @@ class AbstractFeatureInterval(ABC):
         else:
             return seq.reverse_complement()
 
+    def _merge_qualifiers(
+        self, other_qualifiers: Optional[Dict[Hashable, Set[Hashable]]] = None
+    ) -> Dict[Hashable, Set[Hashable]]:
+        """Merges this Interval's qualifiers dictionary with a new one, removing redundancy."""
+        merged = self.qualifiers.copy()
+        if other_qualifiers:
+            for key, vals in other_qualifiers.items():
+                if key not in merged:
+                    merged[key] = set()
+                merged[key].update(vals)
+        return merged
+
 
 class FeatureInterval(AbstractFeatureInterval):
     """FeatureIntervals are generic intervals. These can be used to model genome promoters,
     open chromatin sites, etc.
     """
 
-    _identifiers = ["feature_name", "feature_id", "guid"]
+    _identifiers = ["feature_name", "feature_id"]
 
     def __init__(
         self,
         location: Location,  # exons
-        qualifiers: Optional[Dict[Any, List[Any]]] = None,
+        qualifiers: Optional[Dict[Hashable, Set[Hashable]]] = None,
         sequence_guid: Optional[UUID] = None,
         sequence_name: Optional[str] = None,
         feature_type: Optional[str] = None,
@@ -179,7 +197,12 @@ class FeatureInterval(AbstractFeatureInterval):
         self.feature_type = feature_type
         self.feature_name = feature_name
         self.feature_id = feature_id
-        self.qualifiers = qualifiers
+
+        if qualifiers:
+            self.qualifiers = qualifiers
+        else:
+            self.qualifiers = {}
+
         self.bin = bins(self.start, self.end, fmt="bed")
         self._is_primary_feature = is_primary_feature
 
@@ -200,7 +223,7 @@ class FeatureInterval(AbstractFeatureInterval):
             ObjectValidation.require_location_has_parent_with_sequence(self.location)
 
     def __str__(self):
-        return f"FeatureInterval(({self.location}), qualifiers={self.qualifiers})"
+        return f"FeatureInterval(({self.location}), name={self.feature_name})"
 
     def __repr__(self):
         return "<{}>".format(str(self))
@@ -212,7 +235,7 @@ class FeatureInterval(AbstractFeatureInterval):
             interval_starts=exon_starts,
             interval_ends=exon_ends,
             strand=self.strand.name,
-            qualifiers=self.qualifiers,
+            qualifiers=self.qualifiers if self.qualifiers else None,
             feature_id=self.feature_id,
             feature_name=self.feature_name,
             feature_type=self.feature_type,
@@ -248,7 +271,26 @@ class FeatureInterval(AbstractFeatureInterval):
 
         return FeatureInterval(location=intersection, guid=new_guid, qualifiers=new_qualifiers)
 
-    def to_gff(self, parent: Optional[str] = None, parent_qualifiers: Optional[Dict] = None) -> Iterable[GFFRow]:
+    def export_qualifiers(
+        self, parent_qualifiers: Optional[Dict[Hashable, Set[Hashable]]] = None
+    ) -> Dict[Hashable, Set[Hashable]]:
+        """Exports qualifiers for GFF3/GenBank export"""
+        qualifiers = self._merge_qualifiers(parent_qualifiers)
+        for key, val in [
+            [BioCantorQualifiers.FEATURE_SYMBOL.value, self.feature_name],
+            [BioCantorQualifiers.FEATURE_ID.value, self.feature_id],
+            [BioCantorQualifiers.FEATURE_TYPE.value, self.feature_type],
+        ]:
+            if not val:
+                continue
+            if key not in qualifiers:
+                qualifiers[key] = set()
+            qualifiers[key].add(val)
+        return qualifiers
+
+    def to_gff(
+        self, parent: Optional[str] = None, parent_qualifiers: Optional[Dict[Hashable, Set[Hashable]]] = None
+    ) -> Iterable[GFFRow]:
         """Writes a GFF format list of lists for this feature.
 
         The additional qualifiers are used when writing a hierarchical relationship back to files. GFF files
@@ -261,17 +303,11 @@ class FeatureInterval(AbstractFeatureInterval):
         Yields:
             :class:`~biocantor.io.gff3.rows.GFFRow`
         """
-        qualifiers = self.qualifiers.copy() if self.qualifiers else {}
-        if parent_qualifiers:
-            for key, val in parent_qualifiers.items():
-                if key in qualifiers:
-                    qualifiers[key].extend(val)
-                else:
-                    qualifiers[key] = val
+        qualifiers = self.export_qualifiers(parent_qualifiers)
 
         feature_id = str(self.guid) if self.guid else str(digest_object(self))
 
-        attributes = GFFAttributes(id=feature_id, name=self.feature_name, parent=parent, **qualifiers)
+        attributes = GFFAttributes(id=feature_id, qualifiers=qualifiers, name=self.feature_name, parent=parent)
 
         # transcript feature
         row = GFFRow(
@@ -291,7 +327,7 @@ class FeatureInterval(AbstractFeatureInterval):
         # re-use qualifiers, updating ID each time
         for i, block in enumerate(self.location.blocks, 1):
             attributes = GFFAttributes(
-                id=f"exon-{feature_id}-{i}", name=self.feature_name, parent=feature_id, **qualifiers
+                id=f"exon-{feature_id}-{i}", qualifiers=qualifiers, name=self.feature_name, parent=feature_id
             )
             row = GFFRow(
                 self.sequence_name,

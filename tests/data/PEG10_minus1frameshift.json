@@ -1,0 +1,344 @@
+{
+    "feature_collections": null,
+    "genes": [
+        {
+            "transcripts": [
+                {
+                    "exon_starts": [
+                        94656369,
+                        94663333
+                    ],
+                    "exon_ends": [
+                        94656580,
+                        94669695
+                    ],
+                    "strand": "PLUS",
+                    "cds_starts": [
+                        94663556
+                    ],
+                    "cds_ends": [
+                        94664534
+                    ],
+                    "cds_frames": [
+                        "ZERO"
+                    ],
+                    "qualifiers": {
+                        "Dbxref": [
+                            "MIM:609810",
+                            "GeneID:23089",
+                            "Genbank:NM_001040152.2",
+                            "HGNC:HGNC:14005"
+                        ],
+                        "gbkey": [
+                            "mRNA"
+                        ],
+                        "gene": [
+                            "PEG10"
+                        ],
+                        "product": [
+                            "paternally expressed 10, transcript variant 1"
+                        ]
+                    },
+                    "is_primary_tx": false,
+                    "transcript_id": "NM_001040152.2",
+                    "protein_id": "NP_001035242.1",
+                    "transcript_symbol": null,
+                    "transcript_type": "protein_coding",
+                    "sequence_name": "chr7",
+                    "sequence_guid": null,
+                    "guid": null,
+                    "transcript_guid": null
+                },
+                {
+                    "exon_starts": [
+                        94656324,
+                        94663333
+                    ],
+                    "exon_ends": [
+                        94656591,
+                        94669695
+                    ],
+                    "strand": "PLUS",
+                    "cds_starts": [
+                        94656586,
+                        94663333,
+                        94664512
+                    ],
+                    "cds_ends": [
+                        94656591,
+                        94664513,
+                        94665682
+                    ],
+                    "cds_frames": [
+                        "ZERO",
+                        "TWO",
+                        "ZERO"
+                    ],
+                    "qualifiers": {
+                        "Dbxref": [
+                            "MIM:609810",
+                            "GeneID:23089",
+                            "Genbank:NM_001172437.2",
+                            "HGNC:HGNC:14005"
+                        ],
+                        "gbkey": [
+                            "mRNA"
+                        ],
+                        "gene": [
+                            "PEG10"
+                        ],
+                        "product": [
+                            "paternally expressed 10, transcript variant 2"
+                        ]
+                    },
+                    "is_primary_tx": false,
+                    "transcript_id": "NM_001172437.2",
+                    "protein_id": "NP_001165908.1",
+                    "transcript_symbol": null,
+                    "transcript_type": "protein_coding",
+                    "sequence_name": "chr7",
+                    "sequence_guid": null,
+                    "guid": null,
+                    "transcript_guid": null
+                },
+                {
+                    "exon_starts": [
+                        94656369,
+                        94663333
+                    ],
+                    "exon_ends": [
+                        94656591,
+                        94669695
+                    ],
+                    "strand": "PLUS",
+                    "cds_starts": [
+                        94656586,
+                        94663333
+                    ],
+                    "cds_ends": [
+                        94656591,
+                        94664534
+                    ],
+                    "cds_frames": [
+                        "ZERO",
+                        "TWO"
+                    ],
+                    "qualifiers": {
+                        "Dbxref": [
+                            "MIM:609810",
+                            "GeneID:23089",
+                            "Genbank:NM_001172438.3",
+                            "HGNC:HGNC:14005"
+                        ],
+                        "gbkey": [
+                            "mRNA"
+                        ],
+                        "gene": [
+                            "PEG10"
+                        ],
+                        "product": [
+                            "paternally expressed 10, transcript variant 2"
+                        ]
+                    },
+                    "is_primary_tx": false,
+                    "transcript_id": "NM_001172438.3",
+                    "protein_id": "NP_001165909.1",
+                    "transcript_symbol": null,
+                    "transcript_type": "protein_coding",
+                    "sequence_name": "chr7",
+                    "sequence_guid": null,
+                    "guid": null,
+                    "transcript_guid": null
+                },
+                {
+                    "exon_starts": [
+                        94656324,
+                        94663333
+                    ],
+                    "exon_ends": [
+                        94656580,
+                        94669695
+                    ],
+                    "strand": "PLUS",
+                    "cds_starts": [
+                        94663454,
+                        94664512
+                    ],
+                    "cds_ends": [
+                        94664513,
+                        94665682
+                    ],
+                    "cds_frames": [
+                        "ZERO",
+                        "ZERO"
+                    ],
+                    "qualifiers": {
+                        "Dbxref": [
+                            "MIM:609810",
+                            "GeneID:23089",
+                            "Genbank:NM_001184961.1",
+                            "HGNC:HGNC:14005"
+                        ],
+                        "gbkey": [
+                            "mRNA"
+                        ],
+                        "gene": [
+                            "PEG10"
+                        ],
+                        "product": [
+                            "paternally expressed 10, transcript variant 1"
+                        ],
+                        "tag": [
+                            "RefSeq Select"
+                        ]
+                    },
+                    "is_primary_tx": false,
+                    "transcript_id": "NM_001184961.1",
+                    "protein_id": "NP_001171890.1",
+                    "transcript_symbol": null,
+                    "transcript_type": "protein_coding",
+                    "sequence_name": "chr7",
+                    "sequence_guid": null,
+                    "guid": null,
+                    "transcript_guid": null
+                },
+                {
+                    "exon_starts": [
+                        94656369,
+                        94663333
+                    ],
+                    "exon_ends": [
+                        94656580,
+                        94669695
+                    ],
+                    "strand": "PLUS",
+                    "cds_starts": [
+                        94663454
+                    ],
+                    "cds_ends": [
+                        94664534
+                    ],
+                    "cds_frames": [
+                        "ZERO"
+                    ],
+                    "qualifiers": {
+                        "Dbxref": [
+                            "Genbank:NM_001184962.2",
+                            "GeneID:23089",
+                            "MIM:609810",
+                            "HGNC:HGNC:14005"
+                        ],
+                        "gbkey": [
+                            "mRNA"
+                        ],
+                        "gene": [
+                            "PEG10"
+                        ],
+                        "product": [
+                            "paternally expressed 10, transcript variant 1"
+                        ]
+                    },
+                    "is_primary_tx": false,
+                    "transcript_id": "NM_001184962.2",
+                    "protein_id": "NP_001171891.1",
+                    "transcript_symbol": null,
+                    "transcript_type": "protein_coding",
+                    "sequence_name": "chr7",
+                    "sequence_guid": null,
+                    "guid": null,
+                    "transcript_guid": null
+                },
+                {
+                    "exon_starts": [
+                        94656324,
+                        94663333
+                    ],
+                    "exon_ends": [
+                        94656580,
+                        94669695
+                    ],
+                    "strand": "PLUS",
+                    "cds_starts": [
+                        94663556,
+                        94664512
+                    ],
+                    "cds_ends": [
+                        94664513,
+                        94665682
+                    ],
+                    "cds_frames": [
+                        "ZERO",
+                        "ZERO"
+                    ],
+                    "qualifiers": {
+                        "Dbxref": [
+                            "MIM:609810",
+                            "GeneID:23089",
+                            "Genbank:NM_015068.3",
+                            "HGNC:HGNC:14005"
+                        ],
+                        "gbkey": [
+                            "mRNA"
+                        ],
+                        "gene": [
+                            "PEG10"
+                        ],
+                        "product": [
+                            "paternally expressed 10, transcript variant 1"
+                        ]
+                    },
+                    "is_primary_tx": false,
+                    "transcript_id": "NM_015068.3",
+                    "protein_id": "NP_055883.2",
+                    "transcript_symbol": null,
+                    "transcript_type": "protein_coding",
+                    "sequence_name": "chr7",
+                    "sequence_guid": null,
+                    "guid": null,
+                    "transcript_guid": null
+                }
+            ],
+            "gene_id": null,
+            "gene_symbol": null,
+            "gene_type": "protein_coding",
+            "locus_tag": null,
+            "qualifiers": {
+                "Dbxref": [
+                    "MIM:609810",
+                    "GeneID:23089",
+                    "HGNC:HGNC:14005"
+                ],
+                "description": [
+                    "paternally expressed 10"
+                ],
+                "gbkey": [
+                    "Gene"
+                ],
+                "gene": [
+                    "PEG10"
+                ],
+                "gene_synonym": [
+                    "Mar2",
+                    "RTL2",
+                    "SIRH1",
+                    "MEF3L",
+                    "RGAG3",
+                    "Mart2",
+                    "EDR",
+                    "HB-1"
+                ]
+            },
+            "sequence_name": "chr7",
+            "sequence_guid": null,
+            "gene_guid": null
+        }
+    ],
+    "name": null,
+    "sequence_name": "chr7",
+    "sequence_guid": null,
+    "sequence_path": null,
+    "qualifiers": null,
+    "start": null,
+    "end": null,
+    "completely_within": null
+}

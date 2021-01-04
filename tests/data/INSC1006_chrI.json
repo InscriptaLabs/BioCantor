@@ -18,21 +18,11 @@
                         "ncrna_class": [
                             "other"
                         ],
-                        "locus_tag": [
-                            "GI526_G0000001",
-                            "GI526_G0000001"
-                        ],
                         "product": [
                             "CAT novel prediction: IsoSeq"
                         ],
                         "note": [
                             "CAT transcript id: T0000001; CAT alignment id: IsoSeq-PB.2586.1; CAT novel prediction: IsoSeq"
-                        ],
-                        "gene_biotype": [
-                            "ncRNA"
-                        ],
-                        "transcript_biotype": [
-                            "ncRNA"
                         ]
                     },
                     "is_primary_tx": false,
@@ -50,14 +40,7 @@
             "gene_symbol": null,
             "gene_type": "ncRNA",
             "locus_tag": "GI526_G0000001",
-            "qualifiers": {
-                "locus_tag": [
-                    "GI526_G0000001"
-                ],
-                "gene_biotype": [
-                    "ncRNA"
-                ]
-            },
+            "qualifiers": {},
             "sequence_name": "CM021111.1",
             "sequence_guid": null,
             "gene_guid": null
@@ -83,30 +66,13 @@
                     ],
                     "qualifiers": {
                         "gene": [
-                            "GDH3",
                             "GDH3"
-                        ],
-                        "locus_tag": [
-                            "GI526_G0000002",
-                            "GI526_G0000002"
                         ],
                         "product": [
                             "GDH3 isoform 1"
                         ],
                         "note": [
                             "CAT transcript id: T0000002; CAT alignment id: NM_001178204.1-0; CAT source transcript id: NM_001178204.1; CAT source transcript biotype: protein_coding"
-                        ],
-                        "gene_name": [
-                            "GDH3"
-                        ],
-                        "gene_biotype": [
-                            "protein_coding"
-                        ],
-                        "transcript_name": [
-                            "GDH3"
-                        ],
-                        "transcript_biotype": [
-                            "protein_coding"
                         ]
                     },
                     "is_primary_tx": false,
@@ -127,15 +93,6 @@
             "qualifiers": {
                 "gene": [
                     "GDH3"
-                ],
-                "locus_tag": [
-                    "GI526_G0000002"
-                ],
-                "gene_name": [
-                    "GDH3"
-                ],
-                "gene_biotype": [
-                    "protein_coding"
                 ]
             },
             "sequence_name": "CM021111.1",
@@ -163,12 +120,7 @@
                     ],
                     "qualifiers": {
                         "gene": [
-                            "BDH2",
                             "BDH2"
-                        ],
-                        "locus_tag": [
-                            "GI526_G0000003",
-                            "GI526_G0000003"
                         ],
                         "codon_start": [
                             "1"
@@ -176,23 +128,8 @@
                         "product": [
                             "BDH2 isoform 1"
                         ],
-                        "protein_id": [
-                            "KAF1903246.1"
-                        ],
                         "translation": [
                             "MRALAYFGKGNIRFTNHLKEPHIVAPDELVIDIAWCGICGTDLHEYTDGPIFFPEDGHTHEISHNPLPQAMGHEMAGTVLEVGPSVKNLKVGDKVVVEPTGTCRDRYRWPLSPKVDKEWCAACKKGYYNBioCantorYLGLCGAGVQSGGFAEGVVMNESHCYKVPDFVPLDVAALIQPLAVCWHAIRVCEFKAGSTALIIGAGPIGLGTILALNAAGCKDIVVSEPAKVRRELAEKMGARVYDPTAHAAKESIDYLRSIADGGDGFDYTFDCSGLEVTLNAAIQCLTFRGTAVNLAMWGHHKIQFSPMDITLHERKYTGSMCYTHHDFETVIEALEEGRIDIDRARHMITGRVNIEDGLDGAIMKLINEKESTIKIILTPNNHGELNREADNEKKEISELSSRKDQERLRESINEAKLRHT"
-                        ],
-                        "gene_name": [
-                            "BDH2"
-                        ],
-                        "gene_biotype": [
-                            "protein_coding"
-                        ],
-                        "transcript_name": [
-                            "BDH2"
-                        ],
-                        "transcript_biotype": [
-                            "protein_coding"
                         ]
                     },
                     "is_primary_tx": false,
@@ -213,15 +150,6 @@
             "qualifiers": {
                 "gene": [
                     "BDH2"
-                ],
-                "locus_tag": [
-                    "GI526_G0000003"
-                ],
-                "gene_name": [
-                    "BDH2"
-                ],
-                "gene_biotype": [
-                    "protein_coding"
                 ]
             },
             "sequence_name": "CM021111.1",
@@ -243,30 +171,13 @@
                     "cds_frames": null,
                     "qualifiers": {
                         "gene": [
-                            "BDH1",
                             "BDH1"
-                        ],
-                        "locus_tag": [
-                            "GI526_G0000004",
-                            "GI526_G0000004"
                         ],
                         "product": [
                             "BDH1 isoform 1"
                         ],
                         "note": [
                             "CAT transcript id: T0000004; CAT alignment id: NM_001178202.2-0; CAT source transcript id: NM_001178202.2; CAT source transcript biotype: protein_coding"
-                        ],
-                        "gene_name": [
-                            "BDH1"
-                        ],
-                        "gene_biotype": [
-                            "protein_coding"
-                        ],
-                        "transcript_name": [
-                            "BDH1"
-                        ],
-                        "transcript_biotype": [
-                            "protein_coding"
                         ]
                     },
                     "is_primary_tx": false,
@@ -287,15 +198,6 @@
             "qualifiers": {
                 "gene": [
                     "BDH1"
-                ],
-                "locus_tag": [
-                    "GI526_G0000004"
-                ],
-                "gene_name": [
-                    "BDH1"
-                ],
-                "gene_biotype": [
-                    "protein_coding"
                 ]
             },
             "sequence_name": "CM021111.1",

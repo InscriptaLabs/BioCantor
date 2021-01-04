@@ -28,23 +28,23 @@ class TestFeatureInterval:
     se_unspliced = FeatureIntervalModel.Schema().load(
         dict(interval_starts=[0], interval_ends=[18], strand=Strand.PLUS.name)
     )
-    se_unspliced_repr = "FeatureInterval((0-18:+), qualifiers=None)"
+    se_unspliced_repr = "FeatureInterval((0-18:+), name=None)"
     # a three exon feature
     e3_spliced = FeatureIntervalModel.Schema().load(
         dict(interval_starts=[2, 7, 12], interval_ends=[6, 10, 15], strand=Strand.PLUS.name)
     )
-    e3_spliced_repr = "FeatureInterval((2-6:+, 7-10:+, 12-15:+), qualifiers=None)"
+    e3_spliced_repr = "FeatureInterval((2-6:+, 7-10:+, 12-15:+), name=None)"
     # Negative strand feature definitions
     # a single exon feature that is this entire genome
     se_unspliced_minus = FeatureIntervalModel.Schema().load(
         dict(interval_starts=[0], interval_ends=[18], strand=Strand.MINUS.name)
     )
-    se_unspliced_repr_minus = "FeatureInterval((0-18:-), qualifiers=None)"
+    se_unspliced_repr_minus = "FeatureInterval((0-18:-), name=None)"
     # a three exon negative strand feature
     e3_spliced_minus = FeatureIntervalModel.Schema().load(
         dict(interval_starts=[2, 7, 12], interval_ends=[6, 10, 15], strand=Strand.MINUS.name)
     )
-    e3_spliced_repr_minus = "FeatureInterval((2-6:-, 7-10:-, 12-15:-), qualifiers=None)"
+    e3_spliced_repr_minus = "FeatureInterval((2-6:-, 7-10:-, 12-15:-), name=None)"
 
     @pytest.mark.parametrize(
         "schema,expected",
@@ -276,9 +276,8 @@ class TestFeatureInterval:
         feat = self.se_unspliced.to_feature_interval()
         feat.feature_name = "test"
         feat.feature_id = "testid"
-        feat.guid = "abc"
-        assert feat.identifiers == {"test", "abc", "testid"}
-        assert feat.identifiers_dict == {"feature_name": "test", "feature_id": "testid", "guid": "abc"}
+        assert feat.identifiers == {"test", "testid"}
+        assert feat.identifiers_dict == {"feature_name": "test", "feature_id": "testid"}
 
     def test_intersection_exception(self):
         schema = FeatureIntervalModel.Schema().load(

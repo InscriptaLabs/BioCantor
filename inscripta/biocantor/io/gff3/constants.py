@@ -70,6 +70,7 @@ class BioCantorQualifiers(Enum):
     FEATURE_ID = "feature_id"
     FEATURE_SYMBOL = "feature_name"
     FEATURE_TYPE = "feature_type"
+    LOCUS_TAG = "locus_tag"
 
 
 class GFF3FeatureTypes(Enum):

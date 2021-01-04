@@ -40,7 +40,7 @@ class TestTranscript:
             cds_frames=[CDSFrame.ZERO.name],
         )
     )
-    se_unspliced_repr = "TranscriptInterval((0-18:+), cds=[CDS((0-18:+), (CDSFrame.ZERO)], qualifiers=None)"
+    se_unspliced_repr = "TranscriptInterval((0-18:+), cds=[CDS((0-18:+), (CDSFrame.ZERO)], symbol=None)"
     # a single exon transcript that is out of frame
     se_unspliced_oof = TranscriptIntervalModel.Schema().load(
         dict(
@@ -52,10 +52,10 @@ class TestTranscript:
             cds_frames=[CDSFrame.ONE.name],
         )
     )
-    se_unspliced_oof_repr = "TranscriptInterval((0-18:+), cds=[CDS((0-18:+), (CDSFrame.ONE)], qualifiers=None)"
+    se_unspliced_oof_repr = "TranscriptInterval((0-18:+), cds=[CDS((0-18:+), (CDSFrame.ONE)], symbol=None)"
     # a single exon noncoding transcript
     se_noncoding = TranscriptIntervalModel.Schema().load(dict(exon_starts=[0], exon_ends=[18], strand=Strand.PLUS.name))
-    se_noncoding_repr = "TranscriptInterval((0-18:+), cds=[None], qualifiers=None)"
+    se_noncoding_repr = "TranscriptInterval((0-18:+), cds=[None], symbol=None)"
     # a three exon transcript with a 2bp 5' UTR and a 2bp 3' UTR
     e3_spliced = TranscriptIntervalModel.Schema().load(
         dict(
@@ -70,7 +70,7 @@ class TestTranscript:
     e3_spliced_repr = (
         "TranscriptInterval((2-6:+, 7-10:+, 12-15:+), "
         "cds=[CDS((4-6:+, 7-10:+, 12-13:+), "
-        "(CDSFrame.ZERO, CDSFrame.TWO, CDSFrame.TWO)], qualifiers=None)"
+        "(CDSFrame.ZERO, CDSFrame.TWO, CDSFrame.TWO)], symbol=None)"
     )
     # a three exon transcript with an entirely non-coding 1st and last exon
     e3_spliced_utr = TranscriptIntervalModel.Schema().load(
@@ -84,7 +84,7 @@ class TestTranscript:
         )
     )
     e3_spliced_utr_repr = (
-        "TranscriptInterval((2-6:+, 7-10:+, 12-15:+), cds=[CDS((7-10:+), (CDSFrame.ZERO)], qualifiers=None)"
+        "TranscriptInterval((2-6:+, 7-10:+, 12-15:+), cds=[CDS((7-10:+), (CDSFrame.ZERO)], symbol=None)"
     )
     # a three exon transcript with an entirely non-coding 1st and last exon; out of frame
     # this means it has no translation
@@ -99,7 +99,7 @@ class TestTranscript:
         )
     )
     e3_spliced_notrans_repr = (
-        "TranscriptInterval((2-6:+, 7-10:+, 12-15:+), cds=[CDS((7-10:+), (CDSFrame.ONE)], qualifiers=None)"
+        "TranscriptInterval((2-6:+, 7-10:+, 12-15:+), cds=[CDS((7-10:+), (CDSFrame.ONE)], symbol=None)"
     )
 
     # Negative strand transcript definitions
@@ -114,7 +114,7 @@ class TestTranscript:
             cds_frames=[CDSFrame.ZERO.name],
         )
     )
-    se_unspliced_repr_minus = "TranscriptInterval((0-18:-), cds=[CDS((0-18:-), (CDSFrame.ZERO)], qualifiers=None)"
+    se_unspliced_repr_minus = "TranscriptInterval((0-18:-), cds=[CDS((0-18:-), (CDSFrame.ZERO)], symbol=None)"
     # a single exon transcript that is out of frame
     se_unspliced_oof_minus = TranscriptIntervalModel.Schema().load(
         dict(
@@ -126,12 +126,12 @@ class TestTranscript:
             cds_frames=[CDSFrame.ONE.name],
         )
     )
-    se_unspliced_oof_repr_minus = "TranscriptInterval((0-18:-), cds=[CDS((0-18:-), (CDSFrame.ONE)], qualifiers=None)"
+    se_unspliced_oof_repr_minus = "TranscriptInterval((0-18:-), cds=[CDS((0-18:-), (CDSFrame.ONE)], symbol=None)"
     # a single exon noncoding transcript (explicitly defined)
     se_noncoding_minus = TranscriptIntervalModel.Schema().load(
         dict(exon_starts=[0], exon_ends=[18], strand=Strand.MINUS.name)
     )
-    se_noncoding_repr_minus = "TranscriptInterval((0-18:-), cds=[None], qualifiers=None)"
+    se_noncoding_repr_minus = "TranscriptInterval((0-18:-), cds=[None], symbol=None)"
     # a three exon transcript with a 2bp 5' UTR and a 2bp 3' UTR
     e3_spliced_minus = TranscriptIntervalModel.Schema().load(
         dict(
@@ -146,7 +146,7 @@ class TestTranscript:
     e3_spliced_repr_minus = (
         "TranscriptInterval((2-6:-, 7-10:-, 12-15:-), "
         "cds=[CDS((4-6:-, 7-10:-, 12-13:-), "
-        "(CDSFrame.ONE, CDSFrame.ONE, CDSFrame.ZERO)], qualifiers=None)"
+        "(CDSFrame.ONE, CDSFrame.ONE, CDSFrame.ZERO)], symbol=None)"
     )
     # a three exon transcript with an entirely non-coding 1st and last exon
     e3_spliced_utr_minus = TranscriptIntervalModel.Schema().load(
@@ -160,7 +160,7 @@ class TestTranscript:
         )
     )
     e3_spliced_utr_repr_minus = (
-        "TranscriptInterval((2-6:-, 7-10:-, 12-15:-), cds=[CDS((7-10:-), (CDSFrame.ZERO)], qualifiers=None)"
+        "TranscriptInterval((2-6:-, 7-10:-, 12-15:-), cds=[CDS((7-10:-), (CDSFrame.ZERO)], symbol=None)"
     )
     # a three exon transcript with an entirely non-coding 1st and last exon; out of frame
     # this means it has no translation
@@ -175,7 +175,7 @@ class TestTranscript:
         )
     )
     e3_spliced_notrans_repr_minus = (
-        "TranscriptInterval((2-6:-, 7-10:-, 12-15:-), cds=[CDS((7-10:-), (CDSFrame.ONE)], qualifiers=None)"
+        "TranscriptInterval((2-6:-, 7-10:-, 12-15:-), cds=[CDS((7-10:-), (CDSFrame.ONE)], symbol=None)"
     )
 
     @pytest.mark.parametrize(

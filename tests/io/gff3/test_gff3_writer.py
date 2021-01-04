@@ -43,9 +43,6 @@ class TestGff3Writer:
             collection_to_gff3(a, fh)
         gff2 = list(parse_standard_gff3(tmp_gff))
         a2 = [x.to_annotation_collection() for x in gff2]
+
         for c1, c2 in zip(a, a2):
-            for g1, g2 in zip(c1.genes, c2.genes):
-                assert g1.location == g2.location
-                for tx1, tx2 in zip(g1.transcripts, g2.transcripts):
-                    assert tx1.location == tx2.location
-                    assert tx1.cds == tx2.cds
+            assert c1.to_dict() == c2.to_dict()

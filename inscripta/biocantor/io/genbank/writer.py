@@ -11,7 +11,7 @@ pairs where you have ``gene`` followed by ``[CDS, tRNA, rRNA, ...]``.
 ``[mRNA, tRNA, ...]`` and if the case where the child is ``mRNA``, then there are ``CDS`` features.
 """
 import warnings
-from typing import Iterable, List, Optional, TextIO
+from typing import Iterable, List, Optional, TextIO, Dict, Hashable
 
 from Bio import SeqIO
 from Bio.Seq import Seq
@@ -101,12 +101,9 @@ def gene_to_feature(gene: GeneInterval, genbank_type: GenbankFlavor, force_stran
     strand = max(strands, key=strands.count)
     feature = SeqFeature(location, type=GeneFeatures.GENE.value, strand=strand.value)
 
-    feature.qualifiers.update({key: val for key, val in gene.qualifiers.items() if val is not None})
-    feature.qualifiers.update({key: [val] for key, val in gene.identifiers_dict.items() if val is not None})
+    feature.qualifiers = {key: list(vals) for key, vals in gene.export_qualifiers().items()}
 
-    if gene.gene_type:
-        feature.qualifiers["gene_biotype"] = [gene.gene_type.name]
-
+    # do our best to ensure there is a /gene tag
     gene_symbol = None
     if gene.gene_symbol is not None:
         gene_symbol = gene.gene_symbol
@@ -156,6 +153,12 @@ def transcripts_to_feature(
     for transcript in transcripts:
         location = transcript.location.to_biopython()
 
+        transcript_qualifiers = {key: list(vals) for key, vals in transcript.export_qualifiers().items()}
+        if gene_symbol is not None:
+            transcript_qualifiers["gene"] = [gene_symbol]
+        if locus_tag is not None:
+            transcript_qualifiers["locus_tag"] = [locus_tag]
+
         if location.strand != strand.value:
             warn_str = f"Found strand mismatch between gene and transcript on transcript {transcript}. "
             if force_strand:
@@ -176,35 +179,26 @@ def transcripts_to_feature(
 
         if feat_type == TranscriptFeatures.CODING_TRANSCRIPT and genbank_type == GenbankFlavor.PROKARYOTIC:
             # this is a coding gene in prokaryotic mode; skip straight to CDS
-            yield add_cds_feature(transcript, strand)
+            yield add_cds_feature(transcript, transcript_qualifiers, strand)
         else:
             # build this feature; it could be a mRNA for eukaryotic, or non-coding for either prokaryotic or eukaryotic
             feature = SeqFeature(location, type=feat_type.value, strand=strand.value)
-            feature.qualifiers.update({key: val for key, val in transcript.qualifiers.items() if val is not None})
-            feature.qualifiers.update(
-                {
-                    key: [val]
-                    for key, val in transcript.identifiers_dict.items()
-                    if val is not None and key != "protein_id"
-                }
-            )
+            feature.qualifiers = transcript_qualifiers.copy()
 
-            if gene_symbol is not None:
-                feature.qualifiers["gene"] = [gene_symbol]
-            if locus_tag is not None:
-                feature.qualifiers["locus_tag"] = [locus_tag]
+            # NCBI does not like protein_id on transcript level features
+            if "protein_id" in feature.qualifiers:
+                del feature.qualifiers["protein_id"]
 
             yield feature
             # only in eukaryotic mode for coding genes do we add a third layer
             if genbank_type == GenbankFlavor.EUKARYOTIC and feat_type == TranscriptFeatures.CODING_TRANSCRIPT:
-                yield add_cds_feature(transcript, strand, gene_symbol, locus_tag)
+                yield add_cds_feature(transcript, transcript_qualifiers, strand)
 
 
 def add_cds_feature(
     transcript: TranscriptInterval,
+    transcript_qualifiers: Dict[Hashable, List[Hashable]],
     strand: Strand,
-    gene_symbol: Optional[str] = None,
-    locus_tag: Optional[str] = None,
 ) -> SeqFeature:
     """
     Converts a :class:`~biocantor.gene.transcript.TranscriptInterval` that has a CDS to a
@@ -213,27 +207,19 @@ def add_cds_feature(
     Args:
         transcript: A :class:`~biocantor.gene.transcript.TranscriptInterval`.
         strand: ``Strand`` that this transcript lives on.
-        gene_symbol: An optional gene symbol. Required if ``iep_v1_compatible`` is set to ``True``.
-        locus_tag: An optional locus tag.
+        transcript_qualifiers: Qualifiers dictionary from the transcript level feature.
 
     Returns:
         ``SeqFeature`` for the CDS of this transcript.
     """
-    quals = {key: val for key, val in transcript.qualifiers.items() if val is not None}
-    quals.update({key: [val] for key, val in transcript.identifiers_dict.items() if val is not None})
     location = transcript.cds.location.to_biopython()
     feature = SeqFeature(location, type=IntervalFeatures.CDS.value, strand=strand.value)
-    feature.qualifiers = quals
+    feature.qualifiers = transcript_qualifiers
 
     # if the sequence has N's, we cannot translate
     try:
         feature.qualifiers["translation"] = [str(transcript.get_protein_sequence())]
     except ValueError:
         pass
-
-    if gene_symbol is not None:
-        feature.qualifiers["gene"] = [gene_symbol]
-    if locus_tag is not None:
-        feature.qualifiers["locus_tag"] = [locus_tag]
 
     return feature
