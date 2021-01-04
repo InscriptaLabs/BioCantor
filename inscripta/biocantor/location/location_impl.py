@@ -422,6 +422,7 @@ class CompoundInterval(Location):
         self._ends = tuple([interval.end for interval in self._single_intervals])
         self._start = self._single_intervals[0].start
         self._end = self._single_intervals[-1].end
+        self._len = sum([end - start for start, end in zip(starts, ends)])
 
     @classmethod
     def from_single_intervals(cls, intervals: List[SingleInterval]) -> "CompoundInterval":
@@ -458,7 +459,7 @@ class CompoundInterval(Location):
         return f"CompoundInterval <{str(self)}>"
 
     def __len__(self):
-        return sum([len(interval) for interval in self._single_intervals])
+        return self._len
 
     @property
     def parent(self) -> Parent:
