@@ -420,11 +420,9 @@ class CompoundInterval(Location):
         self._parent = parent_obj.reset_location(CompoundInterval(starts, ends, strand)) if parent_obj else None
         self._strand = strand
         single_interval_parent = self.parent.strip_location_info() if self.parent else None
-        single_intervals_unsorted = [
-            SingleInterval(starts[i], ends[i], self.strand, single_interval_parent)
-            for i in range(len(starts))
-        ]
-        self._single_intervals = sorted(single_intervals_unsorted)
+        single_intervals_no_parent = [SingleInterval(starts[i], ends[i], self.strand) for i in range(len(starts))]
+        self._single_intervals = [
+            interval.reset_parent(single_interval_parent) for interval in sorted(single_intervals_no_parent)]
         self._starts = tuple([interval.start for interval in self._single_intervals])
         self._ends = tuple([interval.end for interval in self._single_intervals])
         self._start = self._single_intervals[0].start
