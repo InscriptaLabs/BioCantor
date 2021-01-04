@@ -1185,7 +1185,7 @@ class TestCompoundInterval:
             Strand.PLUS,
             parent=Parent(id="old_parent", sequence=Sequence("AAAA", Alphabet.NT_STRICT)),
         )
-        with pytest.raises(InvalidPositionException):
+        with pytest.raises(LocationException):
             location.reset_parent(Parent(id="new_parent", sequence=Sequence("T", Alphabet.NT_STRICT)))
 
     @pytest.mark.parametrize(

@@ -718,19 +718,13 @@ class CompoundInterval(Location):
         ).reset_parent(new_parent)
 
     def reverse_strand(self) -> "CompoundInterval":
-        return CompoundInterval.from_single_intervals(
-            [interval.reverse_strand() for interval in self._single_intervals]
-        )
+        return CompoundInterval(self._starts, self._ends, self.strand.reverse(), self.parent)
 
     def reset_strand(self, new_strand: Strand) -> Location:
-        return CompoundInterval.from_single_intervals(
-            [interval.reset_strand(new_strand) for interval in self._single_intervals]
-        )
+        return CompoundInterval(self._starts, self._ends, new_strand, self.parent)
 
     def reset_parent(self, new_parent: Parent) -> "CompoundInterval":
-        return CompoundInterval.from_single_intervals(
-            [interval.reset_parent(new_parent) for interval in self._single_intervals]
-        )
+        return CompoundInterval(self._starts, self._ends, self.strand, new_parent)
 
     def shift_position(self, shift: int) -> Location:
         return CompoundInterval.from_single_intervals(
