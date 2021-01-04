@@ -1,9 +1,8 @@
 import pytest
-
 from inscripta.biocantor.exc import ValidationException, EmptyLocationException, NullSequenceException
+from inscripta.biocantor.io.models import FeatureIntervalModel
 from inscripta.biocantor.location.location_impl import SingleInterval, CompoundInterval
 from inscripta.biocantor.location.strand import Strand
-from inscripta.biocantor.io.models import FeatureIntervalModel
 from inscripta.biocantor.parent.parent import Parent
 from inscripta.biocantor.sequence.alphabet import Alphabet
 from inscripta.biocantor.sequence.sequence import Sequence

@@ -1,7 +1,6 @@
 from uuid import UUID
 
 import pytest
-
 from inscripta.biocantor.exc import InvalidAnnotationError, NoncodingTranscriptError, InvalidQueryError
 from inscripta.biocantor.exc import ValidationException
 from inscripta.biocantor.gene.biotype import Biotype
@@ -17,7 +16,6 @@ from inscripta.biocantor.location.strand import Strand
 from inscripta.biocantor.parent.parent import Parent
 from inscripta.biocantor.sequence.alphabet import Alphabet
 from inscripta.biocantor.sequence.sequence import Sequence
-from inscripta.biocantor.util.hashing import digest_object
 
 genome = "AAGTATTCTTGGACCTAATTAAAAAAAAAAAAAAAAAAA"
 parent_genome = Parent(sequence=Sequence(genome, Alphabet.NT_STRICT))
