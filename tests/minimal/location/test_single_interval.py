@@ -274,6 +274,9 @@ class TestSingleInterval:
     def test_equals(self, interval, other, expected):
         assert (interval == other) is expected
 
+    def test_hash_missing_parent(self):
+        _ = SingleInterval(0, 5, Strand.PLUS).__hash__()
+
     @pytest.mark.parametrize(
         "interval1,interval2,expected",
         [
