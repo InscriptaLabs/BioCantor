@@ -16,6 +16,9 @@ class TestEmptyLocation:
     def test_len(self):
         assert len(EmptyLocation()) == 0
 
+    def test_length(self):
+        assert EmptyLocation().length == 0
+
     def test_parent(self):
         assert EmptyLocation().parent is None
 

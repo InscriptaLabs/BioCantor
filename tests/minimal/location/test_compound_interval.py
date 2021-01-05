@@ -34,7 +34,7 @@ class TestCompoundInterval:
             # An end is less than a start
             ([10], [9], None, InvalidPositionException),
             # Total length of intervals is longer than parent
-            ([0], [3], Parent(sequence=Sequence("AA", Alphabet.NT_STRICT)), LocationException),
+            ([0], [3], Parent(sequence=Sequence("AA", Alphabet.NT_STRICT)), InvalidPositionException),
         ],
     )
     def test_init_error(self, starts, ends, parent, expected_exception):
@@ -69,15 +69,29 @@ class TestCompoundInterval:
         "location,expected",
         [
             # One block
-            (CompoundInterval([3], [5], Strand.PLUS), 1),
+            (CompoundInterval([3], [5], Strand.PLUS), 2),
             # Two adjacent blocks
-            (CompoundInterval([3, 5], [5, 7], Strand.PLUS), 2),
+            (CompoundInterval([3, 5], [5, 7], Strand.PLUS), 4),
             # Three blocks
-            (CompoundInterval([3, 5, 10], [5, 7, 15], Strand.PLUS), 3),
+            (CompoundInterval([3, 5, 10], [5, 7, 15], Strand.PLUS), 9),
         ],
     )
     def test_len(self, location, expected):
-        assert location.num_blocks == expected
+        assert len(location) == expected
+
+    @pytest.mark.parametrize(
+        "location,expected",
+        [
+            # One block
+            (CompoundInterval([3], [5], Strand.PLUS), 2),
+            # Two adjacent blocks
+            (CompoundInterval([3, 5], [5, 7], Strand.PLUS), 4),
+            # Three blocks
+            (CompoundInterval([3, 5, 10], [5, 7, 15], Strand.PLUS), 9),
+        ],
+    )
+    def test_length(self, location, expected):
+        assert location.length == expected
 
     def test_parent(self):
         # Parent gets location from self
@@ -2081,7 +2095,7 @@ class TestCompoundInterval:
             (
                 CompoundInterval([5], [5], Strand.PLUS),
                 SingleInterval(10, 10, Strand.PLUS),
-                ValueError,
+                IndexError,
             ),
             # Opposite strands
             (

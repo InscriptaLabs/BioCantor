@@ -144,7 +144,7 @@ class TestParent:
                 SingleInterval(0, 10, Strand.PLUS),
                 Sequence("A", Alphabet.NT_STRICT),
                 None,
-                LocationException,
+                InvalidPositionException,
             ),
             (
                 None,
@@ -989,7 +989,7 @@ class TestParent:
             (
                 Parent(sequence=Sequence("AAA", Alphabet.NT_STRICT)),
                 SingleInterval(0, 5, Strand.PLUS),
-                LocationException,
+                InvalidPositionException,
             ),
             (
                 Parent(id="id1", sequence=Sequence("AAA", Alphabet.NT_STRICT)),

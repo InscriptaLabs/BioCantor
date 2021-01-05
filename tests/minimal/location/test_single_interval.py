@@ -56,6 +56,16 @@ class TestSingleInterval:
     @pytest.mark.parametrize(
         "interval,expected",
         [
+            (SingleInterval(3, 5, Strand.MINUS, None), 2),
+            (SingleInterval(1, 1, Strand.PLUS, None), 0),
+        ],
+    )
+    def test_length(self, interval, expected):
+        assert interval.length == expected
+
+    @pytest.mark.parametrize(
+        "interval,expected",
+        [
             (SingleInterval(3, 5, Strand.MINUS, None), None),
             # Parent gets location from interval coordinates
             (
@@ -341,6 +351,82 @@ class TestSingleInterval:
         assert (interval1 < interval2) == expected
         if interval1 != interval2:
             assert (interval1 > interval2) == (not expected)
+
+    @pytest.mark.parametrize(
+        "interval1,interval2,expected",
+        [
+            # Equal intervals
+            (
+                SingleInterval(1, 2, Strand.PLUS, None),
+                SingleInterval(1, 2, Strand.PLUS, None),
+                0,
+            ),
+            # First has lower coordinates but parent ID is lexicographically greater
+            (
+                SingleInterval(
+                    1,
+                    2,
+                    Strand.PLUS,
+                    parent=Sequence(
+                        "AAAAAA",
+                        Alphabet.NT_STRICT,
+                        id="seq2",
+                        validate_alphabet=False,
+                    ),
+                ),
+                SingleInterval(
+                    5,
+                    6,
+                    Strand.MINUS,
+                    parent=Sequence(
+                        "AAAAAA",
+                        Alphabet.NT_STRICT,
+                        id="seq1",
+                        validate_alphabet=False,
+                    ),
+                ),
+                1,
+            ),
+            # Same strand, first has lower start and end
+            (
+                SingleInterval(1, 2, Strand.PLUS, None),
+                SingleInterval(5, 6, Strand.PLUS, None),
+                -1,
+            ),
+            # Same coords, different strand
+            (
+                SingleInterval(1, 2, Strand.PLUS, None),
+                SingleInterval(1, 2, Strand.MINUS, None),
+                -1,
+            ),
+            # Same coords, different strand
+            (
+                SingleInterval(1, 2, Strand.MINUS, None),
+                SingleInterval(1, 2, Strand.UNSTRANDED, None),
+                -1,
+            ),
+            # Same strand, different end
+            (
+                SingleInterval(1, 2, Strand.PLUS, None),
+                SingleInterval(1, 3, Strand.PLUS, None),
+                -1,
+            ),
+            # Same end, same strand, different start, first is less
+            (
+                SingleInterval(1, 2, Strand.PLUS, None),
+                SingleInterval(2, 2, Strand.PLUS, None),
+                -1,
+            ),
+            # Same end, same strand, different start, second is less
+            (
+                SingleInterval(2, 2, Strand.PLUS, None),
+                SingleInterval(1, 2, Strand.PLUS, None),
+                1,
+            ),
+        ],
+    )
+    def test_compare_single_interval(self, interval1, interval2, expected):
+        assert interval1.compare(interval2) == expected
 
     @pytest.mark.parametrize(
         "interval,expected",
