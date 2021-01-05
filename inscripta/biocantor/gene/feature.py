@@ -25,7 +25,7 @@ from inscripta.biocantor.util.hashing import digest_object
 from inscripta.biocantor.util.object_validation import ObjectValidation
 
 
-class AbstractFeatureInterval(ABC):
+class AbstractInterval(ABC):
     """This is a wrapper over :class:`~biocantor.location.Location` that adds metadata coordinate transformation
     QOL functions."""
 
@@ -35,13 +35,30 @@ class AbstractFeatureInterval(ABC):
     guid: Optional[UUID] = None
     sequence_guid: Optional[UUID] = None
     sequence_name: Optional[str] = None
-    _is_primary_feature: Optional[bool] = None
+
+    def __len__(self):
+        return len(self.location)
+
+    def __eq__(self, other):
+        if not isinstance(other, self.__class__):
+            return False
+        return self.to_dict() == other.to_dict()
+
+    def __hash__(self):
+        """Produces a hash, which is the GUID."""
+        return hash((self.guid, self.location))
 
     @abstractmethod
-    def export_qualifiers(
-        self, parent_qualifiers: Optional[Dict[Hashable, Set[Hashable]]] = None
-    ) -> Dict[Hashable, Set[Hashable]]:
-        """Exports qualifiers for GFF3 or GenBank export. This merges top level keys with the arbitrary values"""
+    def to_dict(self) -> Dict[str, Any]:
+        """Dictionary to build Model representation"""
+
+    @abstractmethod
+    def to_gff(self):
+        """Writes a GFF format list of lists for this feature.
+
+        Return:
+            List of list of GFF-formatted strings.
+        """
 
     @property
     def start(self) -> int:
@@ -68,22 +85,37 @@ class AbstractFeatureInterval(ABC):
         """Returns the identifiers and their keys for this FeatureInterval, if they exist"""
         return {key: getattr(self, key) for key in self._identifiers if getattr(self, key) is not None}
 
+    def _import_qualifiers_from_list(self, qualifiers: Optional[Dict[Hashable, List[Hashable]]] = None):
+        """Import input qualifiers to sets and store."""
+        if qualifiers:
+            self.qualifiers = {key: set(vals) for key, vals in qualifiers.items()}
+        else:
+            self.qualifiers = {}
+
+    def _export_qualifiers_to_list(self) -> Optional[Dict[Hashable, List[Hashable]]]:
+        """Export qualifiers back to lists. This is used when exporting to dictionary / converting back to marshmallow
+        schemas.
+        """
+        if self.qualifiers:
+            return {key: sorted(vals) for key, vals in self.qualifiers.items()}
+
+
+class AbstractFeatureInterval(AbstractInterval, ABC):
+    """This is a wrapper over :class:`~AbstractInterval` that adds functions shared across
+    :class:`~biocantor.gene.transcript.TranscriptInterval` and :class:`FeatureInterval`."""
+
+    _is_primary_feature: Optional[bool] = None
+
+    @abstractmethod
+    def export_qualifiers(
+        self, parent_qualifiers: Optional[Dict[Hashable, Set[Hashable]]] = None
+    ) -> Dict[Hashable, Set[Hashable]]:
+        """Exports qualifiers for GFF3 or GenBank export. This merges top level keys with the arbitrary values"""
+
     @property
     def is_primary_feature(self) -> bool:
         """Is this the primary feature?"""
         return self._is_primary_feature is True
-
-    def __len__(self):
-        return len(self.location)
-
-    def __eq__(self, other):
-        if not isinstance(other, self.__class__):
-            return False
-        return self.__dict__ == other.__dict__
-
-    def __hash__(self):
-        """Produces a hash, which is the GUID."""
-        return hash(self.guid)
 
     @abstractmethod
     def update_parent(self, parent: Parent):
@@ -182,7 +214,7 @@ class FeatureInterval(AbstractFeatureInterval):
     def __init__(
         self,
         location: Location,  # exons
-        qualifiers: Optional[Dict[Hashable, Set[Hashable]]] = None,
+        qualifiers: Optional[Dict[Hashable, List[Hashable]]] = None,
         sequence_guid: Optional[UUID] = None,
         sequence_name: Optional[str] = None,
         feature_type: Optional[str] = None,
@@ -197,12 +229,8 @@ class FeatureInterval(AbstractFeatureInterval):
         self.feature_type = feature_type
         self.feature_name = feature_name
         self.feature_id = feature_id
-
-        if qualifiers:
-            self.qualifiers = qualifiers
-        else:
-            self.qualifiers = {}
-
+        # qualifiers come in as a List, convert to Set
+        self._import_qualifiers_from_list(qualifiers)
         self.bin = bins(self.start, self.end, fmt="bed")
         self._is_primary_feature = is_primary_feature
 
@@ -235,7 +263,7 @@ class FeatureInterval(AbstractFeatureInterval):
             interval_starts=exon_starts,
             interval_ends=exon_ends,
             strand=self.strand.name,
-            qualifiers=self.qualifiers if self.qualifiers else None,
+            qualifiers=self._export_qualifiers_to_list(),
             feature_id=self.feature_id,
             feature_name=self.feature_name,
             feature_type=self.feature_type,

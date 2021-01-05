@@ -40,7 +40,7 @@ class GffutilsParseArgs:
     merge_strategy: Optional[str] = "create_unique"
 
 
-def filter_qualifiers(qualifiers: Dict[str, List[str]]) -> Dict[str, List[str]]:
+def filter_and_sort_qualifiers(qualifiers: Dict[str, List[str]]) -> Dict[str, List[str]]:
     """Filter out the qualifiers for any terms we have elevated"""
     for key in [
         "gene_id",
@@ -55,7 +55,7 @@ def filter_qualifiers(qualifiers: Dict[str, List[str]]) -> Dict[str, List[str]]:
     ]:
         if key in qualifiers:
             del qualifiers[key]
-    return qualifiers
+    return {key: sorted(vals) for key, vals in qualifiers.items()}
 
 
 def default_parse_func(db: FeatureDB, chroms: List[str]) -> Iterable[AnnotationCollectionModel]:
@@ -176,7 +176,7 @@ def default_parse_func(db: FeatureDB, chroms: List[str]) -> Iterable[AnnotationC
                     cds_starts=cds_starts,
                     cds_ends=cds_ends,
                     cds_frames=cds_frames,
-                    qualifiers=filter_qualifiers(transcript_qualifiers),
+                    qualifiers=filter_and_sort_qualifiers(transcript_qualifiers),
                     is_primary_tx=False,
                     transcript_id=transcript_id,
                     transcript_type=transcript_biotype.name if transcript_biotype else transcript_biotype,
@@ -192,7 +192,7 @@ def default_parse_func(db: FeatureDB, chroms: List[str]) -> Iterable[AnnotationC
                 gene_symbol=gene_symbol,
                 locus_tag=locus_tag,
                 gene_type=gene_biotype.name if gene_biotype else gene_biotype,
-                qualifiers=filter_qualifiers(gene_qualifiers),
+                qualifiers=filter_and_sort_qualifiers(gene_qualifiers),
                 sequence_name=chrom,
             )
 

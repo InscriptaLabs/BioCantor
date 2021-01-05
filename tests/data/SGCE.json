@@ -74,8 +74,8 @@
                         "Dbxref": [
                             "Genbank:NM_001099400.2",
                             "GeneID:8910",
-                            "MIM:604149",
-                            "HGNC:HGNC:10808"
+                            "HGNC:HGNC:10808",
+                            "MIM:604149"
                         ],
                         "gbkey": [
                             "mRNA"
@@ -173,8 +173,8 @@
                         "Dbxref": [
                             "Genbank:NM_001099401.2",
                             "GeneID:8910",
-                            "MIM:604149",
-                            "HGNC:HGNC:10808"
+                            "HGNC:HGNC:10808",
+                            "MIM:604149"
                         ],
                         "gbkey": [
                             "mRNA"
@@ -262,8 +262,8 @@
                         "Dbxref": [
                             "Genbank:NM_001301139.2",
                             "GeneID:8910",
-                            "MIM:604149",
-                            "HGNC:HGNC:10808"
+                            "HGNC:HGNC:10808",
+                            "MIM:604149"
                         ],
                         "gbkey": [
                             "mRNA"
@@ -361,8 +361,8 @@
                         "Dbxref": [
                             "Genbank:NM_001346713.2",
                             "GeneID:8910",
-                            "MIM:604149",
-                            "HGNC:HGNC:10808"
+                            "HGNC:HGNC:10808",
+                            "MIM:604149"
                         ],
                         "gbkey": [
                             "mRNA"
@@ -455,8 +455,8 @@
                         "Dbxref": [
                             "Genbank:NM_001346715.2",
                             "GeneID:8910",
-                            "MIM:604149",
-                            "HGNC:HGNC:10808"
+                            "HGNC:HGNC:10808",
+                            "MIM:604149"
                         ],
                         "gbkey": [
                             "mRNA"
@@ -544,8 +544,8 @@
                         "Dbxref": [
                             "Genbank:NM_001346717.2",
                             "GeneID:8910",
-                            "MIM:604149",
-                            "HGNC:HGNC:10808"
+                            "HGNC:HGNC:10808",
+                            "MIM:604149"
                         ],
                         "gbkey": [
                             "mRNA"
@@ -642,8 +642,8 @@
                         "Dbxref": [
                             "Genbank:NM_001346719.2",
                             "GeneID:8910",
-                            "MIM:604149",
-                            "HGNC:HGNC:10808"
+                            "HGNC:HGNC:10808",
+                            "MIM:604149"
                         ],
                         "gbkey": [
                             "mRNA"
@@ -730,10 +730,10 @@
                     ],
                     "qualifiers": {
                         "Dbxref": [
-                            "HGNC:HGNC:10808",
+                            "Genbank:NM_001346720.2",
                             "GeneID:8910",
-                            "MIM:604149",
-                            "Genbank:NM_001346720.2"
+                            "HGNC:HGNC:10808",
+                            "MIM:604149"
                         ],
                         "gbkey": [
                             "mRNA"
@@ -825,8 +825,8 @@
                         "Dbxref": [
                             "Genbank:NM_001362807.2",
                             "GeneID:8910",
-                            "MIM:604149",
-                            "HGNC:HGNC:10808"
+                            "HGNC:HGNC:10808",
+                            "MIM:604149"
                         ],
                         "gbkey": [
                             "mRNA"
@@ -908,8 +908,8 @@
                     ],
                     "qualifiers": {
                         "Dbxref": [
-                            "GeneID:8910",
                             "Genbank:NM_001362808.2",
+                            "GeneID:8910",
                             "HGNC:HGNC:10808",
                             "MIM:604149"
                         ],
@@ -994,8 +994,8 @@
                         "Dbxref": [
                             "Genbank:NM_001362809.2",
                             "GeneID:8910",
-                            "MIM:604149",
-                            "HGNC:HGNC:10808"
+                            "HGNC:HGNC:10808",
+                            "MIM:604149"
                         ],
                         "gbkey": [
                             "mRNA"
@@ -1086,11 +1086,11 @@
                     ],
                     "qualifiers": {
                         "Dbxref": [
-                            "GeneID:8910",
-                            "MIM:604149",
                             "Ensembl:ENST00000648936.2",
                             "Genbank:NM_003919.3",
-                            "HGNC:HGNC:10808"
+                            "GeneID:8910",
+                            "HGNC:HGNC:10808",
+                            "MIM:604149"
                         ],
                         "gbkey": [
                             "mRNA"
@@ -1191,8 +1191,8 @@
                         "Dbxref": [
                             "Genbank:XM_011516663.2",
                             "GeneID:8910",
-                            "MIM:604149",
-                            "HGNC:HGNC:10808"
+                            "HGNC:HGNC:10808",
+                            "MIM:604149"
                         ],
                         "gbkey": [
                             "mRNA"
@@ -1286,10 +1286,10 @@
                     ],
                     "qualifiers": {
                         "Dbxref": [
-                            "HGNC:HGNC:10808",
+                            "Genbank:XM_011516664.2",
                             "GeneID:8910",
-                            "MIM:604149",
-                            "Genbank:XM_011516664.2"
+                            "HGNC:HGNC:10808",
+                            "MIM:604149"
                         ],
                         "gbkey": [
                             "mRNA"
@@ -1385,8 +1385,8 @@
                         "Dbxref": [
                             "Genbank:XM_011516665.3",
                             "GeneID:8910",
-                            "MIM:604149",
-                            "HGNC:HGNC:10808"
+                            "HGNC:HGNC:10808",
+                            "MIM:604149"
                         ],
                         "gbkey": [
                             "mRNA"
@@ -1475,10 +1475,10 @@
                     ],
                     "qualifiers": {
                         "Dbxref": [
+                            "Genbank:XM_011516666.3",
                             "GeneID:8910",
-                            "MIM:604149",
                             "HGNC:HGNC:10808",
-                            "Genbank:XM_011516666.3"
+                            "MIM:604149"
                         ],
                         "gbkey": [
                             "mRNA"
@@ -1576,10 +1576,10 @@
                     ],
                     "qualifiers": {
                         "Dbxref": [
-                            "HGNC:HGNC:10808",
+                            "Genbank:XM_011516667.2",
                             "GeneID:8910",
-                            "MIM:604149",
-                            "Genbank:XM_011516667.2"
+                            "HGNC:HGNC:10808",
+                            "MIM:604149"
                         ],
                         "gbkey": [
                             "mRNA"
@@ -1669,10 +1669,10 @@
                     ],
                     "qualifiers": {
                         "Dbxref": [
+                            "Genbank:XM_011516669.3",
                             "GeneID:8910",
-                            "MIM:604149",
                             "HGNC:HGNC:10808",
-                            "Genbank:XM_011516669.3"
+                            "MIM:604149"
                         ],
                         "gbkey": [
                             "mRNA"
@@ -1770,8 +1770,8 @@
                         "Dbxref": [
                             "Genbank:XM_017012763.1",
                             "GeneID:8910",
-                            "MIM:604149",
-                            "HGNC:HGNC:10808"
+                            "HGNC:HGNC:10808",
+                            "MIM:604149"
                         ],
                         "gbkey": [
                             "mRNA"
@@ -1858,8 +1858,8 @@
                         "Dbxref": [
                             "Genbank:XM_017012767.1",
                             "GeneID:8910",
-                            "MIM:604149",
-                            "HGNC:HGNC:10808"
+                            "HGNC:HGNC:10808",
+                            "MIM:604149"
                         ],
                         "gbkey": [
                             "mRNA"
@@ -1948,10 +1948,10 @@
                     ],
                     "qualifiers": {
                         "Dbxref": [
-                            "HGNC:HGNC:10808",
+                            "Genbank:XM_024446985.1",
                             "GeneID:8910",
-                            "MIM:604149",
-                            "Genbank:XM_024446985.1"
+                            "HGNC:HGNC:10808",
+                            "MIM:604149"
                         ],
                         "gbkey": [
                             "mRNA"
@@ -2035,10 +2035,10 @@
                     ],
                     "qualifiers": {
                         "Dbxref": [
+                            "Genbank:XM_024446986.1",
                             "GeneID:8910",
-                            "MIM:604149",
                             "HGNC:HGNC:10808",
-                            "Genbank:XM_024446986.1"
+                            "MIM:604149"
                         ],
                         "gbkey": [
                             "mRNA"
@@ -2071,8 +2071,8 @@
             "qualifiers": {
                 "Dbxref": [
                     "GeneID:8910",
-                    "MIM:604149",
-                    "HGNC:HGNC:10808"
+                    "HGNC:HGNC:10808",
+                    "MIM:604149"
                 ],
                 "description": [
                     "sarcoglycan epsilon"

@@ -24,10 +24,10 @@
                     ],
                     "qualifiers": {
                         "Dbxref": [
-                            "MIM:609810",
-                            "GeneID:23089",
                             "Genbank:NM_001040152.2",
-                            "HGNC:HGNC:14005"
+                            "GeneID:23089",
+                            "HGNC:HGNC:14005",
+                            "MIM:609810"
                         ],
                         "gbkey": [
                             "mRNA"
@@ -76,10 +76,10 @@
                     ],
                     "qualifiers": {
                         "Dbxref": [
-                            "MIM:609810",
-                            "GeneID:23089",
                             "Genbank:NM_001172437.2",
-                            "HGNC:HGNC:14005"
+                            "GeneID:23089",
+                            "HGNC:HGNC:14005",
+                            "MIM:609810"
                         ],
                         "gbkey": [
                             "mRNA"
@@ -125,10 +125,10 @@
                     ],
                     "qualifiers": {
                         "Dbxref": [
-                            "MIM:609810",
-                            "GeneID:23089",
                             "Genbank:NM_001172438.3",
-                            "HGNC:HGNC:14005"
+                            "GeneID:23089",
+                            "HGNC:HGNC:14005",
+                            "MIM:609810"
                         ],
                         "gbkey": [
                             "mRNA"
@@ -174,10 +174,10 @@
                     ],
                     "qualifiers": {
                         "Dbxref": [
-                            "MIM:609810",
-                            "GeneID:23089",
                             "Genbank:NM_001184961.1",
-                            "HGNC:HGNC:14005"
+                            "GeneID:23089",
+                            "HGNC:HGNC:14005",
+                            "MIM:609810"
                         ],
                         "gbkey": [
                             "mRNA"
@@ -225,8 +225,8 @@
                         "Dbxref": [
                             "Genbank:NM_001184962.2",
                             "GeneID:23089",
-                            "MIM:609810",
-                            "HGNC:HGNC:14005"
+                            "HGNC:HGNC:14005",
+                            "MIM:609810"
                         ],
                         "gbkey": [
                             "mRNA"
@@ -272,10 +272,10 @@
                     ],
                     "qualifiers": {
                         "Dbxref": [
-                            "MIM:609810",
-                            "GeneID:23089",
                             "Genbank:NM_015068.3",
-                            "HGNC:HGNC:14005"
+                            "GeneID:23089",
+                            "HGNC:HGNC:14005",
+                            "MIM:609810"
                         ],
                         "gbkey": [
                             "mRNA"
@@ -304,9 +304,9 @@
             "locus_tag": null,
             "qualifiers": {
                 "Dbxref": [
-                    "MIM:609810",
                     "GeneID:23089",
-                    "HGNC:HGNC:14005"
+                    "HGNC:HGNC:14005",
+                    "MIM:609810"
                 ],
                 "description": [
                     "paternally expressed 10"
@@ -318,14 +318,14 @@
                     "PEG10"
                 ],
                 "gene_synonym": [
-                    "Mar2",
-                    "RTL2",
-                    "SIRH1",
-                    "MEF3L",
-                    "RGAG3",
-                    "Mart2",
                     "EDR",
-                    "HB-1"
+                    "HB-1",
+                    "MEF3L",
+                    "Mar2",
+                    "Mart2",
+                    "RGAG3",
+                    "RTL2",
+                    "SIRH1"
                 ]
             },
             "sequence_name": "chr7",

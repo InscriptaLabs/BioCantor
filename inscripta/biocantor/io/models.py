@@ -2,7 +2,6 @@
 Data models. These models allow for validation of inputs to a BioCantor model, acting as a JSON schema for serializing
 and deserializing the models.
 """
-from collections import defaultdict
 from typing import List, Optional, ClassVar, Type, Any, Dict
 from uuid import UUID
 
@@ -15,7 +14,7 @@ from inscripta.biocantor.gene.transcript import TranscriptInterval
 from inscripta.biocantor.location.location_impl import CompoundInterval
 from inscripta.biocantor.location.strand import Strand
 from inscripta.biocantor.parent import Parent
-from marshmallow import Schema, pre_load, post_load, pre_dump  # noqa: F401
+from marshmallow import Schema  # noqa: F401
 from marshmallow_dataclass import dataclass
 
 
@@ -27,41 +26,6 @@ class BaseModel:
 
     class Meta:
         ordered = True
-
-    @pre_load
-    def convert_qualifiers(self, data, **kwargs):
-        """
-        Qualifiers may exist in the inputs to any of these models, and as they are generally coming from the biopython
-        or gffutils parsers, they will be of the form:
-
-        ```
-        Dict[Hashable, List[Any]]
-        ```
-
-        However, in order to handle these data internally, it is better to convert this to the form:
-
-        ```
-        DefaultDict[Hashable, Set[Hashable]]
-        ```
-
-        This function performs this transformation, and will raise appropriate exceptions if data are not hashable.
-        """
-        if "qualifiers" in data and data["qualifiers"]:
-            qualifiers = defaultdict(set)
-            for key, vals in data["qualifiers"].items():
-                if isinstance(vals, list) or isinstance(vals, set) or isinstance(vals, tuple):
-                    qualifiers[key].update(vals)
-                else:
-                    qualifiers[key].add(vals)
-            data["qualifiers"] = qualifiers
-        return data
-
-    @pre_dump
-    def serialize_qualifiers(self, in_data, **kwargs):
-        """Convert the sets back to lists for JSON serialization"""
-        if in_data.qualifiers:
-            in_data.qualifiers = {key: list(vals) for key, vals in in_data.qualifiers.items()}
-        return in_data
 
 
 @dataclass
@@ -84,9 +48,9 @@ class FeatureIntervalModel(BaseModel):
         self,
         parent: Optional[Parent] = None,  # should have a sequence associated
     ) -> "FeatureInterval":
-        """Construct from a :class:`~biocantor.models.FeatureIntervalModel`.
+        """Construct a :class:`~biocantor.gene.feature.FeatureInterval` from a :class:`FeatureIntervalModel`.
 
-        A :class:`Parent` can be provided to allow the sequence-retrieval functions to work.
+        A :class:`~biocantor.parent.Parent` can be provided to allow the sequence-retrieval functions to work.
         """
 
         if len(self.interval_starts) != len(self.interval_ends):
@@ -113,8 +77,7 @@ class FeatureIntervalModel(BaseModel):
 
     @staticmethod
     def from_feature_interval(feature_interval: FeatureInterval) -> "FeatureIntervalModel":
-        """Convert to a :class:`~biocantor.models.TranscriptIntervalModel`"""
-
+        """Convert a :class:`~biocantor.gene.feature.FeatureInterval` to a :class:`FeatureIntervalModel`"""
         return FeatureIntervalModel.Schema().load(feature_interval.to_dict())
 
 
@@ -145,9 +108,9 @@ class TranscriptIntervalModel(BaseModel):
         self,
         parent: Optional[Parent] = None,  # should have a sequence associated
     ) -> "TranscriptInterval":
-        """Construct from a :class:`~biocantor.models.TranscriptIntervalModel`.
+        """Construct a :class:`~biocantor.gene.transcript.TranscriptInterval` from a :class:`TranscriptIntervalModel`.
 
-        A :class:`Parent` can be provided to allow the sequence-retrieval functions to work.
+        A :class:`~biocantor.parent.Parent can be provided to allow the sequence-retrieval functions to work.
         """
 
         if len(self.exon_starts) != len(self.exon_ends):
@@ -222,7 +185,7 @@ class GeneIntervalModel(BaseModel):
     gene_guid: Optional[UUID] = None
 
     def to_gene_interval(self, parent: Optional[Parent] = None) -> GeneInterval:
-        """Produce a :class:`GeneInterval` from a :class:`~biocantor.io.models.GeneIntervalModel`.
+        """Produce a :class:`~biocantor.gene.collections.GeneInterval` from a :class:`GeneIntervalModel`.
 
         This is the primary method of constructing a :class:`biocantor.gene.collections.GeneInterval`.
         """
@@ -268,7 +231,7 @@ class FeatureIntervalCollectionModel(BaseModel):
     qualifiers: Optional[Dict[str, Any]] = None
 
     def to_feature_collection(self, parent: Optional[Parent] = None) -> FeatureIntervalCollection:
-        """Produce a feature collection from a :class:`~biocantor.models.FeatureIntervalCollectionModel`."""
+        """Produce a feature collection from a :class:`FeatureIntervalCollectionModel`."""
 
         feature_intervals = [feat.to_feature_interval(parent) for feat in self.feature_intervals]
 

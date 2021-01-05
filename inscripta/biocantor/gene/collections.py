@@ -26,7 +26,7 @@ from inscripta.biocantor.exc import (
 )
 from inscripta.biocantor.gene.biotype import Biotype
 from inscripta.biocantor.gene.cds import CDSInterval, CDSPhase
-from inscripta.biocantor.gene.feature import FeatureInterval
+from inscripta.biocantor.gene.feature import FeatureInterval, AbstractInterval
 from inscripta.biocantor.gene.transcript import TranscriptInterval
 from inscripta.biocantor.io.gff3.constants import GFF_SOURCE, NULL_COLUMN, BioCantorQualifiers, BioCantorFeatureTypes
 from inscripta.biocantor.io.gff3.rows import GFFRow, GFFAttributes
@@ -40,7 +40,7 @@ from inscripta.biocantor.util.hashing import digest_object
 from inscripta.biocantor.util.object_validation import ObjectValidation
 
 
-class AbstractFeatureIntervalCollection(ABC):
+class AbstractFeatureIntervalCollection(AbstractInterval, ABC):
     """
     Abstract class for holding groups of feature intervals. The two implementations of this class
     model Genes or non-transcribed FeatureCollections.
@@ -56,48 +56,12 @@ class AbstractFeatureIntervalCollection(ABC):
     _identifiers: List[str]
     qualifiers: Dict[Hashable, Set[Hashable]]
 
-    def __hash__(self):
-        """Produces a hash, which is the GUID."""
-        return hash(self.guid)
-
-    @abstractmethod
-    def to_dict(self) -> Dict[str, Any]:
-        """Dictionary to build Model representation"""
-
-    @abstractmethod
-    def to_gff(self):
-        """Writes a GFF format list of lists for this feature.
-
-        Return:
-            List of list of GFF-formatted strings.
-        """
-
     @abstractmethod
     def children_guids(self) -> Set[UUID]:
         """Get all of the GUIDs for children.
 
         Returns: A set of UUIDs
         """
-
-    @property
-    def identifiers(self) -> Set[Union[str, UUID]]:
-        """Returns the identifiers for this Collection, if they exist"""
-        return {getattr(self, i) for i in self._identifiers if getattr(self, i) is not None}
-
-    @property
-    def identifiers_dict(self) -> Dict[str, Union[str, UUID]]:
-        """Returns the identifiers and their keys for this Collection, if they exist"""
-        return {key: getattr(self, key) for key in self._identifiers if getattr(self, key) is not None}
-
-    @property
-    def start(self) -> int:
-        """Returns start position"""
-        return self.location.start
-
-    @property
-    def end(self) -> int:
-        """Returns end position"""
-        return self.location.end
 
     def get_reference_sequence(self) -> Sequence:
         """Returns the *plus strand* sequence for this interval"""
@@ -171,11 +135,8 @@ class GeneInterval(AbstractFeatureIntervalCollection):
         self.locus_tag = locus_tag
         self.sequence_name = sequence_name
         self.sequence_guid = sequence_guid
-
-        if qualifiers:
-            self.qualifiers = qualifiers
-        else:
-            self.qualifiers = {}
+        # qualifiers come in as a List, convert to Set
+        self._import_qualifiers_from_list(qualifiers)
 
         if not self.transcripts:
             raise InvalidAnnotationError("GeneInterval must have transcripts")
@@ -225,7 +186,7 @@ class GeneInterval(AbstractFeatureIntervalCollection):
             gene_symbol=self.gene_symbol,
             gene_type=self.gene_type.name if self.gene_type else None,
             locus_tag=self.locus_tag,
-            qualifiers=self.qualifiers if self.qualifiers else None,
+            qualifiers=self._export_qualifiers_to_list(),
             sequence_name=self.sequence_name,
             sequence_guid=self.sequence_guid,
             gene_guid=self.guid,
@@ -266,7 +227,7 @@ class GeneInterval(AbstractFeatureIntervalCollection):
         loc = CompoundInterval(interval_starts, interval_ends, self.location.strand, parent=self.location.parent)
         return FeatureInterval(
             loc,
-            qualifiers=self.qualifiers,
+            qualifiers=self._export_qualifiers_to_list(),
             sequence_guid=self.sequence_guid,
             sequence_name=self.sequence_name,
             feature_type=self.gene_type.name,
@@ -374,11 +335,8 @@ class FeatureIntervalCollection(AbstractFeatureIntervalCollection):
         self.locus_tag = locus_tag
         self.sequence_name = sequence_name
         self.sequence_guid = sequence_guid
-
-        if qualifiers:
-            self.qualifiers = qualifiers
-        else:
-            self.qualifiers = {}
+        # qualifiers come in as a List, convert to Set
+        self._import_qualifiers_from_list(qualifiers)
 
         if not self.feature_intervals:
             raise InvalidAnnotationError("FeatureCollection must have features")
@@ -434,7 +392,7 @@ class FeatureIntervalCollection(AbstractFeatureIntervalCollection):
             feature_name=self.feature_name,
             feature_id=self.feature_id,
             feature_type=self.feature_type,
-            qualifiers=self.qualifiers if self.qualifiers else None,
+            qualifiers=self._export_qualifiers_to_list(),
             sequence_name=self.sequence_name,
             sequence_guid=self.sequence_guid,
             feature_collection_guid=self.guid,
@@ -518,11 +476,8 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
         self.sequence_name = sequence_name
         self.sequence_guid = sequence_guid
         self.name = name
-
-        if qualifiers:
-            self.qualifiers = qualifiers
-        else:
-            self.qualifiers = {}
+        # qualifiers come in as a List, convert to Set
+        self._import_qualifiers_from_list(qualifiers)
 
         # we store the sequence explicitly, because this is how we can retain sequence information
         # for empty collections
@@ -595,7 +550,7 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
             genes=[gene.to_dict() for gene in self.genes],
             feature_collections=[feature.to_dict() for feature in self.feature_collections],
             name=self.name,
-            qualifiers=self.qualifiers if self.qualifiers else None,
+            qualifiers=self._export_qualifiers_to_list(),
             sequence_name=self.sequence_name,
             sequence_guid=self.sequence_guid,
             start=self.start,

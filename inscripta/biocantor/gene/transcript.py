@@ -65,12 +65,8 @@ class TranscriptInterval(AbstractFeatureInterval):
         self.sequence_guid = sequence_guid
         self.sequence_name = sequence_name
         self.bin = bins(self.start, self.end, fmt="bed")
-
-        if qualifiers:
-            self.qualifiers = qualifiers
-        else:
-            self.qualifiers = {}
-
+        # qualifiers come in as a List, convert to Set
+        self._import_qualifiers_from_list(qualifiers)
         self.cds = cds
 
         if guid is None:
@@ -159,7 +155,7 @@ class TranscriptInterval(AbstractFeatureInterval):
             cds_starts=cds_starts,
             cds_ends=cds_ends,
             cds_frames=cds_frames,
-            qualifiers=self.qualifiers if self.qualifiers else None,
+            qualifiers=self._export_qualifiers_to_list(),
             is_primary_tx=self._is_primary_feature,
             transcript_id=self.transcript_id,
             transcript_symbol=self.transcript_symbol,

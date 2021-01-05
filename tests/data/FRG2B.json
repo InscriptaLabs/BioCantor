@@ -1,0 +1,101 @@
+{
+    "feature_collections": null,
+    "genes": [
+        {
+            "transcripts": [
+                {
+                    "exon_starts": [
+                        133623894,
+                        133625921,
+                        133626228,
+                        133626564
+                    ],
+                    "exon_ends": [
+                        133625604,
+                        133625999,
+                        133626303,
+                        133626795
+                    ],
+                    "strand": "MINUS",
+                    "cds_starts": [
+                        133625098,
+                        133625921,
+                        133626228,
+                        133626564
+                    ],
+                    "cds_ends": [
+                        133625604,
+                        133625999,
+                        133626303,
+                        133626742
+                    ],
+                    "cds_frames": [
+                        "ONE",
+                        "ONE",
+                        "ONE",
+                        "ZERO"
+                    ],
+                    "qualifiers": {
+                        "Dbxref": [
+                            "Ensembl:ENST00000425520.2",
+                            "Genbank:NM_001080998.2",
+                            "GeneID:441581",
+                            "HGNC:HGNC:33518"
+                        ],
+                        "gbkey": [
+                            "mRNA"
+                        ],
+                        "gene": [
+                            "FRG2B"
+                        ],
+                        "product": [
+                            "FSHD region gene 2 family member B"
+                        ],
+                        "tag": [
+                            "MANE Select"
+                        ]
+                    },
+                    "is_primary_tx": false,
+                    "transcript_id": "NM_001080998.2",
+                    "protein_id": "NP_001074467.1",
+                    "transcript_symbol": null,
+                    "transcript_type": "protein_coding",
+                    "sequence_name": "NC_000010.11",
+                    "sequence_guid": null,
+                    "guid": null,
+                    "transcript_guid": null
+                }
+            ],
+            "gene_id": null,
+            "gene_symbol": null,
+            "gene_type": "protein_coding",
+            "locus_tag": null,
+            "qualifiers": {
+                "Dbxref": [
+                    "GeneID:441581",
+                    "HGNC:HGNC:33518"
+                ],
+                "description": [
+                    "FSHD region gene 2 family member B"
+                ],
+                "gbkey": [
+                    "Gene"
+                ],
+                "gene": [
+                    "FRG2B"
+                ]
+            },
+            "sequence_name": "NC_000010.11",
+            "sequence_guid": null,
+            "gene_guid": null
+        }
+    ],
+    "name": null,
+    "sequence_name": "NC_000010.11",
+    "sequence_guid": null,
+    "sequence_path": null,
+    "qualifiers": null,
+    "start": null,
+    "end": null,
+    "completely_within": null
+}
