@@ -53,7 +53,7 @@ class Parent:
         seq_type = self._unique_value_or_none([sequence_type, location_parent_type, sequence_seqtype])
 
         if location:
-            if strand and location.strand and strand != location.strand:
+            if strand and location.strand and strand is not location.strand:
                 raise InvalidStrandException("Strand does not match location: {} != {}".format(strand, location.strand))
             if sequence and location.end > len(sequence):
                 raise InvalidPositionException(
@@ -75,8 +75,8 @@ class Parent:
         else:
             self.parent = parent_obj
 
-        self._id = parent_id
-        self._sequence_type = seq_type
+        self.id = parent_id
+        self.sequence_type = seq_type
         self._strand = strand
         self.location = location
         self.sequence = sequence
@@ -97,7 +97,7 @@ class Parent:
     def __eq__(self, other):
         if not self.equals_except_location(other):
             return False
-        return self.location == other.location and self.strand == other.strand
+        return self.location == other.location and self.strand is other.strand
 
     def equals_except_location(self, other):
         if type(other) is not Parent:
@@ -133,22 +133,6 @@ class Parent:
             repr(self.sequence),
             repr(self.parent),
         )
-
-    @property
-    def id(self):
-        if self._id:
-            return self._id
-        if self.sequence:
-            return self.sequence.id
-        return None
-
-    @property
-    def sequence_type(self):
-        if self._sequence_type:
-            return self._sequence_type
-        if self.sequence:
-            return self.sequence.sequence_type
-        return None
 
     @property
     def strand(self):

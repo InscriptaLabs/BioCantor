@@ -56,6 +56,16 @@ class TestSingleInterval:
     @pytest.mark.parametrize(
         "interval,expected",
         [
+            (SingleInterval(3, 5, Strand.MINUS, None), 2),
+            (SingleInterval(1, 1, Strand.PLUS, None), 0),
+        ],
+    )
+    def test_length(self, interval, expected):
+        assert interval.length == expected
+
+    @pytest.mark.parametrize(
+        "interval,expected",
+        [
             (SingleInterval(3, 5, Strand.MINUS, None), None),
             # Parent gets location from interval coordinates
             (
