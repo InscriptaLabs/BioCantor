@@ -417,7 +417,8 @@ class CompoundInterval(Location):
             single_interval_parent = None
         self.strand = strand
         self._single_intervals = sorted(
-            [SingleInterval(starts[i], ends[i], self.strand, single_interval_parent) for i in range(len(starts))])
+            [SingleInterval(starts[i], ends[i], self.strand, single_interval_parent) for i in range(len(starts))]
+        )
         self._starts = tuple([interval.start for interval in self._single_intervals])
         self._ends = tuple([interval.end for interval in self._single_intervals])
         self.start = self._single_intervals[0].start
@@ -483,8 +484,11 @@ class CompoundInterval(Location):
         """Does this interval have overlaps?"""
         if self._is_overlapping is None:
             self._is_overlapping = any(
-                [self._single_intervals[i].end > self._single_intervals[i + 1].start
-                 for i in range(self.num_blocks - 1)])
+                [
+                    self._single_intervals[i].end > self._single_intervals[i + 1].start
+                    for i in range(self.num_blocks - 1)
+                ]
+            )
         return self._is_overlapping
 
     @property
@@ -653,7 +657,8 @@ class CompoundInterval(Location):
 
     def _remove_empty_blocks(self) -> "CompoundInterval":
         return CompoundInterval._from_single_intervals_no_validation(
-            [block for block in self._single_intervals if len(block) > 0])
+            [block for block in self._single_intervals if len(block) > 0]
+        )
 
     def _to_single_interval_if_one_block(self) -> Location:
         return self if self.num_blocks > 1 else self._single_intervals[0]
@@ -676,9 +681,7 @@ class CompoundInterval(Location):
             next_block = self._single_intervals[i]
             next_start = next_block.start
             next_end = next_block.end
-            combine = (
-                (curr_end == next_start) if preserve_overlappers else (curr_end >= next_start)
-            )
+            combine = (curr_end == next_start) if preserve_overlappers else (curr_end >= next_start)
             if combine:
                 curr_end = next_end
             else:

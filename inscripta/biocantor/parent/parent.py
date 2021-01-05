@@ -2,8 +2,13 @@ from functools import reduce
 from typing import TypeVar, Optional
 
 import inscripta.biocantor
-from inscripta.biocantor.exc import NoSuchAncestorException, LocationException, InvalidStrandException, ParentException, \
-    InvalidPositionException
+from inscripta.biocantor.exc import (
+    NoSuchAncestorException,
+    LocationException,
+    InvalidStrandException,
+    ParentException,
+    InvalidPositionException,
+)
 from inscripta.biocantor.location.strand import Strand
 from inscripta.biocantor.util.object_validation import ObjectValidation
 
