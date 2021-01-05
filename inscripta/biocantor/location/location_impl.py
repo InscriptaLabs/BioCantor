@@ -419,13 +419,13 @@ class CompoundInterval(Location):
             single_interval_parent = None
         self.strand = strand
         self._single_intervals = sorted(
-            [SingleInterval(starts[i], ends[i], self.strand, single_interval_parent) for i in range(len(starts))]
+            SingleInterval(starts[i], ends[i], self.strand, single_interval_parent) for i in range(len(starts))
         )
         self._starts = tuple([interval.start for interval in self._single_intervals])
         self._ends = tuple([interval.end for interval in self._single_intervals])
         self.start = self._single_intervals[0].start
         self.end = self._single_intervals[-1].end
-        self.length = sum([end - start for start, end in zip(starts, ends)])
+        self.length = sum(end - start for start, end in zip(starts, ends))
         self._is_overlapping = None
 
     @classmethod
@@ -460,10 +460,7 @@ class CompoundInterval(Location):
             return False
         if self.num_blocks != other.num_blocks:
             return False
-        for block1, block2 in zip(self.blocks, other.blocks):
-            if block1 != block2:
-                return False
-        return True
+        return all(block1 == block2 for block1, block2 in zip(self.blocks, other.blocks))
 
     def __hash__(self):
         return hash((self._starts, self._ends, self.strand, self.parent))
@@ -478,7 +475,7 @@ class CompoundInterval(Location):
     @property
     def is_contiguous(self) -> bool:
         return all(
-            [self._single_intervals[i + 1].start == self._single_intervals[i].end for i in range(self.num_blocks - 1)]
+            self._single_intervals[i + 1].start == self._single_intervals[i].end for i in range(self.num_blocks - 1)
         )
 
     @property
