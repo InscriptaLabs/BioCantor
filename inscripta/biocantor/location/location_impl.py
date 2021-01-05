@@ -119,7 +119,9 @@ class SingleInterval(Location):
         return EmptyLocation()
 
     def __hash__(self):
-        return hash((self.start, self.end, self.strand, self.parent.sequence_type, self.parent.id))
+        return hash(
+            (self.start, self.end, self.strand, self.parent.sequence_type, self.parent.id if self.parent else 0)
+        )
 
     def __lt__(self, other: Location):
         return self.compare(other) < 0
@@ -463,7 +465,7 @@ class CompoundInterval(Location):
         return all(block1 == block2 for block1, block2 in zip(self.blocks, other.blocks))
 
     def __hash__(self):
-        return hash((self._starts, self._ends, self.strand, self.parent))
+        return hash((self._starts, self._ends, self.strand, self.parent.id if self.parent else 0))
 
     def __repr__(self):
         return f"CompoundInterval <{str(self)}>"
