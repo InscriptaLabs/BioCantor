@@ -120,7 +120,7 @@ class GFFAttributes:
                 [BioCantorGFF3ReservedQualifiers.NAME.value, GFFAttributes.escape_value(self.name, escape_comma=True)]
             )
 
-        for key, value_set in self.attributes.items():
+        for key, value_set in sorted(self.attributes.items()):
             if not value_set:
                 continue
             if BioCantorGFF3ReservedQualifiers.has_value(key):
@@ -131,7 +131,7 @@ class GFFAttributes:
             else:
                 escaped_key = GFFAttributes.escape_key(str(key), lower=True)
             escaped_vals = [GFFAttributes.escape_value(value, escape_comma=False) for value in value_set]
-            escaped_val = ATTRIBUTE_SEPARATOR.join(escaped_vals)
+            escaped_val = ATTRIBUTE_SEPARATOR.join(sorted(escaped_vals))
             attrs_list.append([escaped_key, escaped_val])
         return ";".join(["=".join(pair) for pair in attrs_list])
 

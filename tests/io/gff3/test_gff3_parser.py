@@ -1,9 +1,7 @@
 import json
-from uuid import UUID
 
 import pytest
 from Bio import SeqIO
-
 from inscripta.biocantor.gene.biotype import Biotype
 from inscripta.biocantor.gene.cds import CDSFrame
 from inscripta.biocantor.io.gff3.exc import GFF3FastaException
