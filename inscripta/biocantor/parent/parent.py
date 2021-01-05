@@ -88,8 +88,8 @@ class Parent:
 
     @staticmethod
     def _unique_value_or_none(values) -> Optional[str]:
-        """Returns the single unique non-null value, or None if all are None, or raises ValueError if there are
-        multiple distinct non-null values"""
+        """Checks if a set of values contains more than one distinct non-null value. If so, raises ValueError.
+        Otherwise, returns the single unique non-null value (if there is one) or None if all values are None."""
         rtrn = None
         for x in values:
             if x is not None and rtrn is None:
