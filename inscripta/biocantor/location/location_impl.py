@@ -60,6 +60,7 @@ class SingleInterval(Location):
         self._end = end
         self._strand = strand
         self._parent = parent_obj.reset_location(SingleInterval(start, end, strand)) if parent_obj else None
+        self._len = end - start
         self._sequence = None
 
     def __str__(self):
@@ -70,7 +71,7 @@ class SingleInterval(Location):
         return f"<SingleInterval {data}>"
 
     def __len__(self):
-        return self._end - self._start
+        return self._len
 
     @property
     def parent(self) -> Parent:
