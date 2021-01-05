@@ -483,10 +483,7 @@ class CompoundInterval(Location):
         """Does this interval have overlaps?"""
         if self._is_overlapping is None:
             self._is_overlapping = any(
-                [
-                    self._single_intervals[i].end > self._single_intervals[i + 1].start
-                    for i in range(self.num_blocks - 1)
-                ]
+                self._single_intervals[i].end > self._single_intervals[i + 1].start for i in range(self.num_blocks - 1)
             )
         return self._is_overlapping
 
