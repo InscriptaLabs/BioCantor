@@ -34,7 +34,7 @@ class TestCompoundInterval:
             # An end is less than a start
             ([10], [9], None, InvalidPositionException),
             # Total length of intervals is longer than parent
-            ([0], [3], Parent(sequence=Sequence("AA", Alphabet.NT_STRICT)), LocationException),
+            ([0], [3], Parent(sequence=Sequence("AA", Alphabet.NT_STRICT)), InvalidPositionException),
         ],
     )
     def test_init_error(self, starts, ends, parent, expected_exception):
@@ -1185,7 +1185,7 @@ class TestCompoundInterval:
             Strand.PLUS,
             parent=Parent(id="old_parent", sequence=Sequence("AAAA", Alphabet.NT_STRICT)),
         )
-        with pytest.raises(LocationException):
+        with pytest.raises(InvalidPositionException):
             location.reset_parent(Parent(id="new_parent", sequence=Sequence("T", Alphabet.NT_STRICT)))
 
     @pytest.mark.parametrize(
@@ -2081,7 +2081,7 @@ class TestCompoundInterval:
             (
                 CompoundInterval([5], [5], Strand.PLUS),
                 SingleInterval(10, 10, Strand.PLUS),
-                ValueError,
+                IndexError,
             ),
             # Opposite strands
             (

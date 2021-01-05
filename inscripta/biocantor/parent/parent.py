@@ -2,7 +2,8 @@ from functools import reduce
 from typing import TypeVar, Optional
 
 import inscripta.biocantor
-from inscripta.biocantor.exc import NoSuchAncestorException, LocationException, InvalidStrandException, ParentException
+from inscripta.biocantor.exc import NoSuchAncestorException, LocationException, InvalidStrandException, ParentException, \
+    InvalidPositionException
 from inscripta.biocantor.location.strand import Strand
 from inscripta.biocantor.util.object_validation import ObjectValidation
 
@@ -55,7 +56,7 @@ class Parent:
             if strand and location.strand and strand != location.strand:
                 raise InvalidStrandException("Strand does not match location: {} != {}".format(strand, location.strand))
             if sequence and location.end > len(sequence):
-                raise LocationException(
+                raise InvalidPositionException(
                     "Location end ({}) is greater than sequence length ({})".format(location.end, len(sequence))
                 )
 
