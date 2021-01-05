@@ -49,14 +49,17 @@ class SingleInterval(Location):
         self._start = start
         self._end = end
         self._strand = strand
-        parent_obj = make_parent(parent) if parent else None
-        if parent_obj and parent_obj.sequence and not end <= len(parent_obj.sequence):
-            raise InvalidPositionException(
-                f"End position ({end}) must be <= parent length ({len(parent_obj.sequence)})"
-            )
-        self._parent = parent_obj.reset_location(SingleInterval(start, end, strand)) if parent_obj else None
         self._len = end - start
         self._sequence = None
+        self._parent = None
+
+        if parent:
+            parent_obj = make_parent(parent)
+            if parent_obj.sequence and end > len(parent_obj.sequence):
+                raise InvalidPositionException(
+                    f"End position ({end}) must be <= parent length ({len(parent_obj.sequence)})"
+                )
+            self._parent = parent_obj.reset_location(SingleInterval(start, end, strand))
 
     def __str__(self):
         return f"{self.start}-{self.end}:{self.strand}"
