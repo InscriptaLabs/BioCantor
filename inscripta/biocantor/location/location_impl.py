@@ -695,28 +695,31 @@ class CompoundInterval(Location):
         preserve_overlappers
             Do not combine strictly overlapping blocks
         """
-        new_blocks = []
-        curr_block = self._single_intervals[0]
+        first_block = self._single_intervals[0]
+        curr_start = first_block.start
+        curr_end = first_block.end
+        new_starts = []
+        new_ends = []
         i = 1
         while i < self.num_blocks:
             next_block = self._single_intervals[i]
+            next_start = next_block.start
+            next_end = next_block.end
             combine = (
-                (curr_block.end == next_block.start) if preserve_overlappers else (curr_block.end >= next_block.start)
+                (curr_end == next_start) if preserve_overlappers else (curr_end >= next_start)
             )
             if combine:
-                new_parent = curr_block.parent.strip_location_info() if curr_block.parent else None
-                curr_block = SingleInterval(
-                    curr_block.start,
-                    next_block.end,
-                    curr_block.strand,
-                    parent=new_parent,
-                )
+                curr_end = next_end
             else:
-                new_blocks.append(curr_block)
-                curr_block = next_block
+                new_starts.append(curr_start)
+                new_ends.append(curr_end)
+                curr_start = next_start
+                curr_end = next_end
             i += 1
-        new_blocks.append(curr_block)
-        return CompoundInterval.from_single_intervals(new_blocks)
+        new_starts.append(curr_start)
+        new_ends.append(curr_end)
+        new_parent = self.parent.strip_location_info() if self.parent else None
+        return CompoundInterval(new_starts, new_ends, self.strand, new_parent)
 
     def reverse(self) -> "CompoundInterval":
         def reflect_position(relative_pos):
