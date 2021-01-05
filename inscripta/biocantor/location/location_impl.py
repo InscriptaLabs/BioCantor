@@ -2,6 +2,8 @@ from functools import total_ordering, reduce
 from typing import Optional, List, Iterator
 
 from Bio.SeqFeature import FeatureLocation, CompoundLocation
+
+from inscripta.biocantor.util.ordering import RelativeOrder
 from inscripta.biocantor.util.types import ParentInputType
 from inscripta.biocantor.exc import (
     InvalidStrandException,
@@ -122,20 +124,20 @@ class SingleInterval(Location):
     def __lt__(self, other: Location):
         return self.compare(other) < 0
 
-    def compare(self, other: Location) -> int:
+    def compare(self, other: Location) -> RelativeOrder:
         """Returns a negative integer if this Location is less than the other Location, positive integer if it is
         greater, and zero otherwise."""
         self_parent_id = self.parent.id if self.parent is not None else ""
         other_parent_id = other.parent.id if other.parent is not None else ""
         if self_parent_id != other_parent_id:
-            return -1 if self_parent_id < other_parent_id else 1
+            return RelativeOrder.LESS if self_parent_id < other_parent_id else RelativeOrder.GREATER
         if self.start != other.start:
-            return -1 if self.start < other.start else 1
+            return RelativeOrder.LESS if self.start < other.start else RelativeOrder.GREATER
         if self.end != other.end:
-            return -1 if self.end < other.end else 1
+            return RelativeOrder.LESS if self.end < other.end else RelativeOrder.GREATER
         if self.strand != other.strand:
-            return -1 if self.strand < other.strand else 1
-        return 0
+            return RelativeOrder.LESS if self.strand < other.strand else RelativeOrder.GREATER
+        return RelativeOrder.NEITHER
 
     def extract_sequence(self) -> Sequence:
         if self._sequence is None:
