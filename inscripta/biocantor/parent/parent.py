@@ -45,23 +45,31 @@ class Parent:
 
         location_parent_id = location.parent_id if location else None
         sequence_id = sequence.id if sequence else None
-        non_null_ids = set([x for x in [id, location_parent_id, sequence_id] if x is not None])
-        if len(non_null_ids) > 1:
-            raise ParentException(
-                "ID, location parent ID, and sequence ID do not match: {}, {}, {}".format(
-                    id, location_parent_id, sequence_id
+        parent_id = None
+        for x in [id, location_parent_id, sequence_id]:
+            if x is not None and parent_id is None:
+                parent_id = x
+                continue
+            if x is not None and x != parent_id:
+                raise ParentException(
+                    "ID, location parent ID, and sequence ID do not match: {}, {}, {}".format(
+                        id, location_parent_id, sequence_id
+                    )
                 )
-            )
 
         location_parent_type = location.parent_type if location else None
         sequence_seqtype = sequence.sequence_type if sequence else None
-        non_null_types = set([x for x in [sequence_type, location_parent_type, sequence_seqtype] if x is not None])
-        if len(non_null_types) > 1:
-            raise ParentException(
-                "Sequence type, location parent type, and sequence do not match: {}, {}, {}".format(
-                    sequence_type, location_parent_type, sequence_seqtype
+        seq_type = None
+        for x in [sequence_type, location_parent_type, sequence_seqtype]:
+            if x is not None and seq_type is None:
+                seq_type = x
+                continue
+            if x is not None and x != seq_type:
+                raise ParentException(
+                    "Sequence type, location parent type, and sequence do not match: {}, {}, {}".format(
+                        sequence_type, location_parent_type, sequence_seqtype
+                    )
                 )
-            )
 
         if location:
             if strand and location.strand and strand != location.strand:
@@ -86,8 +94,8 @@ class Parent:
         else:
             self.parent = parent_obj
 
-        self._id = non_null_ids.pop() if non_null_ids else None
-        self._sequence_type = non_null_types.pop() if non_null_types else None
+        self._id = parent_id
+        self._sequence_type = seq_type
         self._strand = strand
         self.location = location
         self.sequence = sequence
