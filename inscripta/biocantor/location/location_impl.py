@@ -116,12 +116,15 @@ class SingleInterval(Location):
     def __eq__(self, other):
         if type(other) is not SingleInterval:
             return False
-        return (
-            self.start == other.start
-            and self.end == other.end
-            and self.strand == other.strand
-            and self.parent == other.parent
-        )
+        if self.start != other.start:
+            return False
+        if self.end != other.end:
+            return False
+        if self.strand != other.strand:
+            return False
+        if self.parent != other.parent:
+            return False
+        return True
 
     def optimize_blocks(self) -> Location:
         if len(self) == 0:
@@ -467,7 +470,12 @@ class CompoundInterval(Location):
     def __eq__(self, other):
         if type(other) is not CompoundInterval:
             return False
-        return self.blocks == other.blocks
+        if self.num_blocks != other.num_blocks:
+            return False
+        for block1, block2 in zip(self.blocks, other.blocks):
+            if block1 != block2:
+                return False
+        return True
 
     def __hash__(self):
         return hash((self._starts, self._ends, self.strand, self.parent))
