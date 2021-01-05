@@ -1,5 +1,5 @@
 from functools import total_ordering, reduce
-from typing import Optional, List, Iterator, Tuple
+from typing import Optional, List, Iterator
 
 from Bio.SeqFeature import FeatureLocation, CompoundLocation
 from inscripta.biocantor.util.types import ParentInputType
