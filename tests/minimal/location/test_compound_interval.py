@@ -211,6 +211,9 @@ class TestCompoundInterval:
     def test_equals(self, object1, object2, expected):
         assert (object1 == object2) is expected
 
+    def test_hash_missing_parent(self):
+        _ = CompoundInterval([0], [5], Strand.PLUS).__hash__()
+
     @pytest.mark.parametrize(
         "object1,object2,exp_equal",
         [

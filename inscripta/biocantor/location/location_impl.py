@@ -119,9 +119,7 @@ class SingleInterval(Location):
         return EmptyLocation()
 
     def __hash__(self):
-        return hash(
-            (self.start, self.end, self.strand, self.parent.sequence_type, self.parent.id if self.parent else 0)
-        )
+        return hash((self.start, self.end, self.strand, self.parent.id if self.parent else 0))
 
     def __lt__(self, other: Location):
         return self.compare(other) < 0
