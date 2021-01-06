@@ -208,7 +208,7 @@ class MRNATblFeature(TblFeature):
 
 class CDSTblFeature(TblFeature):
     """
-    A mRNA feature.
+    A CDS feature.
     """
 
     FEATURE_TYPE = IntervalFeatures.CDS

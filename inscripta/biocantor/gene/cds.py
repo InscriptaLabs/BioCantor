@@ -188,7 +188,6 @@ class CDSInterval:
         """
         return len(list(self.scan_codon_locations()))
 
-    @lru_cache(maxsize=2)
     def scan_codons(self, truncate_at_in_frame_stop: Optional[bool] = False) -> Iterator[Codon]:
         """
         Iterator along codons. If truncate_at_in_frame_stop is True,
