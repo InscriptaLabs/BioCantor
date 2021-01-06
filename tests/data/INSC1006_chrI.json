@@ -1,235 +1,216 @@
 {
-    "completely_within": null,
-    "end": null,
     "feature_collections": null,
     "genes": [
         {
-            "gene_guid": null,
-            "gene_id": null,
-            "gene_symbol": null,
-            "gene_type": "ncRNA",
-            "locus_tag": null,
-            "qualifiers": {
-                "gene_biotype": [
-                    "ncRNA"
-                ]
-            },
-            "sequence_guid": null,
-            "sequence_name": "CM021111.1",
             "transcripts": [
                 {
-                    "cds_ends": null,
-                    "cds_frames": null,
-                    "cds_starts": null,
-                    "exon_ends": [
-                        18079
-                    ],
                     "exon_starts": [
                         16174
                     ],
-                    "guid": null,
-                    "is_primary_tx": false,
-                    "protein_id": null,
+                    "exon_ends": [
+                        18079
+                    ],
+                    "strand": "MINUS",
+                    "cds_starts": null,
+                    "cds_ends": null,
+                    "cds_frames": null,
                     "qualifiers": {
-                        "gene_biotype": [
-                            "ncRNA"
+                        "ncrna_class": [
+                            "other"
                         ],
-                        "transcript_biotype": [
-                            "ncRNA"
+                        "product": [
+                            "CAT novel prediction: IsoSeq"
+                        ],
+                        "note": [
+                            "CAT transcript id: T0000001; CAT alignment id: IsoSeq-PB.2586.1; CAT novel prediction: IsoSeq"
                         ]
                     },
-                    "sequence_guid": null,
+                    "is_primary_tx": false,
+                    "transcript_id": "GI526_G0000001",
+                    "protein_id": null,
+                    "transcript_symbol": "GI526_G0000001",
+                    "transcript_type": "ncRNA",
                     "sequence_name": "CM021111.1",
-                    "strand": "MINUS",
-                    "transcript_guid": null,
-                    "transcript_id": null,
-                    "transcript_symbol": null,
-                    "transcript_type": "ncRNA"
+                    "sequence_guid": null,
+                    "guid": null,
+                    "transcript_guid": null
                 }
-            ]
+            ],
+            "gene_id": null,
+            "gene_symbol": null,
+            "gene_type": "ncRNA",
+            "locus_tag": "GI526_G0000001",
+            "qualifiers": {},
+            "sequence_name": "CM021111.1",
+            "sequence_guid": null,
+            "gene_guid": null
         },
         {
-            "gene_guid": null,
-            "gene_id": null,
-            "gene_symbol": "GDH3",
-            "gene_type": "protein_coding",
-            "locus_tag": null,
-            "qualifiers": {
-                "gene_biotype": [
-                    "protein_coding"
-                ],
-                "gene_name": [
-                    "GDH3"
-                ]
-            },
-            "sequence_guid": null,
-            "sequence_name": "CM021111.1",
             "transcripts": [
                 {
+                    "exon_starts": [
+                        37461
+                    ],
+                    "exon_ends": [
+                        39103
+                    ],
+                    "strand": "PLUS",
+                    "cds_starts": [
+                        37637
+                    ],
                     "cds_ends": [
                         39011
                     ],
                     "cds_frames": [
                         "ZERO"
                     ],
-                    "cds_starts": [
-                        37637
-                    ],
-                    "exon_ends": [
-                        39103
-                    ],
-                    "exon_starts": [
-                        37461
-                    ],
-                    "guid": null,
-                    "is_primary_tx": false,
-                    "protein_id": null,
                     "qualifiers": {
-                        "gene_biotype": [
-                            "protein_coding"
-                        ],
-                        "gene_name": [
+                        "gene": [
                             "GDH3"
                         ],
-                        "transcript_biotype": [
-                            "protein_coding"
+                        "product": [
+                            "GDH3 isoform 1"
                         ],
-                        "transcript_name": [
-                            "GDH3"
+                        "note": [
+                            "CAT transcript id: T0000002; CAT alignment id: NM_001178204.1-0; CAT source transcript id: NM_001178204.1; CAT source transcript biotype: protein_coding"
                         ]
                     },
-                    "sequence_guid": null,
-                    "sequence_name": "CM021111.1",
-                    "strand": "PLUS",
-                    "transcript_guid": null,
-                    "transcript_id": null,
+                    "is_primary_tx": false,
+                    "transcript_id": "GI526_G0000002",
+                    "protein_id": null,
                     "transcript_symbol": "GDH3",
-                    "transcript_type": "protein_coding"
+                    "transcript_type": "protein_coding",
+                    "sequence_name": "CM021111.1",
+                    "sequence_guid": null,
+                    "guid": null,
+                    "transcript_guid": null
                 }
-            ]
-        },
-        {
-            "gene_guid": null,
+            ],
             "gene_id": null,
-            "gene_symbol": "BDH2",
+            "gene_symbol": "GDH3",
             "gene_type": "protein_coding",
-            "locus_tag": null,
+            "locus_tag": "GI526_G0000002",
             "qualifiers": {
-                "gene_biotype": [
-                    "protein_coding"
-                ],
-                "gene_name": [
-                    "BDH2"
+                "gene": [
+                    "GDH3"
                 ]
             },
-            "sequence_guid": null,
             "sequence_name": "CM021111.1",
+            "sequence_guid": null,
+            "gene_guid": null
+        },
+        {
             "transcripts": [
                 {
+                    "exon_starts": [
+                        39518
+                    ],
+                    "exon_ends": [
+                        40772
+                    ],
+                    "strand": "PLUS",
+                    "cds_starts": [
+                        39518
+                    ],
                     "cds_ends": [
                         40772
                     ],
                     "cds_frames": [
                         "ZERO"
                     ],
-                    "cds_starts": [
-                        39518
-                    ],
-                    "exon_ends": [
-                        40772
-                    ],
-                    "exon_starts": [
-                        39518
-                    ],
-                    "guid": null,
-                    "is_primary_tx": false,
-                    "protein_id": "KAF1903246.1",
                     "qualifiers": {
-                        "gene_biotype": [
-                            "protein_coding"
-                        ],
-                        "gene_name": [
+                        "gene": [
                             "BDH2"
                         ],
-                        "protein_id": [
-                            "KAF1903246.1"
+                        "codon_start": [
+                            "1"
                         ],
-                        "transcript_biotype": [
-                            "protein_coding"
+                        "product": [
+                            "BDH2 isoform 1"
                         ],
-                        "transcript_name": [
-                            "BDH2"
+                        "translation": [
+                            "MRALAYFGKGNIRFTNHLKEPHIVAPDELVIDIAWCGICGTDLHEYTDGPIFFPEDGHTHEISHNPLPQAMGHEMAGTVLEVGPSVKNLKVGDKVVVEPTGTCRDRYRWPLSPKVDKEWCAACKKGYYNBioCantorYLGLCGAGVQSGGFAEGVVMNESHCYKVPDFVPLDVAALIQPLAVCWHAIRVCEFKAGSTALIIGAGPIGLGTILALNAAGCKDIVVSEPAKVRRELAEKMGARVYDPTAHAAKESIDYLRSIADGGDGFDYTFDCSGLEVTLNAAIQCLTFRGTAVNLAMWGHHKIQFSPMDITLHERKYTGSMCYTHHDFETVIEALEEGRIDIDRARHMITGRVNIEDGLDGAIMKLINEKESTIKIILTPNNHGELNREADNEKKEISELSSRKDQERLRESINEAKLRHT"
                         ]
                     },
-                    "sequence_guid": null,
-                    "sequence_name": "CM021111.1",
-                    "strand": "PLUS",
-                    "transcript_guid": null,
-                    "transcript_id": null,
+                    "is_primary_tx": false,
+                    "transcript_id": "GI526_G0000003",
+                    "protein_id": "KAF1903246.1",
                     "transcript_symbol": "BDH2",
-                    "transcript_type": "protein_coding"
+                    "transcript_type": "protein_coding",
+                    "sequence_name": "CM021111.1",
+                    "sequence_guid": null,
+                    "guid": null,
+                    "transcript_guid": null
                 }
-            ]
-        },
-        {
-            "gene_guid": null,
+            ],
             "gene_id": null,
-            "gene_symbol": "BDH1",
+            "gene_symbol": "BDH2",
             "gene_type": "protein_coding",
-            "locus_tag": null,
+            "locus_tag": "GI526_G0000003",
             "qualifiers": {
-                "gene_biotype": [
-                    "protein_coding"
-                ],
-                "gene_name": [
-                    "BDH1"
+                "gene": [
+                    "BDH2"
                 ]
             },
-            "sequence_guid": null,
             "sequence_name": "CM021111.1",
+            "sequence_guid": null,
+            "gene_guid": null
+        },
+        {
             "transcripts": [
                 {
-                    "cds_ends": null,
-                    "cds_frames": null,
-                    "cds_starts": null,
-                    "exon_ends": [
-                        42503
-                    ],
                     "exon_starts": [
                         41085
                     ],
-                    "guid": null,
-                    "is_primary_tx": false,
-                    "protein_id": null,
+                    "exon_ends": [
+                        42503
+                    ],
+                    "strand": "PLUS",
+                    "cds_starts": null,
+                    "cds_ends": null,
+                    "cds_frames": null,
                     "qualifiers": {
-                        "gene_biotype": [
-                            "protein_coding"
-                        ],
-                        "gene_name": [
+                        "gene": [
                             "BDH1"
                         ],
-                        "transcript_biotype": [
-                            "protein_coding"
+                        "product": [
+                            "BDH1 isoform 1"
                         ],
-                        "transcript_name": [
-                            "BDH1"
+                        "note": [
+                            "CAT transcript id: T0000004; CAT alignment id: NM_001178202.2-0; CAT source transcript id: NM_001178202.2; CAT source transcript biotype: protein_coding"
                         ]
                     },
-                    "sequence_guid": null,
-                    "sequence_name": "CM021111.1",
-                    "strand": "PLUS",
-                    "transcript_guid": null,
-                    "transcript_id": null,
+                    "is_primary_tx": false,
+                    "transcript_id": "GI526_G0000004",
+                    "protein_id": null,
                     "transcript_symbol": "BDH1",
-                    "transcript_type": "protein_coding"
+                    "transcript_type": "protein_coding",
+                    "sequence_name": "CM021111.1",
+                    "sequence_guid": null,
+                    "guid": null,
+                    "transcript_guid": null
                 }
-            ]
+            ],
+            "gene_id": null,
+            "gene_symbol": "BDH1",
+            "gene_type": "protein_coding",
+            "locus_tag": "GI526_G0000004",
+            "qualifiers": {
+                "gene": [
+                    "BDH1"
+                ]
+            },
+            "sequence_name": "CM021111.1",
+            "sequence_guid": null,
+            "gene_guid": null
         }
     ],
     "name": null,
-    "qualifiers": null,
-    "sequence_guid": null,
     "sequence_name": "CM021111.1",
+    "sequence_guid": null,
     "sequence_path": null,
-    "start": null
+    "qualifiers": null,
+    "start": null,
+    "end": null,
+    "completely_within": null
 }

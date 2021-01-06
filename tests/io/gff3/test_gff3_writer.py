@@ -35,17 +35,14 @@ class TestGff3Writer:
     def test_to_gff(self, test_data_dir, tmp_path):
         """Parse GFF, write to disk, parse, compare"""
         gff = test_data_dir / "INSC1006_chrI.gff3"
-        parsed = list(parse_standard_gff3(str(gff)))
+        parsed = list(parse_standard_gff3(gff))
         a = [x.to_annotation_collection() for x in parsed]
 
-        tmp_gff = str(tmp_path / "tmp.gff")
+        tmp_gff = tmp_path / "tmp.gff"
         with open(tmp_gff, "w") as fh:
             collection_to_gff3(a, fh)
         gff2 = list(parse_standard_gff3(tmp_gff))
         a2 = [x.to_annotation_collection() for x in gff2]
+
         for c1, c2 in zip(a, a2):
-            for g1, g2 in zip(c1.genes, c2.genes):
-                assert g1.location == g2.location
-                for tx1, tx2 in zip(g1.transcripts, g2.transcripts):
-                    assert tx1.location == tx2.location
-                    assert tx1.cds == tx2.cds
+            assert c1.to_dict() == c2.to_dict()

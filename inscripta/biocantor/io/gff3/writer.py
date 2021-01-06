@@ -49,4 +49,4 @@ def collection_to_gff3(
     if add_sequences:
         print(GFF3Headers.FASTA_HEADER.value, file=gff3_handle)
         for collection in collections:
-            print(collection.sequence.to_fasta(60), file=gff3_handle)
+            print(collection.sequence.to_fasta(), file=gff3_handle)

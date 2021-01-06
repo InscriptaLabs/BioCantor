@@ -114,7 +114,7 @@ class TestGenbank:
         assert all(
             gene.transcripts[0].location.parent.id == gene.sequence_name == "CM021111.1" for gene in parsed.genes
         )
-        assert digest_object(parsed) == UUID("828078b6-51f6-7369-0ba3-ec5d729a291e")
+        assert digest_object(parsed) == UUID("6845b856-6135-76c5-8f9c-b127bddb2b9f")
         assert not parsed.genes[0].transcripts[0].is_coding
         assert parsed.genes[1].transcripts[0].is_coding
         assert parsed.genes[2].transcripts[0].is_coding
@@ -352,7 +352,7 @@ class TestProkaryoticGenBank:
             for tx in gene.transcripts:
                 if tx.is_coding:
                     # check that protein equals what Prokka thought it was
-                    assert str(tx.get_protein_sequence())[:-1] == tx.qualifiers["translation"][0]
+                    assert {str(tx.get_protein_sequence())[:-1]} == tx.qualifiers["translation"]
 
 
 class TestFrameGenBank:

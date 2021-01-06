@@ -10,3 +10,7 @@ class BioCantorIOException(BioCantorException):
 
 class InvalidInputError(BioCantorIOException):
     pass
+
+
+class StrandViolationWarning(UserWarning):
+    pass

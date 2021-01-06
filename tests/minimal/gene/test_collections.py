@@ -1,21 +1,21 @@
-import pytest
+from uuid import UUID
 
+import pytest
 from inscripta.biocantor.exc import InvalidAnnotationError, NoncodingTranscriptError, InvalidQueryError
 from inscripta.biocantor.exc import ValidationException
 from inscripta.biocantor.gene.biotype import Biotype
 from inscripta.biocantor.gene.cds import CDSFrame
-from inscripta.biocantor.location.location_impl import SingleInterval
-from inscripta.biocantor.location.strand import Strand
 from inscripta.biocantor.io.models import (
     GeneIntervalModel,
     AnnotationCollectionModel,
     FeatureIntervalCollectionModel,
     TranscriptIntervalModel,
 )
+from inscripta.biocantor.location.location_impl import SingleInterval
+from inscripta.biocantor.location.strand import Strand
 from inscripta.biocantor.parent.parent import Parent
 from inscripta.biocantor.sequence.alphabet import Alphabet
 from inscripta.biocantor.sequence.sequence import Sequence
-from inscripta.biocantor.util.hashing import digest_object
 
 genome = "AAGTATTCTTGGACCTAATTAAAAAAAAAAAAAAAAAAA"
 parent_genome = Parent(sequence=Sequence(genome, Alphabet.NT_STRICT))
@@ -73,8 +73,8 @@ class TestGene:
 
     def test_merged_interval(self):
         obj = self.gene.to_gene_interval()
-        assert str(obj.get_merged_transcript()) == "FeatureInterval((2-18:+), qualifiers={})"
-        assert str(obj.get_merged_cds()) == "FeatureInterval((4-10:+, 12-13:+), qualifiers={})"
+        assert str(obj.get_merged_transcript()) == "FeatureInterval((2-18:+), name=None)"
+        assert str(obj.get_merged_cds()) == "FeatureInterval((4-10:+, 12-13:+), name=None)"
 
     def test_failed_merge_interval(self):
         obj = self.gene_noncoding.to_gene_interval()
@@ -138,6 +138,10 @@ class TestFeatureIntervalCollection:
     def test_feature_collection(self):
         obj = self.collection1.to_feature_collection()
         model = FeatureIntervalCollectionModel.from_feature_collection(obj)
+        # remove guids to make comparison work
+        for item in model.feature_intervals:
+            item.feature_interval_guid = None
+        model.feature_collection_guid = None
         assert model == self.collection1
 
     def test_empty(self):
@@ -205,6 +209,19 @@ class TestAnnotationCollection:
     def test_annotation(self):
         obj = self.annot.to_annotation_collection()
         model = AnnotationCollectionModel.from_annotation_collection(obj)
+
+        # remove guids to make comparison work
+        for feat_grp in model.feature_collections:
+            for item in feat_grp.feature_intervals:
+                item.feature_interval_guid = None
+            feat_grp.feature_collection_guid = None
+
+        # remove guids to make comparison work
+        for gene in model.genes:
+            for item in gene.transcripts:
+                item.transcript_guid = None
+            gene.gene_guid = None
+
         assert model == self.annot
 
     def test_annot_no_range(self):
@@ -226,17 +243,66 @@ class TestAnnotationCollection:
     @pytest.mark.parametrize(
         "start,end,coding_only,completely_within,expected",
         [
-            (None, None, False, True, {"featgrp1", "featgrp2", "gene1"}),
-            (0, None, False, True, {"featgrp1", "featgrp2", "gene1"}),
-            (None, 30, False, True, {"featgrp1", "featgrp2", "gene1"}),
+            (
+                None,
+                None,
+                False,
+                True,
+                # {"featgrp1", "featgrp2", "gene1"}
+                {
+                    UUID("6a1e7d72-e02d-8c00-af71-a1f916462642"),
+                    UUID("c2f81b52-aebb-8de3-3488-bdaa53a7e102"),
+                    UUID("bf5c1145-f895-0f66-b5ef-74f48e5550b7"),
+                },
+            ),
+            (
+                0,
+                None,
+                False,
+                True,  # {"featgrp1", "featgrp2", "gene1"}
+                {
+                    UUID("6a1e7d72-e02d-8c00-af71-a1f916462642"),
+                    UUID("c2f81b52-aebb-8de3-3488-bdaa53a7e102"),
+                    UUID("bf5c1145-f895-0f66-b5ef-74f48e5550b7"),
+                },
+            ),
+            (
+                None,
+                30,
+                False,
+                True,  # {"featgrp1", "featgrp2", "gene1"}
+                {
+                    UUID("6a1e7d72-e02d-8c00-af71-a1f916462642"),
+                    UUID("c2f81b52-aebb-8de3-3488-bdaa53a7e102"),
+                    UUID("bf5c1145-f895-0f66-b5ef-74f48e5550b7"),
+                },
+            ),
             (0, 0, False, True, {}),
-            (0, 20, False, True, {"featgrp1", "gene1"}),
-            (None, 20, False, True, {"featgrp1", "gene1"}),
-            (25, None, False, True, {"featgrp2"}),
+            (
+                0,
+                20,
+                False,
+                True,  # {"featgrp1", "gene1"}
+                {UUID("6a1e7d72-e02d-8c00-af71-a1f916462642"), UUID("bf5c1145-f895-0f66-b5ef-74f48e5550b7")},
+            ),
+            (
+                None,
+                20,
+                False,
+                True,  # {"featgrp1", "gene1"}
+                {UUID("6a1e7d72-e02d-8c00-af71-a1f916462642"), UUID("bf5c1145-f895-0f66-b5ef-74f48e5550b7")},
+            ),
+            (25, None, False, True, {UUID("c2f81b52-aebb-8de3-3488-bdaa53a7e102")}),  # {"featgrp2"}
             (26, None, False, True, {}),
-            (26, None, False, False, {"featgrp2"}),
-            (0, 3, False, False, {"featgrp1", "gene1"}),
-            (0, None, True, False, {"gene1"}),
+            (26, None, False, False, {UUID("c2f81b52-aebb-8de3-3488-bdaa53a7e102")}),  # {"featgrp2"}
+            (
+                0,
+                3,
+                False,
+                False,  # {"featgrp1", "gene1"}
+                {UUID("6a1e7d72-e02d-8c00-af71-a1f916462642"), UUID("bf5c1145-f895-0f66-b5ef-74f48e5550b7")},
+            ),
+            (0, None, True, False, {UUID("bf5c1145-f895-0f66-b5ef-74f48e5550b7")}),  # {"gene1"}
         ],
     )
     def test_position_queries(self, start, end, completely_within, coding_only, expected):
@@ -245,7 +311,7 @@ class TestAnnotationCollection:
         if r.is_empty:
             assert len(expected) == 0
         else:
-            assert set.union(*[x.identifiers for x in r]) == expected
+            assert r.hierarchical_children_guids.keys() == expected
 
     @pytest.mark.parametrize(
         "start,end,coding_only,completely_within,expected",
@@ -275,7 +341,11 @@ class TestAnnotationCollection:
 
     @pytest.mark.parametrize(
         "ids",
-        [["gene1"], ["featgrp1", "gene1"], []],
+        (
+            {"gene1"},
+            {"gene1", "featgrp1"},
+            {},
+        ),
     )
     def test_query_by_identifiers(self, ids):
         obj = self.annot.to_annotation_collection()
@@ -283,7 +353,12 @@ class TestAnnotationCollection:
         if r.is_empty:
             assert len(ids) == 0
         else:
-            assert set.union(*[x.identifiers for x in r]) == set(ids)
+            assert {x.gene_id for x in r.genes} | {x.feature_id for x in r.feature_collections} == ids
+
+    def test_query_by_identifiers_with_extraneous(self):
+        obj = self.annot.to_annotation_collection()
+        r = obj.query_by_feature_identifier(["gene1", "abc"])
+        assert len(r.genes) == 1 and r.genes[0].gene_id == "gene1"
 
     def test_extract_sequence(self):
         obj = self.annot.to_annotation_collection(parent=parent_genome)
@@ -292,12 +367,7 @@ class TestAnnotationCollection:
 
     def test_query_by_ids(self):
         obj = self.annot.to_annotation_collection()
-        # add  GUIDs, since we are not using the database
-        my_ids = []
-        for o in obj:
-            u = digest_object(o)
-            o.guid = u
-            my_ids.append(u)
+        my_ids = list(obj.hierarchical_children_guids.keys())
 
         # query them all
         assert obj.query_by_guids(my_ids).children_guids == set(my_ids)

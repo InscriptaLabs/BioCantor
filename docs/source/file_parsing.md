@@ -13,12 +13,12 @@ in the BioCantor annotation model.
 
 BioCantor supports import and export of GFF3 with or without an embedded FASTA file. Embedded FASTA files are a method
 of combining sequence and annotation information. The annotation section is standard GFF3 up top, delimited with the
-header line `##gff-version 3`. The FASTA section comes at the end, and is delimited by the break line `###FASTA`.
+header line `##gff-version 3`. The FASTA section comes at the end, and is delimited by the break line `##FASTA`.
 
 This version of GFF3 could be constructed from two separate files with the command:
 
 ```
-(cat ${GFF3}; echo -e "###FASTA\n"; cat ${FASTA}) > gff3_with_fasta.gff3
+(cat ${GFF3}; echo -e "##FASTA\n"; cat ${FASTA}) > gff3_with_fasta.gff3
 ```
 
 To enable GFF3 parsing, BioCantor leverages the library [gffutils](http://daler.github.io/gffutils/). 
