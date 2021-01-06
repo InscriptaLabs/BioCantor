@@ -222,7 +222,7 @@ class CDSTblFeature(TblFeature):
         if "product" in transcript.qualifiers:
             qualifiers["product"] = transcript.qualifiers["product"]
         elif transcript.protein_id:
-            qualifiers["product"] = qualifiers["protein_id"]
+            qualifiers["product"] = [transcript.protein_id]
         else:
             qualifiers["product"] = qualifiers["gene"]
 
@@ -294,20 +294,60 @@ class MiscRNATblFeature(TblFeature):
         )
 
 
-class TRNATblFeature(MiscRNATblFeature):
+class TRNATblFeature(TblFeature):
     """
-    A tRNA feature.
+    A tRNA feature. Applies ``tRNA-Xxx`` to products if they are not correct.
     """
 
     FEATURE_TYPE = TranscriptFeatures.TRANSFER_RNA
+    VALID_KEYS = GeneTblFeature.VALID_KEYS | {"transcript_id", "product"}
+
+    def __init__(self, transcript: TranscriptInterval, gene_feature: GeneTblFeature):
+        qualifiers = gene_feature.qualifiers.copy()
+        qualifiers["transcript_id"] = [transcript.transcript_id]
+
+        if "product" in transcript.qualifiers:
+            product = str(list(transcript.qualifiers["product"])[0])
+            if product.startswith("tRNA-"):
+                qualifiers["product"] = [product]
+        else:
+            qualifiers["product"] = ["tRNA-Xxx"]
+
+        super().__init__(
+            transcript.location,
+            start_is_incomplete=False,
+            end_is_complete=False,
+            is_pseudo=False,
+            qualifiers=qualifiers,
+        )
 
 
-class RRNATblFeature(MiscRNATblFeature):
+class RRNATblFeature(TblFeature):
     """
-    A rRNA feature.
+    A rRNA feature. rRNA features must have a product, so these are
     """
 
     FEATURE_TYPE = TranscriptFeatures.RIBOSOMAL_RNA
+    VALID_KEYS = GeneTblFeature.VALID_KEYS | {"transcript_id", "product"}
+
+    def __init__(self, transcript: TranscriptInterval, gene_feature: GeneTblFeature):
+        qualifiers = gene_feature.qualifiers.copy()
+        qualifiers["transcript_id"] = [transcript.transcript_id]
+
+        if "product" in transcript.qualifiers:
+            product = str(list(transcript.qualifiers["product"])[0])
+            if product.startswith("tRNA-"):
+                qualifiers["product"] = [product]
+        else:
+            qualifiers["product"] = ["unknown ribosomal RNA"]
+
+        super().__init__(
+            transcript.location,
+            start_is_incomplete=False,
+            end_is_complete=False,
+            is_pseudo=False,
+            qualifiers=qualifiers,
+        )
 
 
 class TblGene:
@@ -327,9 +367,9 @@ class TblGene:
         # adjacent blocks. This must be performed before we instantiate GeneTblFeature because performing this process
         # may break translations.
         for tx in gene.transcripts:
-            tx.location = tx.location.optimize_blocks()
+            tx.location = tx.location.optimize_and_combine_blocks()
             if gene.is_coding:
-                tx.cds.location = tx.cds.location.optimize_blocks()
+                tx.cds.location = tx.cds.location.optimize_and_combine_blocks()
 
         self.gene_tbl = GeneTblFeature(self.gene, locus_tag)
 
@@ -364,7 +404,7 @@ def collection_to_tbl(
     genbank_flavor: Optional[GenbankFlavor] = GenbankFlavor.EUKARYOTIC,
 ):
     """
-    Take an instantiated :class:`~biocantor.gene.collections.AnnotationCollection` and produce a TBL file.
+    Take an iterable of :class:`~biocantor.gene.collections.AnnotationCollection` and produce a TBL file.
 
     Args:
         collections: Iterable of AnnotationCollections. They must have sequences associated with them.∂
