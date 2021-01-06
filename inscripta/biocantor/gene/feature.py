@@ -4,7 +4,7 @@ Object representation of features. Includes an abstract feature class that is al
 Each object is capable of exporting itself to BED and GFF3.
 """
 from abc import ABC, abstractmethod
-from functools import lru_cache
+from methodtools import lru_cache
 from typing import Optional, Any, Union, Dict, List, Set, Iterable, Hashable
 from uuid import UUID
 
@@ -46,7 +46,7 @@ class AbstractInterval(ABC):
 
     def __hash__(self):
         """Produces a hash, which is the GUID."""
-        return hash((self.guid, self.location))
+        return hash(self.guid)
 
     @abstractmethod
     def to_dict(self) -> Dict[str, Any]:

@@ -3,7 +3,7 @@ Object representation of Transcripts.
 
 Each object is capable of exporting itself to BED and GFF3.
 """
-from functools import lru_cache
+from methodtools import lru_cache
 from itertools import count
 from typing import Optional, Any, Dict, Iterable, Hashable, Set
 from uuid import UUID

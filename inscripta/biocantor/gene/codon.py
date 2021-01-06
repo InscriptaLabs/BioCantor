@@ -124,7 +124,7 @@ class Codon(Enum):
         return self.value in aacodons["*"]
 
     @property
-    def is_start_codon(self) -> bool:
+    def is_canonical_start_codon(self) -> bool:
         """Is this a canonical start codon?"""
         return self == Codon.ATG
 

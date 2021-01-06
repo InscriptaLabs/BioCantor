@@ -1,5 +1,5 @@
 from enum import Enum
-from functools import lru_cache
+from methodtools import lru_cache
 from typing import Iterator, List, Union, Optional, AnyStr
 
 from inscripta.biocantor.exc import LocationException
@@ -188,7 +188,7 @@ class CDSInterval:
         """
         return len(list(self.scan_codon_locations()))
 
-    @lru_cache(maxsize=1)
+    @lru_cache(maxsize=2)
     def scan_codons(self, truncate_at_in_frame_stop: Optional[bool] = False) -> Iterator[Codon]:
         """
         Iterator along codons. If truncate_at_in_frame_stop is True,
@@ -250,7 +250,7 @@ class CDSInterval:
     def _total_block_len(starts: List[int], ends: List[int]) -> int:
         return sum([coords[1] - coords[0] for coords in zip(starts, ends)])
 
-    @lru_cache(maxsize=1)
+    @lru_cache(maxsize=2)
     def translate(self, truncate_at_in_frame_stop: Optional[bool] = False) -> Sequence:
         """
         Returns amino acid sequence of this CDS. If truncate_at_in_frame_stop is ``True``,
