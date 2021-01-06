@@ -3,8 +3,9 @@ Object representation of Transcripts.
 
 Each object is capable of exporting itself to BED and GFF3.
 """
+from methodtools import lru_cache
 from itertools import count
-from typing import Optional, Any, Dict, Iterable
+from typing import Optional, Any, Dict, Iterable, Hashable, Set
 from uuid import UUID
 
 from inscripta.biocantor.exc import (
@@ -14,18 +15,15 @@ from inscripta.biocantor.exc import NoncodingTranscriptError
 from inscripta.biocantor.gene.biotype import Biotype
 from inscripta.biocantor.gene.cds import CDSInterval, CDSPhase
 from inscripta.biocantor.gene.feature import AbstractFeatureInterval
+from inscripta.biocantor.io.bed import BED12, RGB
+from inscripta.biocantor.io.gff3.constants import GFF_SOURCE, NULL_COLUMN, BioCantorQualifiers, BioCantorFeatureTypes
+from inscripta.biocantor.io.gff3.rows import GFFAttributes, GFFRow
 from inscripta.biocantor.location.location import Location
-from inscripta.biocantor.location.location_impl import (
-    SingleInterval,
-    EmptyLocation,
-)
+from inscripta.biocantor.location.location_impl import SingleInterval, EmptyLocation
 from inscripta.biocantor.location.strand import Strand
 from inscripta.biocantor.parent.parent import Parent
 from inscripta.biocantor.sequence.sequence import Sequence
-from inscripta.biocantor.io.bed import BED12, RGB
 from inscripta.biocantor.util.bins import bins
-from inscripta.biocantor.io.gff3.constants import GFF_SOURCE, NULL_COLUMN, BioCantorQualifiers, BioCantorFeatureTypes
-from inscripta.biocantor.io.gff3.rows import GFFAttributes, GFFRow
 from inscripta.biocantor.util.hashing import digest_object
 from inscripta.biocantor.util.object_validation import ObjectValidation
 
@@ -42,13 +40,13 @@ class TranscriptInterval(AbstractFeatureInterval):
     of sequence.
     """
 
-    _identifiers = ["transcript_id", "transcript_symbol", "protein_id", "guid"]
+    _identifiers = ["transcript_id", "transcript_symbol", "protein_id"]
 
     def __init__(
         self,
         location: Location,  # exons
         cds: Optional[CDSInterval] = None,  # optional CDS with frame
-        qualifiers: Optional[dict] = None,  # arbitrary key-value store
+        qualifiers: Optional[Dict[Hashable, Set[Hashable]]] = None,  # arbitrary key-value store
         is_primary_tx: Optional[bool] = None,
         transcript_id: Optional[str] = None,
         transcript_symbol: Optional[str] = None,
@@ -56,10 +54,9 @@ class TranscriptInterval(AbstractFeatureInterval):
         sequence_guid: Optional[UUID] = None,
         sequence_name: Optional[str] = None,
         protein_id: Optional[str] = None,
-        transcript_guid: Optional[UUID] = None,
+        guid: Optional[UUID] = None,
     ):
         self.location = location  # genomic CompoundInterval
-        self.guid = transcript_guid
         self._is_primary_feature = is_primary_tx
         self.transcript_id = transcript_id
         self.transcript_symbol = transcript_symbol
@@ -68,9 +65,24 @@ class TranscriptInterval(AbstractFeatureInterval):
         self.sequence_guid = sequence_guid
         self.sequence_name = sequence_name
         self.bin = bins(self.start, self.end, fmt="bed")
-        self.qualifiers = qualifiers
-
+        # qualifiers come in as a List, convert to Set
+        self._import_qualifiers_from_list(qualifiers)
         self.cds = cds
+
+        if guid is None:
+            self.guid = digest_object(
+                self.location,
+                self.cds,
+                self.qualifiers,
+                self.transcript_id,
+                self.transcript_symbol,
+                self.transcript_type,
+                self.protein_id,
+                self.sequence_name,
+                self.is_primary_tx,
+            )
+        else:
+            self.guid = guid
 
         if self.location.parent:
             ObjectValidation.require_location_has_parent_with_sequence(self.location)
@@ -78,7 +90,7 @@ class TranscriptInterval(AbstractFeatureInterval):
                 ObjectValidation.require_locations_have_same_nonempty_parent(location, cds.location)
 
     def __str__(self):
-        return f"TranscriptInterval(({self.location}), cds=[{self.cds}], qualifiers={self.qualifiers})"
+        return f"TranscriptInterval(({self.location}), cds=[{self.cds}], symbol={self.transcript_symbol})"
 
     def __repr__(self):
         return "<{}>".format(str(self))
@@ -99,7 +111,7 @@ class TranscriptInterval(AbstractFeatureInterval):
     def has_in_frame_stop(self) -> bool:
         if not self.is_coding:
             raise NoncodingTranscriptError("Cannot have frameshifts on non-coding transcripts")
-        return "*" in str(self.get_protein_sequence()[:-1])
+        return self.cds.has_in_frame_stop()
 
     @property
     def cds_size(self) -> int:
@@ -143,7 +155,7 @@ class TranscriptInterval(AbstractFeatureInterval):
             cds_starts=cds_starts,
             cds_ends=cds_ends,
             cds_frames=cds_frames,
-            qualifiers=self.qualifiers,
+            qualifiers=self._export_qualifiers_to_list(),
             is_primary_tx=self._is_primary_feature,
             transcript_id=self.transcript_id,
             transcript_symbol=self.transcript_symbol,
@@ -169,7 +181,7 @@ class TranscriptInterval(AbstractFeatureInterval):
             transcript_type=self.transcript_type,
             sequence_name=self.sequence_name,
             sequence_guid=self.sequence_guid,
-            transcript_guid=self.guid,
+            guid=self.guid,
         )
         return tx
 
@@ -197,7 +209,7 @@ class TranscriptInterval(AbstractFeatureInterval):
 
         return TranscriptInterval(
             location=intersection,
-            transcript_guid=new_guid,
+            guid=new_guid,
             qualifiers=new_qualifiers,
         )
 
@@ -285,23 +297,46 @@ class TranscriptInterval(AbstractFeatureInterval):
             raise NoncodingTranscriptError("No coding interval on non-coding transcript")
         return self.cds.location
 
+    @lru_cache(maxsize=1)
     def get_transcript_sequence(self) -> Sequence:
         """Returns the mRNA sequence."""
         return self.get_spliced_sequence()
 
+    @lru_cache(maxsize=1)
     def get_cds_sequence(self) -> Sequence:
         """Returns the in-frame CDS sequence (always multiple of 3)."""
         if not self.is_coding:
             raise NoncodingTranscriptError("No CDS sequence on non-coding transcript")
         return self.cds.extract_sequence()
 
+    @lru_cache(maxsize=2)
     def get_protein_sequence(self, truncate_at_in_frame_stop: Optional[bool] = False) -> Sequence:
         """Return the translation of this transcript, if possible."""
         if not self.is_coding:
             raise NoncodingTranscriptError("No translation on non-coding transcript")
         return self.cds.translate(truncate_at_in_frame_stop)
 
-    def to_gff(self, parent: Optional[str] = None, parent_qualifiers: Optional[Dict] = None) -> Iterable[GFFRow]:
+    def export_qualifiers(
+        self, parent_qualifiers: Optional[Dict[Hashable, Set[Hashable]]] = None
+    ) -> Dict[Hashable, Set[Hashable]]:
+        """Exports qualifiers for GFF3/GenBank export"""
+        qualifiers = self._merge_qualifiers(parent_qualifiers)
+        for key, val in [
+            [BioCantorQualifiers.TRANSCRIPT_ID.value, self.transcript_id],
+            [BioCantorQualifiers.TRANSCRIPT_NAME.value, self.transcript_symbol],
+            [BioCantorQualifiers.TRANSCRIPT_TYPE.value, self.transcript_type.name],
+            [BioCantorQualifiers.PROTEIN_ID.value, self.protein_id],
+        ]:
+            if not val:
+                continue
+            if key not in qualifiers:
+                qualifiers[key] = set()
+            qualifiers[key].add(val)
+        return qualifiers
+
+    def to_gff(
+        self, parent: Optional[str] = None, parent_qualifiers: Optional[Dict[Hashable, Set[Hashable]]] = None
+    ) -> Iterable[GFFRow]:
         """Writes a GFF format list of lists for this gene.
 
         The additional qualifiers are used when writing a hierarchical relationship back to files. GFF files
@@ -314,22 +349,11 @@ class TranscriptInterval(AbstractFeatureInterval):
         Yields:
             :class:`~biocantor.util.gff3.rows.GFFRow`
         """
-        qualifiers = {}
-        if parent_qualifiers:
-            qualifiers.update(parent_qualifiers)
+        qualifiers = self.export_qualifiers(parent_qualifiers)
 
-        tx_id = str(self.guid) if self.guid else str(digest_object(self))
+        tx_guid = str(self.guid) if self.guid else str(digest_object(self))
 
-        if self.transcript_id:
-            qualifiers[BioCantorQualifiers.TRANSCRIPT_ID.value] = self.transcript_id
-        if self.transcript_symbol:
-            qualifiers[BioCantorQualifiers.TRANSCRIPT_NAME.value] = self.transcript_symbol
-        if self.transcript_type:
-            qualifiers[BioCantorQualifiers.TRANSCRIPT_TYPE.value] = self.transcript_type.name
-        if self.protein_id:
-            qualifiers[BioCantorQualifiers.PROTEIN_ID.value] = self.protein_id
-
-        attributes = GFFAttributes(id=tx_id, name=self.transcript_symbol, parent=parent, **qualifiers)
+        attributes = GFFAttributes(id=tx_guid, qualifiers=qualifiers, name=self.transcript_symbol, parent=parent)
 
         # transcript feature
         row = GFFRow(
@@ -348,7 +372,9 @@ class TranscriptInterval(AbstractFeatureInterval):
         # start adding exon features
         # re-use qualifiers, updating ID each time
         for i, block in enumerate(self.location.blocks, 1):
-            attributes = GFFAttributes(id=f"exon-{tx_id}-{i}", name=self.transcript_symbol, parent=tx_id, **qualifiers)
+            attributes = GFFAttributes(
+                id=f"exon-{tx_guid}-{i}", qualifiers=qualifiers, name=self.transcript_symbol, parent=tx_guid
+            )
             row = GFFRow(
                 self.sequence_name,
                 GFF_SOURCE,
@@ -366,7 +392,10 @@ class TranscriptInterval(AbstractFeatureInterval):
         if self.cds:
             for i, block, frame in zip(count(1), self.cds.location.blocks, self.cds.frames):
                 attributes = GFFAttributes(
-                    id=f"cds-{tx_id}-{i}", name=self.transcript_symbol, parent=tx_id, **qualifiers
+                    id=f"cds-{tx_guid}-{i}",
+                    qualifiers=qualifiers,
+                    name=self.transcript_symbol,
+                    parent=tx_guid,
                 )
                 row = GFFRow(
                     self.sequence_name,

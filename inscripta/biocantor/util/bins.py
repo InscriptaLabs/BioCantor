@@ -1,5 +1,9 @@
 """
-This UCSC binning implementation is borrowed from gffutils. The below documentation is copied from
+This UCSC binning implementation is borrowed from gffutils. The reason for duplicating this code here is
+to avoid users who do not want to perform GFF3 import/export to install the `[io]` extras, which includde gffutils,
+just for this module.
+
+The below documentation is copied from
 that implementation.
 
 https://github.com/daler/gffutils/blob/master/gffutils/bins.py

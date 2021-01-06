@@ -16,8 +16,6 @@ from inscripta.biocantor.sequence.alphabet import (
 )
 
 Location = TypeVar("Location")
-Sequence = TypeVar("Sequence")
-ParentInputType = TypeVar("ParentInputType")
 
 
 class Sequence:
@@ -31,7 +29,7 @@ class Sequence:
         alphabet: Alphabet,
         id: Optional[str] = None,
         type: Optional[str] = None,
-        parent: Optional[ParentInputType] = None,
+        parent: Optional[Parent] = None,
         validate_alphabet: bool = True,
     ):
         """
@@ -88,7 +86,7 @@ class Sequence:
     def __len__(self):
         return self._len
 
-    def __getitem__(self, key: Union[int, slice]) -> Sequence:
+    def __getitem__(self, key: Union[int, slice]) -> "Sequence":
         """Returns a slice of the current Sequence as a new Sequence object"""
         subseq = str(self.sequence[key])
 
@@ -186,7 +184,7 @@ class Sequence:
             validate_alphabet=False,
         )
 
-    def append(self, other: Sequence, new_id: Optional[str] = None, data_only: bool = False) -> Sequence:
+    def append(self, other: "Sequence", new_id: Optional[str] = None, data_only: bool = False) -> "Sequence":
         """Returns a new Sequence consisting of other sequence appended to the end of this Sequence
 
         Parameters

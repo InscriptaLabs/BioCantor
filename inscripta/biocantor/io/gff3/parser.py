@@ -40,6 +40,24 @@ class GffutilsParseArgs:
     merge_strategy: Optional[str] = "create_unique"
 
 
+def filter_and_sort_qualifiers(qualifiers: Dict[str, List[str]]) -> Dict[str, List[str]]:
+    """Filter out the qualifiers for any terms we have elevated"""
+    for key in [
+        "gene_id",
+        "locus_tag",
+        "gene_name",
+        "gene_biotype",
+        "gene_symbol",
+        "transcript_id",
+        "transcript_name",
+        "transcript_biotype",
+        "protein_id",
+    ]:
+        if key in qualifiers:
+            del qualifiers[key]
+    return {key: sorted(vals) for key, vals in qualifiers.items()}
+
+
 def default_parse_func(db: FeatureDB, chroms: List[str]) -> Iterable[AnnotationCollectionModel]:
     """
     This is the default parser function. Mappings include:
@@ -77,10 +95,7 @@ def default_parse_func(db: FeatureDB, chroms: List[str]) -> Iterable[AnnotationC
                 try:
                     gene_biotype = Biotype[gene_biotype]
                 except KeyError:
-                    gene_biotype = Biotype["unknown"]
                     gene_qualifiers["provided_biotype"] = gene.attributes["gene_biotype"][0]
-            else:
-                gene_biotype = Biotype["unknown"]
 
             transcripts = []
             for i, transcript in enumerate(db.children(gene, level=1)):
@@ -100,7 +115,6 @@ def default_parse_func(db: FeatureDB, chroms: List[str]) -> Iterable[AnnotationC
                     try:
                         transcript_biotype = Biotype[transcript_biotype]
                     except KeyError:
-                        transcript_biotype = Biotype["unknown"]
                         transcript_qualifiers["provided_transcript_biotype"] = gene.attributes["transcript_biotype"][0]
                 elif gene_biotype is not None:
                     transcript_biotype = gene_biotype
@@ -162,10 +176,10 @@ def default_parse_func(db: FeatureDB, chroms: List[str]) -> Iterable[AnnotationC
                     cds_starts=cds_starts,
                     cds_ends=cds_ends,
                     cds_frames=cds_frames,
-                    qualifiers=transcript_qualifiers,
+                    qualifiers=filter_and_sort_qualifiers(transcript_qualifiers),
                     is_primary_tx=False,
                     transcript_id=transcript_id,
-                    transcript_type=transcript_biotype.name,
+                    transcript_type=transcript_biotype.name if transcript_biotype else transcript_biotype,
                     transcript_symbol=transcript_symbol,
                     sequence_name=chrom,
                     protein_id=protein_id,
@@ -177,8 +191,8 @@ def default_parse_func(db: FeatureDB, chroms: List[str]) -> Iterable[AnnotationC
                 gene_id=gene_id,
                 gene_symbol=gene_symbol,
                 locus_tag=locus_tag,
-                gene_type=gene_biotype.name,
-                qualifiers=gene_qualifiers,
+                gene_type=gene_biotype.name if gene_biotype else gene_biotype,
+                qualifiers=filter_and_sort_qualifiers(gene_qualifiers),
                 sequence_name=chrom,
             )
 
@@ -257,8 +271,8 @@ def parse_standard_gff3(
     chrom_query = db.execute("SELECT DISTINCT seqid FROM features")
     chroms = [x["seqid"] for x in chrom_query]
     logger.info(f"Found {len(chroms)} sequences")
-    for annnot in parse_func(db, chroms):
-        yield ParsedAnnotationRecord(annnot)
+    for annot in parse_func(db, chroms):
+        yield ParsedAnnotationRecord(annot)
 
 
 def _produce_empty_records(

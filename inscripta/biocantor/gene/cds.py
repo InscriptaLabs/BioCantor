@@ -1,4 +1,5 @@
 from enum import Enum
+from methodtools import lru_cache
 from typing import Iterator, List, Union, Optional, AnyStr
 
 from inscripta.biocantor.exc import LocationException
@@ -156,6 +157,7 @@ class CDSInterval:
         else:
             yield from reversed(self.location.blocks)
 
+    @lru_cache(maxsize=1)
     def extract_sequence(self) -> Sequence:
         """
         Returns a continuous CDS sequence that is in frame and always a multiple of 3.
@@ -198,6 +200,7 @@ class CDSInterval:
             if truncate_at_in_frame_stop and c.is_stop_codon:
                 break
 
+    @lru_cache(maxsize=1)
     def scan_codon_locations(self) -> Iterator[Location]:
         """
         Returns an iterator over codon locations.
@@ -225,6 +228,10 @@ class CDSInterval:
                     cleaned_rel_ends[-1] = cleaned_rel_ends[-1] - shift
                 # we are now inherently in frame
                 next_frame = CDSFrame(CDSFrame.ZERO)
+            # it may be the case that the removal of the trailing codon from the previous block entirely
+            # eliminates that block. In that case, skip it.
+            if rel_start >= rel_end:
+                continue
             cleaned_rel_starts.append(rel_start)
             cleaned_rel_ends.append(rel_end)
             # this is what we expect the next frame to be, if no frameshift occurred
@@ -242,10 +249,16 @@ class CDSInterval:
     def _total_block_len(starts: List[int], ends: List[int]) -> int:
         return sum([coords[1] - coords[0] for coords in zip(starts, ends)])
 
+    @lru_cache(maxsize=2)
     def translate(self, truncate_at_in_frame_stop: Optional[bool] = False) -> Sequence:
         """
-        Returns amino acid sequence of this CDS. If truncate_at_in_frame_stop is True,
-        this will stop at the first in-frame stop
+        Returns amino acid sequence of this CDS. If truncate_at_in_frame_stop is ``True``,
+        this will stop at the first in-frame stop.
         """
         aa_seq_str = "".join([codon.translate() for codon in self.scan_codons(truncate_at_in_frame_stop)])
         return Sequence(aa_seq_str, Alphabet.AA)
+
+    @lru_cache(maxsize=1)
+    def has_in_frame_stop(self) -> bool:
+        """Does this CDS have an in-frame stop codon?"""
+        return "*" in str(self.translate()[:-1])

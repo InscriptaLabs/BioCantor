@@ -2,11 +2,8 @@
 Data models. These models allow for validation of inputs to a BioCantor model, acting as a JSON schema for serializing
 and deserializing the models.
 """
-from typing import List, Optional, ClassVar, Type
+from typing import List, Optional, ClassVar, Type, Any, Dict
 from uuid import UUID
-
-from marshmallow import Schema  # noqa: F401
-from marshmallow_dataclass import dataclass
 
 from inscripta.biocantor.exc import InvalidCDSIntervalError, LocationException, ValidationException
 from inscripta.biocantor.gene.biotype import Biotype
@@ -17,6 +14,8 @@ from inscripta.biocantor.gene.transcript import TranscriptInterval
 from inscripta.biocantor.location.location_impl import CompoundInterval
 from inscripta.biocantor.location.strand import Strand
 from inscripta.biocantor.parent import Parent
+from marshmallow import Schema  # noqa: F401
+from marshmallow_dataclass import dataclass
 
 
 @dataclass
@@ -36,10 +35,10 @@ class FeatureIntervalModel(BaseModel):
     interval_starts: List[int]
     interval_ends: List[int]
     strand: Strand
-    qualifiers: Optional[dict] = None
+    qualifiers: Optional[Dict[str, Any]] = None
     sequence_name: Optional[str] = None
     sequence_guid: Optional[UUID] = None
-    guid: Optional[UUID] = None
+    feature_interval_guid: Optional[UUID] = None
     feature_type: Optional[str] = None
     feature_name: Optional[str] = None
     feature_id: Optional[str] = None
@@ -49,9 +48,9 @@ class FeatureIntervalModel(BaseModel):
         self,
         parent: Optional[Parent] = None,  # should have a sequence associated
     ) -> "FeatureInterval":
-        """Construct from a :class:`~biocantor.models.FeatureIntervalModel`.
+        """Construct a :class:`~biocantor.gene.feature.FeatureInterval` from a :class:`FeatureIntervalModel`.
 
-        A :class:`Parent` can be provided to allow the sequence-retrieval functions to work.
+        A :class:`~biocantor.parent.Parent` can be provided to allow the sequence-retrieval functions to work.
         """
 
         if len(self.interval_starts) != len(self.interval_ends):
@@ -72,14 +71,13 @@ class FeatureIntervalModel(BaseModel):
             feature_type=self.feature_type,
             feature_name=self.feature_name,
             feature_id=self.feature_id,
-            guid=self.guid,
+            guid=self.feature_interval_guid,
             is_primary_feature=self.is_primary_feature,
         )
 
     @staticmethod
     def from_feature_interval(feature_interval: FeatureInterval) -> "FeatureIntervalModel":
-        """Convert to a :class:`~biocantor.models.TranscriptIntervalModel`"""
-
+        """Convert a :class:`~biocantor.gene.feature.FeatureInterval` to a :class:`FeatureIntervalModel`"""
         return FeatureIntervalModel.Schema().load(feature_interval.to_dict())
 
 
@@ -95,7 +93,7 @@ class TranscriptIntervalModel(BaseModel):
     cds_starts: Optional[List[int]] = None
     cds_ends: Optional[List[int]] = None
     cds_frames: Optional[List[CDSFrame]] = None
-    qualifiers: Optional[dict] = None
+    qualifiers: Optional[Dict[str, Any]] = None
     is_primary_tx: Optional[bool] = None
     transcript_id: Optional[str] = None
     protein_id: Optional[str] = None
@@ -110,9 +108,9 @@ class TranscriptIntervalModel(BaseModel):
         self,
         parent: Optional[Parent] = None,  # should have a sequence associated
     ) -> "TranscriptInterval":
-        """Construct from a :class:`~biocantor.models.TranscriptIntervalModel`.
+        """Construct a :class:`~biocantor.gene.transcript.TranscriptInterval` from a :class:`TranscriptIntervalModel`.
 
-        A :class:`Parent` can be provided to allow the sequence-retrieval functions to work.
+        A :class:`~biocantor.parent.Parent can be provided to allow the sequence-retrieval functions to work.
         """
 
         if len(self.exon_starts) != len(self.exon_ends):
@@ -148,7 +146,7 @@ class TranscriptIntervalModel(BaseModel):
         return TranscriptInterval(
             location=location,
             cds=cds,
-            transcript_guid=self.guid,
+            guid=self.transcript_guid,
             qualifiers=self.qualifiers,
             is_primary_tx=self.is_primary_tx,
             transcript_id=self.transcript_id,
@@ -181,13 +179,13 @@ class GeneIntervalModel(BaseModel):
     gene_symbol: Optional[str] = None
     gene_type: Optional[Biotype] = None
     locus_tag: Optional[str] = None
-    qualifiers: Optional[dict] = None
+    qualifiers: Optional[Dict[str, Any]] = None
     sequence_name: Optional[str] = None
     sequence_guid: Optional[UUID] = None
     gene_guid: Optional[UUID] = None
 
     def to_gene_interval(self, parent: Optional[Parent] = None) -> GeneInterval:
-        """Produce a :class:`GeneInterval` from a :class:`~biocantor.io.models.GeneIntervalModel`.
+        """Produce a :class:`~biocantor.gene.collections.GeneInterval` from a :class:`GeneIntervalModel`.
 
         This is the primary method of constructing a :class:`biocantor.gene.collections.GeneInterval`.
         """
@@ -230,10 +228,10 @@ class FeatureIntervalCollectionModel(BaseModel):
     sequence_name: Optional[str] = None
     sequence_guid: Optional[UUID] = None
     feature_collection_guid: Optional[UUID] = None
-    qualifiers: Optional[dict] = None
+    qualifiers: Optional[Dict[str, Any]] = None
 
     def to_feature_collection(self, parent: Optional[Parent] = None) -> FeatureIntervalCollection:
-        """Produce a feature collection from a :class:`~biocantor.models.FeatureIntervalCollectionModel`."""
+        """Produce a feature collection from a :class:`FeatureIntervalCollectionModel`."""
 
         feature_intervals = [feat.to_feature_interval(parent) for feat in self.feature_intervals]
 
@@ -278,7 +276,7 @@ class AnnotationCollectionModel(BaseModel):
     sequence_name: Optional[str] = None
     sequence_guid: Optional[UUID] = None
     sequence_path: Optional[str] = None
-    qualifiers: Optional[dict] = None
+    qualifiers: Optional[Dict[str, Any]] = None
     start: Optional[int] = None
     end: Optional[int] = None
     completely_within: Optional[bool] = None

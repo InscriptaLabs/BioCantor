@@ -6,6 +6,7 @@ from inscripta.biocantor.exc import NoSuchAncestorException, LocationException, 
 from inscripta.biocantor.location.strand import Strand
 from inscripta.biocantor.util.object_validation import ObjectValidation
 
+
 Parent = TypeVar("Parent")
 ParentInputType = TypeVar("ParentInputType")
 

@@ -3,11 +3,13 @@ Core parser functionality. Contains the dataclass :class:`ParsedAnnotationRecord
 by any of the parser with optional sequence information.
 """
 from dataclasses import dataclass
-from typing import Optional, Iterable
+from typing import Optional, Iterable, TextIO
 
+from Bio import SeqIO
 from Bio.SeqRecord import SeqRecord
 
 from inscripta.biocantor.gene.collections import AnnotationCollection
+from inscripta.biocantor.io.fasta.exc import FastaExportError
 from inscripta.biocantor.io.models import AnnotationCollectionModel
 from inscripta.biocantor.parent import Parent
 from inscripta.biocantor.sequence.alphabet import Alphabet
@@ -55,6 +57,19 @@ class ParsedAnnotationRecord:
         """
         for annotation in annotations:
             yield annotation.to_annotation_collection()
+
+    def to_fasta(self, fasta_file_handle: TextIO):
+        """Convenience function that writes the associated SeqRecord in this record to FASTA.
+
+        Args:
+            fasta_file_handle: Open file handle to write to.
+
+        Raises:
+            ``FastaExportError`` if the associated ``SeqRecord`` is null.
+        """
+        if not self.seqrecord:
+            raise FastaExportError("Cannot export FASTA without sequence information.")
+        SeqIO.write(self.seqrecord, fasta_file_handle, format="fasta")
 
 
 def seq_to_parent(

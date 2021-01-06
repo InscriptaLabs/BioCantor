@@ -15,8 +15,7 @@ Each object is capable of exporting itself to BED and GFF3.
 import itertools
 from abc import ABC, abstractmethod
 from functools import reduce
-from typing import List, Iterable, Any, Dict, Set
-from typing import Optional, Union
+from typing import List, Iterable, Any, Dict, Set, Hashable, Optional, Union
 from uuid import UUID
 
 from inscripta.biocantor.exc import (
@@ -27,21 +26,21 @@ from inscripta.biocantor.exc import (
 )
 from inscripta.biocantor.gene.biotype import Biotype
 from inscripta.biocantor.gene.cds import CDSInterval, CDSPhase
-from inscripta.biocantor.gene.feature import FeatureInterval
+from inscripta.biocantor.gene.feature import FeatureInterval, AbstractInterval
 from inscripta.biocantor.gene.transcript import TranscriptInterval
+from inscripta.biocantor.io.gff3.constants import GFF_SOURCE, NULL_COLUMN, BioCantorQualifiers, BioCantorFeatureTypes
+from inscripta.biocantor.io.gff3.rows import GFFRow, GFFAttributes
 from inscripta.biocantor.location import Location
 from inscripta.biocantor.location.location_impl import SingleInterval, CompoundInterval, EmptyLocation
 from inscripta.biocantor.location.strand import Strand
 from inscripta.biocantor.parent.parent import Parent
 from inscripta.biocantor.sequence import Sequence
 from inscripta.biocantor.util.bins import bins
-from inscripta.biocantor.io.gff3.constants import GFF_SOURCE, NULL_COLUMN, BioCantorQualifiers, BioCantorFeatureTypes
-from inscripta.biocantor.io.gff3.rows import GFFRow, GFFAttributes
 from inscripta.biocantor.util.hashing import digest_object
 from inscripta.biocantor.util.object_validation import ObjectValidation
 
 
-class AbstractFeatureIntervalCollection(ABC):
+class AbstractFeatureIntervalCollection(AbstractInterval, ABC):
     """
     Abstract class for holding groups of feature intervals. The two implementations of this class
     model Genes or non-transcribed FeatureCollections.
@@ -49,27 +48,13 @@ class AbstractFeatureIntervalCollection(ABC):
     These are always on the same sequence, but can be on different strands.
     """
 
-    _sequence_guid: UUID
-    _sequence_name: str
-    _location: SingleInterval
-    _bin: int
-
-    @abstractmethod
-    def to_dict(self) -> Dict[str, Any]:
-        """Dictionary to build Model representation"""
-
-    @property
-    @abstractmethod
-    def _identifiers(self) -> List[str]:
-        """Stores the identifier attributes for this object"""
-
-    @abstractmethod
-    def to_gff(self):
-        """Writes a GFF format list of lists for this feature.
-
-        Return:
-            List of list of GFF-formatted strings.
-        """
+    sequence_guid: UUID
+    sequence_name: str
+    location: SingleInterval
+    bin: int
+    guid: UUID
+    _identifiers: List[str]
+    qualifiers: Dict[Hashable, Set[Hashable]]
 
     @abstractmethod
     def children_guids(self) -> Set[UUID]:
@@ -78,49 +63,9 @@ class AbstractFeatureIntervalCollection(ABC):
         Returns: A set of UUIDs
         """
 
-    @property
-    def identifiers(self) -> Set[Union[str, UUID]]:
-        """Returns the identifiers for this Collection, if they exist"""
-        return {getattr(self, i) for i in self._identifiers if getattr(self, i) is not None}
-
-    @property
-    def identifiers_dict(self) -> Dict[str, Union[str, UUID]]:
-        """Returns the identifiers and their keys for this Collection, if they exist"""
-        return {key: getattr(self, key) for key in self._identifiers if getattr(self, key) is not None}
-
-    @property
-    def sequence_guid(self) -> Union[UUID, None]:
-        """Returns GUID for the sequence of this interval"""
-        return self._sequence_guid
-
-    @property
-    def sequence_name(self) -> Union[str, None]:
-        """Returns symbol of the sequence for this interval"""
-        return self._sequence_name
-
-    @property
-    def start(self) -> int:
-        """Returns start position"""
-        return self._location.start
-
-    @property
-    def end(self) -> int:
-        """Returns end position"""
-        return self._location.end
-
-    @property
-    def location(self) -> SingleInterval:
-        """Returns my location"""
-        return self._location
-
-    @property
-    def bin(self) -> int:
-        """Returns the bin for this interval"""
-        return self._bin
-
     def get_reference_sequence(self) -> Sequence:
         """Returns the *plus strand* sequence for this interval"""
-        return self._location.extract_sequence()
+        return self.location.extract_sequence()
 
     @staticmethod
     def _find_primary_feature(
@@ -168,6 +113,8 @@ class GeneInterval(AbstractFeatureIntervalCollection):
     longest isoform.
     """
 
+    _identifiers = ["gene_id", "gene_symbol", "locus_tag"]
+
     def __init__(
         self,
         transcripts: List[TranscriptInterval],
@@ -176,30 +123,43 @@ class GeneInterval(AbstractFeatureIntervalCollection):
         gene_symbol: Optional[str] = None,
         gene_type: Optional[Biotype] = None,
         locus_tag: Optional[str] = None,
-        qualifiers: Optional[dict] = None,
+        qualifiers: Optional[Dict[Hashable, Set[Hashable]]] = None,
         sequence_name: Optional[str] = None,
         sequence_guid: Optional[UUID] = None,
         parent: Optional[Parent] = None,
     ):
         self.transcripts = transcripts
-        self.guid = guid
         self.gene_id = gene_id
         self.gene_symbol = gene_symbol
         self.gene_type = gene_type
         self.locus_tag = locus_tag
-        self._sequence_name = sequence_name
-        self._sequence_guid = sequence_guid
-        self.qualifiers = qualifiers
+        self.sequence_name = sequence_name
+        self.sequence_guid = sequence_guid
+        # qualifiers come in as a List, convert to Set
+        self._import_qualifiers_from_list(qualifiers)
 
         if not self.transcripts:
             raise InvalidAnnotationError("GeneInterval must have transcripts")
 
         start = min(tx.start for tx in self.transcripts)
         end = max(tx.end for tx in self.transcripts)
-        self._location = SingleInterval(start, end, Strand.PLUS, parent=parent)
-        self._bin = bins(start, end, fmt="bed")
-
+        self.location = SingleInterval(start, end, Strand.PLUS, parent=parent)
+        self.bin = bins(start, end, fmt="bed")
         self.primary_transcript = AbstractFeatureIntervalCollection._find_primary_feature(self.transcripts)
+
+        if guid is None:
+            self.guid = digest_object(
+                self.location,
+                self.gene_id,
+                self.gene_symbol,
+                self.gene_type,
+                self.locus_tag,
+                self.sequence_name,
+                self.qualifiers,
+            )
+        else:
+            self.guid = guid
+
         if self.location.parent:
             ObjectValidation.require_location_has_parent_with_sequence(self.location)
 
@@ -215,12 +175,8 @@ class GeneInterval(AbstractFeatureIntervalCollection):
         return any(tx.is_coding for tx in self.transcripts)
 
     @property
-    def _identifiers(self) -> List[str]:
-        return ["gene_id", "gene_symbol", "locus_tag", "guid"]
-
-    @property
     def children_guids(self):
-        return {x.guid for x in self.transcripts if x.guid is not None}
+        return {x.guid for x in self.transcripts}
 
     def to_dict(self) -> Dict[Any, str]:
         """Convert to a dict usable by :class:`~biocantor.io.models.GeneIntervalModel`."""
@@ -230,7 +186,7 @@ class GeneInterval(AbstractFeatureIntervalCollection):
             gene_symbol=self.gene_symbol,
             gene_type=self.gene_type.name if self.gene_type else None,
             locus_tag=self.locus_tag,
-            qualifiers=self.qualifiers,
+            qualifiers=self._export_qualifiers_to_list(),
             sequence_name=self.sequence_name,
             sequence_guid=self.sequence_guid,
             gene_guid=self.guid,
@@ -271,7 +227,7 @@ class GeneInterval(AbstractFeatureIntervalCollection):
         loc = CompoundInterval(interval_starts, interval_ends, self.location.strand, parent=self.location.parent)
         return FeatureInterval(
             loc,
-            qualifiers=self.qualifiers,
+            qualifiers=self._export_qualifiers_to_list(),
             sequence_guid=self.sequence_guid,
             sequence_name=self.sequence_name,
             feature_type=self.gene_type.name,
@@ -302,23 +258,33 @@ class GeneInterval(AbstractFeatureIntervalCollection):
             raise NoncodingTranscriptError("No CDS transcripts found on this gene")
         return self._produce_merged_feature(intervals)
 
+    def export_qualifiers(self) -> Dict[Hashable, Set[Hashable]]:
+        """Exports qualifiers for GFF3/GenBank export"""
+        qualifiers = self.qualifiers.copy()
+        for key, val in [
+            [BioCantorQualifiers.GENE_ID.value, self.gene_id],
+            [BioCantorQualifiers.GENE_NAME.value, self.gene_symbol],
+            [BioCantorQualifiers.GENE_TYPE.value, self.gene_type.name],
+            [BioCantorQualifiers.LOCUS_TAG.value, self.locus_tag],
+        ]:
+            if not val:
+                continue
+            if key not in qualifiers:
+                qualifiers[key] = set()
+            qualifiers[key].add(val)
+        return qualifiers
+
     def to_gff(self) -> Iterable[GFFRow]:
         """Produces iterable of :class:`~biocantor.io.gff3.rows.GFFRow` for this gene and its children.
 
         Yields:
             :class:`~biocantor.io.gff3.rows.GFFRow`
         """
-        qualifiers = {}
-        gene_id = str(self.guid) if self.guid else digest_object(self)
+        qualifiers = self.export_qualifiers()
 
-        if self.gene_id:
-            qualifiers[BioCantorQualifiers.GENE_ID.value] = self.gene_id
-        if self.gene_symbol:
-            qualifiers[BioCantorQualifiers.GENE_NAME.value] = self.gene_symbol
-        if self.gene_type:
-            qualifiers[BioCantorQualifiers.GENE_TYPE.value] = self.gene_type.name
+        gene_guid = str(self.guid) if self.guid else digest_object(self)
 
-        attributes = GFFAttributes(id=gene_id, name=self.gene_symbol, parent=None, **qualifiers)
+        attributes = GFFAttributes(id=gene_guid, qualifiers=qualifiers, name=self.gene_symbol, parent=None)
         row = GFFRow(
             self.sequence_name,
             GFF_SOURCE,
@@ -332,7 +298,7 @@ class GeneInterval(AbstractFeatureIntervalCollection):
         )
         yield row
         for tx in self.transcripts:
-            yield from tx.to_gff(gene_id, qualifiers)
+            yield from tx.to_gff(gene_guid, qualifiers)
 
 
 class FeatureIntervalCollection(AbstractFeatureIntervalCollection):
@@ -347,6 +313,8 @@ class FeatureIntervalCollection(AbstractFeatureIntervalCollection):
     This cannot be empty; it must have at least one feature interval.
     """
 
+    _identifiers = ["feature_id", "feature_name", "locus_tag"]
+
     def __init__(
         self,
         feature_intervals: List[FeatureInterval],
@@ -357,7 +325,7 @@ class FeatureIntervalCollection(AbstractFeatureIntervalCollection):
         sequence_name: Optional[str] = None,
         sequence_guid: Optional[UUID] = None,
         guid: Optional[UUID] = None,
-        qualifiers: Optional[dict] = None,
+        qualifiers: Optional[Dict[Hashable, Set[Hashable]]] = None,
         parent: Optional[Parent] = None,
     ):
         self.feature_intervals = feature_intervals
@@ -365,20 +333,33 @@ class FeatureIntervalCollection(AbstractFeatureIntervalCollection):
         self.feature_id = feature_id
         self.feature_type = feature_type
         self.locus_tag = locus_tag
-        self._sequence_name = sequence_name
-        self._sequence_guid = sequence_guid
-        self.guid = guid
-        self.qualifiers = qualifiers
+        self.sequence_name = sequence_name
+        self.sequence_guid = sequence_guid
+        # qualifiers come in as a List, convert to Set
+        self._import_qualifiers_from_list(qualifiers)
 
         if not self.feature_intervals:
             raise InvalidAnnotationError("FeatureCollection must have features")
 
         start = min(f.start for f in self.feature_intervals)
         end = max(f.end for f in self.feature_intervals)
-        self._location = SingleInterval(start, end, Strand.PLUS, parent=parent)
-        self._bin = bins(start, end, fmt="bed")
+        self.location = SingleInterval(start, end, Strand.PLUS, parent=parent)
+        self.bin = bins(start, end, fmt="bed")
 
         self.primary_feature = AbstractFeatureIntervalCollection._find_primary_feature(self.feature_intervals)
+
+        if guid is None:
+            self.guid = digest_object(
+                self.location,
+                self.feature_name,
+                self.feature_id,
+                self.feature_type,
+                self.locus_tag,
+                self.sequence_name,
+                self.qualifiers,
+            )
+        else:
+            self.guid = guid
 
         if self.location.parent:
             ObjectValidation.require_location_has_parent_with_sequence(self.location)
@@ -396,12 +377,8 @@ class FeatureIntervalCollection(AbstractFeatureIntervalCollection):
         return False
 
     @property
-    def _identifiers(self) -> List[Union[str, UUID]]:
-        return ["feature_id", "feature_name", "locus_tag", "guid"]
-
-    @property
     def children_guids(self) -> Set[UUID]:
-        return {x.guid for x in self.feature_intervals if x.guid is not None}
+        return {x.guid for x in self.feature_intervals}
 
     def get_primary_feature(self) -> Union[FeatureInterval, None]:
         """Get the primary transcript, if it exists."""
@@ -415,11 +392,27 @@ class FeatureIntervalCollection(AbstractFeatureIntervalCollection):
             feature_name=self.feature_name,
             feature_id=self.feature_id,
             feature_type=self.feature_type,
-            qualifiers=self.qualifiers,
+            qualifiers=self._export_qualifiers_to_list(),
             sequence_name=self.sequence_name,
             sequence_guid=self.sequence_guid,
             feature_collection_guid=self.guid,
         )
+
+    def export_qualifiers(self) -> Dict[Hashable, Set[Hashable]]:
+        """Exports qualifiers for GFF3/GenBank export"""
+        qualifiers = self.qualifiers.copy()
+        for key, val in [
+            [BioCantorQualifiers.FEATURE_ID.value, self.feature_id],
+            [BioCantorQualifiers.FEATURE_SYMBOL.value, self.feature_name],
+            [BioCantorQualifiers.FEATURE_TYPE.value, self.feature_type],
+            [BioCantorQualifiers.LOCUS_TAG.value, self.locus_tag],
+        ]:
+            if not val:
+                continue
+            if key not in qualifiers:
+                qualifiers[key] = set()
+            qualifiers[key].add(val)
+        return qualifiers
 
     def to_gff(self) -> Iterable[GFFRow]:
         """Produces iterable of :class:`~biocantor.io.gff3.rows.GFFRow` for this feature and its children.
@@ -427,16 +420,12 @@ class FeatureIntervalCollection(AbstractFeatureIntervalCollection):
         Yields:
             :class:`~biocantor.io.gff3.rows.GFFRow`
         """
-        qualifiers = {}
-        feat_group_id = str(self.guid) if self.guid else digest_object(self)
-        if self.feature_id:
-            qualifiers[BioCantorQualifiers.FEATURE_ID.value] = self.feature_id
-        if self.feature_name:
-            qualifiers[BioCantorQualifiers.FEATURE_SYMBOL.value] = self.feature_name
-        if self.feature_type:
-            qualifiers[BioCantorQualifiers.FEATURE_TYPE.value] = self.feature_type
+        qualifiers = self.export_qualifiers()
 
-        attributes = GFFAttributes(id=feat_group_id, name=self.feature_name, parent=None, **qualifiers)
+        feat_group_id = str(self.guid) if self.guid else digest_object(self)
+
+        attributes = GFFAttributes(id=feat_group_id, qualifiers=qualifiers, name=self.feature_name, parent=None)
+
         row = GFFRow(
             self.sequence_name,
             GFF_SOURCE,
@@ -449,6 +438,7 @@ class FeatureIntervalCollection(AbstractFeatureIntervalCollection):
             attributes,
         )
         yield row
+
         for feature in self.feature_intervals:
             yield from feature.to_gff(feat_group_id, qualifiers)
 
@@ -465,6 +455,8 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
     An AnnotationCollection can be empty.
     """
 
+    _identifiers = ["name"]
+
     def __init__(
         self,
         feature_collections: Optional[List[FeatureIntervalCollection]] = None,
@@ -472,7 +464,7 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
         name: Optional[str] = None,
         sequence_name: Optional[str] = None,
         sequence_guid: Optional[UUID] = None,
-        qualifiers: Optional[dict] = None,
+        qualifiers: Optional[Dict[Hashable, Set[Hashable]]] = None,
         start: Optional[int] = None,
         end: Optional[int] = None,
         completely_within: Optional[bool] = None,
@@ -481,10 +473,12 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
 
         self.feature_collections = feature_collections if feature_collections else []
         self.genes = genes if genes else []
-        self._sequence_name = sequence_name
-        self._sequence_guid = sequence_guid
+        self.sequence_name = sequence_name
+        self.sequence_guid = sequence_guid
         self.name = name
-        self.qualifiers = qualifiers
+        # qualifiers come in as a List, convert to Set
+        self._import_qualifiers_from_list(qualifiers)
+
         # we store the sequence explicitly, because this is how we can retain sequence information
         # for empty collections
         if parent and parent.sequence:
@@ -502,15 +496,17 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
 
         if start is None and end is None:
             # if we still have nothing, we are empty
-            self._location = EmptyLocation()
+            self.location = EmptyLocation()
         else:
             assert start is not None and end is not None
-            self._location = SingleInterval(start, end, Strand.PLUS, parent=parent)
-            self._bin = bins(self.start, self.end, fmt="bed")
+            self.location = SingleInterval(start, end, Strand.PLUS, parent=parent)
+            self.bin = bins(self.start, self.end, fmt="bed")
         self.completely_within = completely_within
 
         self._guid_map = {}
         self._guid_cached = False
+
+        self.guid = digest_object(self.location, self.name, self.sequence_name, self.qualifiers, self.completely_within)
 
         if self.location.parent:
             ObjectValidation.require_location_has_parent_with_sequence(self.location)
@@ -532,10 +528,15 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
 
     @property
     def children_guids(self) -> set:
-        return {x.guid for x in self.iter_children() if x.guid is not None}
+        return {x.guid for x in self.iter_children()}
 
-    def _identifiers(self) -> List[str]:
-        return [self.name]
+    @property
+    def hierarchical_children_guids(self) -> Dict[UUID, Set[UUID]]:
+        """Returns children GUIDs in their hierarchical structure."""
+        retval = {}
+        for child in self.iter_children():
+            retval[child.guid] = child.children_guids
+        return retval
 
     def iter_children(self) -> Iterable[Union[GeneInterval, FeatureIntervalCollection]]:
         """Iterate over all intervals in this collection, in sorted order."""
@@ -549,7 +550,7 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
             genes=[gene.to_dict() for gene in self.genes],
             feature_collections=[feature.to_dict() for feature in self.feature_collections],
             name=self.name,
-            qualifiers=self.qualifiers,
+            qualifiers=self._export_qualifiers_to_list(),
             sequence_name=self.sequence_name,
             sequence_guid=self.sequence_guid,
             start=self.start,
@@ -628,7 +629,7 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
         If :meth:`AnnotationCollection.query_by_guids()` is called, then this function is called
         to populate the ``_guid_map`` member. Subsequent lookups are now ``O(1)``.
         """
-        self._guid_map = {x.guid: x for x in self.iter_children() if x.guid is not None}
+        self._guid_map = {x.guid: x for x in self.iter_children()}
         self._guid_cached = True
 
     def query_by_guids(self, ids: List[UUID]) -> "AnnotationCollection":
