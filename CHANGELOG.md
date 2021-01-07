@@ -24,7 +24,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Changed
 - Migrated sphinx documentation from `automodapi` to `autoapi`. 
-- Arbitrary qualifiers on `Interval` classes are now stored as dicts of sets. When exporting to files, these are turned into lists.
 - Performance upgrades to interval arithmetic operations.
 
 ### Removed
