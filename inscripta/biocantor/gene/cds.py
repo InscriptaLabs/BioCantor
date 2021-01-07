@@ -200,7 +200,6 @@ class CDSInterval:
             if truncate_at_in_frame_stop and c.is_stop_codon:
                 break
 
-    @lru_cache(maxsize=1)
     def scan_codon_locations(self) -> Iterator[Location]:
         """
         Returns an iterator over codon locations.
