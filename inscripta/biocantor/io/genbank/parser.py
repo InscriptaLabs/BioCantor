@@ -32,7 +32,7 @@ from Bio.SeqFeature import SeqFeature
 from Bio.SeqRecord import SeqRecord
 
 from inscripta.biocantor.gene.biotype import Biotype
-from inscripta.biocantor.gene.cds import CDSFrame
+from inscripta.biocantor.gene.cds import CDSFrame, CDSInterval
 from inscripta.biocantor.io.genbank.constants import (
     GeneFeatures,
     TranscriptFeatures,
@@ -231,14 +231,8 @@ class TranscriptFeature(Feature):
         # make 0 based offset, if possible, otherwise assume always in frame
         frame = int(self.children[0].feature.qualifiers.get("codon_start", [1])[0]) - 1
         frame = CDSFrame.from_int(frame)
-        frames = []
-        blocks = cds_interval.blocks if cds_interval.strand == Strand.PLUS else reversed(cds_interval.blocks)
-        for block in blocks:
-            frames.append(frame.name)
-            frame = frame.shift(len(block))
-        if cds_interval.strand == Strand.MINUS:
-            frames = frames[::-1]
-        return frames
+        frames = CDSInterval.construct_frames_from_location(cds_interval, frame)
+        return [x.name for x in frames]
 
     @property
     def exon_features(self) -> SeqFeature:

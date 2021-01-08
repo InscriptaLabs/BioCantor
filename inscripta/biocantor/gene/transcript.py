@@ -111,7 +111,7 @@ class TranscriptInterval(AbstractFeatureInterval):
     def has_in_frame_stop(self) -> bool:
         if not self.is_coding:
             raise NoncodingTranscriptError("Cannot have frameshifts on non-coding transcripts")
-        return self.cds.has_in_frame_stop()
+        return self.cds.has_in_frame_stop
 
     @property
     def cds_size(self) -> int:

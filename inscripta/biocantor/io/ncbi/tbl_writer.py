@@ -164,6 +164,12 @@ class GeneTblFeature(TblFeature):
         location = gene.location.reset_strand(strand)
 
         qualifiers = {"gene": [gene.gene_symbol], "locus_tag": [locus_tag] if locus_tag else [gene.locus_tag]}
+        # locus tag and gene can't be the same thing or tbl2asn reports LocusTagProblem
+
+        if qualifiers["gene"][0] is None and qualifiers["locus_tag"][0] is None:
+            raise TblExportException("Must be able to provide locus_tag or gene.")
+        elif qualifiers["gene"] == qualifiers["locus_tag"]:
+            qualifiers["gene"][0] += "_gene"
 
         # try to pull out the special qualifiers
         if gene.qualifiers:
@@ -212,7 +218,7 @@ class CDSTblFeature(TblFeature):
     """
 
     FEATURE_TYPE = IntervalFeatures.CDS
-    VALID_KEYS = MRNATblFeature.VALID_KEYS | {"product"}
+    VALID_KEYS = MRNATblFeature.VALID_KEYS | {"product", "codon_start"}
 
     def __init__(
         self, transcript: TranscriptInterval, gene_feature: GeneTblFeature, translation_table: TranslationTable
@@ -234,9 +240,15 @@ class CDSTblFeature(TblFeature):
         if transcript.transcript_id:
             qualifiers["transcript_id"] = [transcript.transcript_id]
 
-        codons = list(transcript.cds.scan_codons())
-        start_is_incomplete = not codons[0].is_start_codon_in_specific_translation_table(translation_table)
-        end_is_incomplete = not codons[-1].is_stop_codon
+        codon_start = next(transcript.cds.frame_iter()).value + 1
+        qualifiers["codon_start"] = [codon_start]
+
+        # start codon can look directly at the translation, because we have a codon_start value
+        start_is_incomplete = not transcript.cds.has_start_codon_in_specific_translation_table(translation_table)
+
+        # End completeness requires that there be a in-frame stop codon that is in the last mod3 position
+        end_is_incomplete = len(transcript.cds) % 3 != (codon_start - 1) or not transcript.cds.has_valid_stop
+
         super().__init__(
             transcript.cds.location,
             start_is_incomplete=start_is_incomplete,
@@ -335,9 +347,7 @@ class RRNATblFeature(TblFeature):
         qualifiers["transcript_id"] = [transcript.transcript_id]
 
         if "product" in transcript.qualifiers:
-            product = str(list(transcript.qualifiers["product"])[0])
-            if product.startswith("tRNA-"):
-                qualifiers["product"] = [product]
+            qualifiers["product"] = transcript.qualifiers["product"]
         else:
             qualifiers["product"] = ["unknown ribosomal RNA"]
 
@@ -369,7 +379,7 @@ class TblGene:
         for tx in gene.transcripts:
             tx.location = tx.location.optimize_and_combine_blocks()
             if gene.is_coding:
-                tx.cds.location = tx.cds.location.optimize_and_combine_blocks()
+                tx.cds = tx.cds.optimize_and_combine_blocks()
 
         self.gene_tbl = GeneTblFeature(self.gene, locus_tag)
 
@@ -388,6 +398,8 @@ class TblGene:
                 tx_tbl = RRNATblFeature(tx, self.gene_tbl)
             elif gene.gene_type == Biotype.tRNA:
                 tx_tbl = TRNATblFeature(tx, self.gene_tbl)
+            elif gene.gene_type == Biotype.misc_RNA:
+                tx_tbl = MiscRNATblFeature(tx, self.gene_tbl)
             else:
                 tx_tbl = NcRNATblFeature(tx, self.gene_tbl)
             self.gene_tbl.children.append(tx_tbl)

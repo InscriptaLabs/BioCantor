@@ -1,6 +1,6 @@
 import pytest
 
-from inscripta.biocantor.gene.cds import CDSPhase, CDSFrame, CDSInterval
+from inscripta.biocantor.gene.cds import CDSPhase, CDSFrame, CDSInterval, TranslationTable
 from inscripta.biocantor.gene.codon import Codon
 from inscripta.biocantor.location.location_impl import CompoundInterval, SingleInterval
 from inscripta.biocantor.location.strand import Strand
@@ -190,6 +190,8 @@ class TestCDSInterval:
     )
     def test_scan_codons(self, cds, expected):
         assert list(cds.scan_codons()) == expected
+        # run again to ensure caching is not a problem
+        assert list(cds.scan_codons()) == expected
 
     @pytest.mark.parametrize(
         "cds,expected",
@@ -218,6 +220,8 @@ class TestCDSInterval:
         ],
     )
     def test_scan_codons_lower_case(self, cds, expected):
+        assert list(cds.scan_codons()) == expected
+        # run again to ensure caching is not a problem
         assert list(cds.scan_codons()) == expected
 
     @pytest.mark.parametrize(
@@ -448,6 +452,8 @@ class TestCDSInterval:
     )
     def test_scan_codon_locations(self, cds, expected):
         assert list(cds.scan_codon_locations()) == expected
+        # run again to prove caching doesn't exist
+        assert list(cds.scan_codon_locations()) == expected
 
     @pytest.mark.parametrize(
         "cds,expected",
@@ -495,6 +501,8 @@ class TestCDSInterval:
     )
     def test_translate(self, cds, expected):
         assert str(cds.translate()) == expected
+        # run again to ensure caching is not a problem
+        assert str(cds.translate()) == expected
 
     def test_accessors(self):
         cds = CDSInterval(SingleInterval(0, 10, Strand.PLUS), [CDSFrame.ZERO])
@@ -523,3 +531,289 @@ class TestCDSInterval:
     )
     def test_has_valid_stop(self, cds, expected):
         assert cds.has_valid_stop == expected
+        # run again to ensure caching is not a problem
+        assert cds.has_valid_stop == expected
+
+    @pytest.mark.parametrize(
+        "cds,expected",
+        [
+            (
+                CDSInterval(
+                    SingleInterval(0, 9, Strand.PLUS, parent=Sequence("ATGTGAAAACCC", alphabet)), [CDSFrame.ZERO]
+                ),
+                True,
+            ),
+            (
+                CDSInterval(SingleInterval(0, 9, Strand.PLUS, parent=Sequence("ATACGATCA", alphabet)), [CDSFrame.ZERO]),
+                False,
+            ),
+        ],
+    )
+    def test_in_frame_stop(self, cds, expected):
+        assert cds.has_in_frame_stop == expected
+
+    @pytest.mark.parametrize(
+        "cds,expected",
+        [
+            (
+                CDSInterval(
+                    SingleInterval(0, 9, Strand.PLUS, parent=Sequence("ATGTGAAAACCC", alphabet)), [CDSFrame.ZERO]
+                ),
+                True,
+            ),
+            (
+                CDSInterval(SingleInterval(0, 9, Strand.PLUS, parent=Sequence("ATACGATCA", alphabet)), [CDSFrame.ZERO]),
+                False,
+            ),
+            (
+                CDSInterval(
+                    SingleInterval(0, 9, Strand.MINUS, parent=Sequence("ATGTGCCATCC", alphabet)), [CDSFrame.ZERO]
+                ),
+                True,
+            ),
+            (
+                CDSInterval(
+                    SingleInterval(0, 9, Strand.MINUS, parent=Sequence("ATACGATCA", alphabet)), [CDSFrame.ZERO]
+                ),
+                False,
+            ),
+        ],
+    )
+    def test_has_canonical_start_codon(self, cds, expected):
+        assert cds.has_canonical_start_codon == expected
+
+    @pytest.mark.parametrize(
+        "cds,expected",
+        [
+            (
+                CDSInterval(
+                    SingleInterval(0, 9, Strand.PLUS, parent=Sequence("TTGTGAAAACCC", alphabet)), [CDSFrame.ZERO]
+                ),
+                True,
+            ),
+            (
+                CDSInterval(SingleInterval(0, 9, Strand.PLUS, parent=Sequence("ATACGATCA", alphabet)), [CDSFrame.ZERO]),
+                False,
+            ),
+            (
+                CDSInterval(
+                    SingleInterval(0, 9, Strand.MINUS, parent=Sequence("ATGTGCCAG", alphabet)), [CDSFrame.ZERO]
+                ),
+                True,
+            ),
+            (
+                CDSInterval(
+                    SingleInterval(0, 9, Strand.MINUS, parent=Sequence("ATACGAGAT", alphabet)), [CDSFrame.ZERO]
+                ),
+                False,
+            ),
+        ],
+    )
+    def test_has_start_codon_in_specific_translation_table(self, cds, expected):
+        assert cds.has_start_codon_in_specific_translation_table(TranslationTable.STANDARD) == expected
+
+    @pytest.mark.parametrize(
+        "location,starting_frame,expected",
+        [
+            # 1bp exon on the negative strand gets removed due to being a partial codon
+            (
+                CompoundInterval([0, 7], [5, 8], Strand.MINUS, parent=Sequence("ATACGATCA", alphabet)),
+                CDSFrame.TWO,
+                [CDSFrame.TWO, CDSFrame.TWO],
+            ),
+            # 3 exons on plus strand with starting frame of 2
+            (
+                CompoundInterval(
+                    [2, 8, 12], [5, 11, 18], Strand.PLUS, parent=Sequence("AAACAAAAGGGTACCCAAAAAA", alphabet)
+                ),
+                CDSFrame.TWO,
+                [CDSFrame.TWO, CDSFrame.ONE, CDSFrame.ONE],
+            ),
+            # 3 exons on plus strand with starting frame of 0
+            (
+                CompoundInterval(
+                    [2, 8, 12], [5, 11, 18], Strand.PLUS, parent=Sequence("AAACAAAAGGGTACCCAAAAAA", alphabet)
+                ),
+                CDSFrame.ZERO,
+                [CDSFrame.ZERO, CDSFrame.ZERO, CDSFrame.ZERO],
+            ),
+            # 3 exons on plus strand with starting frame of 0
+            (
+                CompoundInterval(
+                    [0, 8, 12], [5, 11, 18], Strand.PLUS, parent=Sequence("AAACAAAAGGGTACCCAAAAAA", alphabet)
+                ),
+                CDSFrame.ZERO,
+                [CDSFrame.ZERO, CDSFrame.TWO, CDSFrame.TWO],
+            ),
+            # 3 exons on plus strand with starting frame of 2
+            (
+                CompoundInterval(
+                    [0, 8, 12], [5, 11, 18], Strand.PLUS, parent=Sequence("AAACAAAAGGGTACCCAAAAAA", alphabet)
+                ),
+                CDSFrame.TWO,
+                [CDSFrame.TWO, CDSFrame.ZERO, CDSFrame.ZERO],
+            ),
+            # 3 exons on minus strand with starting frame of 0
+            (
+                CompoundInterval(
+                    [2, 8, 12], [5, 11, 18], Strand.MINUS, parent=Sequence("AAACAAAAGGGTACCCAAAAAA", alphabet)
+                ),
+                CDSFrame.ZERO,
+                [CDSFrame.ZERO, CDSFrame.ZERO, CDSFrame.ZERO],
+            ),
+            # 3 exons on minus strand with starting frame of 1
+            (
+                CompoundInterval(
+                    [2, 8, 12], [5, 11, 18], Strand.MINUS, parent=Sequence("AAACAAAAGGGTACCCAAAAAA", alphabet)
+                ),
+                CDSFrame.ONE,
+                [CDSFrame.TWO, CDSFrame.TWO, CDSFrame.ONE],
+            ),
+            # 3 exons on minus strand with starting frame of 2
+            (
+                CompoundInterval(
+                    [2, 8, 12], [5, 11, 18], Strand.MINUS, parent=Sequence("AAACAAAAGGGTACCCAAAAAA", alphabet)
+                ),
+                CDSFrame.TWO,
+                [CDSFrame.ONE, CDSFrame.ONE, CDSFrame.TWO],
+            ),
+            (
+                CompoundInterval(
+                    [0, 7, 12], [5, 11, 18], Strand.PLUS, parent=Sequence("AAACAAAAGGGTACCCAAAAAA", alphabet)
+                ),
+                CDSFrame.ZERO,
+                [CDSFrame.ZERO, CDSFrame.TWO, CDSFrame.ZERO],
+            ),
+            (
+                CompoundInterval(
+                    [0, 7, 12], [5, 11, 18], Strand.PLUS, parent=Sequence("AAACAAAAGGGTACCCAAAAAA", alphabet)
+                ),
+                CDSFrame.ONE,
+                [CDSFrame.ONE, CDSFrame.ONE, CDSFrame.TWO],
+            ),
+            (
+                CompoundInterval(
+                    [0, 7, 12], [5, 11, 18], Strand.PLUS, parent=Sequence("AAACAAAAGGGTACCCAAAAAA", alphabet)
+                ),
+                CDSFrame.TWO,
+                [CDSFrame.TWO, CDSFrame.ZERO, CDSFrame.ONE],
+            ),
+            (
+                CompoundInterval(
+                    [0, 7, 12], [5, 11, 18], Strand.MINUS, parent=Sequence("AAACAAAAGGGTACCCAAAAAA", alphabet)
+                ),
+                CDSFrame.ZERO,
+                [CDSFrame.ONE, CDSFrame.ZERO, CDSFrame.ZERO],
+            ),
+            (
+                CompoundInterval(
+                    [0, 7, 12], [5, 11, 18], Strand.MINUS, parent=Sequence("AAACAAAAGGGTACCCAAAAAA", alphabet)
+                ),
+                CDSFrame.ONE,
+                [CDSFrame.ZERO, CDSFrame.TWO, CDSFrame.ONE],
+            ),
+            (
+                CompoundInterval(
+                    [0, 7, 12], [5, 11, 18], Strand.MINUS, parent=Sequence("AAACAAAAGGGTACCCAAAAAA", alphabet)
+                ),
+                CDSFrame.TWO,
+                [CDSFrame.TWO, CDSFrame.ONE, CDSFrame.TWO],
+            ),
+        ],
+    )
+    def test_construct_frames_from_location(self, location, starting_frame, expected):
+        frames = CDSInterval.construct_frames_from_location(location, starting_frame)
+        assert frames == expected
+
+    @pytest.mark.parametrize(
+        "cds,expected",
+        [
+            # 1bp exon on the negative strand gets removed due to being a partial codon
+            # this shifts the frame all the
+            (
+                CDSInterval(
+                    CompoundInterval([0, 7], [5, 8], Strand.MINUS, parent=Sequence("ATACGATCA", alphabet)),
+                    [CDSFrame.ZERO, CDSFrame.TWO],
+                ),
+                [Codon.TAT],
+            ),
+            # Discontiguous CDS, plus strand, with +1 programmed frameshift that skips over a 1nt exon
+            # last frame gets shifted as a result
+            (
+                CDSInterval(
+                    CompoundInterval(
+                        [2, 6, 8],
+                        [5, 7, 16],
+                        Strand.PLUS,
+                        parent=Sequence("AAACAAAAGGACCCAAAAAA", alphabet),
+                    ),
+                    [CDSFrame.ZERO, CDSFrame.ZERO, CDSFrame.ZERO],
+                ),
+                [Codon.ACA, Codon.AGG, Codon.ACC, Codon.CAA],
+            ),
+            # Discontiguous CDS, plus strand, frame=2,
+            # 1bp insertion inside exon 2 relative to some canonical genome and we want(ed) to maintain original frame
+            # frame is not changed
+            (
+                CDSInterval(
+                    CompoundInterval(
+                        [2, 8, 12],
+                        [5, 11, 18],
+                        Strand.PLUS,
+                        parent=Sequence("AAACAAAAGGGTACCCAAAAAA", alphabet),
+                    ),
+                    [CDSFrame.TWO, CDSFrame.ONE, CDSFrame.ONE],
+                ),
+                [Codon.AGG, Codon.GAC, Codon.CCA],
+            ),
+        ],
+    )
+    def test_optimize_blocks(self, cds, expected):
+        assert list(cds.optimize_blocks().scan_codons()) == expected
+
+    @pytest.mark.parametrize(
+        "cds,expected",
+        [
+            # this overlapping interval gets merged into [0, 17], with frame 1, so we end up with 5 codons
+            (
+                CDSInterval(
+                    CompoundInterval(
+                        [2, 8],
+                        [9, 17],
+                        Strand.PLUS,
+                        parent=Sequence("AAAGGAAAGTCCCTGAAAAAA", alphabet),
+                    ),
+                    [CDSFrame.ZERO, CDSFrame.ONE],
+                ),
+                [Codon.AGG, Codon.AAA, Codon.GTC, Codon.CCT, Codon.GAA],
+            ),
+            # this overlapping interval gets merged into [2,5], [8,18] with 0bp offset
+            (
+                CDSInterval(
+                    CompoundInterval(
+                        [2, 8, 12],
+                        [5, 13, 18],
+                        Strand.PLUS,
+                        parent=Sequence("AAAGGAAAGTCCCTGAAAAAA", alphabet),
+                    ),
+                    [CDSFrame.ZERO, CDSFrame.ONE, CDSFrame.ZERO],
+                ),
+                [Codon.AGG, Codon.GTC, Codon.CCT, Codon.GAA],
+            ),
+            # this overlapping interval gets merged into [2,5], [8,18] with 1bp offset
+            (
+                CDSInterval(
+                    CompoundInterval(
+                        [2, 8, 12],
+                        [5, 13, 18],
+                        Strand.PLUS,
+                        parent=Sequence("AAAGGAAAGTCCCTGAAAAAA", alphabet),
+                    ),
+                    [CDSFrame.ONE, CDSFrame.ONE, CDSFrame.ZERO],
+                ),
+                [Codon.GGG, Codon.TCC, Codon.CTG, Codon.AAA],
+            ),
+        ],
+    )
+    def test_optimize_and_combine_blocks(self, cds, expected):
+        assert list(cds.optimize_and_combine_blocks().scan_codons()) == expected
