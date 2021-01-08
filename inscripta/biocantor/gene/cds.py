@@ -129,7 +129,11 @@ class CDSInterval:
     def has_start_codon_in_specific_translation_table(
         self, translation_table: Optional[TranslationTable] = TranslationTable.DEFAULT
     ) -> bool:
-        """Does this CDS have a canonical valid start? Requires a sequence be associated."""
+        """
+        Does this CDS have a valid start in a provided translation table? Requires a sequence be associated.
+
+        Defaults to the ``DEFAULT`` table, which is just ``ATG``.
+        """
         return next(self.scan_codons()).is_start_codon_in_specific_translation_table(translation_table)
 
     @property
