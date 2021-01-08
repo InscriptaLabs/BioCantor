@@ -1,3 +1,9 @@
+"""
+The :class:`Parent` class defines a hierarchical relationship between objects. :class:`Location` objects,
+:class:`Sequence` objects, and :class:`Parent` objects can have a :class:`Parent`. A :class:`Parent` object defines its
+relationship with its child object through a variety of optional constructor parameters.
+"""
+
 from functools import singledispatch
 
 from inscripta.biocantor.parent.parent import Parent

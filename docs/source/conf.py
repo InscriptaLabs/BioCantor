@@ -42,17 +42,19 @@ release = __version__
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    "sphinx_automodapi.automodapi",
+    "autoapi.extension",
     "sphinx.ext.intersphinx",
     "sphinx.ext.todo",
     "sphinx.ext.mathjax",
     "sphinx.ext.napoleon",
     "sphinx.ext.viewcode",
-    "sphinx.ext.autodoc",
+    "sphinx.ext.autodoc.typehints",
     "nbsphinx",
     "sphinx.ext.mathjax",
     "sphinx.ext.githubpages",
     "IPython.sphinxext.ipython_console_highlighting",
+    "sphinx_rtd_theme",
+    "recommonmark",
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -194,11 +196,7 @@ intersphinx_mapping = {"https://docs.python.org/": None}
 # If true, `todo` and `todoList` produce output, else they produce nothing.
 todo_include_todos = True
 
-# Automodapi
+# Autoapi
 
-automodsumm_inherited_members = True
-autosummary_generate = True
-autosummary_generate_overwrite = True
-automodapi_type = "python"
-automodapi_dirs = [os.path.abspath("../inscripta/")]
-automodapi_inheritance_diagram = False
+autoapi_type = "python"
+autoapi_dirs = [os.path.abspath("../../inscripta/biocantor/")]

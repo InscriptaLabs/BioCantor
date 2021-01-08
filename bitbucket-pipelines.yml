@@ -9,9 +9,5 @@ pipelines:
           - mkdir test-results
           - conda create -y -n test python=3.7
           - eval "$(conda shell.bash hook)" && conda activate test
-          - pip install .[all]
-          - conda install pandoc
-          - python -m pytest tests/ --junitxml=test-results/nosetests.xml
-          - black -l 120 --check .
-          - cd docs
-          - sphinx-build -M html source build
+          - pip install tox tox-conda
+          - tox -vv

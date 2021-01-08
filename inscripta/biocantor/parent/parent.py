@@ -2,7 +2,13 @@ from functools import reduce
 from typing import TypeVar, Optional
 
 import inscripta.biocantor
-from inscripta.biocantor.exc import NoSuchAncestorException
+from inscripta.biocantor.exc import (
+    NoSuchAncestorException,
+    LocationException,
+    InvalidStrandException,
+    ParentException,
+    InvalidPositionException,
+)
 from inscripta.biocantor.location.strand import Strand
 from inscripta.biocantor.util.object_validation import ObjectValidation
 
@@ -45,35 +51,23 @@ class Parent:
 
         location_parent_id = location.parent_id if location else None
         sequence_id = sequence.id if sequence else None
-        non_null_ids = set([x for x in [id, location_parent_id, sequence_id] if x is not None])
-        if len(non_null_ids) > 1:
-            raise ValueError(
-                "ID, location parent ID, and sequence ID do not match: {}, {}, {}".format(
-                    id, location_parent_id, sequence_id
-                )
-            )
+        parent_id = self._unique_value_or_none([id, location_parent_id, sequence_id])
 
         location_parent_type = location.parent_type if location else None
         sequence_seqtype = sequence.sequence_type if sequence else None
-        non_null_types = set([x for x in [sequence_type, location_parent_type, sequence_seqtype] if x is not None])
-        if len(non_null_types) > 1:
-            raise ValueError(
-                "Sequence type, location parent type, and sequence do not match: {}, {}, {}".format(
-                    sequence_type, location_parent_type, sequence_seqtype
-                )
-            )
+        seq_type = self._unique_value_or_none([sequence_type, location_parent_type, sequence_seqtype])
 
         if location:
-            if strand and location.strand and strand != location.strand:
-                raise ValueError("Strand does not match location: {} != {}".format(strand, location.strand))
+            if strand and location.strand and strand is not location.strand:
+                raise InvalidStrandException("Strand does not match location: {} != {}".format(strand, location.strand))
             if sequence and location.end > len(sequence):
-                raise ValueError(
+                raise InvalidPositionException(
                     "Location end ({}) is greater than sequence length ({})".format(location.end, len(sequence))
                 )
 
         parent_obj = inscripta.biocantor.parent.make_parent(parent) if parent else None
         if sequence and parent_obj and parent_obj.sequence and len(sequence) > len(parent_obj.sequence):
-            raise ValueError(
+            raise LocationException(
                 "Parent ({}) is longer than parent of parent ({})".format(len(sequence), len(parent_obj.sequence))
             )
 
@@ -86,16 +80,29 @@ class Parent:
         else:
             self.parent = parent_obj
 
-        self._id = non_null_ids.pop() if non_null_ids else None
-        self._sequence_type = non_null_types.pop() if non_null_types else None
+        self.id = parent_id
+        self.sequence_type = seq_type
         self._strand = strand
         self.location = location
         self.sequence = sequence
 
+    @staticmethod
+    def _unique_value_or_none(values) -> Optional[str]:
+        """Checks if a set of values contains more than one distinct non-null value. If so, raises ValueError.
+        Otherwise, returns the single unique non-null value (if there is one) or None if all values are None."""
+        rtrn = None
+        for x in values:
+            if x is not None and rtrn is None:
+                rtrn = x
+                continue
+            if x is not None and x != rtrn:
+                raise ParentException(f"Multiple distinct non-null values were provided: {values}")
+        return rtrn
+
     def __eq__(self, other):
         if not self.equals_except_location(other):
             return False
-        return self.location == other.location and self.strand == other.strand
+        return self.location == other.location and self.strand is other.strand
 
     def equals_except_location(self, other):
         if type(other) is not Parent:
@@ -131,22 +138,6 @@ class Parent:
             repr(self.sequence),
             repr(self.parent),
         )
-
-    @property
-    def id(self):
-        if self._id:
-            return self._id
-        if self.sequence:
-            return self.sequence.id
-        return None
-
-    @property
-    def sequence_type(self):
-        if self._sequence_type:
-            return self._sequence_type
-        if self.sequence:
-            return self.sequence.sequence_type
-        return None
 
     @property
     def strand(self):

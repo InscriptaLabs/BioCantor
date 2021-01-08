@@ -12,3 +12,5 @@ docs/source/api/
 docs/source/apidocs/source/.ipynb_checkpoints/
 docs/source/.ipynb_checkpoints
 docs/source/api
+.tox
+.virtual_documents

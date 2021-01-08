@@ -1,0 +1,2105 @@
+{
+    "feature_collections": null,
+    "genes": [
+        {
+            "transcripts": [
+                {
+                    "exon_starts": [
+                        94584979,
+                        94587777,
+                        94588688,
+                        94598774,
+                        94600645,
+                        94603289,
+                        94618757,
+                        94623324,
+                        94628201,
+                        94629718,
+                        94655989
+                    ],
+                    "exon_ends": [
+                        94585515,
+                        94587812,
+                        94588732,
+                        94598963,
+                        94600857,
+                        94603452,
+                        94618956,
+                        94623397,
+                        94628359,
+                        94629841,
+                        94656133
+                    ],
+                    "strand": "MINUS",
+                    "cds_starts": [
+                        94585464,
+                        94587777,
+                        94588688,
+                        94598774,
+                        94600645,
+                        94603289,
+                        94618757,
+                        94623324,
+                        94628201,
+                        94629718,
+                        94655989
+                    ],
+                    "cds_ends": [
+                        94585515,
+                        94587812,
+                        94588732,
+                        94598963,
+                        94600857,
+                        94603452,
+                        94618956,
+                        94623397,
+                        94628359,
+                        94629841,
+                        94656098
+                    ],
+                    "cds_frames": [
+                        "ZERO",
+                        "ONE",
+                        "TWO",
+                        "TWO",
+                        "ZERO",
+                        "TWO",
+                        "ONE",
+                        "ZERO",
+                        "ONE",
+                        "ONE",
+                        "ZERO"
+                    ],
+                    "qualifiers": {
+                        "Dbxref": [
+                            "Genbank:NM_001099400.2",
+                            "GeneID:8910",
+                            "HGNC:HGNC:10808",
+                            "MIM:604149"
+                        ],
+                        "gbkey": [
+                            "mRNA"
+                        ],
+                        "gene": [
+                            "SGCE"
+                        ],
+                        "product": [
+                            "sarcoglycan epsilon, transcript variant 3"
+                        ]
+                    },
+                    "is_primary_tx": false,
+                    "transcript_id": "NM_001099400.2",
+                    "protein_id": "NP_001092870.1",
+                    "transcript_symbol": null,
+                    "transcript_type": "protein_coding",
+                    "sequence_name": "NC_000007.14",
+                    "sequence_guid": null,
+                    "guid": null,
+                    "transcript_guid": null
+                },
+                {
+                    "exon_starts": [
+                        94584979,
+                        94588688,
+                        94597929,
+                        94598774,
+                        94599696,
+                        94600645,
+                        94603289,
+                        94618757,
+                        94623324,
+                        94628201,
+                        94629718,
+                        94655989
+                    ],
+                    "exon_ends": [
+                        94585515,
+                        94588732,
+                        94598004,
+                        94598963,
+                        94599723,
+                        94600857,
+                        94603452,
+                        94618956,
+                        94623397,
+                        94628359,
+                        94629841,
+                        94656133
+                    ],
+                    "strand": "MINUS",
+                    "cds_starts": [
+                        94585498,
+                        94588688,
+                        94597929,
+                        94598774,
+                        94599696,
+                        94600645,
+                        94603289,
+                        94618757,
+                        94623324,
+                        94628201,
+                        94629718,
+                        94655989
+                    ],
+                    "cds_ends": [
+                        94585515,
+                        94588732,
+                        94598004,
+                        94598963,
+                        94599723,
+                        94600857,
+                        94603452,
+                        94618956,
+                        94623397,
+                        94628359,
+                        94629841,
+                        94656098
+                    ],
+                    "cds_frames": [
+                        "ONE",
+                        "TWO",
+                        "TWO",
+                        "TWO",
+                        "TWO",
+                        "ZERO",
+                        "TWO",
+                        "ONE",
+                        "ZERO",
+                        "ONE",
+                        "ONE",
+                        "ZERO"
+                    ],
+                    "qualifiers": {
+                        "Dbxref": [
+                            "Genbank:NM_001099401.2",
+                            "GeneID:8910",
+                            "HGNC:HGNC:10808",
+                            "MIM:604149"
+                        ],
+                        "gbkey": [
+                            "mRNA"
+                        ],
+                        "gene": [
+                            "SGCE"
+                        ],
+                        "product": [
+                            "sarcoglycan epsilon, transcript variant 1"
+                        ]
+                    },
+                    "is_primary_tx": false,
+                    "transcript_id": "NM_001099401.2",
+                    "protein_id": "NP_001092871.1",
+                    "transcript_symbol": null,
+                    "transcript_type": "protein_coding",
+                    "sequence_name": "NC_000007.14",
+                    "sequence_guid": null,
+                    "guid": null,
+                    "transcript_guid": null
+                },
+                {
+                    "exon_starts": [
+                        94584979,
+                        94588688,
+                        94598774,
+                        94599696,
+                        94600645,
+                        94603289,
+                        94618757,
+                        94623324,
+                        94628201,
+                        94655989
+                    ],
+                    "exon_ends": [
+                        94585515,
+                        94588732,
+                        94598963,
+                        94599723,
+                        94600857,
+                        94603452,
+                        94618956,
+                        94623397,
+                        94628359,
+                        94656133
+                    ],
+                    "strand": "MINUS",
+                    "cds_starts": [
+                        94585498,
+                        94588688,
+                        94598774,
+                        94599696,
+                        94600645,
+                        94603289,
+                        94618757,
+                        94623324,
+                        94628201,
+                        94655989
+                    ],
+                    "cds_ends": [
+                        94585515,
+                        94588732,
+                        94598963,
+                        94599723,
+                        94600857,
+                        94603452,
+                        94618956,
+                        94623397,
+                        94628359,
+                        94656098
+                    ],
+                    "cds_frames": [
+                        "ONE",
+                        "TWO",
+                        "TWO",
+                        "TWO",
+                        "ZERO",
+                        "TWO",
+                        "ONE",
+                        "ZERO",
+                        "ONE",
+                        "ZERO"
+                    ],
+                    "qualifiers": {
+                        "Dbxref": [
+                            "Genbank:NM_001301139.2",
+                            "GeneID:8910",
+                            "HGNC:HGNC:10808",
+                            "MIM:604149"
+                        ],
+                        "gbkey": [
+                            "mRNA"
+                        ],
+                        "gene": [
+                            "SGCE"
+                        ],
+                        "product": [
+                            "sarcoglycan epsilon, transcript variant 4"
+                        ]
+                    },
+                    "is_primary_tx": false,
+                    "transcript_id": "NM_001301139.2",
+                    "protein_id": "NP_001288068.1",
+                    "transcript_symbol": null,
+                    "transcript_type": "protein_coding",
+                    "sequence_name": "NC_000007.14",
+                    "sequence_guid": null,
+                    "guid": null,
+                    "transcript_guid": null
+                },
+                {
+                    "exon_starts": [
+                        94584979,
+                        94588688,
+                        94598774,
+                        94599696,
+                        94600645,
+                        94603289,
+                        94618757,
+                        94623324,
+                        94628201,
+                        94629718,
+                        94639340,
+                        94655989
+                    ],
+                    "exon_ends": [
+                        94585515,
+                        94588732,
+                        94598963,
+                        94599723,
+                        94600857,
+                        94603452,
+                        94618956,
+                        94623397,
+                        94628359,
+                        94629841,
+                        94639448,
+                        94656133
+                    ],
+                    "strand": "MINUS",
+                    "cds_starts": [
+                        94585498,
+                        94588688,
+                        94598774,
+                        94599696,
+                        94600645,
+                        94603289,
+                        94618757,
+                        94623324,
+                        94628201,
+                        94629718,
+                        94639340,
+                        94655989
+                    ],
+                    "cds_ends": [
+                        94585515,
+                        94588732,
+                        94598963,
+                        94599723,
+                        94600857,
+                        94603452,
+                        94618956,
+                        94623397,
+                        94628359,
+                        94629841,
+                        94639448,
+                        94656098
+                    ],
+                    "cds_frames": [
+                        "ONE",
+                        "TWO",
+                        "TWO",
+                        "TWO",
+                        "ZERO",
+                        "TWO",
+                        "ONE",
+                        "ZERO",
+                        "ONE",
+                        "ONE",
+                        "ONE",
+                        "ZERO"
+                    ],
+                    "qualifiers": {
+                        "Dbxref": [
+                            "Genbank:NM_001346713.2",
+                            "GeneID:8910",
+                            "HGNC:HGNC:10808",
+                            "MIM:604149"
+                        ],
+                        "gbkey": [
+                            "mRNA"
+                        ],
+                        "gene": [
+                            "SGCE"
+                        ],
+                        "product": [
+                            "sarcoglycan epsilon, transcript variant 5"
+                        ]
+                    },
+                    "is_primary_tx": false,
+                    "transcript_id": "NM_001346713.2",
+                    "protein_id": "NP_001333642.1",
+                    "transcript_symbol": null,
+                    "transcript_type": "protein_coding",
+                    "sequence_name": "NC_000007.14",
+                    "sequence_guid": null,
+                    "guid": null,
+                    "transcript_guid": null
+                },
+                {
+                    "exon_starts": [
+                        94584979,
+                        94588688,
+                        94598774,
+                        94600645,
+                        94603289,
+                        94618757,
+                        94623324,
+                        94628201,
+                        94629718,
+                        94639340,
+                        94655989
+                    ],
+                    "exon_ends": [
+                        94585515,
+                        94588732,
+                        94598963,
+                        94600857,
+                        94603452,
+                        94618956,
+                        94623397,
+                        94628359,
+                        94629841,
+                        94639448,
+                        94656133
+                    ],
+                    "strand": "MINUS",
+                    "cds_starts": [
+                        94585498,
+                        94588688,
+                        94598774,
+                        94600645,
+                        94603289,
+                        94618757,
+                        94623324,
+                        94628201,
+                        94629718,
+                        94639340,
+                        94655989
+                    ],
+                    "cds_ends": [
+                        94585515,
+                        94588732,
+                        94598963,
+                        94600857,
+                        94603452,
+                        94618956,
+                        94623397,
+                        94628359,
+                        94629841,
+                        94639448,
+                        94656098
+                    ],
+                    "cds_frames": [
+                        "ONE",
+                        "TWO",
+                        "TWO",
+                        "ZERO",
+                        "TWO",
+                        "ONE",
+                        "ZERO",
+                        "ONE",
+                        "ONE",
+                        "ONE",
+                        "ZERO"
+                    ],
+                    "qualifiers": {
+                        "Dbxref": [
+                            "Genbank:NM_001346715.2",
+                            "GeneID:8910",
+                            "HGNC:HGNC:10808",
+                            "MIM:604149"
+                        ],
+                        "gbkey": [
+                            "mRNA"
+                        ],
+                        "gene": [
+                            "SGCE"
+                        ],
+                        "product": [
+                            "sarcoglycan epsilon, transcript variant 6"
+                        ]
+                    },
+                    "is_primary_tx": false,
+                    "transcript_id": "NM_001346715.2",
+                    "protein_id": "NP_001333644.1",
+                    "transcript_symbol": null,
+                    "transcript_type": "protein_coding",
+                    "sequence_name": "NC_000007.14",
+                    "sequence_guid": null,
+                    "guid": null,
+                    "transcript_guid": null
+                },
+                {
+                    "exon_starts": [
+                        94584979,
+                        94588688,
+                        94598774,
+                        94600645,
+                        94603289,
+                        94618757,
+                        94623324,
+                        94628201,
+                        94629718,
+                        94655989
+                    ],
+                    "exon_ends": [
+                        94585515,
+                        94588732,
+                        94598963,
+                        94600857,
+                        94603452,
+                        94618956,
+                        94623397,
+                        94628359,
+                        94629841,
+                        94656133
+                    ],
+                    "strand": "MINUS",
+                    "cds_starts": [
+                        94585498,
+                        94588688,
+                        94598774,
+                        94600645,
+                        94603289,
+                        94618757,
+                        94623324,
+                        94628201,
+                        94629718,
+                        94655989
+                    ],
+                    "cds_ends": [
+                        94585515,
+                        94588732,
+                        94598963,
+                        94600857,
+                        94603452,
+                        94618956,
+                        94623397,
+                        94628359,
+                        94629841,
+                        94656098
+                    ],
+                    "cds_frames": [
+                        "ONE",
+                        "TWO",
+                        "TWO",
+                        "ZERO",
+                        "TWO",
+                        "ONE",
+                        "ZERO",
+                        "ONE",
+                        "ONE",
+                        "ZERO"
+                    ],
+                    "qualifiers": {
+                        "Dbxref": [
+                            "Genbank:NM_001346717.2",
+                            "GeneID:8910",
+                            "HGNC:HGNC:10808",
+                            "MIM:604149"
+                        ],
+                        "gbkey": [
+                            "mRNA"
+                        ],
+                        "gene": [
+                            "SGCE"
+                        ],
+                        "product": [
+                            "sarcoglycan epsilon, transcript variant 7"
+                        ]
+                    },
+                    "is_primary_tx": false,
+                    "transcript_id": "NM_001346717.2",
+                    "protein_id": "NP_001333646.1",
+                    "transcript_symbol": null,
+                    "transcript_type": "protein_coding",
+                    "sequence_name": "NC_000007.14",
+                    "sequence_guid": null,
+                    "guid": null,
+                    "transcript_guid": null
+                },
+                {
+                    "exon_starts": [
+                        94584979,
+                        94588688,
+                        94598774,
+                        94599696,
+                        94600645,
+                        94603289,
+                        94618757,
+                        94623324,
+                        94628201,
+                        94629718,
+                        94639340,
+                        94644605,
+                        94655989
+                    ],
+                    "exon_ends": [
+                        94585515,
+                        94588732,
+                        94598963,
+                        94599723,
+                        94600857,
+                        94603452,
+                        94618956,
+                        94623397,
+                        94628359,
+                        94629841,
+                        94639448,
+                        94644667,
+                        94656133
+                    ],
+                    "strand": "MINUS",
+                    "cds_starts": [
+                        94585498,
+                        94588688,
+                        94598774,
+                        94599696,
+                        94600645,
+                        94603289,
+                        94618757,
+                        94623324,
+                        94628201,
+                        94629718,
+                        94639340
+                    ],
+                    "cds_ends": [
+                        94585515,
+                        94588732,
+                        94598963,
+                        94599723,
+                        94600857,
+                        94603452,
+                        94618956,
+                        94623397,
+                        94628359,
+                        94629841,
+                        94639362
+                    ],
+                    "cds_frames": [
+                        "ONE",
+                        "TWO",
+                        "TWO",
+                        "TWO",
+                        "ZERO",
+                        "TWO",
+                        "ONE",
+                        "ZERO",
+                        "ONE",
+                        "ONE",
+                        "ZERO"
+                    ],
+                    "qualifiers": {
+                        "Dbxref": [
+                            "Genbank:NM_001346719.2",
+                            "GeneID:8910",
+                            "HGNC:HGNC:10808",
+                            "MIM:604149"
+                        ],
+                        "gbkey": [
+                            "mRNA"
+                        ],
+                        "gene": [
+                            "SGCE"
+                        ],
+                        "product": [
+                            "sarcoglycan epsilon, transcript variant 8"
+                        ]
+                    },
+                    "is_primary_tx": false,
+                    "transcript_id": "NM_001346719.2",
+                    "protein_id": "NP_001333648.1",
+                    "transcript_symbol": null,
+                    "transcript_type": "protein_coding",
+                    "sequence_name": "NC_000007.14",
+                    "sequence_guid": null,
+                    "guid": null,
+                    "transcript_guid": null
+                },
+                {
+                    "exon_starts": [
+                        94584979,
+                        94588688,
+                        94598774,
+                        94599696,
+                        94600645,
+                        94603289,
+                        94618757,
+                        94623324,
+                        94628201,
+                        94629718,
+                        94644605,
+                        94655989
+                    ],
+                    "exon_ends": [
+                        94585515,
+                        94588732,
+                        94598963,
+                        94599723,
+                        94600857,
+                        94603452,
+                        94618956,
+                        94623397,
+                        94628359,
+                        94629841,
+                        94644667,
+                        94656133
+                    ],
+                    "strand": "MINUS",
+                    "cds_starts": [
+                        94585498,
+                        94588688,
+                        94598774,
+                        94599696,
+                        94600645,
+                        94603289,
+                        94618757,
+                        94623324,
+                        94628201
+                    ],
+                    "cds_ends": [
+                        94585515,
+                        94588732,
+                        94598963,
+                        94599723,
+                        94600857,
+                        94603452,
+                        94618956,
+                        94623397,
+                        94628318
+                    ],
+                    "cds_frames": [
+                        "ONE",
+                        "TWO",
+                        "TWO",
+                        "TWO",
+                        "ZERO",
+                        "TWO",
+                        "ONE",
+                        "ZERO",
+                        "ZERO"
+                    ],
+                    "qualifiers": {
+                        "Dbxref": [
+                            "Genbank:NM_001346720.2",
+                            "GeneID:8910",
+                            "HGNC:HGNC:10808",
+                            "MIM:604149"
+                        ],
+                        "gbkey": [
+                            "mRNA"
+                        ],
+                        "gene": [
+                            "SGCE"
+                        ],
+                        "product": [
+                            "sarcoglycan epsilon, transcript variant 9"
+                        ]
+                    },
+                    "is_primary_tx": false,
+                    "transcript_id": "NM_001346720.2",
+                    "protein_id": "NP_001333649.1",
+                    "transcript_symbol": null,
+                    "transcript_type": "protein_coding",
+                    "sequence_name": "NC_000007.14",
+                    "sequence_guid": null,
+                    "guid": null,
+                    "transcript_guid": null
+                },
+                {
+                    "exon_starts": [
+                        94584979,
+                        94588688,
+                        94598774,
+                        94600645,
+                        94603289,
+                        94618757,
+                        94623324,
+                        94628201,
+                        94629718,
+                        94639340,
+                        94640896,
+                        94655989
+                    ],
+                    "exon_ends": [
+                        94585515,
+                        94588732,
+                        94598963,
+                        94600857,
+                        94603452,
+                        94618956,
+                        94623397,
+                        94628359,
+                        94629841,
+                        94639448,
+                        94640964,
+                        94656133
+                    ],
+                    "strand": "MINUS",
+                    "cds_starts": [
+                        94585498,
+                        94588688,
+                        94598774,
+                        94600645,
+                        94603289,
+                        94618757,
+                        94623324,
+                        94628201,
+                        94629718,
+                        94639340
+                    ],
+                    "cds_ends": [
+                        94585515,
+                        94588732,
+                        94598963,
+                        94600857,
+                        94603452,
+                        94618956,
+                        94623397,
+                        94628359,
+                        94629841,
+                        94639362
+                    ],
+                    "cds_frames": [
+                        "ONE",
+                        "TWO",
+                        "TWO",
+                        "ZERO",
+                        "TWO",
+                        "ONE",
+                        "ZERO",
+                        "ONE",
+                        "ONE",
+                        "ZERO"
+                    ],
+                    "qualifiers": {
+                        "Dbxref": [
+                            "Genbank:NM_001362807.2",
+                            "GeneID:8910",
+                            "HGNC:HGNC:10808",
+                            "MIM:604149"
+                        ],
+                        "gbkey": [
+                            "mRNA"
+                        ],
+                        "gene": [
+                            "SGCE"
+                        ],
+                        "product": [
+                            "sarcoglycan epsilon, transcript variant 10"
+                        ]
+                    },
+                    "is_primary_tx": false,
+                    "transcript_id": "NM_001362807.2",
+                    "protein_id": "NP_001349736.1",
+                    "transcript_symbol": null,
+                    "transcript_type": "protein_coding",
+                    "sequence_name": "NC_000007.14",
+                    "sequence_guid": null,
+                    "guid": null,
+                    "transcript_guid": null
+                },
+                {
+                    "exon_starts": [
+                        94584979,
+                        94588688,
+                        94598774,
+                        94600645,
+                        94603289,
+                        94618757,
+                        94623324,
+                        94628201,
+                        94629718,
+                        94644605,
+                        94655989
+                    ],
+                    "exon_ends": [
+                        94585515,
+                        94588732,
+                        94598963,
+                        94600857,
+                        94603452,
+                        94618956,
+                        94623397,
+                        94628359,
+                        94629841,
+                        94644667,
+                        94656133
+                    ],
+                    "strand": "MINUS",
+                    "cds_starts": [
+                        94585498,
+                        94588688,
+                        94598774,
+                        94600645,
+                        94603289,
+                        94618757,
+                        94623324,
+                        94628201
+                    ],
+                    "cds_ends": [
+                        94585515,
+                        94588732,
+                        94598963,
+                        94600857,
+                        94603452,
+                        94618956,
+                        94623397,
+                        94628318
+                    ],
+                    "cds_frames": [
+                        "ONE",
+                        "TWO",
+                        "TWO",
+                        "ZERO",
+                        "TWO",
+                        "ONE",
+                        "ZERO",
+                        "ZERO"
+                    ],
+                    "qualifiers": {
+                        "Dbxref": [
+                            "Genbank:NM_001362808.2",
+                            "GeneID:8910",
+                            "HGNC:HGNC:10808",
+                            "MIM:604149"
+                        ],
+                        "gbkey": [
+                            "mRNA"
+                        ],
+                        "gene": [
+                            "SGCE"
+                        ],
+                        "product": [
+                            "sarcoglycan epsilon, transcript variant 11"
+                        ]
+                    },
+                    "is_primary_tx": false,
+                    "transcript_id": "NM_001362808.2",
+                    "protein_id": "NP_001349737.1",
+                    "transcript_symbol": null,
+                    "transcript_type": "protein_coding",
+                    "sequence_name": "NC_000007.14",
+                    "sequence_guid": null,
+                    "guid": null,
+                    "transcript_guid": null
+                },
+                {
+                    "exon_starts": [
+                        94584979,
+                        94588688,
+                        94598774,
+                        94600645,
+                        94603289,
+                        94618757,
+                        94623324,
+                        94628201,
+                        94655989
+                    ],
+                    "exon_ends": [
+                        94585515,
+                        94588732,
+                        94598963,
+                        94600857,
+                        94603452,
+                        94618956,
+                        94623397,
+                        94628359,
+                        94656133
+                    ],
+                    "strand": "MINUS",
+                    "cds_starts": [
+                        94585498,
+                        94588688,
+                        94598774,
+                        94600645,
+                        94603289,
+                        94618757,
+                        94623324,
+                        94628201,
+                        94655989
+                    ],
+                    "cds_ends": [
+                        94585515,
+                        94588732,
+                        94598963,
+                        94600857,
+                        94603452,
+                        94618956,
+                        94623397,
+                        94628359,
+                        94656098
+                    ],
+                    "cds_frames": [
+                        "ONE",
+                        "TWO",
+                        "TWO",
+                        "ZERO",
+                        "TWO",
+                        "ONE",
+                        "ZERO",
+                        "ONE",
+                        "ZERO"
+                    ],
+                    "qualifiers": {
+                        "Dbxref": [
+                            "Genbank:NM_001362809.2",
+                            "GeneID:8910",
+                            "HGNC:HGNC:10808",
+                            "MIM:604149"
+                        ],
+                        "gbkey": [
+                            "mRNA"
+                        ],
+                        "gene": [
+                            "SGCE"
+                        ],
+                        "product": [
+                            "sarcoglycan epsilon, transcript variant 12"
+                        ]
+                    },
+                    "is_primary_tx": false,
+                    "transcript_id": "NM_001362809.2",
+                    "protein_id": "NP_001349738.1",
+                    "transcript_symbol": null,
+                    "transcript_type": "protein_coding",
+                    "sequence_name": "NC_000007.14",
+                    "sequence_guid": null,
+                    "guid": null,
+                    "transcript_guid": null
+                },
+                {
+                    "exon_starts": [
+                        94584979,
+                        94588688,
+                        94598774,
+                        94599696,
+                        94600645,
+                        94603289,
+                        94618757,
+                        94623324,
+                        94628201,
+                        94629718,
+                        94655989
+                    ],
+                    "exon_ends": [
+                        94585515,
+                        94588732,
+                        94598963,
+                        94599723,
+                        94600857,
+                        94603452,
+                        94618956,
+                        94623397,
+                        94628359,
+                        94629841,
+                        94656133
+                    ],
+                    "strand": "MINUS",
+                    "cds_starts": [
+                        94585498,
+                        94588688,
+                        94598774,
+                        94599696,
+                        94600645,
+                        94603289,
+                        94618757,
+                        94623324,
+                        94628201,
+                        94629718,
+                        94655989
+                    ],
+                    "cds_ends": [
+                        94585515,
+                        94588732,
+                        94598963,
+                        94599723,
+                        94600857,
+                        94603452,
+                        94618956,
+                        94623397,
+                        94628359,
+                        94629841,
+                        94656098
+                    ],
+                    "cds_frames": [
+                        "ONE",
+                        "TWO",
+                        "TWO",
+                        "TWO",
+                        "ZERO",
+                        "TWO",
+                        "ONE",
+                        "ZERO",
+                        "ONE",
+                        "ONE",
+                        "ZERO"
+                    ],
+                    "qualifiers": {
+                        "Dbxref": [
+                            "Ensembl:ENST00000648936.2",
+                            "Genbank:NM_003919.3",
+                            "GeneID:8910",
+                            "HGNC:HGNC:10808",
+                            "MIM:604149"
+                        ],
+                        "gbkey": [
+                            "mRNA"
+                        ],
+                        "gene": [
+                            "SGCE"
+                        ],
+                        "product": [
+                            "sarcoglycan epsilon, transcript variant 2"
+                        ],
+                        "tag": [
+                            "MANE Select"
+                        ]
+                    },
+                    "is_primary_tx": false,
+                    "transcript_id": "NM_003919.3",
+                    "protein_id": "NP_003910.1",
+                    "transcript_symbol": null,
+                    "transcript_type": "protein_coding",
+                    "sequence_name": "NC_000007.14",
+                    "sequence_guid": null,
+                    "guid": null,
+                    "transcript_guid": null
+                },
+                {
+                    "exon_starts": [
+                        94585528,
+                        94588688,
+                        94598774,
+                        94599696,
+                        94600645,
+                        94603289,
+                        94618757,
+                        94623324,
+                        94628201,
+                        94629718,
+                        94639340,
+                        94655989
+                    ],
+                    "exon_ends": [
+                        94587812,
+                        94588732,
+                        94598963,
+                        94599723,
+                        94600857,
+                        94603452,
+                        94618956,
+                        94623397,
+                        94628359,
+                        94629841,
+                        94639448,
+                        94656184
+                    ],
+                    "strand": "MINUS",
+                    "cds_starts": [
+                        94587705,
+                        94588688,
+                        94598774,
+                        94599696,
+                        94600645,
+                        94603289,
+                        94618757,
+                        94623324,
+                        94628201,
+                        94629718,
+                        94639340,
+                        94655989
+                    ],
+                    "cds_ends": [
+                        94587812,
+                        94588732,
+                        94598963,
+                        94599723,
+                        94600857,
+                        94603452,
+                        94618956,
+                        94623397,
+                        94628359,
+                        94629841,
+                        94639448,
+                        94656098
+                    ],
+                    "cds_frames": [
+                        "ONE",
+                        "TWO",
+                        "TWO",
+                        "TWO",
+                        "ZERO",
+                        "TWO",
+                        "ONE",
+                        "ZERO",
+                        "ONE",
+                        "ONE",
+                        "ONE",
+                        "ZERO"
+                    ],
+                    "qualifiers": {
+                        "Dbxref": [
+                            "Genbank:XM_011516663.2",
+                            "GeneID:8910",
+                            "HGNC:HGNC:10808",
+                            "MIM:604149"
+                        ],
+                        "gbkey": [
+                            "mRNA"
+                        ],
+                        "gene": [
+                            "SGCE"
+                        ],
+                        "model_evidence": [
+                            "Supporting evidence includes similarity to: 1 mRNA, 21 ESTs, 6 Proteins, 126 long SRA reads, and 95% coverage of the annotated genomic feature by RNAseq alignments, including 9 samples with support for all annotated introns"
+                        ],
+                        "product": [
+                            "sarcoglycan epsilon, transcript variant X1"
+                        ]
+                    },
+                    "is_primary_tx": false,
+                    "transcript_id": "XM_011516663.2",
+                    "protein_id": "XP_011514965.1",
+                    "transcript_symbol": null,
+                    "transcript_type": "protein_coding",
+                    "sequence_name": "NC_000007.14",
+                    "sequence_guid": null,
+                    "guid": null,
+                    "transcript_guid": null
+                },
+                {
+                    "exon_starts": [
+                        94585527,
+                        94588688,
+                        94598774,
+                        94600645,
+                        94603289,
+                        94618757,
+                        94623324,
+                        94628201,
+                        94629718,
+                        94639340,
+                        94655989
+                    ],
+                    "exon_ends": [
+                        94587812,
+                        94588732,
+                        94598963,
+                        94600857,
+                        94603452,
+                        94618956,
+                        94623397,
+                        94628359,
+                        94629841,
+                        94639448,
+                        94656184
+                    ],
+                    "strand": "MINUS",
+                    "cds_starts": [
+                        94587705,
+                        94588688,
+                        94598774,
+                        94600645,
+                        94603289,
+                        94618757,
+                        94623324,
+                        94628201,
+                        94629718,
+                        94639340,
+                        94655989
+                    ],
+                    "cds_ends": [
+                        94587812,
+                        94588732,
+                        94598963,
+                        94600857,
+                        94603452,
+                        94618956,
+                        94623397,
+                        94628359,
+                        94629841,
+                        94639448,
+                        94656098
+                    ],
+                    "cds_frames": [
+                        "ONE",
+                        "TWO",
+                        "TWO",
+                        "ZERO",
+                        "TWO",
+                        "ONE",
+                        "ZERO",
+                        "ONE",
+                        "ONE",
+                        "ONE",
+                        "ZERO"
+                    ],
+                    "qualifiers": {
+                        "Dbxref": [
+                            "Genbank:XM_011516664.2",
+                            "GeneID:8910",
+                            "HGNC:HGNC:10808",
+                            "MIM:604149"
+                        ],
+                        "gbkey": [
+                            "mRNA"
+                        ],
+                        "gene": [
+                            "SGCE"
+                        ],
+                        "model_evidence": [
+                            "Supporting evidence includes similarity to: 16 ESTs, 3 Proteins, 167 long SRA reads, and 95% coverage of the annotated genomic feature by RNAseq alignments, including 9 samples with support for all annotated introns"
+                        ],
+                        "product": [
+                            "sarcoglycan epsilon, transcript variant X2"
+                        ]
+                    },
+                    "is_primary_tx": false,
+                    "transcript_id": "XM_011516664.2",
+                    "protein_id": "XP_011514966.1",
+                    "transcript_symbol": null,
+                    "transcript_type": "protein_coding",
+                    "sequence_name": "NC_000007.14",
+                    "sequence_guid": null,
+                    "guid": null,
+                    "transcript_guid": null
+                },
+                {
+                    "exon_starts": [
+                        94585529,
+                        94588688,
+                        94598774,
+                        94599696,
+                        94600645,
+                        94603289,
+                        94618757,
+                        94623324,
+                        94628201,
+                        94629718,
+                        94655989
+                    ],
+                    "exon_ends": [
+                        94587812,
+                        94588732,
+                        94598963,
+                        94599723,
+                        94600857,
+                        94603452,
+                        94618956,
+                        94623397,
+                        94628359,
+                        94629841,
+                        94656205
+                    ],
+                    "strand": "MINUS",
+                    "cds_starts": [
+                        94587705,
+                        94588688,
+                        94598774,
+                        94599696,
+                        94600645,
+                        94603289,
+                        94618757,
+                        94623324,
+                        94628201,
+                        94629718,
+                        94655989
+                    ],
+                    "cds_ends": [
+                        94587812,
+                        94588732,
+                        94598963,
+                        94599723,
+                        94600857,
+                        94603452,
+                        94618956,
+                        94623397,
+                        94628359,
+                        94629841,
+                        94656098
+                    ],
+                    "cds_frames": [
+                        "ONE",
+                        "TWO",
+                        "TWO",
+                        "TWO",
+                        "ZERO",
+                        "TWO",
+                        "ONE",
+                        "ZERO",
+                        "ONE",
+                        "ONE",
+                        "ZERO"
+                    ],
+                    "qualifiers": {
+                        "Dbxref": [
+                            "Genbank:XM_011516665.3",
+                            "GeneID:8910",
+                            "HGNC:HGNC:10808",
+                            "MIM:604149"
+                        ],
+                        "gbkey": [
+                            "mRNA"
+                        ],
+                        "gene": [
+                            "SGCE"
+                        ],
+                        "model_evidence": [
+                            "Supporting evidence includes similarity to: 78 ESTs, 7 Proteins, 242 long SRA reads, and 95% coverage of the annotated genomic feature by RNAseq alignments, including 14 samples with support for all annotated introns"
+                        ],
+                        "product": [
+                            "sarcoglycan epsilon, transcript variant X3"
+                        ]
+                    },
+                    "is_primary_tx": false,
+                    "transcript_id": "XM_011516665.3",
+                    "protein_id": "XP_011514967.1",
+                    "transcript_symbol": null,
+                    "transcript_type": "protein_coding",
+                    "sequence_name": "NC_000007.14",
+                    "sequence_guid": null,
+                    "guid": null,
+                    "transcript_guid": null
+                },
+                {
+                    "exon_starts": [
+                        94585528,
+                        94588688,
+                        94598774,
+                        94600645,
+                        94603289,
+                        94618757,
+                        94623324,
+                        94628201,
+                        94629718,
+                        94655989
+                    ],
+                    "exon_ends": [
+                        94587812,
+                        94588732,
+                        94598963,
+                        94600857,
+                        94603452,
+                        94618956,
+                        94623397,
+                        94628359,
+                        94629841,
+                        94656205
+                    ],
+                    "strand": "MINUS",
+                    "cds_starts": [
+                        94587705,
+                        94588688,
+                        94598774,
+                        94600645,
+                        94603289,
+                        94618757,
+                        94623324,
+                        94628201,
+                        94629718,
+                        94655989
+                    ],
+                    "cds_ends": [
+                        94587812,
+                        94588732,
+                        94598963,
+                        94600857,
+                        94603452,
+                        94618956,
+                        94623397,
+                        94628359,
+                        94629841,
+                        94656098
+                    ],
+                    "cds_frames": [
+                        "ONE",
+                        "TWO",
+                        "TWO",
+                        "ZERO",
+                        "TWO",
+                        "ONE",
+                        "ZERO",
+                        "ONE",
+                        "ONE",
+                        "ZERO"
+                    ],
+                    "qualifiers": {
+                        "Dbxref": [
+                            "Genbank:XM_011516666.3",
+                            "GeneID:8910",
+                            "HGNC:HGNC:10808",
+                            "MIM:604149"
+                        ],
+                        "gbkey": [
+                            "mRNA"
+                        ],
+                        "gene": [
+                            "SGCE"
+                        ],
+                        "model_evidence": [
+                            "Supporting evidence includes similarity to: 73 ESTs, 6 Proteins, 344 long SRA reads, and 95% coverage of the annotated genomic feature by RNAseq alignments, including 14 samples with support for all annotated introns"
+                        ],
+                        "product": [
+                            "sarcoglycan epsilon, transcript variant X4"
+                        ]
+                    },
+                    "is_primary_tx": false,
+                    "transcript_id": "XM_011516666.3",
+                    "protein_id": "XP_011514968.1",
+                    "transcript_symbol": null,
+                    "transcript_type": "protein_coding",
+                    "sequence_name": "NC_000007.14",
+                    "sequence_guid": null,
+                    "guid": null,
+                    "transcript_guid": null
+                },
+                {
+                    "exon_starts": [
+                        94585529,
+                        94588688,
+                        94598774,
+                        94599696,
+                        94600645,
+                        94603289,
+                        94618757,
+                        94623324,
+                        94628201,
+                        94629718,
+                        94639340,
+                        94644605,
+                        94655989
+                    ],
+                    "exon_ends": [
+                        94587812,
+                        94588732,
+                        94598963,
+                        94599723,
+                        94600857,
+                        94603452,
+                        94618956,
+                        94623397,
+                        94628359,
+                        94629841,
+                        94639448,
+                        94644667,
+                        94656154
+                    ],
+                    "strand": "MINUS",
+                    "cds_starts": [
+                        94587705,
+                        94588688,
+                        94598774,
+                        94599696,
+                        94600645,
+                        94603289,
+                        94618757,
+                        94623324,
+                        94628201,
+                        94629718,
+                        94639340
+                    ],
+                    "cds_ends": [
+                        94587812,
+                        94588732,
+                        94598963,
+                        94599723,
+                        94600857,
+                        94603452,
+                        94618956,
+                        94623397,
+                        94628359,
+                        94629841,
+                        94639362
+                    ],
+                    "cds_frames": [
+                        "ONE",
+                        "TWO",
+                        "TWO",
+                        "TWO",
+                        "ZERO",
+                        "TWO",
+                        "ONE",
+                        "ZERO",
+                        "ONE",
+                        "ONE",
+                        "ZERO"
+                    ],
+                    "qualifiers": {
+                        "Dbxref": [
+                            "Genbank:XM_011516667.2",
+                            "GeneID:8910",
+                            "HGNC:HGNC:10808",
+                            "MIM:604149"
+                        ],
+                        "gbkey": [
+                            "mRNA"
+                        ],
+                        "gene": [
+                            "SGCE"
+                        ],
+                        "model_evidence": [
+                            "Supporting evidence includes similarity to: 19 ESTs, 4 Proteins, 112 long SRA reads, and 95% coverage of the annotated genomic feature by RNAseq alignments, including 3 samples with support for all annotated introns"
+                        ],
+                        "product": [
+                            "sarcoglycan epsilon, transcript variant X5"
+                        ]
+                    },
+                    "is_primary_tx": false,
+                    "transcript_id": "XM_011516667.2",
+                    "protein_id": "XP_011514969.1",
+                    "transcript_symbol": null,
+                    "transcript_type": "protein_coding",
+                    "sequence_name": "NC_000007.14",
+                    "sequence_guid": null,
+                    "guid": null,
+                    "transcript_guid": null
+                },
+                {
+                    "exon_starts": [
+                        94585528,
+                        94588688,
+                        94598774,
+                        94599696,
+                        94600645,
+                        94603289,
+                        94618757,
+                        94623324,
+                        94628201,
+                        94629718,
+                        94644605,
+                        94655989
+                    ],
+                    "exon_ends": [
+                        94587812,
+                        94588732,
+                        94598963,
+                        94599723,
+                        94600857,
+                        94603452,
+                        94618956,
+                        94623397,
+                        94628359,
+                        94629841,
+                        94644667,
+                        94656167
+                    ],
+                    "strand": "MINUS",
+                    "cds_starts": [
+                        94587705,
+                        94588688,
+                        94598774,
+                        94599696,
+                        94600645,
+                        94603289,
+                        94618757,
+                        94623324,
+                        94628201
+                    ],
+                    "cds_ends": [
+                        94587812,
+                        94588732,
+                        94598963,
+                        94599723,
+                        94600857,
+                        94603452,
+                        94618956,
+                        94623397,
+                        94628318
+                    ],
+                    "cds_frames": [
+                        "ONE",
+                        "TWO",
+                        "TWO",
+                        "TWO",
+                        "ZERO",
+                        "TWO",
+                        "ONE",
+                        "ZERO",
+                        "ZERO"
+                    ],
+                    "qualifiers": {
+                        "Dbxref": [
+                            "Genbank:XM_011516669.3",
+                            "GeneID:8910",
+                            "HGNC:HGNC:10808",
+                            "MIM:604149"
+                        ],
+                        "gbkey": [
+                            "mRNA"
+                        ],
+                        "gene": [
+                            "SGCE"
+                        ],
+                        "model_evidence": [
+                            "Supporting evidence includes similarity to: 19 ESTs, 111 long SRA reads, and 95% coverage of the annotated genomic feature by RNAseq alignments, including 4 samples with support for all annotated introns"
+                        ],
+                        "product": [
+                            "sarcoglycan epsilon, transcript variant X11"
+                        ]
+                    },
+                    "is_primary_tx": false,
+                    "transcript_id": "XM_011516669.3",
+                    "protein_id": "XP_011514971.1",
+                    "transcript_symbol": null,
+                    "transcript_type": "protein_coding",
+                    "sequence_name": "NC_000007.14",
+                    "sequence_guid": null,
+                    "guid": null,
+                    "transcript_guid": null
+                },
+                {
+                    "exon_starts": [
+                        94585529,
+                        94588688,
+                        94598774,
+                        94599696,
+                        94600645,
+                        94603289,
+                        94618757,
+                        94623324,
+                        94628201,
+                        94629718,
+                        94639340,
+                        94640896
+                    ],
+                    "exon_ends": [
+                        94587812,
+                        94588732,
+                        94598963,
+                        94599723,
+                        94600857,
+                        94603452,
+                        94618956,
+                        94623397,
+                        94628359,
+                        94629841,
+                        94639448,
+                        94640959
+                    ],
+                    "strand": "MINUS",
+                    "cds_starts": [
+                        94587705,
+                        94588688,
+                        94598774,
+                        94599696,
+                        94600645,
+                        94603289,
+                        94618757,
+                        94623324,
+                        94628201,
+                        94629718,
+                        94639340
+                    ],
+                    "cds_ends": [
+                        94587812,
+                        94588732,
+                        94598963,
+                        94599723,
+                        94600857,
+                        94603452,
+                        94618956,
+                        94623397,
+                        94628359,
+                        94629841,
+                        94639362
+                    ],
+                    "cds_frames": [
+                        "ONE",
+                        "TWO",
+                        "TWO",
+                        "TWO",
+                        "ZERO",
+                        "TWO",
+                        "ONE",
+                        "ZERO",
+                        "ONE",
+                        "ONE",
+                        "ZERO"
+                    ],
+                    "qualifiers": {
+                        "Dbxref": [
+                            "Genbank:XM_017012763.1",
+                            "GeneID:8910",
+                            "HGNC:HGNC:10808",
+                            "MIM:604149"
+                        ],
+                        "gbkey": [
+                            "mRNA"
+                        ],
+                        "gene": [
+                            "SGCE"
+                        ],
+                        "model_evidence": [
+                            "Supporting evidence includes similarity to: 18 ESTs, 4 Proteins, 112 long SRA reads, and 95% coverage of the annotated genomic feature by RNAseq alignments, including 2 samples with support for all annotated introns"
+                        ],
+                        "product": [
+                            "sarcoglycan epsilon, transcript variant X6"
+                        ]
+                    },
+                    "is_primary_tx": false,
+                    "transcript_id": "XM_017012763.1",
+                    "protein_id": "XP_016868252.1",
+                    "transcript_symbol": null,
+                    "transcript_type": "protein_coding",
+                    "sequence_name": "NC_000007.14",
+                    "sequence_guid": null,
+                    "guid": null,
+                    "transcript_guid": null
+                },
+                {
+                    "exon_starts": [
+                        94585526,
+                        94588688,
+                        94598774,
+                        94600645,
+                        94603289,
+                        94618757,
+                        94623324,
+                        94628201,
+                        94629718,
+                        94644605,
+                        94655989
+                    ],
+                    "exon_ends": [
+                        94587812,
+                        94588732,
+                        94598963,
+                        94600857,
+                        94603452,
+                        94618956,
+                        94623397,
+                        94628359,
+                        94629841,
+                        94644667,
+                        94656181
+                    ],
+                    "strand": "MINUS",
+                    "cds_starts": [
+                        94587705,
+                        94588688,
+                        94598774,
+                        94600645,
+                        94603289,
+                        94618757,
+                        94623324,
+                        94628201
+                    ],
+                    "cds_ends": [
+                        94587812,
+                        94588732,
+                        94598963,
+                        94600857,
+                        94603452,
+                        94618956,
+                        94623397,
+                        94628318
+                    ],
+                    "cds_frames": [
+                        "ONE",
+                        "TWO",
+                        "TWO",
+                        "ZERO",
+                        "TWO",
+                        "ONE",
+                        "ZERO",
+                        "ZERO"
+                    ],
+                    "qualifiers": {
+                        "Dbxref": [
+                            "Genbank:XM_017012767.1",
+                            "GeneID:8910",
+                            "HGNC:HGNC:10808",
+                            "MIM:604149"
+                        ],
+                        "gbkey": [
+                            "mRNA"
+                        ],
+                        "gene": [
+                            "SGCE"
+                        ],
+                        "model_evidence": [
+                            "Supporting evidence includes similarity to: 14 ESTs, 149 long SRA reads, and 95% coverage of the annotated genomic feature by RNAseq alignments, including 4 samples with support for all annotated introns"
+                        ],
+                        "product": [
+                            "sarcoglycan epsilon, transcript variant X12"
+                        ]
+                    },
+                    "is_primary_tx": false,
+                    "transcript_id": "XM_017012767.1",
+                    "protein_id": "XP_016868256.1",
+                    "transcript_symbol": null,
+                    "transcript_type": "protein_coding",
+                    "sequence_name": "NC_000007.14",
+                    "sequence_guid": null,
+                    "guid": null,
+                    "transcript_guid": null
+                },
+                {
+                    "exon_starts": [
+                        94585528,
+                        94588688,
+                        94598774,
+                        94599696,
+                        94600645,
+                        94603289,
+                        94618757,
+                        94623324,
+                        94628201,
+                        94655989
+                    ],
+                    "exon_ends": [
+                        94587812,
+                        94588732,
+                        94598963,
+                        94599723,
+                        94600857,
+                        94603452,
+                        94618956,
+                        94623397,
+                        94628359,
+                        94656161
+                    ],
+                    "strand": "MINUS",
+                    "cds_starts": [
+                        94587705,
+                        94588688,
+                        94598774,
+                        94599696,
+                        94600645,
+                        94603289,
+                        94618757,
+                        94623324,
+                        94628201,
+                        94655989
+                    ],
+                    "cds_ends": [
+                        94587812,
+                        94588732,
+                        94598963,
+                        94599723,
+                        94600857,
+                        94603452,
+                        94618956,
+                        94623397,
+                        94628359,
+                        94656098
+                    ],
+                    "cds_frames": [
+                        "ONE",
+                        "TWO",
+                        "TWO",
+                        "TWO",
+                        "ZERO",
+                        "TWO",
+                        "ONE",
+                        "ZERO",
+                        "ONE",
+                        "ZERO"
+                    ],
+                    "qualifiers": {
+                        "Dbxref": [
+                            "Genbank:XM_024446985.1",
+                            "GeneID:8910",
+                            "HGNC:HGNC:10808",
+                            "MIM:604149"
+                        ],
+                        "gbkey": [
+                            "mRNA"
+                        ],
+                        "gene": [
+                            "SGCE"
+                        ],
+                        "model_evidence": [
+                            "Supporting evidence includes similarity to: 19 ESTs, 56 long SRA reads, and 95% coverage of the annotated genomic feature by RNAseq alignments, including 8 samples with support for all annotated introns"
+                        ],
+                        "product": [
+                            "sarcoglycan epsilon, transcript variant X7"
+                        ]
+                    },
+                    "is_primary_tx": false,
+                    "transcript_id": "XM_024446985.1",
+                    "protein_id": "XP_024302753.1",
+                    "transcript_symbol": null,
+                    "transcript_type": "protein_coding",
+                    "sequence_name": "NC_000007.14",
+                    "sequence_guid": null,
+                    "guid": null,
+                    "transcript_guid": null
+                },
+                {
+                    "exon_starts": [
+                        94585526,
+                        94588688,
+                        94598774,
+                        94600645,
+                        94603289,
+                        94618757,
+                        94623324,
+                        94628201,
+                        94655989
+                    ],
+                    "exon_ends": [
+                        94587812,
+                        94588732,
+                        94598963,
+                        94600857,
+                        94603452,
+                        94618956,
+                        94623397,
+                        94628359,
+                        94656166
+                    ],
+                    "strand": "MINUS",
+                    "cds_starts": [
+                        94587705,
+                        94588688,
+                        94598774,
+                        94600645,
+                        94603289,
+                        94618757,
+                        94623324,
+                        94628201,
+                        94655989
+                    ],
+                    "cds_ends": [
+                        94587812,
+                        94588732,
+                        94598963,
+                        94600857,
+                        94603452,
+                        94618956,
+                        94623397,
+                        94628359,
+                        94656098
+                    ],
+                    "cds_frames": [
+                        "ONE",
+                        "TWO",
+                        "TWO",
+                        "ZERO",
+                        "TWO",
+                        "ONE",
+                        "ZERO",
+                        "ONE",
+                        "ZERO"
+                    ],
+                    "qualifiers": {
+                        "Dbxref": [
+                            "Genbank:XM_024446986.1",
+                            "GeneID:8910",
+                            "HGNC:HGNC:10808",
+                            "MIM:604149"
+                        ],
+                        "gbkey": [
+                            "mRNA"
+                        ],
+                        "gene": [
+                            "SGCE"
+                        ],
+                        "model_evidence": [
+                            "Supporting evidence includes similarity to: 14 ESTs, 84 long SRA reads, and 95% coverage of the annotated genomic feature by RNAseq alignments, including 8 samples with support for all annotated introns"
+                        ],
+                        "product": [
+                            "sarcoglycan epsilon, transcript variant X8"
+                        ]
+                    },
+                    "is_primary_tx": false,
+                    "transcript_id": "XM_024446986.1",
+                    "protein_id": "XP_024302754.1",
+                    "transcript_symbol": null,
+                    "transcript_type": "protein_coding",
+                    "sequence_name": "NC_000007.14",
+                    "sequence_guid": null,
+                    "guid": null,
+                    "transcript_guid": null
+                }
+            ],
+            "gene_id": null,
+            "gene_symbol": null,
+            "gene_type": "protein_coding",
+            "locus_tag": null,
+            "qualifiers": {
+                "Dbxref": [
+                    "GeneID:8910",
+                    "HGNC:HGNC:10808",
+                    "MIM:604149"
+                ],
+                "description": [
+                    "sarcoglycan epsilon"
+                ],
+                "gbkey": [
+                    "Gene"
+                ],
+                "gene": [
+                    "SGCE"
+                ],
+                "gene_synonym": [
+                    "DYT11",
+                    "ESG",
+                    "epsilon-SG"
+                ]
+            },
+            "sequence_name": "NC_000007.14",
+            "sequence_guid": null,
+            "gene_guid": null
+        }
+    ],
+    "name": null,
+    "sequence_name": "NC_000007.14",
+    "sequence_guid": null,
+    "sequence_path": null,
+    "qualifiers": null,
+    "start": null,
+    "end": null,
+    "completely_within": null
+}

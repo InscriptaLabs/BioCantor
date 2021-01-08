@@ -3,7 +3,7 @@ from typing import Iterator, List, Union
 
 from Bio.SeqFeature import FeatureLocation, CompoundLocation
 
-from inscripta.biocantor.exc import NoSuchAncestorException
+from inscripta.biocantor.exc import NoSuchAncestorException, NullParentException
 from inscripta.biocantor.location.distance import DistanceType
 from inscripta.biocantor.location.strand import Strand
 from inscripta.biocantor.parent import Parent
@@ -14,10 +14,10 @@ from inscripta.biocantor.util.object_validation import ObjectValidation
 class Location(ABC):
     """Abstract location with respect to a coordinate system"""
 
-    @abstractmethod
     def __len__(self):
         """Returns the length (number of positions) of this Location. For subclasses representing discontiguous
         locations, regions between blocks are not considered."""
+        return self.length
 
     @abstractmethod
     def __str__(self):
@@ -28,13 +28,28 @@ class Location(ABC):
         """Returns True iff this Location is equal to other object"""
 
     @abstractmethod
+    def __hash__(self):
+        """Returns a hash code satisfying location1 == location2 => hash(location1) == hash(location2)"""
+
+    @abstractmethod
     def __repr__(self):
         """Returns the 'official' string representation of this Location"""
 
-    @property
-    @abstractmethod
-    def parent(self) -> Parent:
-        """Returns the parent of this Location"""
+    # The 0-based start position of this Location on its parent
+    start: int
+
+    # The 0-based exclusive end position of this Location on its parent
+    end: int
+
+    # The strand of this Location with respect to its parent
+    strand: Strand
+
+    # The parent of this Location
+    parent: Parent
+
+    # The length (number of positions) of this Location. For subclasses representing discontiguous locations,
+    # regions between blocks are not considered
+    length: int
 
     @property
     def parent_id(self) -> str:
@@ -45,21 +60,6 @@ class Location(ABC):
     def parent_type(self) -> str:
         """Returns the sequence type of the parent"""
         return self.parent.sequence_type if self.parent else None
-
-    @property
-    @abstractmethod
-    def strand(self) -> Strand:
-        """Returns the strand of this Location with respect to its parent"""
-
-    @property
-    @abstractmethod
-    def start(self) -> int:
-        """Returns the 0-based start position of this Location on its parent"""
-
-    @property
-    @abstractmethod
-    def end(self) -> int:
-        """Returns the 0-based exclusive end position of this Location on its parent"""
 
     @property
     @abstractmethod
@@ -139,7 +139,7 @@ class Location(ABC):
             return other
         if self.parent or other.parent:
             if not self.parent and other.parent:
-                raise ValueError(
+                raise NullParentException(
                     "Parents must be both null or both non-null:\n{}\n  !=\n{}".format(self.parent, other.parent)
                 )
             ObjectValidation.require_parents_equal_except_location(self.parent, other.parent)

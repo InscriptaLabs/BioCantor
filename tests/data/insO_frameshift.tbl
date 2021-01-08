@@ -1,0 +1,19 @@
+>Features test
+97	2693	gene		
+			gene	insO
+			locus_tag	test_000001
+			pseudo	
+97	351	mRNA		
+1909	>2693			
+			gene	insO
+			locus_tag	test_000001
+			protein_id	insO
+			pseudo	
+97	351	CDS		
+1909	>2693			
+			gene	insO
+			locus_tag	test_000001
+			product	insO
+			protein_id	insO
+			codon_start	1
+			pseudo	
