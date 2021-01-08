@@ -371,8 +371,6 @@ class TestFrameGenBank:
 
         This transcript is extra funky because it has exactly 1 base of the start codon present on the 2nd, 1bp, exon.
 
-        In this case, because the /codon_start=2 truncates the 2nd exon entirely, the frame ends up undisturbed
-        in the main exon.
         """
         gbk = test_data_dir / "negative_strand_frame.gbk"
         with open(gbk, "r") as fh:
@@ -381,6 +379,11 @@ class TestFrameGenBank:
         prot_str = (
             "MAHFKEYQVIGRRLPTESVPEPKLFRMRIFASNEVIAKSRYWYFLQKLHKVKKASGEIVSINQINEAHPTKVKNFGVWVRYDSRSGTHNMYKEIRD"
             "VSRVAAVETLYQDMAARHRARFRSIHILKVAEIEKTADVKRQYVKQFLTKDLKFPLPHRVQKSTKTFSYKRPSTFY*"
+        )
+
+        shifted_prot_str = (
+            "WLTLKNTKLLAVVCQLNLFQNQSCSE*ESLLQMKLLPSLVTGISCKSCTRLRRLLVKLFPSTKSTKLIQPRSRTSVSGLDTTPDLVL"
+            "TICTRKSETSPELLPSKPYTKTWLPDTELDLDLFTS*RLLKLKRLLTSRDNTLSNF*PRT*NSHCLTESKNPPRLSPTRDLPLST"
         )
 
         assert (
@@ -394,8 +397,8 @@ class TestFrameGenBank:
             == [CDSFrame.ONE, CDSFrame.ZERO]
         )
 
-        assert str(annot_collection.genes[2].get_primary_protein()) == prot_str[1:]
-        assert annot_collection.genes[2].get_primary_cds().frames == [CDSFrame.TWO, CDSFrame.ONE]
+        assert str(annot_collection.genes[2].get_primary_protein()) == shifted_prot_str
+        assert annot_collection.genes[2].get_primary_cds().frames == [CDSFrame.ZERO, CDSFrame.ONE]
 
     def test_positive_strand(self, test_data_dir):
         """
@@ -427,16 +430,16 @@ class TestFrameGenBank:
 
         assert (
             str(annot_collection.genes[2].get_primary_protein())
-            == "CPLKNLDS*ISIEED*SSTKDCRTNCCRESCP*SR*QGKKSYYFGKKRRLPKGIRNC*KKHHSS*A*CQGCWFLLRRSSTQVGLRCQNQGY*QDST*AKKG"
-            "STIAKIDKNQLWYIRQSYQGYFGTIEVD*TIRCLRLPILLYY*TIGLQERFR*DQQAKSSIVRQCYHRSQLG*VWYLVH*RFDSRNHHCWSTLQAS*QLFV"
-            "AIQVVQPIWWLGCPKKVQAFHPRWFFR*P*RIHQ*IG*GYEL"
+            == "CPLKKS*LLNLN*RRLKLNKRLQNKLLQRELPVKPLTRKKELLFWKETPLTKRNTKLLKETSFKLSVMPRLLVPTTSKLNTSWSSLSESRVLTRFHLSQER"
+            "FYNC*D*QESTLVHSSKLPRLLWNY*S*LNHTLLTVTHPTLLLDNWSTREVSVRSTSKEFHCPTMLSSKPTWVSMVSCPLTI*FTKSSLLVHTSSKLTTFC"
+            "GHSSCPTHLVVGVSQESSSISSKVVLSVTVKNSSINWLRL*T"
         )
 
         assert (
             str(annot_collection.genes[3].get_primary_protein())
-            == "VH*KILTPESQLKKTKAQQKTAEQIAAERAARKA*QGKKSYYFGKKRRLPKGIRNC*KKHHSS*A*CQGCWFLLRRSSTQVGLRCQNQGY*QDST*AKKG"
-            "STIAKIDKNQLWYIRQSYQGYFGTIEVD*TIRCLRLPILLYY*TIGLQERFR*DQQAKSSIVRQCYHRSQLG*VWYLVH*RFDSRNHHCWSTLQAS*QLF"
-            "VAIQVVQPIWWLGCPKKVQAFHPRWFFR*P*RIHQ*IG*GYEL"
+            == "VH*KNLDS*ISIEED*SSTKDCRTNCCRESCP*SR*QGKKSYYFGKKRRLPKGIRNC*KKHHSS*A*CQGCWFLLRRSSTQVGLRCQNQGY*QDST*"
+            "AKKGSTIAKIDKNQLWYIRQSYQGYFGTIEVD*TIRCLRLPILLYY*TIGLQERFR*DQQAKSSIVRQCYHRSQLG*VWYLVH*RFDSRNHHCWSTLQ"
+            "AS*QLFVAIQVVQPIWWLGCPKKVQAFHPRWFFR*P*RIHQ*IG*GYEL"
         )
 
 

@@ -15,4 +15,5 @@
 			locus_tag	test_000001
 			product	insO
 			protein_id	insO
+			codon_start	1
 			pseudo	
