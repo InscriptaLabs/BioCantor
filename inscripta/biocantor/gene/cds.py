@@ -140,7 +140,7 @@ class CDSInterval:
     def has_valid_stop(self) -> bool:
         """Does this CDS have a valid stop? Requires a sequence be associated."""
         seq = self.extract_sequence()
-        c = Codon(seq[-3:].sequence)
+        c = Codon(seq[-3:].sequence.upper())
         return c.is_stop_codon
 
     @property
