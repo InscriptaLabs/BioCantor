@@ -120,8 +120,8 @@ class TestGff3FastaParser:
             assert gff3_rec.name.split(".")[0] == gbk_rec.name
 
     def test_no_fa_exception(self, test_data_dir):
-        """Inscripta_BL21.gff3 has no sequences"""
-        gff3_without_fasta = test_data_dir / "Inscripta_BL21.gff3"
+        """INSC1003.gff3 has no sequences"""
+        gff3_without_fasta = test_data_dir / "INSC1003.gff3"
         with pytest.raises(GFF3FastaException):
             _ = list(
                 ParsedAnnotationRecord.parsed_annotation_records_to_model(parse_gff3_embedded_fasta(gff3_without_fasta))
@@ -132,13 +132,13 @@ class TestGff3ToModel:
     """
     Test Prokaryotic genbanks. These have no mRNA feature, and they are inferred.
 
-    The test case ``Inscripta_BL21.gff3`` is a subset of a Prokka annotation, with 7 total genes: 5 protein coding,
+    The test case ``INSC1003.gff3`` is a subset of a Prokka annotation, with 7 total genes: 5 protein coding,
     1 tRNA and 1 rRNA. The tRNA and rRNA are not real, but the CDS are.
     """
 
     def test_gff3(self, test_data_dir):
-        gff = test_data_dir / "Inscripta_BL21.gff3"
-        fasta = test_data_dir / "Inscripta_BL21.fa"
+        gff = test_data_dir / "INSC1003.gff3"
+        fasta = test_data_dir / "INSC1003.fa"
         recs = list(ParsedAnnotationRecord.parsed_annotation_records_to_model(parse_gff3_fasta(gff, fasta)))
         for rec in recs:
             for gene in rec.genes:
@@ -149,8 +149,8 @@ class TestGff3ToModel:
 
     def test_gff3_with_fa_extra_contig(self, test_data_dir):
         """Handle FASTA with sequences not seen in the GFF3"""
-        gff3_without_fasta = test_data_dir / "Inscripta_BL21.gff3"
-        fasta = test_data_dir / "Inscripta_BL21_extra_contig.fa"
+        gff3_without_fasta = test_data_dir / "INSC1003.gff3"
+        fasta = test_data_dir / "INSC1003_extra_contig.fa"
         recs = list(
             ParsedAnnotationRecord.parsed_annotation_records_to_model(parse_gff3_fasta(gff3_without_fasta, fasta))
         )
@@ -163,7 +163,7 @@ class TestGff3ToModel:
 
     def test_gff3_with_embedded_fa_extra_contig(self, test_data_dir):
         """Handle FASTA with sequences not seen in the GFF3"""
-        gff3 = test_data_dir / "Inscripta_BL21_embedded_extra_contig.gff3"
+        gff3 = test_data_dir / "INSC1003_embedded_extra_contig.gff3"
         recs = list(ParsedAnnotationRecord.parsed_annotation_records_to_model(parse_gff3_embedded_fasta(gff3)))
         assert len(recs) == 2
         assert recs[1].is_empty

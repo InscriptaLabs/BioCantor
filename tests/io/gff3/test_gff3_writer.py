@@ -14,11 +14,11 @@ class TestGff3Writer:
 
     @pytest.mark.parametrize(
         "gbk,gff3,add_sequences",
-        [("INSC1006_chrI.gbff", "INSC1006_chrI.gff3", True), ("Inscripta_BL21.gbk", "Inscripta_BL21.gff3", False)],
+        [("INSC1006_chrI.gbff", "INSC1006_chrI.gff3", True), ("INSC1003.gbk", "INSC1003.gff3", False)],
     )
     def test_genbank_to_gff(self, test_data_dir, tmp_path, gbk, gff3, add_sequences):
         """
-        INSC1006_chrI.gff3 and Inscripta_BL21.gff3 were created from INSC1006_chrI.gbff and Inscripta_BL21.gbk
+        INSC1006_chrI.gff3 and INSC1003.gff3 were created from INSC1006_chrI.gbff and INSC1003.gbk
         respectively, so we can compare to the source file.
         """
         gbk = test_data_dir / gbk
