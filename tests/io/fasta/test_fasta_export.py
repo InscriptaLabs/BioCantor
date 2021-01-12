@@ -21,8 +21,8 @@ def test_collection_to_fasta_from_genbank(test_data_dir, tmp_path):
 
 
 def test_collection_to_fasta_from_genbank_fasta_header(test_data_dir, tmp_path):
-    """Inscripta_BL21.fa has FASTA comments, and so the sequence will match but the comments will be lost."""
-    gbk = test_data_dir / "Inscripta_BL21.gbk"
+    """INSC1003.fa has FASTA comments, and so the sequence will match but the comments will be lost."""
+    gbk = test_data_dir / "INSC1003.gbk"
     with open(gbk, "r") as fh:
         parsed = list(ParsedAnnotationRecord.parsed_annotation_records_to_model(parse_genbank(fh)))
 
@@ -30,7 +30,7 @@ def test_collection_to_fasta_from_genbank_fasta_header(test_data_dir, tmp_path):
     with open(tmp_fasta, "w") as fh:
         collection_to_fasta(parsed, fh)
 
-    with open(tmp_fasta, "r") as fh1, open(test_data_dir / "Inscripta_BL21.fa", "r") as fh2:
+    with open(tmp_fasta, "r") as fh1, open(test_data_dir / "INSC1003.fa", "r") as fh2:
         f1 = fh1.readlines()
         f2 = fh2.readlines()
         assert f1[1:] == f2[1:]
@@ -40,7 +40,7 @@ def test_collection_to_fasta_from_genbank_fasta_header(test_data_dir, tmp_path):
 
 def test_records_to_fasta_from_genbank_fasta_header(test_data_dir, tmp_path):
     """Because we are exporting from a ParsedAnnotationRecord directly the FASTA comments are retained."""
-    gbk = test_data_dir / "Inscripta_BL21.gbk"
+    gbk = test_data_dir / "INSC1003.gbk"
     with open(gbk, "r") as fh:
         parsed = parse_genbank(fh)
         tmp_fasta = tmp_path / "tmp.fasta"
@@ -48,7 +48,7 @@ def test_records_to_fasta_from_genbank_fasta_header(test_data_dir, tmp_path):
             for rec in parsed:
                 rec.to_fasta(ofh)
 
-    with open(tmp_fasta, "r") as fh1, open(test_data_dir / "Inscripta_BL21.fa", "r") as fh2:
+    with open(tmp_fasta, "r") as fh1, open(test_data_dir / "INSC1003.fa", "r") as fh2:
         assert fh1.read() == fh2.read()
 
 

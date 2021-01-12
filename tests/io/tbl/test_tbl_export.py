@@ -13,7 +13,7 @@ from inscripta.biocantor.io.parser import ParsedAnnotationRecord
 @pytest.mark.parametrize(
     "gff3,expected_tbl",
     [
-        ("Inscripta_BL21_embedded_extra_contig.gff3", "Inscripta_BL21_embedded_extra_contig.tbl"),
+        ("INSC1003_embedded_extra_contig.gff3", "INSC1003_embedded_extra_contig.tbl"),
         ("insO_frameshift.gff3", "insO_frameshift.tbl"),
         ("PEG10_offset_gff3_fasta.gff3", "PEG10_offset_gff3_fasta.tbl"),
     ],
