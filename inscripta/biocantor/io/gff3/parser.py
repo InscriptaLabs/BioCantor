@@ -96,6 +96,7 @@ def default_parse_func(db: FeatureDB, chroms: List[str]) -> Iterable[AnnotationC
                     gene_biotype = Biotype[gene_biotype]
                 except KeyError:
                     gene_qualifiers["provided_biotype"] = gene.attributes["gene_biotype"][0]
+                    gene_biotype = None
 
             transcripts = []
             for i, transcript in enumerate(db.children(gene, level=1)):
@@ -116,6 +117,7 @@ def default_parse_func(db: FeatureDB, chroms: List[str]) -> Iterable[AnnotationC
                         transcript_biotype = Biotype[transcript_biotype]
                     except KeyError:
                         transcript_qualifiers["provided_transcript_biotype"] = gene.attributes["transcript_biotype"][0]
+                        transcript_biotype = None
                 elif gene_biotype is not None:
                     transcript_biotype = gene_biotype
 

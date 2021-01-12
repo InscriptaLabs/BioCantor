@@ -58,11 +58,11 @@ class TestProkaryoticGenBankParser:
     """
     Test Prokaryotic GenBanks. These have no mRNA feature, and they are inferred.
 
-    The test case ``Inscripta_BL21.gbk`` is a subset of a Prokka annotation, with 7 total genes: 5 protein coding,
+    The test case ``INSC1003.gbk`` is a subset of a Prokka annotation, with 7 total genes: 5 protein coding,
     1 tRNA and 1 rRNA. The tRNA and rRNA are not real, but the CDS are.
     """
 
-    gbk = "Inscripta_BL21.gbk"
+    gbk = "INSC1003.gbk"
 
     def test_parse_genbank_metadata(self, test_data_dir):
         gbk = test_data_dir / self.gbk
@@ -337,11 +337,11 @@ class TestProkaryoticGenBank:
     """
     Test Prokaryotic genbanks. These have no mRNA feature, and they are inferred.
 
-    The test case ``Inscripta_BL21.gbk`` is a subset of a Prokka annotation, with 7 total genes: 5 protein coding,
+    The test case ``INSC1003.gbk`` is a subset of a Prokka annotation, with 7 total genes: 5 protein coding,
     1 tRNA and 1 rRNA. The tRNA and rRNA are not real, but the CDS are.
     """
 
-    gbk = "Inscripta_BL21.gbk"
+    gbk = "INSC1003.gbk"
 
     def test_parsing(self, test_data_dir):
         gbk = test_data_dir / self.gbk

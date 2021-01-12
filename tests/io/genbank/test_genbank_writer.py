@@ -8,7 +8,7 @@ from inscripta.biocantor.io.parser import ParsedAnnotationRecord
 
 
 @pytest.mark.parametrize(
-    "gbk,flavor", [("INSC1006_chrI.gbff", GenbankFlavor.EUKARYOTIC), ("Inscripta_BL21.gbk", GenbankFlavor.PROKARYOTIC)]
+    "gbk,flavor", [("INSC1006_chrI.gbff", GenbankFlavor.EUKARYOTIC), ("INSC1003.gbk", GenbankFlavor.PROKARYOTIC)]
 )
 def test_sequences(test_data_dir, tmp_path, gbk, flavor):
     """Parse a genbank, write it to disk, then parse it again and compare."""

@@ -527,6 +527,13 @@ class TestCDSInterval:
                 ),
                 False,
             ),
+            (
+                CDSInterval(
+                    SingleInterval(0, 9, Strand.PLUS, parent=Sequence("atacgatca", alphabet)),
+                    [CDSFrame.ZERO],
+                ),
+                False,
+            ),
         ],
     )
     def test_has_valid_stop(self, cds, expected):
@@ -545,6 +552,10 @@ class TestCDSInterval:
             ),
             (
                 CDSInterval(SingleInterval(0, 9, Strand.PLUS, parent=Sequence("ATACGATCA", alphabet)), [CDSFrame.ZERO]),
+                False,
+            ),
+            (
+                CDSInterval(SingleInterval(0, 9, Strand.PLUS, parent=Sequence("atacgatca", alphabet)), [CDSFrame.ZERO]),
                 False,
             ),
         ],
