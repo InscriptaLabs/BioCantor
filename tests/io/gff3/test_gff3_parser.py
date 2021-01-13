@@ -65,7 +65,7 @@ class TestGff3Parser:
             "transcript_type": Biotype.protein_coding,
             "sequence_name": "NC_000010.11",
             "sequence_guid": None,
-            "guid": None,
+            "transcript_interval_guid": None,
             "transcript_guid": None,
         }
 
@@ -82,7 +82,7 @@ class TestGff3Parser:
         gene = genes[0]
         txs = gene.transcripts
         assert len(txs) == 22
-        with open("tests/data/SGCE.json") as fh:
+        with open(test_data_dir / "SGCE.json") as fh:
             assert AnnotationCollectionModel.Schema().load(json.load(fh)) == rec.annotation
 
     def test_parse_peg10(self, test_data_dir):
@@ -91,7 +91,7 @@ class TestGff3Parser:
         """
         gff = test_data_dir / "PEG10_minus1frameshift.gff3"
         rec = list(parse_standard_gff3(gff))[0]
-        with open("tests/data/PEG10_minus1frameshift.json") as fh:
+        with open(test_data_dir / "PEG10_minus1frameshift.json") as fh:
             assert AnnotationCollectionModel.Schema().load(json.load(fh)) == rec.annotation
 
     def test_parse_insc1006(self, test_data_dir):
@@ -99,7 +99,7 @@ class TestGff3Parser:
         gff = test_data_dir / "INSC1006_chrI.gff3"
         recs = list(parse_standard_gff3(gff))
         c = recs[0].annotation
-        with open("tests/data/INSC1006_chrI.json") as fh:
+        with open(test_data_dir / "INSC1006_chrI.json") as fh:
             assert AnnotationCollectionModel.Schema().load(json.load(fh)) == c
 
 

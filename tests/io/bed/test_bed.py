@@ -31,7 +31,7 @@ class TestBedWriter:
         cds_starts=[4, 7, 12],
         cds_ends=[6, 10, 13],
         cds_frames=[CDSFrame.ZERO.name, CDSFrame.TWO.name, CDSFrame.TWO.name],
-        guid=digest_object(123),
+        transcript_interval_guid=digest_object(123),
         transcript_symbol="name",
     )
     feat1 = dict(interval_starts=[2], interval_ends=[5], strand=Strand.PLUS.name, sequence_name="chr10")
