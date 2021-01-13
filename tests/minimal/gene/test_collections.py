@@ -219,7 +219,7 @@ class TestAnnotationCollection:
         # remove guids to make comparison work
         for gene in model.genes:
             for item in gene.transcripts:
-                item.transcript_guid = None
+                item.transcript_interval_guid = None
             gene.gene_guid = None
 
         assert model == self.annot

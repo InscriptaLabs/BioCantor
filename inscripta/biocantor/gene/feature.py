@@ -221,6 +221,7 @@ class FeatureInterval(AbstractFeatureInterval):
         feature_name: Optional[str] = None,
         feature_id: Optional[str] = None,
         guid: Optional[UUID] = None,
+        feature_guid: Optional[UUID] = None,
         is_primary_feature: Optional[bool] = None,
     ):
         self.location = location  # genomic CompoundInterval
@@ -246,6 +247,7 @@ class FeatureInterval(AbstractFeatureInterval):
             )
         else:
             self.guid = guid
+        self.feature_guid = feature_guid
 
         if self.location.parent:
             ObjectValidation.require_location_has_parent_with_sequence(self.location)
@@ -270,6 +272,7 @@ class FeatureInterval(AbstractFeatureInterval):
             sequence_name=self.sequence_name,
             sequence_guid=self.sequence_guid,
             feature_interval_guid=self.guid,
+            feature_guid=self.feature_guid,
             is_primary_feature=self._is_primary_feature,
         )
 
