@@ -39,6 +39,7 @@ class FeatureIntervalModel(BaseModel):
     sequence_name: Optional[str] = None
     sequence_guid: Optional[UUID] = None
     feature_interval_guid: Optional[UUID] = None
+    feature_guid: Optional[UUID] = None
     feature_type: Optional[str] = None
     feature_name: Optional[str] = None
     feature_id: Optional[str] = None
@@ -72,6 +73,7 @@ class FeatureIntervalModel(BaseModel):
             feature_name=self.feature_name,
             feature_id=self.feature_id,
             guid=self.feature_interval_guid,
+            feature_guid=self.feature_guid,
             is_primary_feature=self.is_primary_feature,
         )
 
@@ -101,7 +103,7 @@ class TranscriptIntervalModel(BaseModel):
     transcript_type: Optional[Biotype] = None
     sequence_name: Optional[str] = None
     sequence_guid: Optional[UUID] = None
-    guid: Optional[UUID] = None
+    transcript_interval_guid: Optional[UUID] = None
     transcript_guid: Optional[UUID] = None
 
     def to_transcript_interval(
@@ -146,7 +148,8 @@ class TranscriptIntervalModel(BaseModel):
         return TranscriptInterval(
             location=location,
             cds=cds,
-            guid=self.transcript_guid,
+            guid=self.transcript_interval_guid,
+            transcript_guid=self.transcript_guid,
             qualifiers=self.qualifiers,
             is_primary_tx=self.is_primary_tx,
             transcript_id=self.transcript_id,

@@ -55,6 +55,7 @@ class TranscriptInterval(AbstractFeatureInterval):
         sequence_name: Optional[str] = None,
         protein_id: Optional[str] = None,
         guid: Optional[UUID] = None,
+        transcript_guid: Optional[UUID] = None,
     ):
         self.location = location  # genomic CompoundInterval
         self._is_primary_feature = is_primary_tx
@@ -83,6 +84,7 @@ class TranscriptInterval(AbstractFeatureInterval):
             )
         else:
             self.guid = guid
+        self.transcript_guid = transcript_guid
 
         if self.location.parent:
             ObjectValidation.require_location_has_parent_with_sequence(self.location)
@@ -163,7 +165,8 @@ class TranscriptInterval(AbstractFeatureInterval):
             sequence_name=self.sequence_name,
             sequence_guid=self.sequence_guid,
             protein_id=self.protein_id,
-            transcript_guid=self.guid,
+            transcript_guid=self.transcript_guid,
+            transcript_interval_guid=self.guid,
         )
 
     def merge_overlapping(self) -> "TranscriptInterval":
