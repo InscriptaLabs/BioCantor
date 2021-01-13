@@ -48,14 +48,6 @@ class AbstractFeatureIntervalCollection(AbstractInterval, ABC):
     These are always on the same sequence, but can be on different strands.
     """
 
-    sequence_guid: UUID
-    sequence_name: str
-    location: SingleInterval
-    bin: int
-    guid: UUID
-    _identifiers: List[str]
-    qualifiers: Dict[Hashable, Set[Hashable]]
-
     @abstractmethod
     def children_guids(self) -> Set[UUID]:
         """Get all of the GUIDs for children.
@@ -123,7 +115,7 @@ class GeneInterval(AbstractFeatureIntervalCollection):
         gene_symbol: Optional[str] = None,
         gene_type: Optional[Biotype] = None,
         locus_tag: Optional[str] = None,
-        qualifiers: Optional[Dict[Hashable, Set[Hashable]]] = None,
+        qualifiers: Optional[Dict[Hashable, List[Union[int, str, float, bool]]]] = None,
         sequence_name: Optional[str] = None,
         sequence_guid: Optional[UUID] = None,
         parent: Optional[Parent] = None,
@@ -156,6 +148,7 @@ class GeneInterval(AbstractFeatureIntervalCollection):
                 self.locus_tag,
                 self.sequence_name,
                 self.qualifiers,
+                self.children_guids,
             )
         else:
             self.guid = guid
@@ -258,13 +251,13 @@ class GeneInterval(AbstractFeatureIntervalCollection):
             raise NoncodingTranscriptError("No CDS transcripts found on this gene")
         return self._produce_merged_feature(intervals)
 
-    def export_qualifiers(self) -> Dict[Hashable, Set[Hashable]]:
+    def export_qualifiers(self) -> Dict[Hashable, Set[str]]:
         """Exports qualifiers for GFF3/GenBank export"""
         qualifiers = self.qualifiers.copy()
         for key, val in [
             [BioCantorQualifiers.GENE_ID.value, self.gene_id],
             [BioCantorQualifiers.GENE_NAME.value, self.gene_symbol],
-            [BioCantorQualifiers.GENE_TYPE.value, self.gene_type.name],
+            [BioCantorQualifiers.GENE_TYPE.value, self.gene_type.name if self.gene_type else None],
             [BioCantorQualifiers.LOCUS_TAG.value, self.locus_tag],
         ]:
             if not val:
@@ -282,7 +275,7 @@ class GeneInterval(AbstractFeatureIntervalCollection):
         """
         qualifiers = self.export_qualifiers()
 
-        gene_guid = str(self.guid) if self.guid else digest_object(self)
+        gene_guid = str(self.guid)
 
         attributes = GFFAttributes(id=gene_guid, qualifiers=qualifiers, name=self.gene_symbol, parent=None)
         row = GFFRow(
@@ -325,7 +318,7 @@ class FeatureIntervalCollection(AbstractFeatureIntervalCollection):
         sequence_name: Optional[str] = None,
         sequence_guid: Optional[UUID] = None,
         guid: Optional[UUID] = None,
-        qualifiers: Optional[Dict[Hashable, Set[Hashable]]] = None,
+        qualifiers: Optional[Dict[Hashable, List[Union[int, str, float, bool]]]] = None,
         parent: Optional[Parent] = None,
     ):
         self.feature_intervals = feature_intervals
@@ -357,6 +350,7 @@ class FeatureIntervalCollection(AbstractFeatureIntervalCollection):
                 self.locus_tag,
                 self.sequence_name,
                 self.qualifiers,
+                self.children_guids,
             )
         else:
             self.guid = guid
@@ -398,7 +392,7 @@ class FeatureIntervalCollection(AbstractFeatureIntervalCollection):
             feature_collection_guid=self.guid,
         )
 
-    def export_qualifiers(self) -> Dict[Hashable, Set[Hashable]]:
+    def export_qualifiers(self) -> Dict[Hashable, Set[str]]:
         """Exports qualifiers for GFF3/GenBank export"""
         qualifiers = self.qualifiers.copy()
         for key, val in [
@@ -422,7 +416,7 @@ class FeatureIntervalCollection(AbstractFeatureIntervalCollection):
         """
         qualifiers = self.export_qualifiers()
 
-        feat_group_id = str(self.guid) if self.guid else digest_object(self)
+        feat_group_id = str(self.guid)
 
         attributes = GFFAttributes(id=feat_group_id, qualifiers=qualifiers, name=self.feature_name, parent=None)
 
@@ -464,7 +458,7 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
         name: Optional[str] = None,
         sequence_name: Optional[str] = None,
         sequence_guid: Optional[UUID] = None,
-        qualifiers: Optional[Dict[Hashable, Set[Hashable]]] = None,
+        qualifiers: Optional[Dict[Hashable, List[Any]]] = None,
         start: Optional[int] = None,
         end: Optional[int] = None,
         completely_within: Optional[bool] = None,
@@ -506,7 +500,9 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
         self._guid_map = {}
         self._guid_cached = False
 
-        self.guid = digest_object(self.location, self.name, self.sequence_name, self.qualifiers, self.completely_within)
+        self.guid = digest_object(
+            self.location, self.name, self.sequence_name, self.qualifiers, self.completely_within, self.children_guids
+        )
 
         if self.location.parent:
             ObjectValidation.require_location_has_parent_with_sequence(self.location)
@@ -617,7 +613,7 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
             name=self.name,
             sequence_name=self.sequence_name,
             sequence_guid=self.sequence_guid,
-            qualifiers=self.qualifiers,
+            qualifiers=self._export_qualifiers_to_list(),
             start=start,
             end=end,
             completely_within=completely_within,
@@ -664,7 +660,7 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
             name=self.name,
             sequence_name=self.sequence_name,
             sequence_guid=self.sequence_guid,
-            qualifiers=self.qualifiers,
+            qualifiers=self._export_qualifiers_to_list(),
             start=self.start,
             end=self.end,
             parent=self.location.parent,
@@ -702,7 +698,7 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
             name=self.name,
             sequence_name=self.sequence_name,
             sequence_guid=self.sequence_guid,
-            qualifiers=self.qualifiers,
+            qualifiers=self._export_qualifiers_to_list(),
             start=self.start,
             end=self.end,
             parent=self.location.parent,
