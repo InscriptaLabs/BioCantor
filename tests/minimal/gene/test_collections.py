@@ -250,9 +250,9 @@ class TestAnnotationCollection:
                 True,
                 # {"featgrp1", "featgrp2", "gene1"}
                 {
-                    UUID("6a1e7d72-e02d-8c00-af71-a1f916462642"),
-                    UUID("c2f81b52-aebb-8de3-3488-bdaa53a7e102"),
-                    UUID("bf5c1145-f895-0f66-b5ef-74f48e5550b7"),
+                    UUID("aed74122-cbee-7ae2-ab6c-3306f7d32a6a"),
+                    UUID("9ed7ee5e-3abd-7ad2-b30d-826dbc69fda2"),
+                    UUID("fd5bf6b3-b4e6-0c9b-c93a-f58f27d0551a"),
                 },
             ),
             (
@@ -261,9 +261,9 @@ class TestAnnotationCollection:
                 False,
                 True,  # {"featgrp1", "featgrp2", "gene1"}
                 {
-                    UUID("6a1e7d72-e02d-8c00-af71-a1f916462642"),
-                    UUID("c2f81b52-aebb-8de3-3488-bdaa53a7e102"),
-                    UUID("bf5c1145-f895-0f66-b5ef-74f48e5550b7"),
+                    UUID("aed74122-cbee-7ae2-ab6c-3306f7d32a6a"),
+                    UUID("9ed7ee5e-3abd-7ad2-b30d-826dbc69fda2"),
+                    UUID("fd5bf6b3-b4e6-0c9b-c93a-f58f27d0551a"),
                 },
             ),
             (
@@ -272,9 +272,9 @@ class TestAnnotationCollection:
                 False,
                 True,  # {"featgrp1", "featgrp2", "gene1"}
                 {
-                    UUID("6a1e7d72-e02d-8c00-af71-a1f916462642"),
-                    UUID("c2f81b52-aebb-8de3-3488-bdaa53a7e102"),
-                    UUID("bf5c1145-f895-0f66-b5ef-74f48e5550b7"),
+                    UUID("aed74122-cbee-7ae2-ab6c-3306f7d32a6a"),
+                    UUID("9ed7ee5e-3abd-7ad2-b30d-826dbc69fda2"),
+                    UUID("fd5bf6b3-b4e6-0c9b-c93a-f58f27d0551a"),
                 },
             ),
             (0, 0, False, True, {}),
@@ -283,26 +283,26 @@ class TestAnnotationCollection:
                 20,
                 False,
                 True,  # {"featgrp1", "gene1"}
-                {UUID("6a1e7d72-e02d-8c00-af71-a1f916462642"), UUID("bf5c1145-f895-0f66-b5ef-74f48e5550b7")},
+                {UUID("aed74122-cbee-7ae2-ab6c-3306f7d32a6a"), UUID("fd5bf6b3-b4e6-0c9b-c93a-f58f27d0551a")},
             ),
             (
                 None,
                 20,
                 False,
                 True,  # {"featgrp1", "gene1"}
-                {UUID("6a1e7d72-e02d-8c00-af71-a1f916462642"), UUID("bf5c1145-f895-0f66-b5ef-74f48e5550b7")},
+                {UUID("aed74122-cbee-7ae2-ab6c-3306f7d32a6a"), UUID("fd5bf6b3-b4e6-0c9b-c93a-f58f27d0551a")},
             ),
-            (25, None, False, True, {UUID("c2f81b52-aebb-8de3-3488-bdaa53a7e102")}),  # {"featgrp2"}
+            (25, None, False, True, {UUID("9ed7ee5e-3abd-7ad2-b30d-826dbc69fda2")}),  # {"featgrp2"}
             (26, None, False, True, {}),
-            (26, None, False, False, {UUID("c2f81b52-aebb-8de3-3488-bdaa53a7e102")}),  # {"featgrp2"}
+            (26, None, False, False, {UUID("9ed7ee5e-3abd-7ad2-b30d-826dbc69fda2")}),  # {"featgrp2"}
             (
                 0,
                 3,
                 False,
                 False,  # {"featgrp1", "gene1"}
-                {UUID("6a1e7d72-e02d-8c00-af71-a1f916462642"), UUID("bf5c1145-f895-0f66-b5ef-74f48e5550b7")},
+                {UUID("aed74122-cbee-7ae2-ab6c-3306f7d32a6a"), UUID("fd5bf6b3-b4e6-0c9b-c93a-f58f27d0551a")},
             ),
-            (0, None, True, False, {UUID("bf5c1145-f895-0f66-b5ef-74f48e5550b7")}),  # {"gene1"}
+            (0, None, True, False, {UUID("fd5bf6b3-b4e6-0c9b-c93a-f58f27d0551a")}),  # {"gene1"}
         ],
     )
     def test_position_queries(self, start, end, completely_within, coding_only, expected):

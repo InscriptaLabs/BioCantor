@@ -25,7 +25,7 @@ import logging
 from abc import ABC
 from collections import Counter
 from copy import deepcopy
-from typing import Optional, TextIO, Iterable, List, Dict, Callable, Tuple, Any
+from typing import Optional, TextIO, Iterable, List, Dict, Callable, Tuple, Any, Union
 
 from Bio import SeqIO
 from Bio.SeqFeature import SeqFeature
@@ -274,7 +274,7 @@ class IntervalFeature(Feature):
 
 
 def parse_genbank(
-    genbank_handle: TextIO,
+    genbank_handle_or_path: Union[TextIO, str],
     parse_func: Optional[Callable[[GeneFeature], Dict[str, Any]]] = GeneFeature.to_gene_model,
     gbk_type: Optional[GenBankParserType] = GenBankParserType.LOCUS_TAG,
 ) -> Iterable[ParsedAnnotationRecord]:
@@ -282,14 +282,14 @@ def parse_genbank(
     over-ridden to provide a custom implementation.
 
     Args:
-        genbank_handle: An open GenBank file.
+        genbank_handle_or_path: An open GenBank file or a path to a locally stored GenBank file.
         parse_func: Optional parse function implementation.
         gbk_type: Do we want to use model 1 or model 2? Must be one of ``sorted``, ``locus_tag``.
 
     Yields:
          :class:`ParsedAnnotationRecord`.
     """
-    seq_records = list(SeqIO.parse(genbank_handle, format="genbank"))
+    seq_records = SeqIO.parse(genbank_handle_or_path, format="genbank")
     if gbk_type == GenBankParserType.SORTED:
         gene_records = group_gene_records_from_sorted_genbank(seq_records, parse_func)
     else:

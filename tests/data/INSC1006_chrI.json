@@ -18,11 +18,11 @@
                         "ncrna_class": [
                             "other"
                         ],
-                        "product": [
-                            "CAT novel prediction: IsoSeq"
-                        ],
                         "note": [
                             "CAT transcript id: T0000001; CAT alignment id: IsoSeq-PB.2586.1; CAT novel prediction: IsoSeq"
+                        ],
+                        "product": [
+                            "CAT novel prediction: IsoSeq"
                         ]
                     },
                     "is_primary_tx": false,
@@ -68,11 +68,11 @@
                         "gene": [
                             "GDH3"
                         ],
-                        "product": [
-                            "GDH3 isoform 1"
-                        ],
                         "note": [
                             "CAT transcript id: T0000002; CAT alignment id: NM_001178204.1-0; CAT source transcript id: NM_001178204.1; CAT source transcript biotype: protein_coding"
+                        ],
+                        "product": [
+                            "GDH3 isoform 1"
                         ]
                     },
                     "is_primary_tx": false,
@@ -119,11 +119,11 @@
                         "ZERO"
                     ],
                     "qualifiers": {
-                        "gene": [
-                            "BDH2"
-                        ],
                         "codon_start": [
                             "1"
+                        ],
+                        "gene": [
+                            "BDH2"
                         ],
                         "product": [
                             "BDH2 isoform 1"
@@ -173,11 +173,11 @@
                         "gene": [
                             "BDH1"
                         ],
-                        "product": [
-                            "BDH1 isoform 1"
-                        ],
                         "note": [
                             "CAT transcript id: T0000004; CAT alignment id: NM_001178202.2-0; CAT source transcript id: NM_001178202.2; CAT source transcript biotype: protein_coding"
+                        ],
+                        "product": [
+                            "BDH1 isoform 1"
                         ]
                     },
                     "is_primary_tx": false,

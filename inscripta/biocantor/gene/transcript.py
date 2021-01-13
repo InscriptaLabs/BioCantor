@@ -46,7 +46,7 @@ class TranscriptInterval(AbstractFeatureInterval):
         self,
         location: Location,  # exons
         cds: Optional[CDSInterval] = None,  # optional CDS with frame
-        qualifiers: Optional[Dict[Hashable, Set[Hashable]]] = None,  # arbitrary key-value store
+        qualifiers: Optional[Dict[Hashable, Set[str]]] = None,  # arbitrary key-value store
         is_primary_tx: Optional[bool] = None,
         transcript_id: Optional[str] = None,
         transcript_symbol: Optional[str] = None,
@@ -317,14 +317,14 @@ class TranscriptInterval(AbstractFeatureInterval):
         return self.cds.translate(truncate_at_in_frame_stop)
 
     def export_qualifiers(
-        self, parent_qualifiers: Optional[Dict[Hashable, Set[Hashable]]] = None
+        self, parent_qualifiers: Optional[Dict[Hashable, Set[str]]] = None
     ) -> Dict[Hashable, Set[Hashable]]:
         """Exports qualifiers for GFF3/GenBank export"""
         qualifiers = self._merge_qualifiers(parent_qualifiers)
         for key, val in [
             [BioCantorQualifiers.TRANSCRIPT_ID.value, self.transcript_id],
             [BioCantorQualifiers.TRANSCRIPT_NAME.value, self.transcript_symbol],
-            [BioCantorQualifiers.TRANSCRIPT_TYPE.value, self.transcript_type.name],
+            [BioCantorQualifiers.TRANSCRIPT_TYPE.value, self.transcript_type.name if self.transcript_type else None],
             [BioCantorQualifiers.PROTEIN_ID.value, self.protein_id],
         ]:
             if not val:
@@ -335,7 +335,7 @@ class TranscriptInterval(AbstractFeatureInterval):
         return qualifiers
 
     def to_gff(
-        self, parent: Optional[str] = None, parent_qualifiers: Optional[Dict[Hashable, Set[Hashable]]] = None
+        self, parent: Optional[str] = None, parent_qualifiers: Optional[Dict[Hashable, Set[str]]] = None
     ) -> Iterable[GFFRow]:
         """Writes a GFF format list of lists for this gene.
 

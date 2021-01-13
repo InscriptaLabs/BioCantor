@@ -31,10 +31,11 @@ class AbstractInterval(ABC):
 
     location: Location
     _identifiers: List[Union[str, UUID]]
-    qualifiers: Dict[Hashable, Set[Hashable]]
-    guid: Optional[UUID] = None
+    qualifiers: Dict[Hashable, Set[str]]  # all subclasses convert qualifier values to sets of strings
+    guid: UUID
     sequence_guid: Optional[UUID] = None
     sequence_name: Optional[str] = None
+    bin: int
 
     def __len__(self):
         return len(self.location)
@@ -88,11 +89,11 @@ class AbstractInterval(ABC):
     def _import_qualifiers_from_list(self, qualifiers: Optional[Dict[Hashable, List[Hashable]]] = None):
         """Import input qualifiers to sets and store."""
         if qualifiers:
-            self.qualifiers = {key: set(vals) for key, vals in qualifiers.items()}
+            self.qualifiers = {key: {str(x) for x in vals} for key, vals in qualifiers.items()}
         else:
             self.qualifiers = {}
 
-    def _export_qualifiers_to_list(self) -> Optional[Dict[Hashable, List[Hashable]]]:
+    def _export_qualifiers_to_list(self) -> Optional[Dict[Hashable, List[str]]]:
         """Export qualifiers back to lists. This is used when exporting to dictionary / converting back to marshmallow
         schemas.
         """
@@ -109,7 +110,7 @@ class AbstractFeatureInterval(AbstractInterval, ABC):
     @abstractmethod
     def export_qualifiers(
         self, parent_qualifiers: Optional[Dict[Hashable, Set[Hashable]]] = None
-    ) -> Dict[Hashable, Set[Hashable]]:
+    ) -> Dict[Hashable, Set[str]]:
         """Exports qualifiers for GFF3 or GenBank export. This merges top level keys with the arbitrary values"""
 
     @property
@@ -192,8 +193,8 @@ class AbstractFeatureInterval(AbstractInterval, ABC):
             return seq.reverse_complement()
 
     def _merge_qualifiers(
-        self, other_qualifiers: Optional[Dict[Hashable, Set[Hashable]]] = None
-    ) -> Dict[Hashable, Set[Hashable]]:
+        self, other_qualifiers: Optional[Dict[Hashable, Set[str]]] = None
+    ) -> Dict[Hashable, Set[str]]:
         """Merges this Interval's qualifiers dictionary with a new one, removing redundancy."""
         merged = self.qualifiers.copy()
         if other_qualifiers:
@@ -214,7 +215,7 @@ class FeatureInterval(AbstractFeatureInterval):
     def __init__(
         self,
         location: Location,  # exons
-        qualifiers: Optional[Dict[Hashable, List[Hashable]]] = None,
+        qualifiers: Optional[Dict[Hashable, List[Any]]] = None,
         sequence_guid: Optional[UUID] = None,
         sequence_name: Optional[str] = None,
         feature_type: Optional[str] = None,
@@ -300,8 +301,8 @@ class FeatureInterval(AbstractFeatureInterval):
         return FeatureInterval(location=intersection, guid=new_guid, qualifiers=new_qualifiers)
 
     def export_qualifiers(
-        self, parent_qualifiers: Optional[Dict[Hashable, Set[Hashable]]] = None
-    ) -> Dict[Hashable, Set[Hashable]]:
+        self, parent_qualifiers: Optional[Dict[Hashable, Set[str]]] = None
+    ) -> Dict[Hashable, Set[str]]:
         """Exports qualifiers for GFF3/GenBank export"""
         qualifiers = self._merge_qualifiers(parent_qualifiers)
         for key, val in [
@@ -317,7 +318,7 @@ class FeatureInterval(AbstractFeatureInterval):
         return qualifiers
 
     def to_gff(
-        self, parent: Optional[str] = None, parent_qualifiers: Optional[Dict[Hashable, Set[Hashable]]] = None
+        self, parent: Optional[str] = None, parent_qualifiers: Optional[Dict[Hashable, Set[str]]] = None
     ) -> Iterable[GFFRow]:
         """Writes a GFF format list of lists for this feature.
 
@@ -333,7 +334,7 @@ class FeatureInterval(AbstractFeatureInterval):
         """
         qualifiers = self.export_qualifiers(parent_qualifiers)
 
-        feature_id = str(self.guid) if self.guid else str(digest_object(self))
+        feature_id = str(self.guid)
 
         attributes = GFFAttributes(id=feature_id, qualifiers=qualifiers, name=self.feature_name, parent=parent)
 

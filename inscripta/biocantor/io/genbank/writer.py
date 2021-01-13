@@ -11,7 +11,7 @@ pairs where you have ``gene`` followed by ``[CDS, tRNA, rRNA, ...]``.
 ``[mRNA, tRNA, ...]`` and if the case where the child is ``mRNA``, then there are ``CDS`` features.
 """
 import warnings
-from typing import Iterable, List, Optional, TextIO, Dict, Hashable
+from typing import Iterable, List, Optional, TextIO, Dict, Hashable, Union
 
 from Bio import SeqIO
 from Bio.Seq import Seq
@@ -28,7 +28,7 @@ from inscripta.biocantor.location.strand import Strand
 
 def collection_to_genbank(
     collections: Iterable[AnnotationCollection],
-    genbank_file_handle: TextIO,
+    genbank_file_handle_or_path: Union[TextIO, str],
     genbank_type: Optional[GenbankFlavor] = GenbankFlavor.PROKARYOTIC,
     force_strand: Optional[bool] = True,
     organism: Optional[str] = None,
@@ -39,7 +39,7 @@ def collection_to_genbank(
 
     Args:
         collections: Iterable of AnnotationCollections. They must have sequences associated with them.∂
-        genbank_file_handle: Path to write GenBank file to.
+        genbank_file_handle_or_path: Open file handle or path to write GenBank file to.
         genbank_type: Are we writing an prokaryotic or eukaryotic style GenBank file?
         force_strand: Boolean flag; if ``True``, then strand on children is forced, if ``False``, then improper
             strands are instead skipped.
@@ -71,7 +71,7 @@ def collection_to_genbank(
 
         seqrecords.append(seqrecord)
 
-    SeqIO.write(seqrecords, genbank_file_handle, format="genbank")
+    SeqIO.write(seqrecords, genbank_file_handle_or_path, format="genbank")
 
 
 def gene_to_feature(gene: GeneInterval, genbank_type: GenbankFlavor, force_strand: bool) -> Iterable[SeqFeature]:
