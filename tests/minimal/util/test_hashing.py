@@ -111,3 +111,37 @@ def test_nested_kwargs(kwargs, str_rep, uuid):
 def test_nested_args_kwargs(args, kwargs, str_rep, uuid):
     assert list(_encode_object_for_digest(*args, **kwargs)) == str_rep
     assert digest_object(*args, **kwargs) == uuid
+
+
+@pytest.mark.parametrize(
+    "args,kwargs,str_rep,uuid",
+    [
+        (
+            [],
+            {"key1": {"inner": {"a", "b", "c"}}, "key2": {"inner": {"a", "b", "c"}}},
+            ['key1', 'inner', "['a', 'b', 'c']", 'key2', 'inner', "['a', 'b', 'c']"],
+            UUID("fd76d879-6f7c-2aaa-b2ad-e0f5febbb4b0"),
+        ),
+        (
+            [],
+            {"key1": {"inner": {"a", "b", "c"}}, "key3": {"inner": {"a", "b", "c"}}},
+            ['key1', 'inner', "['a', 'b', 'c']", 'key3', 'inner', "['a', 'b', 'c']"],
+            UUID("d694fdb5-f4ba-998a-8f76-0b04b0c1c1f6"),
+        ),
+        (
+            [{"key1": {"inner": {"a", "b", "c"}}, "key2": {"inner": {"a", "b", "c"}}}],
+            {},
+            ['key1', 'inner', "['a', 'b', 'c']", 'key2', 'inner', "['a', 'b', 'c']"],
+            UUID("fd76d879-6f7c-2aaa-b2ad-e0f5febbb4b0"),
+        ),
+        (
+            [{"key1": {"inner": {"a", "b", "c"}}, "key3": {"inner": {"a", "b", "c"}}}],
+            {},
+            ['key1', 'inner', "['a', 'b', 'c']", 'key3', 'inner', "['a', 'b', 'c']"],
+            UUID("d694fdb5-f4ba-998a-8f76-0b04b0c1c1f6"),
+        ),
+    ],
+)
+def test_same_values_different_keys(args, kwargs, str_rep, uuid):
+    assert list(_encode_object_for_digest(*args, **kwargs)) == str_rep
+    assert digest_object(*args, **kwargs) == uuid

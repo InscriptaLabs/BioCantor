@@ -115,7 +115,7 @@ class GeneInterval(AbstractFeatureIntervalCollection):
         gene_symbol: Optional[str] = None,
         gene_type: Optional[Biotype] = None,
         locus_tag: Optional[str] = None,
-        qualifiers: Optional[Dict[Hashable, List[Any]]] = None,
+        qualifiers: Optional[Dict[Hashable, List[Union[int, str, float, bool]]]] = None,
         sequence_name: Optional[str] = None,
         sequence_guid: Optional[UUID] = None,
         parent: Optional[Parent] = None,
@@ -318,7 +318,7 @@ class FeatureIntervalCollection(AbstractFeatureIntervalCollection):
         sequence_name: Optional[str] = None,
         sequence_guid: Optional[UUID] = None,
         guid: Optional[UUID] = None,
-        qualifiers: Optional[Dict[Hashable, List[Any]]] = None,
+        qualifiers: Optional[Dict[Hashable, List[Union[int, str, float, bool]]]] = None,
         parent: Optional[Parent] = None,
     ):
         self.feature_intervals = feature_intervals

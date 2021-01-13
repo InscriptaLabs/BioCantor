@@ -215,7 +215,7 @@ class FeatureInterval(AbstractFeatureInterval):
     def __init__(
         self,
         location: Location,  # exons
-        qualifiers: Optional[Dict[Hashable, List[Any]]] = None,
+        qualifiers: Optional[Dict[Hashable, List[Union[int, str, float, bool]]]] = None,
         sequence_guid: Optional[UUID] = None,
         sequence_name: Optional[str] = None,
         feature_type: Optional[str] = None,

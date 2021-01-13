@@ -5,7 +5,7 @@ Each object is capable of exporting itself to BED and GFF3.
 """
 from methodtools import lru_cache
 from itertools import count
-from typing import Optional, Any, Dict, Iterable, Hashable, Set
+from typing import Optional, Any, Dict, Iterable, Hashable, Set, List, Union
 from uuid import UUID
 
 from inscripta.biocantor.exc import (
@@ -46,7 +46,7 @@ class TranscriptInterval(AbstractFeatureInterval):
         self,
         location: Location,  # exons
         cds: Optional[CDSInterval] = None,  # optional CDS with frame
-        qualifiers: Optional[Dict[Hashable, Set[str]]] = None,  # arbitrary key-value store
+        qualifiers: Optional[Dict[Hashable, List[Union[int, str, float, bool]]]] = None,
         is_primary_tx: Optional[bool] = None,
         transcript_id: Optional[str] = None,
         transcript_symbol: Optional[str] = None,
@@ -174,7 +174,7 @@ class TranscriptInterval(AbstractFeatureInterval):
         tx = TranscriptInterval(
             new_loc,
             cds=None,
-            qualifiers=self.qualifiers,
+            qualifiers=self._export_qualifiers_to_list(),
             is_primary_tx=self.is_primary_tx,
             transcript_id=self.transcript_id,
             transcript_symbol=self.transcript_symbol,
