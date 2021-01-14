@@ -26,11 +26,10 @@ from inscripta.biocantor.exc import (
 )
 from inscripta.biocantor.gene.biotype import Biotype
 from inscripta.biocantor.gene.cds import CDSInterval, CDSPhase
-from inscripta.biocantor.gene.feature import FeatureInterval, AbstractInterval
+from inscripta.biocantor.gene.feature import FeatureInterval, AbstractInterval, QualifierValue
 from inscripta.biocantor.gene.transcript import TranscriptInterval
 from inscripta.biocantor.io.gff3.constants import GFF_SOURCE, NULL_COLUMN, BioCantorQualifiers, BioCantorFeatureTypes
 from inscripta.biocantor.io.gff3.rows import GFFRow, GFFAttributes
-from inscripta.biocantor.io.models import QualifierValue
 from inscripta.biocantor.location import Location
 from inscripta.biocantor.location.location_impl import SingleInterval, CompoundInterval, EmptyLocation
 from inscripta.biocantor.location.strand import Strand

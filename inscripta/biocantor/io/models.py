@@ -2,23 +2,20 @@
 Data models. These models allow for validation of inputs to a BioCantor model, acting as a JSON schema for serializing
 and deserializing the models.
 """
-from typing import List, Optional, ClassVar, Type, Dict, TypeVar
+from typing import List, Optional, ClassVar, Type, Dict
 from uuid import UUID
 
 from inscripta.biocantor.exc import InvalidCDSIntervalError, LocationException, ValidationException
 from inscripta.biocantor.gene.biotype import Biotype
 from inscripta.biocantor.gene.cds import CDSFrame, CDSInterval
 from inscripta.biocantor.gene.collections import GeneInterval, FeatureIntervalCollection, AnnotationCollection
-from inscripta.biocantor.gene.feature import FeatureInterval
+from inscripta.biocantor.gene.feature import FeatureInterval, QualifierValue
 from inscripta.biocantor.gene.transcript import TranscriptInterval
 from inscripta.biocantor.location.location_impl import CompoundInterval
 from inscripta.biocantor.location.strand import Strand
 from inscripta.biocantor.parent import Parent
 from marshmallow import Schema  # noqa: F401
 from marshmallow_dataclass import dataclass
-
-# primitive data types possible as values of the list in a qualifiers dictionary
-QualifierValue = TypeVar("QualifierValue", str, int, bool, float)
 
 
 @dataclass
