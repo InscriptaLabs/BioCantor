@@ -4,7 +4,6 @@ Object representation of features. Includes an abstract feature class that is al
 Each object is capable of exporting itself to BED and GFF3.
 """
 from abc import ABC, abstractmethod
-from methodtools import lru_cache
 from typing import Optional, Any, Union, Dict, List, Set, Iterable, Hashable
 from uuid import UUID
 
@@ -15,6 +14,7 @@ from inscripta.biocantor.gene.cds import CDSPhase
 from inscripta.biocantor.io.bed import BED12, RGB
 from inscripta.biocantor.io.gff3.constants import GFF_SOURCE, NULL_COLUMN, BioCantorFeatureTypes, BioCantorQualifiers
 from inscripta.biocantor.io.gff3.rows import GFFAttributes, GFFRow
+from inscripta.biocantor.io.models import QualifierValue
 from inscripta.biocantor.location.location import Location
 from inscripta.biocantor.location.location_impl import SingleInterval
 from inscripta.biocantor.location.strand import Strand
@@ -23,6 +23,7 @@ from inscripta.biocantor.sequence.sequence import Sequence
 from inscripta.biocantor.util.bins import bins
 from inscripta.biocantor.util.hashing import digest_object
 from inscripta.biocantor.util.object_validation import ObjectValidation
+from methodtools import lru_cache
 
 
 class AbstractInterval(ABC):
@@ -215,7 +216,7 @@ class FeatureInterval(AbstractFeatureInterval):
     def __init__(
         self,
         location: Location,  # exons
-        qualifiers: Optional[Dict[Hashable, List[Union[int, str, float, bool]]]] = None,
+        qualifiers: Optional[Dict[Hashable, QualifierValue]] = None,
         sequence_guid: Optional[UUID] = None,
         sequence_name: Optional[str] = None,
         feature_type: Optional[str] = None,

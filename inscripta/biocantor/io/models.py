@@ -2,7 +2,7 @@
 Data models. These models allow for validation of inputs to a BioCantor model, acting as a JSON schema for serializing
 and deserializing the models.
 """
-from typing import List, Optional, ClassVar, Type, Any, Dict
+from typing import List, Optional, ClassVar, Type, Dict, TypeVar
 from uuid import UUID
 
 from inscripta.biocantor.exc import InvalidCDSIntervalError, LocationException, ValidationException
@@ -16,6 +16,9 @@ from inscripta.biocantor.location.strand import Strand
 from inscripta.biocantor.parent import Parent
 from marshmallow import Schema  # noqa: F401
 from marshmallow_dataclass import dataclass
+
+# primitive data types possible as values of the list in a qualifiers dictionary
+QualifierValue = TypeVar("QualifierValue", str, int, bool, float)
 
 
 @dataclass
@@ -35,7 +38,7 @@ class FeatureIntervalModel(BaseModel):
     interval_starts: List[int]
     interval_ends: List[int]
     strand: Strand
-    qualifiers: Optional[Dict[str, Any]] = None
+    qualifiers: Optional[Dict[str, QualifierValue]] = None
     sequence_name: Optional[str] = None
     sequence_guid: Optional[UUID] = None
     feature_interval_guid: Optional[UUID] = None
@@ -95,7 +98,7 @@ class TranscriptIntervalModel(BaseModel):
     cds_starts: Optional[List[int]] = None
     cds_ends: Optional[List[int]] = None
     cds_frames: Optional[List[CDSFrame]] = None
-    qualifiers: Optional[Dict[str, Any]] = None
+    qualifiers: Optional[Dict[str, QualifierValue]] = None
     is_primary_tx: Optional[bool] = None
     transcript_id: Optional[str] = None
     protein_id: Optional[str] = None
@@ -182,7 +185,7 @@ class GeneIntervalModel(BaseModel):
     gene_symbol: Optional[str] = None
     gene_type: Optional[Biotype] = None
     locus_tag: Optional[str] = None
-    qualifiers: Optional[Dict[str, Any]] = None
+    qualifiers: Optional[Dict[str, QualifierValue]] = None
     sequence_name: Optional[str] = None
     sequence_guid: Optional[UUID] = None
     gene_guid: Optional[UUID] = None
@@ -231,7 +234,7 @@ class FeatureIntervalCollectionModel(BaseModel):
     sequence_name: Optional[str] = None
     sequence_guid: Optional[UUID] = None
     feature_collection_guid: Optional[UUID] = None
-    qualifiers: Optional[Dict[str, Any]] = None
+    qualifiers: Optional[Dict[str, QualifierValue]] = None
 
     def to_feature_collection(self, parent: Optional[Parent] = None) -> FeatureIntervalCollection:
         """Produce a feature collection from a :class:`FeatureIntervalCollectionModel`."""
@@ -279,7 +282,7 @@ class AnnotationCollectionModel(BaseModel):
     sequence_name: Optional[str] = None
     sequence_guid: Optional[UUID] = None
     sequence_path: Optional[str] = None
-    qualifiers: Optional[Dict[str, Any]] = None
+    qualifiers: Optional[Dict[str, QualifierValue]] = None
     start: Optional[int] = None
     end: Optional[int] = None
     completely_within: Optional[bool] = None

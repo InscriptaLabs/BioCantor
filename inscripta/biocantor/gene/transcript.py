@@ -3,9 +3,8 @@ Object representation of Transcripts.
 
 Each object is capable of exporting itself to BED and GFF3.
 """
-from methodtools import lru_cache
 from itertools import count
-from typing import Optional, Any, Dict, Iterable, Hashable, Set, List, Union
+from typing import Optional, Any, Dict, Iterable, Hashable, Set
 from uuid import UUID
 
 from inscripta.biocantor.exc import (
@@ -18,6 +17,7 @@ from inscripta.biocantor.gene.feature import AbstractFeatureInterval
 from inscripta.biocantor.io.bed import BED12, RGB
 from inscripta.biocantor.io.gff3.constants import GFF_SOURCE, NULL_COLUMN, BioCantorQualifiers, BioCantorFeatureTypes
 from inscripta.biocantor.io.gff3.rows import GFFAttributes, GFFRow
+from inscripta.biocantor.io.models import QualifierValue
 from inscripta.biocantor.location.location import Location
 from inscripta.biocantor.location.location_impl import SingleInterval, EmptyLocation
 from inscripta.biocantor.location.strand import Strand
@@ -26,6 +26,7 @@ from inscripta.biocantor.sequence.sequence import Sequence
 from inscripta.biocantor.util.bins import bins
 from inscripta.biocantor.util.hashing import digest_object
 from inscripta.biocantor.util.object_validation import ObjectValidation
+from methodtools import lru_cache
 
 
 class TranscriptInterval(AbstractFeatureInterval):
@@ -46,7 +47,7 @@ class TranscriptInterval(AbstractFeatureInterval):
         self,
         location: Location,  # exons
         cds: Optional[CDSInterval] = None,  # optional CDS with frame
-        qualifiers: Optional[Dict[Hashable, List[Union[int, str, float, bool]]]] = None,
+        qualifiers: Optional[Dict[Hashable, QualifierValue]] = None,
         is_primary_tx: Optional[bool] = None,
         transcript_id: Optional[str] = None,
         transcript_symbol: Optional[str] = None,
