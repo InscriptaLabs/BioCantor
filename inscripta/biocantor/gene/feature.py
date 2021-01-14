@@ -4,8 +4,7 @@ Object representation of features. Includes an abstract feature class that is al
 Each object is capable of exporting itself to BED and GFF3.
 """
 from abc import ABC, abstractmethod
-from methodtools import lru_cache
-from typing import Optional, Any, Union, Dict, List, Set, Iterable, Hashable
+from typing import Optional, Any, Union, Dict, List, Set, Iterable, Hashable, TypeVar
 from uuid import UUID
 
 from inscripta.biocantor.exc import (
@@ -23,6 +22,11 @@ from inscripta.biocantor.sequence.sequence import Sequence
 from inscripta.biocantor.util.bins import bins
 from inscripta.biocantor.util.hashing import digest_object
 from inscripta.biocantor.util.object_validation import ObjectValidation
+from methodtools import lru_cache
+
+
+# primitive data types possible as values of the list in a qualifiers dictionary
+QualifierValue = TypeVar("QualifierValue", str, int, bool, float)
 
 
 class AbstractInterval(ABC):
@@ -215,7 +219,7 @@ class FeatureInterval(AbstractFeatureInterval):
     def __init__(
         self,
         location: Location,  # exons
-        qualifiers: Optional[Dict[Hashable, List[Union[int, str, float, bool]]]] = None,
+        qualifiers: Optional[Dict[Hashable, QualifierValue]] = None,
         sequence_guid: Optional[UUID] = None,
         sequence_name: Optional[str] = None,
         feature_type: Optional[str] = None,

@@ -4,7 +4,7 @@ from setuptools import find_namespace_packages, setup
 
 import versioneer
 
-dependencies = ["versioneer", "biopython", "marshmallow_dataclass[enum]", "marshmallow", "methodtools"]
+dependencies = ["versioneer", "biopython", "marshmallow_dataclass[enum,union]", "marshmallow", "methodtools"]
 
 extra_dependencies = {
     "io": ["gffutils"],

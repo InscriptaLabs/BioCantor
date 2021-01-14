@@ -26,7 +26,7 @@ from inscripta.biocantor.exc import (
 )
 from inscripta.biocantor.gene.biotype import Biotype
 from inscripta.biocantor.gene.cds import CDSInterval, CDSPhase
-from inscripta.biocantor.gene.feature import FeatureInterval, AbstractInterval
+from inscripta.biocantor.gene.feature import FeatureInterval, AbstractInterval, QualifierValue
 from inscripta.biocantor.gene.transcript import TranscriptInterval
 from inscripta.biocantor.io.gff3.constants import GFF_SOURCE, NULL_COLUMN, BioCantorQualifiers, BioCantorFeatureTypes
 from inscripta.biocantor.io.gff3.rows import GFFRow, GFFAttributes
@@ -115,7 +115,7 @@ class GeneInterval(AbstractFeatureIntervalCollection):
         gene_symbol: Optional[str] = None,
         gene_type: Optional[Biotype] = None,
         locus_tag: Optional[str] = None,
-        qualifiers: Optional[Dict[Hashable, List[Union[int, str, float, bool]]]] = None,
+        qualifiers: Optional[Dict[Hashable, List[QualifierValue]]] = None,
         sequence_name: Optional[str] = None,
         sequence_guid: Optional[UUID] = None,
         parent: Optional[Parent] = None,
@@ -318,7 +318,7 @@ class FeatureIntervalCollection(AbstractFeatureIntervalCollection):
         sequence_name: Optional[str] = None,
         sequence_guid: Optional[UUID] = None,
         guid: Optional[UUID] = None,
-        qualifiers: Optional[Dict[Hashable, List[Union[int, str, float, bool]]]] = None,
+        qualifiers: Optional[Dict[Hashable, List[QualifierValue]]] = None,
         parent: Optional[Parent] = None,
     ):
         self.feature_intervals = feature_intervals
@@ -458,7 +458,7 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
         name: Optional[str] = None,
         sequence_name: Optional[str] = None,
         sequence_guid: Optional[UUID] = None,
-        qualifiers: Optional[Dict[Hashable, List[Any]]] = None,
+        qualifiers: Optional[Dict[Hashable, QualifierValue]] = None,
         start: Optional[int] = None,
         end: Optional[int] = None,
         completely_within: Optional[bool] = None,
