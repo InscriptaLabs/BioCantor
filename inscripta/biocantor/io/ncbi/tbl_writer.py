@@ -347,7 +347,9 @@ class RRNATblFeature(TblFeature):
         qualifiers["transcript_id"] = [transcript.transcript_id]
 
         if "product" in transcript.qualifiers:
-            qualifiers["product"] = transcript.qualifiers["product"]
+            # some tools encode rRNA with underscores, but tbl2asn does not like that
+            # TODO: Try to find the complete list of rRNA names that they consider valid
+            qualifiers["product"] = [transcript.qualifiers["product"].pop().replace("_", " ")]
         else:
             qualifiers["product"] = ["unknown ribosomal RNA"]
 
