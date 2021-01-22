@@ -5,9 +5,11 @@ All of these TBL files have been validated to pass the tbl2asn error validator t
 to acquire and so is not packaged for these unit tests.
 """
 import pytest
-from inscripta.biocantor.io.ncbi.tbl_writer import collection_to_tbl, LocusTagException
+from inscripta.biocantor.io.ncbi.tbl_writer import collection_to_tbl
 from inscripta.biocantor.io.gff3.parser import parse_gff3_embedded_fasta
 from inscripta.biocantor.io.parser import ParsedAnnotationRecord
+import random
+random.seed(123)
 
 
 @pytest.mark.parametrize(
@@ -23,16 +25,6 @@ def test_tbl_export_from_gff3(test_data_dir, tmp_path, gff3, expected_tbl):
     recs = list(ParsedAnnotationRecord.parsed_annotation_records_to_model(parse_gff3_embedded_fasta(gff3)))
     tmp = tmp_path / "tmp.tbl"
     with open(tmp, "w") as fh:
-        collection_to_tbl(recs, fh, locus_tag_prefix="test")
+        collection_to_tbl(recs, fh, locus_tag_prefix="test", submitter_lab_name="inscripta")
     with open(tmp) as fh1, open(test_data_dir / expected_tbl) as fh2:
         assert fh1.read() == fh2.read()
-
-
-def test_export_exception(test_data_dir, tmp_path):
-    """Files without locus tags on all features raise an exception if no locus tag is provided"""
-    gff3 = test_data_dir / "insO_frameshift.gff3"
-    recs = list(ParsedAnnotationRecord.parsed_annotation_records_to_model(parse_gff3_embedded_fasta(gff3)))
-    tmp = tmp_path / "tmp.tbl"
-    with pytest.raises(LocusTagException):
-        with open(tmp, "w") as fh:
-            collection_to_tbl(recs, fh)

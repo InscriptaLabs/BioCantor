@@ -1,77 +1,87 @@
 >Features FEPOIHMA_1
 335	2797	gene		
 			gene	thrA
-			locus_tag	test_000001
+			locus_tag	test_5
 335	2797	mRNA		
 			gene	thrA
-			locus_tag	test_000001
-			protein_id	X:FEPOIHMA_00001
+			locus_tag	test_5
+			protein_id	gnl|inscripta|BICYNIDBMRRK
+			transcript_id	gnl|inscripta|KBFEKRKWHFAN
 335	2797	CDS		
 			gene	thrA
-			locus_tag	test_000001
-			product	X:FEPOIHMA_00001
-			protein_id	X:FEPOIHMA_00001
+			locus_tag	test_5
+			product	hypothetical protein
+			protein_id	gnl|inscripta|BICYNIDBMRRK
+			transcript_id	gnl|inscripta|KBFEKRKWHFAN
 			codon_start	1
 2799	3731	gene		
 			gene	thrB
-			locus_tag	test_000002
+			locus_tag	test_10
 2799	3731	mRNA		
 			gene	thrB
-			locus_tag	test_000002
-			protein_id	X:FEPOIHMA_00002
+			locus_tag	test_10
+			protein_id	gnl|inscripta|YCTMCAKXODBC
+			transcript_id	gnl|inscripta|VEEZAJNSPIPB
 2799	3731	CDS		
 			gene	thrB
-			locus_tag	test_000002
-			product	X:FEPOIHMA_00002
-			protein_id	X:FEPOIHMA_00002
+			locus_tag	test_10
+			product	hypothetical protein
+			protein_id	gnl|inscripta|YCTMCAKXODBC
+			transcript_id	gnl|inscripta|VEEZAJNSPIPB
 			codon_start	1
 3732	5018	gene		
 			gene	thrC
-			locus_tag	test_000003
+			locus_tag	test_15
 3732	5018	mRNA		
 			gene	thrC
-			locus_tag	test_000003
-			protein_id	X:FEPOIHMA_00003
+			locus_tag	test_15
+			protein_id	gnl|inscripta|YJKQZPGTUQSZ
+			transcript_id	gnl|inscripta|KAMYUQNVRUZV
 3732	5018	CDS		
 			gene	thrC
-			locus_tag	test_000003
-			product	X:FEPOIHMA_00003
-			protein_id	X:FEPOIHMA_00003
+			locus_tag	test_15
+			product	hypothetical protein
+			protein_id	gnl|inscripta|YJKQZPGTUQSZ
+			transcript_id	gnl|inscripta|KAMYUQNVRUZV
 			codon_start	1
 5231	5527	gene		
 			gene	yaaX
-			locus_tag	test_000004
+			locus_tag	test_20
 5231	5527	mRNA		
 			gene	yaaX
-			locus_tag	test_000004
-			protein_id	X:FEPOIHMA_00004
+			locus_tag	test_20
+			protein_id	gnl|inscripta|TPQVNLQBYUFX
+			transcript_id	gnl|inscripta|CPVIFKKRMCXO
 5231	5527	CDS		
 			gene	yaaX
-			locus_tag	test_000004
-			product	X:FEPOIHMA_00004
-			protein_id	X:FEPOIHMA_00004
+			locus_tag	test_20
+			product	hypothetical protein
+			protein_id	gnl|inscripta|TPQVNLQBYUFX
+			transcript_id	gnl|inscripta|CPVIFKKRMCXO
 			codon_start	1
 6456	5680	gene		
 			gene	yaaA
-			locus_tag	test_000005
+			locus_tag	test_25
 6456	5680	mRNA		
 			gene	yaaA
-			locus_tag	test_000005
-			protein_id	X:FEPOIHMA_00005
+			locus_tag	test_25
+			protein_id	gnl|inscripta|MSYKAGSCULAL
+			transcript_id	gnl|inscripta|HMRQXBUJPYUX
 6456	5680	CDS		
 			gene	yaaA
-			locus_tag	test_000005
-			product	X:FEPOIHMA_00005
-			protein_id	X:FEPOIHMA_00005
+			locus_tag	test_25
+			product	hypothetical protein
+			protein_id	gnl|inscripta|MSYKAGSCULAL
+			transcript_id	gnl|inscripta|HMRQXBUJPYUX
 			codon_start	1
 6756	6843	gene		
-			locus_tag	test_000006
+			locus_tag	test_30
 6756	6843	tRNA		
-			locus_tag	test_000006
+			locus_tag	test_30
 			product	tRNA-Xxx
 7066	6956	gene		
-			locus_tag	test_000007
+			locus_tag	test_35
 7066	6956	rRNA		
-			locus_tag	test_000007
+			locus_tag	test_35
 			product	unknown ribosomal RNA
 >Features extraseq

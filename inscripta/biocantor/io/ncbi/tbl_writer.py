@@ -3,6 +3,7 @@ Write BioCantor data models to the NCBI .tbl format.
 
 The .tbl format is used for NCBI genome submission, and can be validated with the tool ``tbl2asn``.
 """
+import re
 import warnings
 from abc import ABC
 from typing import Optional, TextIO, Iterable, Union, Dict, List, Set
@@ -11,9 +12,24 @@ from inscripta.biocantor.gene.biotype import Biotype
 from inscripta.biocantor.gene.codon import TranslationTable
 from inscripta.biocantor.gene.collections import AnnotationCollection, GeneInterval, TranscriptInterval
 from inscripta.biocantor.io.genbank.constants import GeneFeatures, TranscriptFeatures, IntervalFeatures, GenbankFlavor
-from inscripta.biocantor.io.ncbi.exc import TblExportException, LocusTagException
+from inscripta.biocantor.io.ncbi.exc import TblExportException
 from inscripta.biocantor.location import Location
 from inscripta.biocantor.location.strand import Strand
+import random
+from string import ascii_uppercase
+
+
+def random_uppercase_str(size=10) -> str:
+    """
+    Generates a random uppercase string of size ``size``.
+    Args:
+        size: Size of string to produce
+
+    Returns:
+        A random string of size ``size``.
+    """
+    return "".join([random.choice(ascii_uppercase) for _ in range(size)])
+
 
 
 class TblFeature(ABC):
@@ -114,6 +130,15 @@ class TblFeature(ABC):
 
         return "\n".join(r)
 
+    @staticmethod
+    def _filter_val(val: str) -> str:
+        """Filter a value based on the regex.
+
+        NCBI does not like parenthesis or semicolons in the values of a qualifier.
+        """
+        chars_to_remove = re.compile(r"\(\);")
+        return re.sub(chars_to_remove, "", val)
+
     def _qualifiers_to_str(self) -> str:
         s = []
         for key, val in self.qualifiers.items():
@@ -122,8 +147,9 @@ class TblFeature(ABC):
             filtered_vals = [str(x) for x in val if x is not None]
             if len(filtered_vals) == 0:
                 continue
-            val = "; ".join(filtered_vals)
-            s.append(f"\t\t\t{key}\t{val}")
+            for val in filtered_vals:
+                val = TblFeature._filter_val(val)
+                s.append(f"\t\t\t{key}\t{val}")
         if self.is_pseudo:
             s.append("\t\t\tpseudo\t")
         return "\n".join(s)
@@ -221,24 +247,37 @@ class CDSTblFeature(TblFeature):
     VALID_KEYS = MRNATblFeature.VALID_KEYS | {"product", "codon_start"}
 
     def __init__(
-        self, transcript: TranscriptInterval, gene_feature: GeneTblFeature, translation_table: TranslationTable
+        self, transcript: TranscriptInterval, gene_feature: GeneTblFeature, submitter_lab_name: str, translation_table: TranslationTable
     ):
         qualifiers = gene_feature.qualifiers.copy()
 
         if "product" in transcript.qualifiers:
-            qualifiers["product"] = transcript.qualifiers["product"]
-        elif transcript.protein_id:
-            qualifiers["product"] = [transcript.protein_id]
+            product = list(transcript.qualifiers["product"])[0]
+            product = product.replace("_", " ")  # NCBI does not allow underscores in product names
         else:
-            qualifiers["product"] = qualifiers["gene"]
+            # if we don't have a product, default to "hypothetical protein"
+            product = "hypothetical protein"
+        qualifiers["product"] = [product]
 
-        if transcript.protein_id:
-            qualifiers["protein_id"] = [transcript.protein_id]
-        else:
-            qualifiers["protein_id"] = qualifiers["gene"]
+        # protein IDs as well as transcript IDs must be in the format gnl|dbname|string, where:
+        # gnl: static string
+        # dbname: submitter group's name
+        # string: a unique string for this protein
+        # transcript ID must not match protein ID
+        # this code is not currently explicitly checking this, because the chances of a collision with 12 characters
+        # is acceptably low.
 
-        if transcript.transcript_id:
-            qualifiers["transcript_id"] = [transcript.transcript_id]
+        qualifiers["protein_id"] = [f"gnl|{submitter_lab_name}|{random_uppercase_str(size=12)}"]
+        qualifiers["transcript_id"] = [f"gnl|{submitter_lab_name}|{random_uppercase_str(size=12)}"]
+
+        # if we have protein or transcript IDs, retain them under the note field
+        qualifiers["note"] = []
+        for key, val in [["protein_id", transcript.protein_id], ["transcript_id", transcript.transcript_id]]:
+            if val:
+                qualifiers["note"].append(f"original {key}: {val}")
+
+        if not qualifiers["note"]:
+            del qualifiers["note"]
 
         codon_start = next(transcript.cds.frame_iter()).value + 1
         qualifiers["codon_start"] = [codon_start]
@@ -370,6 +409,7 @@ class TblGene:
     def __init__(
         self,
         gene: GeneInterval,
+        submitter_lab_name: str,
         locus_tag: Optional[str] = None,
         translation_table: Optional[TranslationTable] = TranslationTable.DEFAULT,
     ):
@@ -392,7 +432,7 @@ class TblGene:
         for tx in gene.transcripts:
             if gene.is_coding:
                 # the CDS feature is built first so that the end-completeness status can be assessed
-                cds_tbl = CDSTblFeature(tx, self.gene_tbl, translation_table)
+                cds_tbl = CDSTblFeature(tx, self.gene_tbl, submitter_lab_name, translation_table)
                 tx_tbl = MRNATblFeature(tx, cds_tbl)
             # try to figure out if this biotype is one of the INSDC biotypes we support, otherwise fall back
             # to just a generic misc_RNA feature
@@ -401,7 +441,8 @@ class TblGene:
             elif gene.gene_type == Biotype.tRNA:
                 tx_tbl = TRNATblFeature(tx, self.gene_tbl)
             elif gene.gene_type == Biotype.misc_RNA:
-                tx_tbl = MiscRNATblFeature(tx, self.gene_tbl)
+                # NCBI has complained about misc_RNA being "not usual"
+                tx_tbl = NcRNATblFeature(tx, self.gene_tbl)
             else:
                 tx_tbl = NcRNATblFeature(tx, self.gene_tbl)
             self.gene_tbl.children.append(tx_tbl)
@@ -416,6 +457,8 @@ def collection_to_tbl(
     translation_table: Optional[TranslationTable] = TranslationTable.DEFAULT,
     locus_tag_prefix: Optional[str] = None,
     genbank_flavor: Optional[GenbankFlavor] = GenbankFlavor.EUKARYOTIC,
+    locus_tag_jump_size: Optional[int] = 5,
+    submitter_lab_name: Optional[str] = None,
 ):
     """
     Take an iterable of :class:`~biocantor.gene.collections.AnnotationCollection` and produce a TBL file.
@@ -430,9 +473,18 @@ def collection_to_tbl(
         genbank_flavor: NCBI treats TBL files similarly to Genbank files. The primary distinction is that for
             prokaryotic genomes, the ``mRNA`` feature is not produced, and instead a ``CDS`` is a direct child
             of the ``gene`` feature.
+        locus_tag_jump_size: NCBI likes to have locus tags jump so that they can be in sort order in subsequent
+            genome iterations.
+        submitter_lab_name: Name to put in the ``dbname`` section of unique identifiers. This is intended to be a
+            string that uniquely labels the submitter lab. If not set, will be a random string.
     """
+    if not locus_tag_prefix:
+        locus_tag_prefix = random_uppercase_str(size=8)
+    if not submitter_lab_name:
+        submitter_lab_name = random_uppercase_str(size=8)
+
     # keep track of the locus tag we last saw
-    locus_tag_offset = 1
+    locus_tag_offset = 0
 
     for collection in collections:
         print(f">Features {collection.sequence_name}", file=tbl_file_handle)
@@ -442,16 +494,10 @@ def collection_to_tbl(
 
         for gene in collection.genes:
 
-            if locus_tag_prefix:
-                locus_tag = f"{locus_tag_prefix}_{locus_tag_offset:06}"
-                locus_tag_offset += 1
-            else:
-                locus_tag = gene.locus_tag
+            locus_tag_offset += locus_tag_jump_size
+            locus_tag = f"{locus_tag_prefix}_{locus_tag_offset}"
 
-            if not locus_tag:
-                raise LocusTagException("Must explicitly assign locus tags to all genes if not providing a prefix.")
-
-            tblgene = TblGene(gene, locus_tag, translation_table)
+            tblgene = TblGene(gene, submitter_lab_name, locus_tag, translation_table)
             for obj in tblgene:
                 if genbank_flavor == GenbankFlavor.PROKARYOTIC and type(obj) == MRNATblFeature:
                     continue
