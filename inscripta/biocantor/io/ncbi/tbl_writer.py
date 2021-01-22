@@ -31,7 +31,6 @@ def random_uppercase_str(size=10) -> str:
     return "".join([random.choice(ascii_uppercase) for _ in range(size)])
 
 
-
 class TblFeature(ABC):
     """
     Models one feature in a tbl file.
@@ -247,7 +246,11 @@ class CDSTblFeature(TblFeature):
     VALID_KEYS = MRNATblFeature.VALID_KEYS | {"product", "codon_start"}
 
     def __init__(
-        self, transcript: TranscriptInterval, gene_feature: GeneTblFeature, submitter_lab_name: str, translation_table: TranslationTable
+        self,
+        transcript: TranscriptInterval,
+        gene_feature: GeneTblFeature,
+        submitter_lab_name: str,
+        translation_table: TranslationTable,
     ):
         qualifiers = gene_feature.qualifiers.copy()
 

@@ -9,6 +9,7 @@ from inscripta.biocantor.io.ncbi.tbl_writer import collection_to_tbl
 from inscripta.biocantor.io.gff3.parser import parse_gff3_embedded_fasta
 from inscripta.biocantor.io.parser import ParsedAnnotationRecord
 import random
+
 random.seed(123)
 
 
