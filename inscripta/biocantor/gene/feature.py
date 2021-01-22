@@ -214,7 +214,7 @@ class FeatureInterval(AbstractFeatureInterval):
     open chromatin sites, etc.
     """
 
-    _identifiers = ["feature_name", "feature_id"]
+    _identifiers = ["feature_name", "feature_id", "locus_tag"]
 
     def __init__(
         self,
@@ -222,9 +222,10 @@ class FeatureInterval(AbstractFeatureInterval):
         qualifiers: Optional[Dict[Hashable, QualifierValue]] = None,
         sequence_guid: Optional[UUID] = None,
         sequence_name: Optional[str] = None,
-        feature_type: Optional[str] = None,
+        feature_types: Optional[List[str]] = None,
         feature_name: Optional[str] = None,
         feature_id: Optional[str] = None,
+        locus_tag: Optional[str] = None,
         guid: Optional[UUID] = None,
         feature_guid: Optional[UUID] = None,
         is_primary_feature: Optional[bool] = None,
@@ -232,9 +233,10 @@ class FeatureInterval(AbstractFeatureInterval):
         self.location = location  # genomic CompoundInterval
         self.sequence_guid = sequence_guid
         self.sequence_name = sequence_name
-        self.feature_type = feature_type
+        self.feature_types = set(feature_types)  # stored as a set of types
         self.feature_name = feature_name
         self.feature_id = feature_id
+        self.locus_tag = locus_tag
         # qualifiers come in as a List, convert to Set
         self._import_qualifiers_from_list(qualifiers)
         self.bin = bins(self.start, self.end, fmt="bed")
@@ -245,7 +247,7 @@ class FeatureInterval(AbstractFeatureInterval):
                 self.location,
                 self.qualifiers,
                 self.sequence_name,
-                self.feature_type,
+                self.feature_types,
                 self.feature_name,
                 self.feature_id,
                 self.is_primary_feature,
@@ -264,16 +266,17 @@ class FeatureInterval(AbstractFeatureInterval):
         return "<{}>".format(str(self))
 
     def to_dict(self) -> Dict[str, Any]:
-        """Convert to a dict usable by :class:`FeatureIntervalModel`."""
-        exon_starts, exon_ends = list(zip(*([x.start, x.end] for x in self.location.blocks)))
+        """Convert to a dict usable by :class:`biocantor.io.models.FeatureIntervalModel`."""
+        interval_starts, interval_ends = list(zip(*([x.start, x.end] for x in self.location.blocks)))
         return dict(
-            interval_starts=exon_starts,
-            interval_ends=exon_ends,
+            interval_starts=interval_starts,
+            interval_ends=interval_ends,
             strand=self.strand.name,
             qualifiers=self._export_qualifiers_to_list(),
             feature_id=self.feature_id,
             feature_name=self.feature_name,
-            feature_type=self.feature_type,
+            feature_types=list(self.feature_types),
+            locus_tag=self.locus_tag,
             sequence_name=self.sequence_name,
             sequence_guid=self.sequence_guid,
             feature_interval_guid=self.guid,
@@ -315,13 +318,14 @@ class FeatureInterval(AbstractFeatureInterval):
         for key, val in [
             [BioCantorQualifiers.FEATURE_SYMBOL.value, self.feature_name],
             [BioCantorQualifiers.FEATURE_ID.value, self.feature_id],
-            [BioCantorQualifiers.FEATURE_TYPE.value, self.feature_type],
         ]:
             if not val:
                 continue
             if key not in qualifiers:
                 qualifiers[key] = set()
             qualifiers[key].add(val)
+        if self.feature_types:
+            qualifiers[BioCantorQualifiers.FEATURE_TYPE.value] = self.feature_types
         return qualifiers
 
     def to_gff(

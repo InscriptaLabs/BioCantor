@@ -223,9 +223,10 @@ class GeneInterval(AbstractFeatureIntervalCollection):
             qualifiers=self._export_qualifiers_to_list(),
             sequence_guid=self.sequence_guid,
             sequence_name=self.sequence_name,
-            feature_type=self.gene_type.name,
+            feature_types=[self.gene_type.name],
             feature_name=self.gene_symbol,
             feature_id=self.gene_id,
+            locus_tag=self.locus_tag,
             guid=self.guid,
         )
 
@@ -313,7 +314,6 @@ class FeatureIntervalCollection(AbstractFeatureIntervalCollection):
         feature_intervals: List[FeatureInterval],
         feature_name: Optional[str] = None,
         feature_id: Optional[str] = None,
-        feature_type: Optional[str] = None,
         locus_tag: Optional[str] = None,
         sequence_name: Optional[str] = None,
         sequence_guid: Optional[UUID] = None,
@@ -324,7 +324,7 @@ class FeatureIntervalCollection(AbstractFeatureIntervalCollection):
         self.feature_intervals = feature_intervals
         self.feature_name = feature_name
         self.feature_id = feature_id
-        self.feature_type = feature_type
+        self.feature_types = set.union(*(x.feature_types for x in feature_intervals if x))
         self.locus_tag = locus_tag
         self.sequence_name = sequence_name
         self.sequence_guid = sequence_guid
@@ -346,7 +346,7 @@ class FeatureIntervalCollection(AbstractFeatureIntervalCollection):
                 self.location,
                 self.feature_name,
                 self.feature_id,
-                self.feature_type,
+                self.feature_types,
                 self.locus_tag,
                 self.sequence_name,
                 self.qualifiers,
@@ -385,7 +385,7 @@ class FeatureIntervalCollection(AbstractFeatureIntervalCollection):
             feature_intervals=[feat.to_dict() for feat in self.feature_intervals],
             feature_name=self.feature_name,
             feature_id=self.feature_id,
-            feature_type=self.feature_type,
+            locus_tag=self.locus_tag,
             qualifiers=self._export_qualifiers_to_list(),
             sequence_name=self.sequence_name,
             sequence_guid=self.sequence_guid,
@@ -398,7 +398,6 @@ class FeatureIntervalCollection(AbstractFeatureIntervalCollection):
         for key, val in [
             [BioCantorQualifiers.FEATURE_ID.value, self.feature_id],
             [BioCantorQualifiers.FEATURE_SYMBOL.value, self.feature_name],
-            [BioCantorQualifiers.FEATURE_TYPE.value, self.feature_type],
             [BioCantorQualifiers.LOCUS_TAG.value, self.locus_tag],
         ]:
             if not val:
@@ -406,6 +405,8 @@ class FeatureIntervalCollection(AbstractFeatureIntervalCollection):
             if key not in qualifiers:
                 qualifiers[key] = set()
             qualifiers[key].add(val)
+        if self.feature_types:
+            qualifiers[BioCantorQualifiers.FEATURE_TYPE.value] = self.feature_types
         return qualifiers
 
     def to_gff(self) -> Iterable[GFFRow]:

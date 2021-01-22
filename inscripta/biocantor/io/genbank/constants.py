@@ -46,6 +46,22 @@ class IntervalFeatures(HasMemberMixin):
     EXON = "exon"
 
 
+class FeatureIntervalIdentifierKeys(IntEnum):
+    """Keys that will be looked for to find primary identifiers for a feature.
+    Will be checked in a case-insensitive fashion.
+    """
+
+    GENE = 1
+    LOCUS_TAG = 2
+    ID = 3
+    LABEL = 4
+    OPERON = 5
+
+
+# FEATURE_TYPE_IDENTIFIERS are case-insensitive substrings to match for identifying feature types to include.
+FEATURE_TYPE_IDENTIFIERS = {"_class"}
+
+
 GenBankFeatures = HasMemberMixin(
     "GenBankFeatures",
     [[i.name, i.value] for j in [GeneFeatures, TranscriptFeatures, IntervalFeatures, MetadataFeatures] for i in j],

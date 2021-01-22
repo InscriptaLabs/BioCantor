@@ -30,7 +30,11 @@ class BaseModel:
 
 @dataclass
 class FeatureIntervalModel(BaseModel):
-    """Data model that allows construction of a :class:`~biocantor.gene.feature.FeatureInterval` object."""
+    """Data model that allows construction of a :class:`~biocantor.gene.feature.FeatureInterval` object.
+
+    FeatureIntervals can have more than one type, and these types are arbitrary and not controlled by a biotype
+    ontology.
+    """
 
     interval_starts: List[int]
     interval_ends: List[int]
@@ -40,9 +44,10 @@ class FeatureIntervalModel(BaseModel):
     sequence_guid: Optional[UUID] = None
     feature_interval_guid: Optional[UUID] = None
     feature_guid: Optional[UUID] = None
-    feature_type: Optional[str] = None
+    feature_types: Optional[List[str]] = None
     feature_name: Optional[str] = None
     feature_id: Optional[str] = None
+    locus_tag: Optional[str] = None
     is_primary_feature: Optional[bool] = None
 
     def to_feature_interval(
@@ -69,9 +74,10 @@ class FeatureIntervalModel(BaseModel):
             qualifiers=self.qualifiers,
             sequence_guid=self.sequence_guid,
             sequence_name=self.sequence_name,
-            feature_type=self.feature_type,
+            feature_types=self.feature_types,
             feature_name=self.feature_name,
             feature_id=self.feature_id,
+            locus_tag=self.locus_tag,
             guid=self.feature_interval_guid,
             feature_guid=self.feature_guid,
             is_primary_feature=self.is_primary_feature,
@@ -220,14 +226,13 @@ class FeatureIntervalCollectionModel(BaseModel):
 
     This is a container for one or more :class:`~biocantor.gene.feature.FeatureInterval` objects.
 
-    Feature types are arbitrary here, and not enumerated, because I am not trying
-    to capture all of Sequence Ontology at this point.
+    Feature Collections do not have a type, but rather their type is the union of all of their child types.
     """
 
     feature_intervals: List[FeatureIntervalModel]
     feature_name: Optional[str] = None
     feature_id: Optional[str] = None
-    feature_type: Optional[str] = None
+    locus_tag: Optional[str] = None
     sequence_name: Optional[str] = None
     sequence_guid: Optional[UUID] = None
     feature_collection_guid: Optional[UUID] = None
@@ -242,7 +247,7 @@ class FeatureIntervalCollectionModel(BaseModel):
             feature_intervals=feature_intervals,
             feature_name=self.feature_name,
             feature_id=self.feature_id,
-            feature_type=self.feature_type,
+            locus_tag=self.locus_tag,
             sequence_name=self.sequence_name,
             sequence_guid=self.sequence_guid,
             qualifiers=self.qualifiers,
