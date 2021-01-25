@@ -1,18 +1,18 @@
 >Features chr7
 300	13670	gene		
-			locus_tag	test_000001
+			locus_tag	test_5
 			pseudo	
 300	566	mRNA		
 7309	>13670			
-			locus_tag	test_000001
-			protein_id	NP_001165908.1
-			transcript_id	NM_001172437.2
+			locus_tag	test_5
+			protein_id	gnl|inscripta|ADTCQLWCCNAZ
+			transcript_id	gnl|inscripta|RMCRWUMAKIPB
 			pseudo	
 562	566	CDS		
 7309	>9657			
-			locus_tag	test_000001
-			product	NP_001165908.1
-			protein_id	NP_001165908.1
-			transcript_id	NM_001172437.2
+			locus_tag	test_5
+			product	hypothetical protein
+			protein_id	gnl|inscripta|ADTCQLWCCNAZ
+			transcript_id	gnl|inscripta|RMCRWUMAKIPB
 			codon_start	1
 			pseudo	

@@ -2,8 +2,8 @@
 Perform MD5 digests of arbitrary objects in memory in python. All objects are unpacked and their string representations
 are digested.
 
-The current implementation of this has not been profiled and likely has room for optimization that could improve
-performance on larger datasets.
+TODO: The current implementation of this has not been profiled and likely has room for optimization that could improve
+    performance on larger datasets.
 """
 import hashlib
 from typing import Dict, Hashable, Any, List, Set, Iterable
