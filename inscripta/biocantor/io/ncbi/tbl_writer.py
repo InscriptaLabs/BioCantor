@@ -6,7 +6,7 @@ The .tbl format is used for NCBI genome submission, and can be validated with th
 import re
 import warnings
 from abc import ABC
-from typing import Optional, TextIO, Iterable, Union, Dict, List, Set
+from typing import Optional, TextIO, Iterable, Union, Dict, List, Set, Hashable
 
 from inscripta.biocantor.gene.biotype import Biotype
 from inscripta.biocantor.gene.codon import TranslationTable
@@ -135,7 +135,7 @@ class TblFeature(ABC):
 
         NCBI does not like parenthesis or semicolons in the values of a qualifier.
         """
-        chars_to_remove = re.compile(r"\(\);")
+        chars_to_remove = re.compile(r"[\[\]\(\);]*")
         return re.sub(chars_to_remove, "", val)
 
     def _qualifiers_to_str(self) -> str:
@@ -152,6 +152,23 @@ class TblFeature(ABC):
         if self.is_pseudo:
             s.append("\t\t\tpseudo\t")
         return "\n".join(s)
+
+    @staticmethod
+    def extract_dbxref_synonyms(
+        parsed_qualifiers: Dict[Hashable, Set[str]],
+        tbl_qualifiers: Dict[str, List[str]],
+        gene_symbol: Optional[str] = None,
+    ):
+        """Update ``tbl_qualifiers`` with values from ``parsed_qualifiers`` if they are xrefs or synonyms."""
+        for key, value in parsed_qualifiers.items():
+            if "synonym" in key:
+                if "gene_synonym" not in tbl_qualifiers:
+                    tbl_qualifiers["gene_synonym"] = []
+                for item in value:
+                    if item != gene_symbol:
+                        tbl_qualifiers["gene_synonym"].append(item)
+            elif key == "db_xref":
+                tbl_qualifiers["db_xref"] = list(value)
 
 
 class GeneTblFeature(TblFeature):
@@ -198,13 +215,14 @@ class GeneTblFeature(TblFeature):
 
         # try to pull out the special qualifiers
         if gene.qualifiers:
-            for key, value in gene.qualifiers.items():
-                if "synonym" in key:
-                    if "gene_synonym" not in qualifiers:
-                        qualifiers["gene_synonym"] = []
-                    qualifiers["gene_synonym"].extend(value)
-                elif key == "db_xref":
-                    qualifiers["db_xref"] = value
+            TblFeature.extract_dbxref_synonyms(gene.qualifiers, qualifiers, gene_symbol=qualifiers["gene"][0])
+
+        # if we end up pulling out synonyms, but have no gene symbol, pick the first synonym as the new symbol
+        if not gene.gene_symbol and "gene_synonym" in qualifiers:
+            qualifiers["gene"] = qualifiers["gene_synonym"][0]
+            del qualifiers["gene_synonym"][0]
+            if not qualifiers["gene_synonym"]:
+                del qualifiers["gene_synonym"]
 
         self.locus_tag = locus_tag
 
@@ -256,10 +274,22 @@ class CDSTblFeature(TblFeature):
 
         if "product" in transcript.qualifiers:
             product = list(transcript.qualifiers["product"])[0]
-            product = product.replace("_", " ")  # NCBI does not allow underscores in product names
+            # NCBI does not allow underscores in product names
+            product = product.replace("_", " ")
         else:
             # if we don't have a product, default to "hypothetical protein"
             product = "hypothetical protein"
+
+        # NCBI also does not seem to like the term 'alpha' as the product name
+        # it considers it a hypothetical protein
+        if "alpha" in product:
+            product = "hypothetical protein"
+
+        # hypothetical proteins cannot have /gene tags
+        if product == "hypothetical protein":
+            del qualifiers["gene"]
+            del gene_feature.qualifiers["gene"]
+
         qualifiers["product"] = [product]
 
         # protein IDs as well as transcript IDs must be in the format gnl|dbname|string, where:
@@ -284,6 +314,16 @@ class CDSTblFeature(TblFeature):
 
         codon_start = next(transcript.cds.frame_iter()).value + 1
         qualifiers["codon_start"] = [codon_start]
+
+        # try to pull out the special qualifiers
+        if transcript.qualifiers:
+            TblFeature.extract_dbxref_synonyms(
+                transcript.qualifiers, qualifiers, gene_symbol=qualifiers.get("gene", [None])[0]
+            )
+            # apply these to the gene level also
+            TblFeature.extract_dbxref_synonyms(
+                transcript.qualifiers, gene_feature.qualifiers, gene_symbol=qualifiers.get("gene", [None])[0]
+            )
 
         # start codon can look directly at the translation, because we have a codon_start value
         start_is_incomplete = not transcript.cds.has_start_codon_in_specific_translation_table(translation_table)

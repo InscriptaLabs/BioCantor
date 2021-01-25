@@ -1,18 +1,15 @@
 >Features test
 97	2693	gene		
-			gene	insO
 			locus_tag	test_5
 			pseudo	
 97	351	mRNA		
 1909	>2693			
-			gene	insO
 			locus_tag	test_5
 			protein_id	gnl|inscripta|HRPFEROMYOBA
 			transcript_id	gnl|inscripta|EOGAIZLVINUN
 			pseudo	
 97	351	CDS		
 1909	>2693			
-			gene	insO
 			locus_tag	test_5
 			product	hypothetical protein
 			protein_id	gnl|inscripta|HRPFEROMYOBA
