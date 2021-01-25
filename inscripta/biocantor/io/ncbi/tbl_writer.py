@@ -146,7 +146,7 @@ class TblFeature(ABC):
             filtered_vals = [str(x) for x in val if x is not None]
             if len(filtered_vals) == 0:
                 continue
-            for val in filtered_vals:
+            for val in sorted(filtered_vals):
                 val = TblFeature._filter_val(val)
                 s.append(f"\t\t\t{key}\t{val}")
         if self.is_pseudo:

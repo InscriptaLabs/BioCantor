@@ -5,8 +5,8 @@
 			gene_synonym	b4283 b4285 b4562 ECK0257 ECK4274 ECK4275 ECK4476 insN-2 insO-2 yi91 yi91b yjhW
 			db_xref	ASAP:ABE-0285254
 			db_xref	ECOCYC:G7904
-			db_xref	GeneID:5061531
 			db_xref	EcoGene:EG40121
+			db_xref	GeneID:5061531
 			pseudo	
 97	351	mRNA		
 1909	>2693			
@@ -17,8 +17,8 @@
 			gene_synonym	b4283 b4285 b4562 ECK0257 ECK4274 ECK4275 ECK4476 insN-2 insO-2 yi91 yi91b yjhW
 			db_xref	ASAP:ABE-0285254
 			db_xref	ECOCYC:G7904
-			db_xref	GeneID:5061531
 			db_xref	EcoGene:EG40121
+			db_xref	GeneID:5061531
 			pseudo	
 97	351	CDS		
 1909	>2693			
@@ -31,6 +31,6 @@
 			gene_synonym	b4283 b4285 b4562 ECK0257 ECK4274 ECK4275 ECK4476 insN-2 insO-2 yi91 yi91b yjhW
 			db_xref	ASAP:ABE-0285254
 			db_xref	ECOCYC:G7904
-			db_xref	GeneID:5061531
 			db_xref	EcoGene:EG40121
+			db_xref	GeneID:5061531
 			pseudo	
