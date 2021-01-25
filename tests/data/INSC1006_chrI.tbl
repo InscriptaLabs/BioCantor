@@ -1,0 +1,43 @@
+>Features CM021111.1
+18079	16175	gene		
+			locus_tag	test_5
+18079	16175	ncRNA		
+			locus_tag	test_5
+			ncRNA_class	ncRNA
+37462	39103	gene		
+			gene	GDH3
+			locus_tag	test_10
+37462	39103	mRNA		
+			gene	GDH3
+			locus_tag	test_10
+			protein_id	gnl|inscripta|RJEUYJYMLERK
+			transcript_id	gnl|inscripta|QDUFZSMNBXEO
+37638	39011	CDS		
+			gene	GDH3
+			locus_tag	test_10
+			product	GDH3 isoform 1
+			protein_id	gnl|inscripta|RJEUYJYMLERK
+			transcript_id	gnl|inscripta|QDUFZSMNBXEO
+			codon_start	1
+39519	40772	gene		
+			gene	BDH2
+			locus_tag	test_15
+39519	40772	mRNA		
+			gene	BDH2
+			locus_tag	test_15
+			protein_id	gnl|inscripta|VALOXXXWVOJN
+			transcript_id	gnl|inscripta|ZYAFQKQQREKQ
+39519	40772	CDS		
+			gene	BDH2
+			locus_tag	test_15
+			product	BDH2 isoform 1
+			protein_id	gnl|inscripta|VALOXXXWVOJN
+			transcript_id	gnl|inscripta|ZYAFQKQQREKQ
+			codon_start	1
+41086	42503	gene		
+			gene	BDH1
+			locus_tag	test_20
+41086	42503	ncRNA		
+			gene	BDH1
+			locus_tag	test_20
+			ncRNA_class	protein_coding

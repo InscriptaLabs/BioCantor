@@ -3,7 +3,6 @@ Object representation of Transcripts.
 
 Each object is capable of exporting itself to BED and GFF3.
 """
-from methodtools import lru_cache
 from itertools import count
 from typing import Optional, Any, Dict, Iterable, Hashable, Set
 from uuid import UUID
@@ -14,7 +13,7 @@ from inscripta.biocantor.exc import (
 from inscripta.biocantor.exc import NoncodingTranscriptError
 from inscripta.biocantor.gene.biotype import Biotype
 from inscripta.biocantor.gene.cds import CDSInterval, CDSPhase
-from inscripta.biocantor.gene.feature import AbstractFeatureInterval
+from inscripta.biocantor.gene.feature import AbstractFeatureInterval, QualifierValue
 from inscripta.biocantor.io.bed import BED12, RGB
 from inscripta.biocantor.io.gff3.constants import GFF_SOURCE, NULL_COLUMN, BioCantorQualifiers, BioCantorFeatureTypes
 from inscripta.biocantor.io.gff3.rows import GFFAttributes, GFFRow
@@ -26,6 +25,7 @@ from inscripta.biocantor.sequence.sequence import Sequence
 from inscripta.biocantor.util.bins import bins
 from inscripta.biocantor.util.hashing import digest_object
 from inscripta.biocantor.util.object_validation import ObjectValidation
+from methodtools import lru_cache
 
 
 class TranscriptInterval(AbstractFeatureInterval):
@@ -46,7 +46,7 @@ class TranscriptInterval(AbstractFeatureInterval):
         self,
         location: Location,  # exons
         cds: Optional[CDSInterval] = None,  # optional CDS with frame
-        qualifiers: Optional[Dict[Hashable, Set[Hashable]]] = None,  # arbitrary key-value store
+        qualifiers: Optional[Dict[Hashable, QualifierValue]] = None,
         is_primary_tx: Optional[bool] = None,
         transcript_id: Optional[str] = None,
         transcript_symbol: Optional[str] = None,
@@ -55,6 +55,7 @@ class TranscriptInterval(AbstractFeatureInterval):
         sequence_name: Optional[str] = None,
         protein_id: Optional[str] = None,
         guid: Optional[UUID] = None,
+        transcript_guid: Optional[UUID] = None,
     ):
         self.location = location  # genomic CompoundInterval
         self._is_primary_feature = is_primary_tx
@@ -83,6 +84,7 @@ class TranscriptInterval(AbstractFeatureInterval):
             )
         else:
             self.guid = guid
+        self.transcript_guid = transcript_guid
 
         if self.location.parent:
             ObjectValidation.require_location_has_parent_with_sequence(self.location)
@@ -163,7 +165,8 @@ class TranscriptInterval(AbstractFeatureInterval):
             sequence_name=self.sequence_name,
             sequence_guid=self.sequence_guid,
             protein_id=self.protein_id,
-            transcript_guid=self.guid,
+            transcript_guid=self.transcript_guid,
+            transcript_interval_guid=self.guid,
         )
 
     def merge_overlapping(self) -> "TranscriptInterval":
@@ -174,7 +177,7 @@ class TranscriptInterval(AbstractFeatureInterval):
         tx = TranscriptInterval(
             new_loc,
             cds=None,
-            qualifiers=self.qualifiers,
+            qualifiers=self._export_qualifiers_to_list(),
             is_primary_tx=self.is_primary_tx,
             transcript_id=self.transcript_id,
             transcript_symbol=self.transcript_symbol,
@@ -317,14 +320,14 @@ class TranscriptInterval(AbstractFeatureInterval):
         return self.cds.translate(truncate_at_in_frame_stop)
 
     def export_qualifiers(
-        self, parent_qualifiers: Optional[Dict[Hashable, Set[Hashable]]] = None
+        self, parent_qualifiers: Optional[Dict[Hashable, Set[str]]] = None
     ) -> Dict[Hashable, Set[Hashable]]:
         """Exports qualifiers for GFF3/GenBank export"""
         qualifiers = self._merge_qualifiers(parent_qualifiers)
         for key, val in [
             [BioCantorQualifiers.TRANSCRIPT_ID.value, self.transcript_id],
             [BioCantorQualifiers.TRANSCRIPT_NAME.value, self.transcript_symbol],
-            [BioCantorQualifiers.TRANSCRIPT_TYPE.value, self.transcript_type.name],
+            [BioCantorQualifiers.TRANSCRIPT_TYPE.value, self.transcript_type.name if self.transcript_type else None],
             [BioCantorQualifiers.PROTEIN_ID.value, self.protein_id],
         ]:
             if not val:
@@ -335,7 +338,7 @@ class TranscriptInterval(AbstractFeatureInterval):
         return qualifiers
 
     def to_gff(
-        self, parent: Optional[str] = None, parent_qualifiers: Optional[Dict[Hashable, Set[Hashable]]] = None
+        self, parent: Optional[str] = None, parent_qualifiers: Optional[Dict[Hashable, Set[str]]] = None
     ) -> Iterable[GFFRow]:
         """Writes a GFF format list of lists for this gene.
 

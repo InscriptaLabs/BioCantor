@@ -759,11 +759,11 @@ class TestTranscript:
         ]:
             obj = model.to_transcript_interval()
             new_model = TranscriptIntervalModel.from_transcript_interval(obj)
-            new_model.transcript_guid = None
+            new_model.transcript_interval_guid = None
             assert model == new_model
             obj = model.to_transcript_interval(parent=parent)
             new_model = TranscriptIntervalModel.from_transcript_interval(obj)
-            new_model.transcript_guid = None
+            new_model.transcript_interval_guid = None
             assert model == new_model
 
     @pytest.mark.parametrize(
@@ -908,3 +908,33 @@ class TestTranscript:
         schema2 = TranscriptIntervalModel.Schema().load(tx2)
         obj2 = schema2.to_transcript_interval(parent=parent_genome)
         assert not obj2.has_in_frame_stop
+
+
+class TestQualifiers:
+    """Ensure that qualifier encoding is stable and digestable"""
+
+    qualifiers = {"key1": ["a", "b", 2]}
+
+    se_unspliced = TranscriptIntervalModel.Schema().load(
+        dict(
+            exon_starts=[0],
+            exon_ends=[18],
+            strand=Strand.PLUS.name,
+            cds_starts=[0],
+            cds_ends=[18],
+            cds_frames=[CDSFrame.ZERO.name],
+            qualifiers=qualifiers,
+        )
+    )
+
+    def test_qualifier_import(self):
+        """Importing qualifiers converts to a set of strings"""
+        tx = self.se_unspliced.to_transcript_interval()
+        assert tx.qualifiers == {"key1": {"2", "a", "b"}}
+
+    def test_qualifier_export_to_list(self):
+        """Exporting to a list of strings"""
+        tx = self.se_unspliced.to_transcript_interval()
+        # not the same as the input because the input was unsorted and not a string
+        assert tx._export_qualifiers_to_list() != self.qualifiers
+        assert tx._export_qualifiers_to_list() == {"key1": ["2", "a", "b"]}

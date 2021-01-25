@@ -2,7 +2,7 @@
 Data models. These models allow for validation of inputs to a BioCantor model, acting as a JSON schema for serializing
 and deserializing the models.
 """
-from typing import List, Optional, ClassVar, Type, Any, Dict
+from typing import List, Optional, ClassVar, Type, Dict, Union
 from uuid import UUID
 
 from inscripta.biocantor.exc import InvalidCDSIntervalError, LocationException, ValidationException
@@ -35,10 +35,11 @@ class FeatureIntervalModel(BaseModel):
     interval_starts: List[int]
     interval_ends: List[int]
     strand: Strand
-    qualifiers: Optional[Dict[str, Any]] = None
+    qualifiers: Optional[Dict[str, List[Union[str, int, bool, float]]]] = None
     sequence_name: Optional[str] = None
     sequence_guid: Optional[UUID] = None
     feature_interval_guid: Optional[UUID] = None
+    feature_guid: Optional[UUID] = None
     feature_type: Optional[str] = None
     feature_name: Optional[str] = None
     feature_id: Optional[str] = None
@@ -72,6 +73,7 @@ class FeatureIntervalModel(BaseModel):
             feature_name=self.feature_name,
             feature_id=self.feature_id,
             guid=self.feature_interval_guid,
+            feature_guid=self.feature_guid,
             is_primary_feature=self.is_primary_feature,
         )
 
@@ -93,7 +95,7 @@ class TranscriptIntervalModel(BaseModel):
     cds_starts: Optional[List[int]] = None
     cds_ends: Optional[List[int]] = None
     cds_frames: Optional[List[CDSFrame]] = None
-    qualifiers: Optional[Dict[str, Any]] = None
+    qualifiers: Optional[Dict[str, List[Union[str, int, bool, float]]]] = None
     is_primary_tx: Optional[bool] = None
     transcript_id: Optional[str] = None
     protein_id: Optional[str] = None
@@ -101,7 +103,7 @@ class TranscriptIntervalModel(BaseModel):
     transcript_type: Optional[Biotype] = None
     sequence_name: Optional[str] = None
     sequence_guid: Optional[UUID] = None
-    guid: Optional[UUID] = None
+    transcript_interval_guid: Optional[UUID] = None
     transcript_guid: Optional[UUID] = None
 
     def to_transcript_interval(
@@ -146,7 +148,8 @@ class TranscriptIntervalModel(BaseModel):
         return TranscriptInterval(
             location=location,
             cds=cds,
-            guid=self.transcript_guid,
+            guid=self.transcript_interval_guid,
+            transcript_guid=self.transcript_guid,
             qualifiers=self.qualifiers,
             is_primary_tx=self.is_primary_tx,
             transcript_id=self.transcript_id,
@@ -179,7 +182,7 @@ class GeneIntervalModel(BaseModel):
     gene_symbol: Optional[str] = None
     gene_type: Optional[Biotype] = None
     locus_tag: Optional[str] = None
-    qualifiers: Optional[Dict[str, Any]] = None
+    qualifiers: Optional[Dict[str, List[Union[str, int, bool, float]]]] = None
     sequence_name: Optional[str] = None
     sequence_guid: Optional[UUID] = None
     gene_guid: Optional[UUID] = None
@@ -228,7 +231,7 @@ class FeatureIntervalCollectionModel(BaseModel):
     sequence_name: Optional[str] = None
     sequence_guid: Optional[UUID] = None
     feature_collection_guid: Optional[UUID] = None
-    qualifiers: Optional[Dict[str, Any]] = None
+    qualifiers: Optional[Dict[str, List[Union[str, int, bool, float]]]] = None
 
     def to_feature_collection(self, parent: Optional[Parent] = None) -> FeatureIntervalCollection:
         """Produce a feature collection from a :class:`FeatureIntervalCollectionModel`."""
@@ -276,7 +279,7 @@ class AnnotationCollectionModel(BaseModel):
     sequence_name: Optional[str] = None
     sequence_guid: Optional[UUID] = None
     sequence_path: Optional[str] = None
-    qualifiers: Optional[Dict[str, Any]] = None
+    qualifiers: Optional[Dict[str, List[Union[str, int, bool, float]]]] = None
     start: Optional[int] = None
     end: Optional[int] = None
     completely_within: Optional[bool] = None

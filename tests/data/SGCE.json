@@ -94,7 +94,7 @@
                     "transcript_type": "protein_coding",
                     "sequence_name": "NC_000007.14",
                     "sequence_guid": null,
-                    "guid": null,
+                    "transcript_interval_guid": null,
                     "transcript_guid": null
                 },
                 {
@@ -193,7 +193,7 @@
                     "transcript_type": "protein_coding",
                     "sequence_name": "NC_000007.14",
                     "sequence_guid": null,
-                    "guid": null,
+                    "transcript_interval_guid": null,
                     "transcript_guid": null
                 },
                 {
@@ -282,7 +282,7 @@
                     "transcript_type": "protein_coding",
                     "sequence_name": "NC_000007.14",
                     "sequence_guid": null,
-                    "guid": null,
+                    "transcript_interval_guid": null,
                     "transcript_guid": null
                 },
                 {
@@ -381,7 +381,7 @@
                     "transcript_type": "protein_coding",
                     "sequence_name": "NC_000007.14",
                     "sequence_guid": null,
-                    "guid": null,
+                    "transcript_interval_guid": null,
                     "transcript_guid": null
                 },
                 {
@@ -475,7 +475,7 @@
                     "transcript_type": "protein_coding",
                     "sequence_name": "NC_000007.14",
                     "sequence_guid": null,
-                    "guid": null,
+                    "transcript_interval_guid": null,
                     "transcript_guid": null
                 },
                 {
@@ -564,7 +564,7 @@
                     "transcript_type": "protein_coding",
                     "sequence_name": "NC_000007.14",
                     "sequence_guid": null,
-                    "guid": null,
+                    "transcript_interval_guid": null,
                     "transcript_guid": null
                 },
                 {
@@ -662,7 +662,7 @@
                     "transcript_type": "protein_coding",
                     "sequence_name": "NC_000007.14",
                     "sequence_guid": null,
-                    "guid": null,
+                    "transcript_interval_guid": null,
                     "transcript_guid": null
                 },
                 {
@@ -752,7 +752,7 @@
                     "transcript_type": "protein_coding",
                     "sequence_name": "NC_000007.14",
                     "sequence_guid": null,
-                    "guid": null,
+                    "transcript_interval_guid": null,
                     "transcript_guid": null
                 },
                 {
@@ -845,7 +845,7 @@
                     "transcript_type": "protein_coding",
                     "sequence_name": "NC_000007.14",
                     "sequence_guid": null,
-                    "guid": null,
+                    "transcript_interval_guid": null,
                     "transcript_guid": null
                 },
                 {
@@ -930,7 +930,7 @@
                     "transcript_type": "protein_coding",
                     "sequence_name": "NC_000007.14",
                     "sequence_guid": null,
-                    "guid": null,
+                    "transcript_interval_guid": null,
                     "transcript_guid": null
                 },
                 {
@@ -1014,7 +1014,7 @@
                     "transcript_type": "protein_coding",
                     "sequence_name": "NC_000007.14",
                     "sequence_guid": null,
-                    "guid": null,
+                    "transcript_interval_guid": null,
                     "transcript_guid": null
                 },
                 {
@@ -1112,7 +1112,7 @@
                     "transcript_type": "protein_coding",
                     "sequence_name": "NC_000007.14",
                     "sequence_guid": null,
-                    "guid": null,
+                    "transcript_interval_guid": null,
                     "transcript_guid": null
                 },
                 {
@@ -1214,7 +1214,7 @@
                     "transcript_type": "protein_coding",
                     "sequence_name": "NC_000007.14",
                     "sequence_guid": null,
-                    "guid": null,
+                    "transcript_interval_guid": null,
                     "transcript_guid": null
                 },
                 {
@@ -1311,7 +1311,7 @@
                     "transcript_type": "protein_coding",
                     "sequence_name": "NC_000007.14",
                     "sequence_guid": null,
-                    "guid": null,
+                    "transcript_interval_guid": null,
                     "transcript_guid": null
                 },
                 {
@@ -1408,7 +1408,7 @@
                     "transcript_type": "protein_coding",
                     "sequence_name": "NC_000007.14",
                     "sequence_guid": null,
-                    "guid": null,
+                    "transcript_interval_guid": null,
                     "transcript_guid": null
                 },
                 {
@@ -1500,7 +1500,7 @@
                     "transcript_type": "protein_coding",
                     "sequence_name": "NC_000007.14",
                     "sequence_guid": null,
-                    "guid": null,
+                    "transcript_interval_guid": null,
                     "transcript_guid": null
                 },
                 {
@@ -1601,7 +1601,7 @@
                     "transcript_type": "protein_coding",
                     "sequence_name": "NC_000007.14",
                     "sequence_guid": null,
-                    "guid": null,
+                    "transcript_interval_guid": null,
                     "transcript_guid": null
                 },
                 {
@@ -1694,7 +1694,7 @@
                     "transcript_type": "protein_coding",
                     "sequence_name": "NC_000007.14",
                     "sequence_guid": null,
-                    "guid": null,
+                    "transcript_interval_guid": null,
                     "transcript_guid": null
                 },
                 {
@@ -1793,7 +1793,7 @@
                     "transcript_type": "protein_coding",
                     "sequence_name": "NC_000007.14",
                     "sequence_guid": null,
-                    "guid": null,
+                    "transcript_interval_guid": null,
                     "transcript_guid": null
                 },
                 {
@@ -1881,7 +1881,7 @@
                     "transcript_type": "protein_coding",
                     "sequence_name": "NC_000007.14",
                     "sequence_guid": null,
-                    "guid": null,
+                    "transcript_interval_guid": null,
                     "transcript_guid": null
                 },
                 {
@@ -1973,7 +1973,7 @@
                     "transcript_type": "protein_coding",
                     "sequence_name": "NC_000007.14",
                     "sequence_guid": null,
-                    "guid": null,
+                    "transcript_interval_guid": null,
                     "transcript_guid": null
                 },
                 {
@@ -2060,7 +2060,7 @@
                     "transcript_type": "protein_coding",
                     "sequence_name": "NC_000007.14",
                     "sequence_guid": null,
-                    "guid": null,
+                    "transcript_interval_guid": null,
                     "transcript_guid": null
                 }
             ],
