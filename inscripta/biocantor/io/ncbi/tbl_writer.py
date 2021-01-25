@@ -77,6 +77,7 @@ class TblFeature(ABC):
     VALID_KEYS: Optional[Set] = None
     FEATURE_TYPE: Optional[Union[TranscriptFeatures, GeneFeatures, IntervalFeatures]] = None
     children: Optional[List["TblFeature"]] = None
+    chars_to_remove = re.compile(r"[\[\]\(\);]*")  # characters to remove from qualifier values
 
     def __init__(
         self,
@@ -129,16 +130,19 @@ class TblFeature(ABC):
 
         return "\n".join(r)
 
-    @staticmethod
-    def _filter_val(val: str) -> str:
-        """Filter a value based on the regex.
-
-        NCBI does not like parenthesis or semicolons in the values of a qualifier.
-        """
-        chars_to_remove = re.compile(r"[\[\]\(\);]*")
-        return re.sub(chars_to_remove, "", val)
-
     def _qualifiers_to_str(self) -> str:
+        """
+        Converts a qualifiers dictionary to TBL representation.
+
+        Qualifiers are encoded as key-value pairs in the 4th and 5th columns of TBL rows, after the rows that
+        represent the genomic interval of the feature. Keys with multiple values are represented by
+        repeating the key on another line.
+
+        NCBI does not like parenthesis, brackets or semicolons in the values of a qualifier, so these are removed.
+
+        ``pseudo`` is a special qualifier key with no value, that marks the feature as being a pseudogene. This turns
+        off many of the classifiers that ``tbl2asn`` applies to the gene, and so should be used carefully.
+        """
         s = []
         for key, val in self.qualifiers.items():
             if val is None or key not in self.VALID_KEYS:
@@ -147,7 +151,7 @@ class TblFeature(ABC):
             if len(filtered_vals) == 0:
                 continue
             for val in sorted(filtered_vals):
-                val = TblFeature._filter_val(val)
+                val = re.sub(self.chars_to_remove, "", val)
                 s.append(f"\t\t\t{key}\t{val}")
         if self.is_pseudo:
             s.append("\t\t\tpseudo\t")
@@ -219,8 +223,8 @@ class GeneTblFeature(TblFeature):
 
         # if we end up pulling out synonyms, but have no gene symbol, pick the first synonym as the new symbol
         if not gene.gene_symbol and "gene_synonym" in qualifiers:
-            qualifiers["gene"] = qualifiers["gene_synonym"][0]
-            del qualifiers["gene_synonym"][0]
+            qualifiers["gene"] = qualifiers["gene_synonym"].pop(0)
+            # if we only had one synonym, then remove the key from the qualifiers dictionary
             if not qualifiers["gene_synonym"]:
                 del qualifiers["gene_synonym"]
 
@@ -282,7 +286,8 @@ class CDSTblFeature(TblFeature):
 
         # NCBI also does not seem to like the term 'alpha' as the product name
         # it considers it a hypothetical protein
-        if "alpha" in product:
+        # NCBI also requires that the product contain string characters, cannot be only numbers
+        if "alpha" in product or not re.search("[A-Za-z]", product):
             product = "hypothetical protein"
 
         # hypothetical proteins cannot have /gene tags
@@ -460,7 +465,9 @@ class TblGene:
 
         # the location of the transcripts and its CDS intervals must be merged because NCBI does not like
         # adjacent blocks. This must be performed before we instantiate GeneTblFeature because performing this process
-        # may break translations.
+        # may break translations. We want to capture broken translations in the /pseudo tag, even if the original
+        # potentially overlapping representation was able to properly represent the ORF. This is an inherent limitation
+        # of the TBL format (as well as the GenBank format).
         for tx in gene.transcripts:
             tx.location = tx.location.optimize_and_combine_blocks()
             if gene.is_coding:
