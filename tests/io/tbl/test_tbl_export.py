@@ -37,8 +37,8 @@ def test_tbl_export_from_gff3(test_data_dir, tmp_path, gff3, expected_tbl):
     "genbank,expected_tbl",
     [
         ("insO_frameshift.gbk", "insO_frameshift_from_gbk.tbl"),
-    ("INSC1006_chrI.gbff", 'INSC1006_chrI.tbl'),
-    ("INSC1003.gbk", "INSC1003_from_gbk.tbl")
+        ("INSC1006_chrI.gbff", "INSC1006_chrI.tbl"),
+        ("INSC1003.gbk", "INSC1003_from_gbk.tbl"),
     ],
 )
 def test_tbl_export_from_genbank(test_data_dir, tmp_path, genbank, expected_tbl):
