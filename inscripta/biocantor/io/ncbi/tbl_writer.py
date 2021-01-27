@@ -81,13 +81,13 @@ class TblFeature(ABC):
     chars_to_remove = re.compile(r"[\[\]\(\);]*")  # characters to remove from qualifier values
 
     def __init__(
-            self,
-            location: Location,
-            start_is_incomplete: bool,
-            end_is_complete: bool,
-            is_pseudo: bool,
-            qualifiers: Dict[str, List[str]],
-            children: Optional[List["TblFeature"]] = None,
+        self,
+        location: Location,
+        start_is_incomplete: bool,
+        end_is_complete: bool,
+        is_pseudo: bool,
+        qualifiers: Dict[str, List[str]],
+        children: Optional[List["TblFeature"]] = None,
     ):
         self.location = location
         self.start_is_incomplete = start_is_incomplete
@@ -160,9 +160,9 @@ class TblFeature(ABC):
 
     @staticmethod
     def extract_dbxref_synonyms(
-            parsed_qualifiers: Dict[Hashable, Set[str]],
-            tbl_qualifiers: Dict[str, List[str]],
-            gene_symbol: Optional[str] = None,
+        parsed_qualifiers: Dict[Hashable, Set[str]],
+        tbl_qualifiers: Dict[str, List[str]],
+        gene_symbol: Optional[str] = None,
     ):
         """Update ``tbl_qualifiers`` with values from ``parsed_qualifiers`` if they are xrefs or synonyms."""
         for key, value in parsed_qualifiers.items():
@@ -191,9 +191,9 @@ class GeneTblFeature(TblFeature):
     VALID_KEYS = {"gene", "locus_tag", "gene_synonym", "db_xref", "note"}
 
     def __init__(
-            self,
-            gene: GeneInterval,
-            locus_tag,
+        self,
+        gene: GeneInterval,
+        locus_tag,
     ):
         self.locus_tag = locus_tag
 
@@ -251,9 +251,9 @@ class MRNATblFeature(TblFeature):
     VALID_KEYS = GeneTblFeature.VALID_KEYS | {"protein_id", "transcript_id", "product"}
 
     def __init__(
-            self,
-            transcript: TranscriptInterval,
-            cds_feature: "CDSTblFeature",
+        self,
+        transcript: TranscriptInterval,
+        cds_feature: "CDSTblFeature",
     ):
         super().__init__(
             transcript.location,
@@ -274,11 +274,11 @@ class CDSTblFeature(TblFeature):
     VALID_KEYS = MRNATblFeature.VALID_KEYS | {"codon_start"}
 
     def __init__(
-            self,
-            transcript: TranscriptInterval,
-            gene_feature: GeneTblFeature,
-            submitter_lab_name: str,
-            translation_table: TranslationTable,
+        self,
+        transcript: TranscriptInterval,
+        gene_feature: GeneTblFeature,
+        submitter_lab_name: str,
+        translation_table: TranslationTable,
     ):
         qualifiers = gene_feature.qualifiers.copy()
 
@@ -459,11 +459,11 @@ class TblGene:
     """
 
     def __init__(
-            self,
-            gene: GeneInterval,
-            submitter_lab_name: str,
-            locus_tag: Optional[str] = None,
-            translation_table: Optional[TranslationTable] = TranslationTable.DEFAULT,
+        self,
+        gene: GeneInterval,
+        submitter_lab_name: str,
+        locus_tag: Optional[str] = None,
+        translation_table: Optional[TranslationTable] = TranslationTable.DEFAULT,
     ):
         self.gene = gene
 
@@ -506,14 +506,14 @@ class TblGene:
 
 
 def collection_to_tbl(
-        collections: Iterable[AnnotationCollection],
-        tbl_file_handle: TextIO,
-        translation_table: Optional[TranslationTable] = TranslationTable.DEFAULT,
-        locus_tag_prefix: Optional[str] = None,
-        genbank_flavor: Optional[GenbankFlavor] = GenbankFlavor.EUKARYOTIC,
-        locus_tag_jump_size: Optional[int] = 5,
-        submitter_lab_name: Optional[str] = None,
-        random_seed: Optional[str] = None,
+    collections: Iterable[AnnotationCollection],
+    tbl_file_handle: TextIO,
+    translation_table: Optional[TranslationTable] = TranslationTable.DEFAULT,
+    locus_tag_prefix: Optional[str] = None,
+    genbank_flavor: Optional[GenbankFlavor] = GenbankFlavor.EUKARYOTIC,
+    locus_tag_jump_size: Optional[int] = 5,
+    submitter_lab_name: Optional[str] = None,
+    random_seed: Optional[int] = None,
 ):
     """
     Take an iterable of :class:`~biocantor.gene.collections.AnnotationCollection` and produce a TBL file.

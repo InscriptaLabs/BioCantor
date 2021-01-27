@@ -6,14 +6,14 @@
 			locus_tag	test_5
 			note	original protein_id: X:FEPOIHMA_00001
 			product	hypothetical protein
-			protein_id	gnl|inscripta|ADTCQLWCCNAZ
-			transcript_id	gnl|inscripta|RMCRWUMAKIPB
+			protein_id	gnl|inscripta|BICYNIDBMRRK
+			transcript_id	gnl|inscripta|KBFEKRKWHFAN
 335	2797	CDS		
 			locus_tag	test_5
 			note	original protein_id: X:FEPOIHMA_00001
 			product	hypothetical protein
-			protein_id	gnl|inscripta|ADTCQLWCCNAZ
-			transcript_id	gnl|inscripta|RMCRWUMAKIPB
+			protein_id	gnl|inscripta|BICYNIDBMRRK
+			transcript_id	gnl|inscripta|KBFEKRKWHFAN
 			codon_start	1
 2799	3731	gene		
 			locus_tag	test_10
@@ -22,14 +22,14 @@
 			locus_tag	test_10
 			note	original protein_id: X:FEPOIHMA_00002
 			product	hypothetical protein
-			protein_id	gnl|inscripta|YRKNLAUUFNCW
-			transcript_id	gnl|inscripta|VELVHXCUBYQM
+			protein_id	gnl|inscripta|YCTMCAKXODBC
+			transcript_id	gnl|inscripta|VEEZAJNSPIPB
 2799	3731	CDS		
 			locus_tag	test_10
 			note	original protein_id: X:FEPOIHMA_00002
 			product	hypothetical protein
-			protein_id	gnl|inscripta|YRKNLAUUFNCW
-			transcript_id	gnl|inscripta|VELVHXCUBYQM
+			protein_id	gnl|inscripta|YCTMCAKXODBC
+			transcript_id	gnl|inscripta|VEEZAJNSPIPB
 			codon_start	1
 3732	5018	gene		
 			locus_tag	test_15
@@ -38,14 +38,14 @@
 			locus_tag	test_15
 			note	original protein_id: X:FEPOIHMA_00003
 			product	hypothetical protein
-			protein_id	gnl|inscripta|RJEUYJYMLERK
-			transcript_id	gnl|inscripta|QDUFZSMNBXEO
+			protein_id	gnl|inscripta|YJKQZPGTUQSZ
+			transcript_id	gnl|inscripta|KAMYUQNVRUZV
 3732	5018	CDS		
 			locus_tag	test_15
 			note	original protein_id: X:FEPOIHMA_00003
 			product	hypothetical protein
-			protein_id	gnl|inscripta|RJEUYJYMLERK
-			transcript_id	gnl|inscripta|QDUFZSMNBXEO
+			protein_id	gnl|inscripta|YJKQZPGTUQSZ
+			transcript_id	gnl|inscripta|KAMYUQNVRUZV
 			codon_start	1
 5231	5527	gene		
 			locus_tag	test_20
@@ -54,14 +54,14 @@
 			locus_tag	test_20
 			note	original protein_id: X:FEPOIHMA_00004
 			product	hypothetical protein
-			protein_id	gnl|inscripta|VALOXXXWVOJN
-			transcript_id	gnl|inscripta|ZYAFQKQQREKQ
+			protein_id	gnl|inscripta|TPQVNLQBYUFX
+			transcript_id	gnl|inscripta|CPVIFKKRMCXO
 5231	5527	CDS		
 			locus_tag	test_20
 			note	original protein_id: X:FEPOIHMA_00004
 			product	hypothetical protein
-			protein_id	gnl|inscripta|VALOXXXWVOJN
-			transcript_id	gnl|inscripta|ZYAFQKQQREKQ
+			protein_id	gnl|inscripta|TPQVNLQBYUFX
+			transcript_id	gnl|inscripta|CPVIFKKRMCXO
 			codon_start	1
 6456	5680	gene		
 			locus_tag	test_25
@@ -70,14 +70,14 @@
 			locus_tag	test_25
 			note	original protein_id: X:FEPOIHMA_00005
 			product	hypothetical protein
-			protein_id	gnl|inscripta|DRXLHSKCIQHG
-			transcript_id	gnl|inscripta|KIMBQCGQGYAG
+			protein_id	gnl|inscripta|MSYKAGSCULAL
+			transcript_id	gnl|inscripta|HMRQXBUJPYUX
 6456	5680	CDS		
 			locus_tag	test_25
 			note	original protein_id: X:FEPOIHMA_00005
 			product	hypothetical protein
-			protein_id	gnl|inscripta|DRXLHSKCIQHG
-			transcript_id	gnl|inscripta|KIMBQCGQGYAG
+			protein_id	gnl|inscripta|MSYKAGSCULAL
+			transcript_id	gnl|inscripta|HMRQXBUJPYUX
 			codon_start	1
 6756	6843	gene		
 			gene	test_30
