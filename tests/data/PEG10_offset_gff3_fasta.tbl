@@ -10,8 +10,8 @@
 			note	original protein_id: NP_001165908.1
 			note	original transcript_id: NM_001172437.2
 			product	hypothetical protein
-			protein_id	gnl|inscripta|XWBWQWYELBEE
-			transcript_id	gnl|inscripta|ZUFVVMXZFYRH
+			protein_id	gnl|inscripta|PKMHQETUAZZT
+			transcript_id	gnl|inscripta|TPKWSDWBLOLV
 			pseudo	
 562	566	CDS		
 7309	>9657			
@@ -19,7 +19,7 @@
 			note	original protein_id: NP_001165908.1
 			note	original transcript_id: NM_001172437.2
 			product	hypothetical protein
-			protein_id	gnl|inscripta|XWBWQWYELBEE
-			transcript_id	gnl|inscripta|ZUFVVMXZFYRH
+			protein_id	gnl|inscripta|PKMHQETUAZZT
+			transcript_id	gnl|inscripta|TPKWSDWBLOLV
 			codon_start	1
 			pseudo	

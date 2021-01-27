@@ -513,6 +513,7 @@ def collection_to_tbl(
         genbank_flavor: Optional[GenbankFlavor] = GenbankFlavor.EUKARYOTIC,
         locus_tag_jump_size: Optional[int] = 5,
         submitter_lab_name: Optional[str] = None,
+        random_seed: Optional[str] = None,
 ):
     """
     Take an iterable of :class:`~biocantor.gene.collections.AnnotationCollection` and produce a TBL file.
@@ -531,7 +532,11 @@ def collection_to_tbl(
             genome iterations.
         submitter_lab_name: Name to put in the ``dbname`` section of unique identifiers. This is intended to be a
             string that uniquely labels the submitter lab. If not set, will be a random string.
+        random_seed: A seed value for random string generation. Useful for reproducible runs of this function.
     """
+    if random_seed:
+        random.seed(random_seed)
+
     if not locus_tag_prefix:
         locus_tag_prefix = random_uppercase_str(size=8)
     if not submitter_lab_name:
