@@ -9,7 +9,7 @@ import random
 import pytest
 from inscripta.biocantor.io.genbank.parser import parse_genbank
 from inscripta.biocantor.io.gff3.parser import parse_gff3_embedded_fasta
-from inscripta.biocantor.io.ncbi.tbl_writer import collection_to_tbl
+from inscripta.biocantor.io.ncbi.tbl_writer import collection_to_tbl, GenbankFlavor
 from inscripta.biocantor.io.parser import ParsedAnnotationRecord
 
 random.seed(123)
@@ -47,5 +47,21 @@ def test_tbl_export_from_genbank(test_data_dir, tmp_path, genbank, expected_tbl)
     tmp = tmp_path / "tmp.tbl"
     with open(tmp, "w") as fh:
         collection_to_tbl(recs, fh, locus_tag_prefix="test", submitter_lab_name="inscripta")
+    with open(tmp) as fh1, open(test_data_dir / expected_tbl) as fh2:
+        assert fh1.read() == fh2.read()
+
+
+@pytest.mark.parametrize(
+    "genbank,expected_tbl",
+    [
+        ("INSC1003_tbl_edge_cases.gbk", "INSC1003_tbl_edge_cases.tbl")
+    ],
+)
+def test_tbl_export_from_genbank_prokaryotic(test_data_dir, tmp_path, genbank, expected_tbl):
+    genbank = test_data_dir / genbank
+    recs = list(ParsedAnnotationRecord.parsed_annotation_records_to_model(parse_genbank(genbank)))
+    tmp = tmp_path / "tmp.tbl"
+    with open(tmp, "w") as fh:
+        collection_to_tbl(recs, fh, locus_tag_prefix="test", submitter_lab_name="inscripta", genbank_flavor=GenbankFlavor.PROKARYOTIC)
     with open(tmp) as fh1, open(test_data_dir / expected_tbl) as fh2:
         assert fh1.read() == fh2.read()

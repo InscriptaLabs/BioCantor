@@ -2,6 +2,7 @@
 97	2693	gene		
 			gene	insO
 			locus_tag	test_5
+			note	original locus_tag: b4623
 			gene_synonym	b4283 b4285 b4562 ECK0257 ECK4274 ECK4275 ECK4476 insN-2 insO-2 yi91 yi91b yjhW
 			db_xref	ASAP:ABE-0285254
 			db_xref	ECOCYC:G7904
@@ -12,8 +13,10 @@
 1909	>2693			
 			gene	insO
 			locus_tag	test_5
-			protein_id	gnl|inscripta|YRKNLAUUFNCW
-			transcript_id	gnl|inscripta|VELVHXCUBYQM
+			note	original locus_tag: b4623
+			product	KpLE2 phage-like element IS911B regulator fragment
+			protein_id	gnl|inscripta|QUFYPQVAPEIL
+			transcript_id	gnl|inscripta|VQUOHCNXPMKB
 			gene_synonym	b4283 b4285 b4562 ECK0257 ECK4274 ECK4275 ECK4476 insN-2 insO-2 yi91 yi91b yjhW
 			db_xref	ASAP:ABE-0285254
 			db_xref	ECOCYC:G7904
@@ -24,9 +27,10 @@
 1909	>2693			
 			gene	insO
 			locus_tag	test_5
+			note	original locus_tag: b4623
 			product	KpLE2 phage-like element IS911B regulator fragment
-			protein_id	gnl|inscripta|YRKNLAUUFNCW
-			transcript_id	gnl|inscripta|VELVHXCUBYQM
+			protein_id	gnl|inscripta|QUFYPQVAPEIL
+			transcript_id	gnl|inscripta|VQUOHCNXPMKB
 			codon_start	1
 			gene_synonym	b4283 b4285 b4562 ECK0257 ECK4274 ECK4275 ECK4476 insN-2 insO-2 yi91 yi91b yjhW
 			db_xref	ASAP:ABE-0285254

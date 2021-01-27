@@ -10,38 +10,38 @@
 			note	original locus_tag: FEPOIHMA_00001
 			note	original protein_id: X:FEPOIHMA_00001
 			product	aspartate kinase / homoserine dehydrogenase
-			protein_id	gnl|inscripta|VCLGZBDREQAT
-			transcript_id	gnl|inscripta|PQNMWPCZGFLH
+			protein_id	gnl|inscripta|UMODTKMSSTQE
+			transcript_id	gnl|inscripta|HYBFWNZQOVTI
 335	2797	CDS		
 			gene	thrA
 			locus_tag	test_5
 			note	original locus_tag: FEPOIHMA_00001
 			note	original protein_id: X:FEPOIHMA_00001
 			product	aspartate kinase / homoserine dehydrogenase
-			protein_id	gnl|inscripta|VCLGZBDREQAT
-			transcript_id	gnl|inscripta|PQNMWPCZGFLH
+			protein_id	gnl|inscripta|UMODTKMSSTQE
+			transcript_id	gnl|inscripta|HYBFWNZQOVTI
 			codon_start	1
 2799	3731	gene		
-			gene	thrB
 			locus_tag	test_10
 			note	original locus_tag: FEPOIHMA_00002
+			note	original product: alpha
 			note	original protein_id: X:FEPOIHMA_00002
 2799	3731	mRNA		
-			gene	thrB
 			locus_tag	test_10
 			note	original locus_tag: FEPOIHMA_00002
+			note	original product: alpha
 			note	original protein_id: X:FEPOIHMA_00002
-			product	homoserine kinase
-			protein_id	gnl|inscripta|KWNXPDMCLQMD
-			transcript_id	gnl|inscripta|GICWDLFGCCNU
+			product	hypothetical protein
+			protein_id	gnl|inscripta|THYJFQHWNZXC
+			transcript_id	gnl|inscripta|SMRCLOWUEFLW
 2799	3731	CDS		
-			gene	thrB
 			locus_tag	test_10
 			note	original locus_tag: FEPOIHMA_00002
+			note	original product: alpha
 			note	original protein_id: X:FEPOIHMA_00002
-			product	homoserine kinase
-			protein_id	gnl|inscripta|KWNXPDMCLQMD
-			transcript_id	gnl|inscripta|GICWDLFGCCNU
+			product	hypothetical protein
+			protein_id	gnl|inscripta|THYJFQHWNZXC
+			transcript_id	gnl|inscripta|SMRCLOWUEFLW
 			codon_start	1
 3732	5018	gene		
 			gene	thrC
@@ -54,16 +54,16 @@
 			note	original locus_tag: FEPOIHMA_00003
 			note	original protein_id: X:FEPOIHMA_00003
 			product	threonine synthase
-			protein_id	gnl|inscripta|UOXNOWBNBDJQ
-			transcript_id	gnl|inscripta|MMXKLLCKTFDA
+			protein_id	gnl|inscripta|SEEZJNEFOITH
+			transcript_id	gnl|inscripta|TGJGSTBYJYGT
 3732	5018	CDS		
 			gene	thrC
 			locus_tag	test_15
 			note	original locus_tag: FEPOIHMA_00003
 			note	original protein_id: X:FEPOIHMA_00003
 			product	threonine synthase
-			protein_id	gnl|inscripta|UOXNOWBNBDJQ
-			transcript_id	gnl|inscripta|MMXKLLCKTFDA
+			protein_id	gnl|inscripta|SEEZJNEFOITH
+			transcript_id	gnl|inscripta|TGJGSTBYJYGT
 			codon_start	1
 5231	5527	gene		
 			locus_tag	test_20
@@ -74,15 +74,15 @@
 			note	original locus_tag: FEPOIHMA_00004
 			note	original protein_id: X:FEPOIHMA_00004
 			product	hypothetical protein
-			protein_id	gnl|inscripta|OMQKBGZJKWJE
-			transcript_id	gnl|inscripta|KTPLHRYBTPEG
+			protein_id	gnl|inscripta|OAFFYKTVZFKB
+			transcript_id	gnl|inscripta|DHBLGCFONFDR
 5231	5527	CDS		
 			locus_tag	test_20
 			note	original locus_tag: FEPOIHMA_00004
 			note	original protein_id: X:FEPOIHMA_00004
 			product	hypothetical protein
-			protein_id	gnl|inscripta|OMQKBGZJKWJE
-			transcript_id	gnl|inscripta|KTPLHRYBTPEG
+			protein_id	gnl|inscripta|OAFFYKTVZFKB
+			transcript_id	gnl|inscripta|DHBLGCFONFDR
 			codon_start	1
 6456	5680	gene		
 			gene	yaaA
@@ -95,32 +95,54 @@
 			note	original locus_tag: FEPOIHMA_00005
 			note	original protein_id: X:FEPOIHMA_00005
 			product	protein that reduces intracellular iron levels under peroxide stress
-			protein_id	gnl|inscripta|KHWPRHJYFGOP
-			transcript_id	gnl|inscripta|ZKPUOOZINXJC
+			protein_id	gnl|inscripta|QBTVHUDNEHVJ
+			transcript_id	gnl|inscripta|FOYESLXMATPJ
 6456	5680	CDS		
 			gene	yaaA
 			locus_tag	test_25
 			note	original locus_tag: FEPOIHMA_00005
 			note	original protein_id: X:FEPOIHMA_00005
 			product	protein that reduces intracellular iron levels under peroxide stress
-			protein_id	gnl|inscripta|KHWPRHJYFGOP
-			transcript_id	gnl|inscripta|ZKPUOOZINXJC
+			protein_id	gnl|inscripta|QBTVHUDNEHVJ
+			transcript_id	gnl|inscripta|FOYESLXMATPJ
+			codon_start	1
+335	2797	gene		
+			gene	thrA
+			locus_tag	test_30
+			note	original locus_tag: FEPOIHMA_00010
+			note	original transcript_id: abc123
+335	2797	mRNA		
+			gene	thrA
+			locus_tag	test_30
+			note	original locus_tag: FEPOIHMA_00010
+			note	original transcript_id: abc123
+			product	aspartate kinase / homoserine dehydrogenase
+			protein_id	gnl|inscripta|NNXTFSEGHJXV
+			transcript_id	gnl|inscripta|ZOQEVSWZGFQF
+335	2797	CDS		
+			gene	thrA
+			locus_tag	test_30
+			note	original locus_tag: FEPOIHMA_00010
+			note	original transcript_id: abc123
+			product	aspartate kinase / homoserine dehydrogenase
+			protein_id	gnl|inscripta|NNXTFSEGHJXV
+			transcript_id	gnl|inscripta|ZOQEVSWZGFQF
 			codon_start	1
 6756	6843	gene		
-			gene	test_30
-			locus_tag	test_30
+			gene	test_35
+			locus_tag	test_35
 			note	original locus_tag: FEPOIHMA_02080
 6756	6843	tRNA		
-			gene	test_30
-			locus_tag	test_30
+			gene	test_35
+			locus_tag	test_35
 			note	original locus_tag: FEPOIHMA_02080
 			product	tRNA-Pro
 7066	6956	gene		
-			gene	test_35
-			locus_tag	test_35
+			gene	test_40
+			locus_tag	test_40
 			note	original locus_tag: FEPOIHMA_02457
 7066	6956	rRNA		
-			gene	test_35
-			locus_tag	test_35
+			gene	test_40
+			locus_tag	test_40
 			note	original locus_tag: FEPOIHMA_02457
 			product	5S ribosomal RNA

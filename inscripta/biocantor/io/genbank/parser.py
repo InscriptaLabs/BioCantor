@@ -22,6 +22,7 @@ The generic parsing function that interprets the BioPython results to BioCantor 
 """
 import itertools
 import logging
+import pathlib
 from abc import ABC
 from collections import Counter
 from copy import deepcopy
@@ -30,7 +31,6 @@ from typing import Optional, TextIO, Iterable, List, Dict, Callable, Tuple, Any,
 from Bio import SeqIO
 from Bio.SeqFeature import SeqFeature
 from Bio.SeqRecord import SeqRecord
-
 from inscripta.biocantor.gene.biotype import Biotype
 from inscripta.biocantor.gene.cds import CDSFrame, CDSInterval
 from inscripta.biocantor.io.genbank.constants import (
@@ -274,7 +274,7 @@ class IntervalFeature(Feature):
 
 
 def parse_genbank(
-    genbank_handle_or_path: Union[TextIO, str],
+    genbank_handle_or_path: Union[TextIO, str, pathlib.Path],
     parse_func: Optional[Callable[[GeneFeature], Dict[str, Any]]] = GeneFeature.to_gene_model,
     gbk_type: Optional[GenBankParserType] = GenBankParserType.LOCUS_TAG,
 ) -> Iterable[ParsedAnnotationRecord]:
