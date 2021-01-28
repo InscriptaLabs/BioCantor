@@ -6,9 +6,9 @@ import pytest
     "a,b",
     (
         [Biotype["protein_coding"], Biotype["protein-coding"]],
-        [Biotype.misc_RNA == Biotype.miscRNA],
-        [Biotype.pseudogene == Biotype.pseudo],
-        [Biotype.lncRNA == Biotype.lnc_RNA],
+        [Biotype.misc_RNA, Biotype.miscRNA],
+        [Biotype.pseudogene, Biotype.pseudo],
+        [Biotype.lncRNA, Biotype.lnc_RNA],
     ),
 )
 def test_redundant_biotypes(a, b):
