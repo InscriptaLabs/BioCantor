@@ -324,12 +324,17 @@ class FeatureIntervalCollection(AbstractFeatureIntervalCollection):
         self.feature_intervals = feature_intervals
         self.feature_name = feature_name
         self.feature_id = feature_id
-        self.feature_types = set.union(*(x.feature_types for x in feature_intervals if x))
         self.locus_tag = locus_tag
         self.sequence_name = sequence_name
         self.sequence_guid = sequence_guid
         # qualifiers come in as a List, convert to Set
         self._import_qualifiers_from_list(qualifiers)
+
+        feature_types = [x.feature_types for x in feature_intervals if x.feature_types]
+        if feature_types:
+            self.feature_types = set.union(*feature_types)
+        else:
+            self.feature_types = None
 
         if not self.feature_intervals:
             raise InvalidAnnotationError("FeatureCollection must have features")
@@ -406,7 +411,7 @@ class FeatureIntervalCollection(AbstractFeatureIntervalCollection):
                 qualifiers[key] = set()
             qualifiers[key].add(val)
         if self.feature_types:
-            qualifiers[BioCantorQualifiers.FEATURE_TYPE.value] = self.feature_types
+            qualifiers[BioCantorQualifiers.FEATURE_TYPES.value] = self.feature_types
         return qualifiers
 
     def to_gff(self) -> Iterable[GFFRow]:
@@ -424,7 +429,7 @@ class FeatureIntervalCollection(AbstractFeatureIntervalCollection):
         row = GFFRow(
             self.sequence_name,
             GFF_SOURCE,
-            BioCantorFeatureTypes.GENE,
+            BioCantorFeatureTypes.FEATURE_COLLECTION,
             self.start + 1,
             self.end,
             NULL_COLUMN,

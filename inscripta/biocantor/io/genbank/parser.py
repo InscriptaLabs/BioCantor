@@ -25,14 +25,14 @@ import logging
 from abc import ABC
 from collections import Counter
 from copy import deepcopy
-from typing import Optional, TextIO, Iterable, List, Dict, Callable, Tuple, Any, Union, Hashable
+from typing import Optional, TextIO, Iterable, List, Dict, Callable, Tuple, Any, Union
 
 from Bio import SeqIO
 from Bio.SeqFeature import SeqFeature
 from Bio.SeqRecord import SeqRecord
-
 from inscripta.biocantor.gene.biotype import Biotype
 from inscripta.biocantor.gene.cds import CDSFrame, CDSInterval
+from inscripta.biocantor.io.features import extract_feature_types, extract_feature_name_id, merge_qualifiers
 from inscripta.biocantor.io.genbank.constants import (
     GeneFeatures,
     TranscriptFeatures,
@@ -40,8 +40,7 @@ from inscripta.biocantor.io.genbank.constants import (
     GenBankFeatures,
     MetadataFeatures,
     GenBankParserType,
-    FeatureIntervalIdentifierKeys,
-    FEATURE_TYPE_IDENTIFIERS
+    KnownQualifiers,
 )
 from inscripta.biocantor.io.genbank.exc import GenBankValidationError
 from inscripta.biocantor.io.models import (
@@ -107,18 +106,6 @@ class FeatureIntervalGenBankCollection:
         self.features = features
 
     @staticmethod
-    def _merge_qualifiers(
-        qualifiers: Dict[Hashable, List[str]], other_qualifiers: Dict[Hashable, List[str]]
-    ) -> Dict[Hashable, List[str]]:
-        """Merges two dicts of lists using sets."""
-        merged = {key: set(vals) for key, vals in qualifiers.items()}
-        for key, vals in other_qualifiers.items():
-            if key not in merged:
-                merged[key] = set()
-            merged[key].update(vals)
-        return merged
-
-    @staticmethod
     def to_feature_model(cls: "FeatureIntervalGenBankCollection") -> Dict[str, Any]:
         """Convert to a Dict representation of a :class:`biocantor.gene.collections.FeatureIntervalCollection`
         that can be used for analyses.
@@ -132,6 +119,8 @@ class FeatureIntervalGenBankCollection:
         the parser we have only one feature, so the first name is chosen.
         """
         features = []
+        feature_names = Counter()
+        feature_ids = Counter()
         locus_tag = None
         merged_qualifiers = {}
         for feature in cls.features:
@@ -142,52 +131,65 @@ class FeatureIntervalGenBankCollection:
                 interval_ends.append(loc.nofuzzy_end)
             strand = Strand.from_int(feature.location.strand)
 
-            # by default the only feature type
+            # extract feature types, including the base type
             feature_types = {feature.type}
-            # start to dig through the qualifiers
-            qualifiers = {}
-            feature_name = None
-            for key, vals in feature.qualifiers.items():
-                if any(x in key for x in FEATURE_TYPE_IDENTIFIERS):
-                    feature_types.update(vals)
-                elif key == "locus_tag":
-                    locus_tag = vals[0]
-                elif key.upper() in FeatureIntervalIdentifierKeys.__members__:
-                    feature_identifier = FeatureIntervalIdentifierKeys[key.upper()]
-                    if not feature_name or feature_identifier > feature_name:
-                        feature_name = feature_identifier
-                else:
-                    qualifiers[key] = vals
+            extract_feature_types(feature_types, feature.qualifiers)
+
+            # extract primary identifier
+            feature_name, feature_id = extract_feature_name_id(feature.qualifiers)
+            # keep track of feature names seen to identify consensus feature name for collection
+            if feature_name:
+                feature_names[feature_name] += 1
+            if feature_id:
+                feature_ids[feature_id] += 1
+
+            # try to find a locus tag
+            if KnownQualifiers.LOCUS_TAG.value in feature.qualifiers:
+                locus_tag = feature.qualifiers[KnownQualifiers.LOCUS_TAG.value][0]
+
+            # try to ensure there is always a name
+            if not feature_name:
+                if feature_id:
+                    feature_name = feature_id
+                elif locus_tag:
+                    feature_name = locus_tag
 
             features.append(
                 dict(
                     interval_starts=interval_starts,
                     interval_ends=interval_ends,
                     strand=strand.name,
-                    qualifiers=qualifiers,
-                    feature_id=feature_name.name.lower(),
-                    feature_name=feature_name.name.lower(),
+                    qualifiers=feature.qualifiers,
+                    feature_id=feature_id,
+                    feature_name=feature_name,
                     feature_types=list(feature_types),
                     locus_tag=locus_tag,
                     sequence_name=cls.record.id,
                     is_primary_feature=False,
                 )
             )
-            merged_qualifiers = FeatureIntervalGenBankCollection._merge_qualifiers(merged_qualifiers, qualifiers)
+            merged_qualifiers = merge_qualifiers(merged_qualifiers, feature.qualifiers)
 
-        if locus_tag:
-            feature_name = locus_tag
+        if len(feature_names) > 0:
+            feature_name = feature_names.most_common(1)[0][0]
         else:
-            feature_name = features[0]["feature_name"]
+            feature_name = locus_tag
 
-        feature_collection = FeatureIntervalCollectionModel.Schema().load(dict(
-            feature_intervals=features,
-            feature_name=feature_name,
-            feature_id=feature_name,
-            locus_tag=locus_tag,
-            qualifiers=merged_qualifiers,
-            sequence_name=cls.record.id,
-        ))
+        if len(feature_ids) > 0:
+            feature_id = feature_ids.most_common(1)[0][0]
+        else:
+            feature_id = locus_tag
+
+        feature_collection = FeatureIntervalCollectionModel.Schema().load(
+            dict(
+                feature_intervals=features,
+                feature_name=feature_name,
+                feature_id=feature_id,
+                locus_tag=locus_tag,
+                qualifiers=merged_qualifiers,
+                sequence_name=cls.record.id,
+            )
+        )
         # construct a FeatureIntervalCollection to run validations
         feature_collection = feature_collection.to_feature_collection()
         return feature_collection.to_dict()

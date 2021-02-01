@@ -3,7 +3,7 @@ GenBank parsing constants. Records common feature types and their relationships 
 """
 
 from enum import Enum, IntEnum
-
+import re
 from inscripta.biocantor.util.enum import HasMemberMixin
 
 
@@ -46,20 +46,20 @@ class IntervalFeatures(HasMemberMixin):
     EXON = "exon"
 
 
-class FeatureIntervalIdentifierKeys(IntEnum):
-    """Keys that will be looked for to find primary identifiers for a feature.
-    Will be checked in a case-insensitive fashion.
-    """
+class KnownQualifiers(Enum):
+    """GenBank qualifiers that have special meaning"""
 
-    GENE = 1
-    LOCUS_TAG = 2
-    ID = 3
-    LABEL = 4
-    OPERON = 5
-
-
-# FEATURE_TYPE_IDENTIFIERS are case-insensitive substrings to match for identifying feature types to include.
-FEATURE_TYPE_IDENTIFIERS = {"_class"}
+    GENE = "gene"
+    LOCUS_TAG = "locus_tag"
+    GENE_ID = "gene_id"
+    TRANSCRIPT_ID = "transcript_id"
+    PROTEIN_ID = "protein_id"
+    PRODUCT = "product"
+    GENE_NAME = "gene_name"
+    GBKEY = "gbkey"
+    DBXREF = "db_xref"
+    GENE_SYNONYM = "gene_synonym"
+    CODON_START = "codon_start"
 
 
 GenBankFeatures = HasMemberMixin(

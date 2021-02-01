@@ -26,7 +26,7 @@ class ReservedKeyWarning(UserWarning):
     pass
 
 
-class Gff3ParserError(InvalidInputError):
+class GFF3ParserError(InvalidInputError):
     """
     Raised when there is a parsing exception.
     """
@@ -34,7 +34,7 @@ class Gff3ParserError(InvalidInputError):
     pass
 
 
-class EmptyGff3Exception(InvalidInputError):
+class EmptyGFF3Exception(InvalidInputError):
     """
     Raised when parsing produces an empty GFF3.
     """

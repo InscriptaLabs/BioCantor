@@ -233,7 +233,7 @@ class FeatureInterval(AbstractFeatureInterval):
         self.location = location  # genomic CompoundInterval
         self.sequence_guid = sequence_guid
         self.sequence_name = sequence_name
-        self.feature_types = set(feature_types)  # stored as a set of types
+        self.feature_types = set(feature_types) if feature_types else None  # stored as a set of types
         self.feature_name = feature_name
         self.feature_id = feature_id
         self.locus_tag = locus_tag
@@ -275,7 +275,7 @@ class FeatureInterval(AbstractFeatureInterval):
             qualifiers=self._export_qualifiers_to_list(),
             feature_id=self.feature_id,
             feature_name=self.feature_name,
-            feature_types=list(self.feature_types),
+            feature_types=sorted(self.feature_types) if self.feature_types else None,
             locus_tag=self.locus_tag,
             sequence_name=self.sequence_name,
             sequence_guid=self.sequence_guid,

@@ -127,13 +127,23 @@ class TestGene:
 
 
 class TestFeatureIntervalCollection:
-    feat1 = dict(interval_starts=[2], interval_ends=[5], strand=Strand.PLUS.name)
-    feat2 = dict(interval_starts=[2, 7, 12], interval_ends=[6, 10, 15], strand=Strand.PLUS.name)
-    feat3 = dict(interval_starts=[25], interval_ends=[30], strand=Strand.MINUS.name)
-    collection1 = FeatureIntervalCollectionModel.Schema().load(
-        dict(feature_intervals=[feat1, feat2], feature_id="featgrp1")
+    feat1 = dict(
+        interval_starts=[2], interval_ends=[5], strand=Strand.PLUS.name, feature_types=["a", "b"], feature_name="feat1"
     )
-    collection2 = FeatureIntervalCollectionModel.Schema().load(dict(feature_intervals=[feat3], feature_id="featgrp2"))
+    feat2 = dict(
+        interval_starts=[2, 7, 12],
+        interval_ends=[6, 10, 15],
+        strand=Strand.PLUS.name,
+        feature_types=["b"],
+        feature_name="feat2",
+    )
+    feat3 = dict(
+        interval_starts=[25], interval_ends=[30], strand=Strand.MINUS.name, feature_types=["a"], feature_name="feat3"
+    )
+    collection1 = FeatureIntervalCollectionModel.Schema().load(
+        dict(feature_intervals=[feat1, feat2], feature_name="featgrp1")
+    )
+    collection2 = FeatureIntervalCollectionModel.Schema().load(dict(feature_intervals=[feat3], feature_name="featgrp2"))
 
     def test_feature_collection(self):
         obj = self.collection1.to_feature_collection()
@@ -248,61 +258,49 @@ class TestAnnotationCollection:
                 None,
                 False,
                 True,
-                # {"featgrp1", "featgrp2", "gene1"}
-                {
-                    UUID("aed74122-cbee-7ae2-ab6c-3306f7d32a6a"),
-                    UUID("9ed7ee5e-3abd-7ad2-b30d-826dbc69fda2"),
-                    UUID("fd5bf6b3-b4e6-0c9b-c93a-f58f27d0551a"),
-                },
+                #
+                {"featgrp1", "featgrp2", "gene1"},
             ),
             (
                 0,
                 None,
                 False,
-                True,  # {"featgrp1", "featgrp2", "gene1"}
-                {
-                    UUID("aed74122-cbee-7ae2-ab6c-3306f7d32a6a"),
-                    UUID("9ed7ee5e-3abd-7ad2-b30d-826dbc69fda2"),
-                    UUID("fd5bf6b3-b4e6-0c9b-c93a-f58f27d0551a"),
-                },
+                True,
+                {"featgrp1", "featgrp2", "gene1"},
             ),
             (
                 None,
                 30,
                 False,
-                True,  # {"featgrp1", "featgrp2", "gene1"}
-                {
-                    UUID("aed74122-cbee-7ae2-ab6c-3306f7d32a6a"),
-                    UUID("9ed7ee5e-3abd-7ad2-b30d-826dbc69fda2"),
-                    UUID("fd5bf6b3-b4e6-0c9b-c93a-f58f27d0551a"),
-                },
+                True,
+                {"featgrp1", "featgrp2", "gene1"},
             ),
             (0, 0, False, True, {}),
             (
                 0,
                 20,
                 False,
-                True,  # {"featgrp1", "gene1"}
-                {UUID("aed74122-cbee-7ae2-ab6c-3306f7d32a6a"), UUID("fd5bf6b3-b4e6-0c9b-c93a-f58f27d0551a")},
+                True,
+                {"featgrp1", "gene1"},
             ),
             (
                 None,
                 20,
                 False,
-                True,  # {"featgrp1", "gene1"}
-                {UUID("aed74122-cbee-7ae2-ab6c-3306f7d32a6a"), UUID("fd5bf6b3-b4e6-0c9b-c93a-f58f27d0551a")},
+                True,
+                {"featgrp1", "gene1"},
             ),
-            (25, None, False, True, {UUID("9ed7ee5e-3abd-7ad2-b30d-826dbc69fda2")}),  # {"featgrp2"}
+            (25, None, False, True, {"featgrp2"}),
             (26, None, False, True, {}),
-            (26, None, False, False, {UUID("9ed7ee5e-3abd-7ad2-b30d-826dbc69fda2")}),  # {"featgrp2"}
+            (26, None, False, False, {"featgrp2"}),
             (
                 0,
                 3,
                 False,
-                False,  # {"featgrp1", "gene1"}
-                {UUID("aed74122-cbee-7ae2-ab6c-3306f7d32a6a"), UUID("fd5bf6b3-b4e6-0c9b-c93a-f58f27d0551a")},
+                False,
+                {"featgrp1", "gene1"},
             ),
-            (0, None, True, False, {UUID("fd5bf6b3-b4e6-0c9b-c93a-f58f27d0551a")}),  # {"gene1"}
+            (0, None, True, False, {"gene1"}),
         ],
     )
     def test_position_queries(self, start, end, completely_within, coding_only, expected):
@@ -311,7 +309,7 @@ class TestAnnotationCollection:
         if r.is_empty:
             assert len(expected) == 0
         else:
-            assert r.hierarchical_children_guids.keys() == expected
+            assert set.union(*[x.identifiers for x in r]) == expected
 
     @pytest.mark.parametrize(
         "start,end,coding_only,completely_within,expected",

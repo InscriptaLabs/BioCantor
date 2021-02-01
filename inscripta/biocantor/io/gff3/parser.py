@@ -12,10 +12,11 @@ dataclass to adjust the arguments passed to :mod:`gffutils`.
 """
 import logging
 from dataclasses import dataclass
+from collections import Counter
 from io import StringIO
 from pathlib import Path
-from typing import Iterable, List, Optional, Callable, TextIO, Dict, Set
-
+from typing import Iterable, List, Optional, Callable, TextIO, Dict, Set, Any
+import re
 import gffutils
 from Bio import SeqIO
 from Bio.SeqRecord import SeqRecord
@@ -23,8 +24,15 @@ from gffutils.feature import Feature
 from gffutils.interface import FeatureDB
 from inscripta.biocantor.gene.biotype import Biotype
 from inscripta.biocantor.gene.cds import CDSPhase
-from inscripta.biocantor.io.gff3.constants import GFF3Headers, BioCantorGFF3ReservedQualifiers, GFF3FeatureTypes
-from inscripta.biocantor.io.gff3.exc import GFF3FastaException, EmptyGff3Exception
+from inscripta.biocantor.io.gff3.constants import (
+    GFF3Headers,
+    BioCantorGFF3ReservedQualifiers,
+    GFF3GeneFeatureTypes,
+    BioCantorQualifiers,
+    BIOCANTOR_QUALIFIERS_REGEX,
+)
+from inscripta.biocantor.io.features import extract_feature_types, extract_feature_name_id, merge_qualifiers
+from inscripta.biocantor.io.gff3.exc import GFF3FastaException, EmptyGFF3Exception, GFF3ParserError
 from inscripta.biocantor.io.models import AnnotationCollectionModel
 from inscripta.biocantor.io.parser import ParsedAnnotationRecord
 from inscripta.biocantor.location.strand import Strand
@@ -42,20 +50,291 @@ class GffutilsParseArgs:
 
 def filter_and_sort_qualifiers(qualifiers: Dict[str, List[str]]) -> Dict[str, List[str]]:
     """Filter out the qualifiers for any terms we have elevated"""
-    for key in [
-        "gene_id",
-        "locus_tag",
-        "gene_name",
-        "gene_biotype",
-        "gene_symbol",
-        "transcript_id",
-        "transcript_name",
-        "transcript_biotype",
-        "protein_id",
-    ]:
-        if key in qualifiers:
-            del qualifiers[key]
-    return {key: sorted(vals) for key, vals in qualifiers.items()}
+    return {key: sorted(vals) for key, vals in qualifiers.items() if not re.match(BIOCANTOR_QUALIFIERS_REGEX, key)}
+
+
+def _parse_genes(chrom: str, db: FeatureDB) -> List[Dict]:
+    """
+    Parse canonical genes from this database.
+
+    Args:
+        chrom: A chromosome to parse.
+        db: Database from :mod:`gffutils`.
+
+    Returns:
+        A list of nested dictionaries representing all genes on this chromosome.
+    """
+    parsed_genes = []
+    for gene in db.region(
+        seqid=chrom, featuretype=[GFF3GeneFeatureTypes.GENE.value, GFF3GeneFeatureTypes.PSEUDOGENE.value]
+    ):
+        gene_id = gene.attributes.get("gene_id", [None])[0]
+        locus_tag = gene.attributes.get("locus_tag", [None])[0]
+        gene_symbol = gene.attributes.get("gene_name", [gene.attributes.get("gene_symbol", None)])[0]
+        gene_biotype = gene.attributes.get("gene_biotype", [gene.attributes.get("gene_type", None)])[0]
+        gene_qualifiers = {x: y for x, y in gene.attributes.items() if not BioCantorGFF3ReservedQualifiers.has_value(x)}
+
+        if gene_biotype is not None:
+            try:
+                gene_biotype = Biotype[gene_biotype]
+            except KeyError:
+                gene_qualifiers["provided_biotype"] = gene.attributes["gene_biotype"][0]
+                gene_biotype = None
+
+        transcripts = []
+        for i, transcript in enumerate(db.children(gene, level=1)):
+
+            transcript_id = transcript.attributes.get("transcript_id", [None])[0]
+            transcript_symbol = transcript.attributes.get(
+                "transcript_name", [gene.attributes.get("transcript_name", None)]
+            )[0]
+            transcript_qualifiers = {
+                x: y for x, y in transcript.attributes.items() if not BioCantorGFF3ReservedQualifiers.has_value(x)
+            }
+            transcript_biotype = gene.attributes.get(
+                "transcript_biotype", [gene.attributes.get("transcript_type", None)]
+            )[0]
+
+            if transcript_biotype is not None:
+                try:
+                    transcript_biotype = Biotype[transcript_biotype]
+                except KeyError:
+                    transcript_qualifiers["provided_transcript_biotype"] = gene.attributes["transcript_biotype"][0]
+                    transcript_biotype = None
+            elif gene_biotype is not None:
+                transcript_biotype = gene_biotype
+
+            if locus_tag is not None:
+                if transcript_id is None:
+                    transcript_id = locus_tag
+                if transcript_symbol is None:
+                    transcript_symbol = locus_tag
+
+            exons = []
+            cds = []
+            for feature in db.children(transcript, level=1):
+                if feature.featuretype == GFF3GeneFeatureTypes.EXON.value:
+                    exons.append(feature)
+                elif feature.featuretype == GFF3GeneFeatureTypes.CDS.value:
+                    cds.append(feature)
+                else:
+                    logger.warning(f"Found non CDS/exon child of transcript in feature: {feature}")
+
+            # This gene has only a CDS/exon feature as its direct child
+            # therefore, we really have one interval here
+            if len(exons) == 0:
+                if transcript.featuretype not in [
+                    GFF3GeneFeatureTypes.CDS.value,
+                    GFF3GeneFeatureTypes.EXON.value,
+                ]:
+                    logger.warning(f"Gene child feature has type {transcript.featuretype}; skipping")
+                    continue
+                logger.info(f"gene {gene_id} had no transcript feature")
+                if transcript.featuretype == GFF3GeneFeatureTypes.CDS.value:
+                    exons = cds = [transcript]
+                else:
+                    exons = [transcript]
+
+            exons = sorted(exons, key=lambda e: e.start)
+            exon_starts = [x.start - 1 for x in exons]
+            exon_ends = [x.end for x in exons]
+            start = exon_starts[0]
+            end = exon_ends[-1]
+            assert start <= end
+            strand = Strand.from_symbol(transcript.strand)
+
+            if len(cds) == 0:
+                cds_starts = cds_ends = cds_frames = None
+                protein_id = None
+            else:
+                cds = sorted(cds, key=lambda c: c.start)
+                cds_starts = [x.start - 1 for x in cds]
+                cds_ends = [x.end for x in cds]
+                cds_frames = [CDSPhase.from_int(int(f.frame)).to_frame().name for f in cds]
+                # NCBI encodes protein IDs on the CDS feature
+                protein_id = cds[0].attributes.get("protein_id", [None])[0]
+
+            tx = dict(
+                exon_starts=exon_starts,
+                exon_ends=exon_ends,
+                strand=strand.name,
+                cds_starts=cds_starts,
+                cds_ends=cds_ends,
+                cds_frames=cds_frames,
+                qualifiers=filter_and_sort_qualifiers(transcript_qualifiers),
+                is_primary_tx=False,
+                transcript_id=transcript_id,
+                transcript_type=transcript_biotype.name if transcript_biotype else transcript_biotype,
+                transcript_symbol=transcript_symbol,
+                sequence_name=chrom,
+                protein_id=protein_id,
+            )
+            transcripts.append(tx)
+
+        gene = dict(
+            transcripts=transcripts,
+            gene_id=gene_id,
+            gene_symbol=gene_symbol,
+            locus_tag=locus_tag,
+            gene_type=gene_biotype.name if gene_biotype else gene_biotype,
+            qualifiers=filter_and_sort_qualifiers(gene_qualifiers),
+            sequence_name=chrom,
+        )
+
+        parsed_genes.append(gene)
+    return parsed_genes
+
+
+def _find_all_top_level_non_gene_features(chrom: str, db: FeatureDB, feature_types: List[str]) -> Iterable[Feature]:
+    """
+    Find all top-level non gene features. GFFutils lacks a way to do this directly, so we just iterate over everything.
+
+    Args:
+        chrom: A chromosome to parse.
+        db: Database from :mod:`gffutils`.
+        feature_types: A set of feature types that are in the database that are not genic.
+
+    Yields:
+        Iterable of ``Feature`` objects that are top-level.
+    """
+    for feature in db.region(seqid=chrom, featuretype=feature_types):
+        try:
+            _ = next(db.parents(feature.id))
+        except StopIteration:
+            yield feature
+
+
+def _parse_child_features_to_feature_interval(features: List[Feature]) -> Dict[str, Any]:
+    """
+    Extract values from a list of child features and produce a dictionary to build a FeatureIntervalModel from.
+
+    This function combines all child features of a top-level non-gene feature
+    """
+    # extract feature types, including the base type
+    feature_types = {feature.featuretype for feature in features}
+
+    # loop over features to get names, identifiers, positions and qualifiers
+    qualifiers = None
+    feature_names = Counter()
+    feature_ids = Counter()
+    strand = None
+    chrom = None
+    locus_tag = None
+    interval_starts = []
+    interval_ends = []
+    for feature in features:
+        if chrom and chrom != feature.chrom:
+            raise GFF3ParserError("Cannot have multiple child features on the same chromosome.")
+        elif strand and strand != feature.strand:
+            raise GFF3ParserError("Cannot have multiple child features on different strands.")
+        if not strand:
+            strand = Strand.from_symbol(feature.strand).name
+        if not chrom:
+            chrom = feature.chrom
+
+        interval_starts.append(feature.start - 1)
+        interval_ends.append(feature.end)
+
+        extract_feature_types(feature_types, feature.attributes)
+        feature_name, feature_id = extract_feature_name_id(feature.attributes)
+        feature_names[feature_name] += 1
+        feature_ids[feature_id] += 1
+
+        if BioCantorQualifiers.LOCUS_TAG.value in feature.attributes:
+            this_locus_tag = feature.attributes[BioCantorQualifiers.LOCUS_TAG.value][0]
+            if this_locus_tag == locus_tag:
+                raise GFF3ParserError("Cannot have multiple child features with the same locus_tag.")
+            elif not locus_tag:
+                locus_tag = this_locus_tag
+
+        if not qualifiers:
+            qualifiers = feature.attributes
+        else:
+            qualifiers = merge_qualifiers(qualifiers, feature.attributes)
+
+    if len(feature_names) > 0:
+        feature_name = feature_names.most_common(1)[0][0]
+    else:
+        feature_name = locus_tag
+
+    if len(feature_ids) > 0:
+        feature_id = feature_ids.most_common(1)[0][0]
+    else:
+        feature_id = locus_tag
+
+    return dict(
+        interval_starts=sorted(interval_starts),
+        interval_ends=sorted(interval_ends),
+        strand=strand,
+        qualifiers=filter_and_sort_qualifiers(qualifiers),
+        feature_id=feature_id,
+        feature_name=feature_name,
+        feature_types=list(feature_types),
+        locus_tag=locus_tag,
+        sequence_name=chrom,
+        is_primary_feature=False,
+    )
+
+
+def _parse_features(chrom: str, db: FeatureDB, feature_types: List[str]) -> List[Dict]:
+    """
+    Parse generic features from this database. These are anything that cannot be interpreted as a gene.
+
+    If a feature is a top-level feature with no children, then infer a collection wrapper for it.
+
+    Args:
+        chrom: A chromosome to parse.
+        db: Database from :mod:`gffutils`.
+        feature_types: A set of feature types that are in the database that are not genic.
+
+    Returns:
+        A list of nested dictionaries representing non-gene features.
+    """
+    feature_collections = []
+    for top_level_feature in _find_all_top_level_non_gene_features(chrom, db, feature_types):
+        children = list(db.children(top_level_feature, level=1))
+
+        if not children:
+            feature = _parse_child_features_to_feature_interval([top_level_feature])
+        else:
+            feature = _parse_child_features_to_feature_interval(children)
+
+        feature_collection = dict(
+            feature_intervals=[feature],
+            feature_name=feature["feature_name"],
+            feature_id=feature["feature_id"],
+            locus_tag=feature["locus_tag"],
+            sequence_name=chrom,
+        )
+
+        feature_collections.append(feature_collection)
+    return feature_collections
+
+
+def _find_non_gene_feature_types(db: FeatureDB) -> List[str]:
+    """Non-gene feature types are those that are not either a member of :class:`~biocantor.gene.biotype.Biotype`
+    or :class:`~biocantor.io.gff3.constants.GFF3GeneFeatureTypes`. This combination of filters prevents genes being
+    inadvertently pulled in from either of the two main styles of representing them.
+
+    NCBI Style: {gene,pseudogene} -> {mRNA, tRNA, etc} -> {exon, cds}
+    Ensembl/GENCODE Style: gene -> transcript -> {exon, cds}
+
+    Args:
+        db: db: Database from :mod:`gffutils`.
+
+    Returns:
+        A list of strings representing the non-gene feature types found in the database.
+    """
+    non_gene_feature_types = []
+    for feat_type in db.featuretypes():
+        if GFF3GeneFeatureTypes.has_value(feat_type):
+            continue
+        else:
+            try:
+                _ = Biotype[feat_type]
+            except KeyError:
+                non_gene_feature_types.append(feat_type)
+    return non_gene_feature_types
 
 
 def default_parse_func(db: FeatureDB, chroms: List[str]) -> Iterable[AnnotationCollectionModel]:
@@ -80,131 +359,18 @@ def default_parse_func(db: FeatureDB, chroms: List[str]) -> Iterable[AnnotationC
     Yields:
         :class:`~biocantor.io.models.AnnotationCollectionModel`
     """
+    non_gene_feature_types = _find_non_gene_feature_types(db)
+
     for chrom in chroms:
-        this_genes = []  # holds genes
-        for gene in db.region(seqid=chrom, featuretype=["gene"]):
-            gene_id = gene.attributes.get("gene_id", [None])[0]
-            locus_tag = gene.attributes.get("locus_tag", [None])[0]
-            gene_symbol = gene.attributes.get("gene_name", [gene.attributes.get("gene_symbol", None)])[0]
-            gene_biotype = gene.attributes.get("gene_biotype", [gene.attributes.get("gene_type", None)])[0]
-            gene_qualifiers = {
-                x: y for x, y in gene.attributes.items() if not BioCantorGFF3ReservedQualifiers.has_value(x)
-            }
+        parsed_genes = _parse_genes(chrom, db)
+        if non_gene_feature_types:
+            parsed_features = _parse_features(chrom, db, non_gene_feature_types)
+        else:
+            parsed_features = None
 
-            if gene_biotype is not None:
-                try:
-                    gene_biotype = Biotype[gene_biotype]
-                except KeyError:
-                    gene_qualifiers["provided_biotype"] = gene.attributes["gene_biotype"][0]
-                    gene_biotype = None
-
-            transcripts = []
-            for i, transcript in enumerate(db.children(gene, level=1)):
-
-                transcript_id = transcript.attributes.get("transcript_id", [None])[0]
-                transcript_symbol = transcript.attributes.get(
-                    "transcript_name", [gene.attributes.get("transcript_name", None)]
-                )[0]
-                transcript_qualifiers = {
-                    x: y for x, y in transcript.attributes.items() if not BioCantorGFF3ReservedQualifiers.has_value(x)
-                }
-                transcript_biotype = gene.attributes.get(
-                    "transcript_biotype", [gene.attributes.get("transcript_type", None)]
-                )[0]
-
-                if transcript_biotype is not None:
-                    try:
-                        transcript_biotype = Biotype[transcript_biotype]
-                    except KeyError:
-                        transcript_qualifiers["provided_transcript_biotype"] = gene.attributes["transcript_biotype"][0]
-                        transcript_biotype = None
-                elif gene_biotype is not None:
-                    transcript_biotype = gene_biotype
-
-                if locus_tag is not None:
-                    if transcript_id is None:
-                        transcript_id = locus_tag
-                    if transcript_symbol is None:
-                        transcript_symbol = locus_tag
-
-                exons = []
-                cds = []
-                for feature in db.children(transcript, level=1):
-                    if feature.featuretype == GFF3FeatureTypes.EXON.value:
-                        exons.append(feature)
-                    elif feature.featuretype == GFF3FeatureTypes.CDS.value:
-                        cds.append(feature)
-                    else:
-                        logger.warning(f"Found non CDS/exon child of transcript in feature: {feature}")
-
-                # This gene has only a CDS/exon feature as its direct child
-                # therefore, we really have one interval here
-                if len(exons) == 0:
-                    if transcript.featuretype not in [
-                        GFF3FeatureTypes.CDS.value,
-                        GFF3FeatureTypes.EXON.value,
-                    ]:
-                        logger.warning(f"Gene child feature has type {transcript.featuretype}; skipping")
-                        continue
-                    logger.info(f"gene {gene_id} had no transcript feature")
-                    if transcript.featuretype == GFF3FeatureTypes.CDS.value:
-                        exons = cds = [transcript]
-                    else:
-                        exons = [transcript]
-
-                exons = sorted(exons, key=lambda e: e.start)
-                exon_starts = [x.start - 1 for x in exons]
-                exon_ends = [x.end for x in exons]
-                start = exon_starts[0]
-                end = exon_ends[-1]
-                assert start <= end
-                strand = Strand.from_symbol(transcript.strand)
-
-                if len(cds) == 0:
-                    cds_starts = cds_ends = cds_frames = None
-                    protein_id = None
-                else:
-                    cds = sorted(cds, key=lambda c: c.start)
-                    cds_starts = [x.start - 1 for x in cds]
-                    cds_ends = [x.end for x in cds]
-                    cds_frames = [CDSPhase.from_int(int(f.frame)).to_frame().name for f in cds]
-                    # NCBI encodes protein IDs on the CDS feature
-                    protein_id = cds[0].attributes.get("protein_id", [None])[0]
-
-                tx = dict(
-                    exon_starts=exon_starts,
-                    exon_ends=exon_ends,
-                    strand=strand.name,
-                    cds_starts=cds_starts,
-                    cds_ends=cds_ends,
-                    cds_frames=cds_frames,
-                    qualifiers=filter_and_sort_qualifiers(transcript_qualifiers),
-                    is_primary_tx=False,
-                    transcript_id=transcript_id,
-                    transcript_type=transcript_biotype.name if transcript_biotype else transcript_biotype,
-                    transcript_symbol=transcript_symbol,
-                    sequence_name=chrom,
-                    protein_id=protein_id,
-                )
-                transcripts.append(tx)
-
-            gene = dict(
-                transcripts=transcripts,
-                gene_id=gene_id,
-                gene_symbol=gene_symbol,
-                locus_tag=locus_tag,
-                gene_type=gene_biotype.name if gene_biotype else gene_biotype,
-                qualifiers=filter_and_sort_qualifiers(gene_qualifiers),
-                sequence_name=chrom,
-            )
-
-            this_genes.append(gene)
-
-        if len(this_genes) == 0:
-            # empty sequence
-            continue
-
-        annot = AnnotationCollectionModel.Schema().load(dict(genes=this_genes, sequence_name=chrom))
+        annot = AnnotationCollectionModel.Schema().load(
+            dict(genes=parsed_genes, feature_collections=parsed_features, sequence_name=chrom)
+        )
         yield annot
 
 
@@ -265,7 +431,7 @@ def parse_standard_gff3(
     """
     db = gffutils.create_db(str(gff), db_fn, transform=gffutil_transform_func, **gffutil_parse_args.__dict__)
     if sum(db.count_features_of_type(i) for i in db.featuretypes()) == 0:
-        raise EmptyGff3Exception("Parsing this GFF3 led to zero features. Is it empty or corrupted?")
+        raise EmptyGFF3Exception("Parsing this GFF3 led to zero features. Is it empty or corrupted?")
     logger.info(f"Parsed {gff}")
     for i in db.featuretypes():
         logger.info(f"Found feature type {i} with {db.count_features_of_type(i)} features")
