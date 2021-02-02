@@ -7,9 +7,7 @@ from abc import ABC, abstractmethod
 from typing import Optional, Any, Union, Dict, List, Set, Iterable, Hashable, TypeVar
 from uuid import UUID
 
-from inscripta.biocantor.exc import (
-    EmptyLocationException,
-)
+from inscripta.biocantor.exc import EmptyLocationException
 from inscripta.biocantor.gene.cds import CDSPhase
 from inscripta.biocantor.io.bed import BED12, RGB
 from inscripta.biocantor.io.gff3.constants import GFF_SOURCE, NULL_COLUMN, BioCantorFeatureTypes, BioCantorQualifiers

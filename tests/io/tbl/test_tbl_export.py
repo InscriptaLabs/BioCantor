@@ -5,8 +5,9 @@ All of these TBL files have been validated to pass the tbl2asn error validator t
 to acquire and so is not packaged for these unit tests.
 """
 import pytest
-from inscripta.biocantor.io.ncbi.tbl_writer import collection_to_tbl, LocusTagException
+from inscripta.biocantor.io.genbank.parser import parse_genbank
 from inscripta.biocantor.io.gff3.parser import parse_gff3_embedded_fasta
+from inscripta.biocantor.io.ncbi.tbl_writer import collection_to_tbl, GenbankFlavor
 from inscripta.biocantor.io.parser import ParsedAnnotationRecord
 
 
@@ -23,16 +24,45 @@ def test_tbl_export_from_gff3(test_data_dir, tmp_path, gff3, expected_tbl):
     recs = list(ParsedAnnotationRecord.parsed_annotation_records_to_model(parse_gff3_embedded_fasta(gff3)))
     tmp = tmp_path / "tmp.tbl"
     with open(tmp, "w") as fh:
-        collection_to_tbl(recs, fh, locus_tag_prefix="test")
+        collection_to_tbl(recs, fh, locus_tag_prefix="test", submitter_lab_name="inscripta", random_seed=123)
     with open(tmp) as fh1, open(test_data_dir / expected_tbl) as fh2:
         assert fh1.read() == fh2.read()
 
 
-def test_export_exception(test_data_dir, tmp_path):
-    """Files without locus tags on all features raise an exception if no locus tag is provided"""
-    gff3 = test_data_dir / "insO_frameshift.gff3"
-    recs = list(ParsedAnnotationRecord.parsed_annotation_records_to_model(parse_gff3_embedded_fasta(gff3)))
+@pytest.mark.parametrize(
+    "genbank,expected_tbl",
+    [
+        ("insO_frameshift.gbk", "insO_frameshift_from_gbk.tbl"),
+        ("INSC1006_chrI.gbff", "INSC1006_chrI.tbl"),
+        ("INSC1003.gbk", "INSC1003_from_gbk.tbl"),
+    ],
+)
+def test_tbl_export_from_genbank(test_data_dir, tmp_path, genbank, expected_tbl):
+    genbank = test_data_dir / genbank
+    recs = list(ParsedAnnotationRecord.parsed_annotation_records_to_model(parse_genbank(genbank)))
     tmp = tmp_path / "tmp.tbl"
-    with pytest.raises(LocusTagException):
-        with open(tmp, "w") as fh:
-            collection_to_tbl(recs, fh)
+    with open(tmp, "w") as fh:
+        collection_to_tbl(recs, fh, locus_tag_prefix="test", submitter_lab_name="inscripta", random_seed=123)
+    with open(tmp) as fh1, open(test_data_dir / expected_tbl) as fh2:
+        assert fh1.read() == fh2.read()
+
+
+@pytest.mark.parametrize(
+    "genbank,expected_tbl",
+    [("INSC1003_tbl_edge_cases.gbk", "INSC1003_tbl_edge_cases.tbl")],
+)
+def test_tbl_export_from_genbank_prokaryotic(test_data_dir, tmp_path, genbank, expected_tbl):
+    genbank = test_data_dir / genbank
+    recs = list(ParsedAnnotationRecord.parsed_annotation_records_to_model(parse_genbank(genbank)))
+    tmp = tmp_path / "tmp.tbl"
+    with open(tmp, "w") as fh:
+        collection_to_tbl(
+            recs,
+            fh,
+            locus_tag_prefix="test",
+            submitter_lab_name="inscripta",
+            genbank_flavor=GenbankFlavor.PROKARYOTIC,
+            random_seed=123,
+        )
+    with open(tmp) as fh1, open(test_data_dir / expected_tbl) as fh2:
+        assert fh1.read() == fh2.read()

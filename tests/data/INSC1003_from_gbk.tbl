@@ -1,96 +1,126 @@
 >Features FEPOIHMA_1
 335	2797	gene		
+			gene	thrA
 			locus_tag	test_5
+			note	original locus_tag: FEPOIHMA_00001
 			note	original protein_id: X:FEPOIHMA_00001
 335	2797	mRNA		
+			gene	thrA
 			locus_tag	test_5
+			note	original locus_tag: FEPOIHMA_00001
 			note	original protein_id: X:FEPOIHMA_00001
-			product	hypothetical protein
+			product	aspartate kinase / homoserine dehydrogenase
 			protein_id	gnl|inscripta|BICYNIDBMRRK
 			transcript_id	gnl|inscripta|KBFEKRKWHFAN
 335	2797	CDS		
+			gene	thrA
 			locus_tag	test_5
+			note	original locus_tag: FEPOIHMA_00001
 			note	original protein_id: X:FEPOIHMA_00001
-			product	hypothetical protein
+			product	aspartate kinase / homoserine dehydrogenase
 			protein_id	gnl|inscripta|BICYNIDBMRRK
 			transcript_id	gnl|inscripta|KBFEKRKWHFAN
 			codon_start	1
 2799	3731	gene		
+			gene	thrB
 			locus_tag	test_10
+			note	original locus_tag: FEPOIHMA_00002
 			note	original protein_id: X:FEPOIHMA_00002
 2799	3731	mRNA		
+			gene	thrB
 			locus_tag	test_10
+			note	original locus_tag: FEPOIHMA_00002
 			note	original protein_id: X:FEPOIHMA_00002
-			product	hypothetical protein
+			product	homoserine kinase
 			protein_id	gnl|inscripta|YCTMCAKXODBC
 			transcript_id	gnl|inscripta|VEEZAJNSPIPB
 2799	3731	CDS		
+			gene	thrB
 			locus_tag	test_10
+			note	original locus_tag: FEPOIHMA_00002
 			note	original protein_id: X:FEPOIHMA_00002
-			product	hypothetical protein
+			product	homoserine kinase
 			protein_id	gnl|inscripta|YCTMCAKXODBC
 			transcript_id	gnl|inscripta|VEEZAJNSPIPB
 			codon_start	1
 3732	5018	gene		
+			gene	thrC
 			locus_tag	test_15
+			note	original locus_tag: FEPOIHMA_00003
 			note	original protein_id: X:FEPOIHMA_00003
 3732	5018	mRNA		
+			gene	thrC
 			locus_tag	test_15
+			note	original locus_tag: FEPOIHMA_00003
 			note	original protein_id: X:FEPOIHMA_00003
-			product	hypothetical protein
+			product	threonine synthase
 			protein_id	gnl|inscripta|YJKQZPGTUQSZ
 			transcript_id	gnl|inscripta|KAMYUQNVRUZV
 3732	5018	CDS		
+			gene	thrC
 			locus_tag	test_15
+			note	original locus_tag: FEPOIHMA_00003
 			note	original protein_id: X:FEPOIHMA_00003
-			product	hypothetical protein
+			product	threonine synthase
 			protein_id	gnl|inscripta|YJKQZPGTUQSZ
 			transcript_id	gnl|inscripta|KAMYUQNVRUZV
 			codon_start	1
 5231	5527	gene		
 			locus_tag	test_20
+			note	original locus_tag: FEPOIHMA_00004
 			note	original protein_id: X:FEPOIHMA_00004
 5231	5527	mRNA		
 			locus_tag	test_20
+			note	original locus_tag: FEPOIHMA_00004
 			note	original protein_id: X:FEPOIHMA_00004
 			product	hypothetical protein
 			protein_id	gnl|inscripta|TPQVNLQBYUFX
 			transcript_id	gnl|inscripta|CPVIFKKRMCXO
 5231	5527	CDS		
 			locus_tag	test_20
+			note	original locus_tag: FEPOIHMA_00004
 			note	original protein_id: X:FEPOIHMA_00004
 			product	hypothetical protein
 			protein_id	gnl|inscripta|TPQVNLQBYUFX
 			transcript_id	gnl|inscripta|CPVIFKKRMCXO
 			codon_start	1
 6456	5680	gene		
+			gene	yaaA
 			locus_tag	test_25
+			note	original locus_tag: FEPOIHMA_00005
 			note	original protein_id: X:FEPOIHMA_00005
 6456	5680	mRNA		
+			gene	yaaA
 			locus_tag	test_25
+			note	original locus_tag: FEPOIHMA_00005
 			note	original protein_id: X:FEPOIHMA_00005
-			product	hypothetical protein
+			product	protein that reduces intracellular iron levels under peroxide stress
 			protein_id	gnl|inscripta|MSYKAGSCULAL
 			transcript_id	gnl|inscripta|HMRQXBUJPYUX
 6456	5680	CDS		
+			gene	yaaA
 			locus_tag	test_25
+			note	original locus_tag: FEPOIHMA_00005
 			note	original protein_id: X:FEPOIHMA_00005
-			product	hypothetical protein
+			product	protein that reduces intracellular iron levels under peroxide stress
 			protein_id	gnl|inscripta|MSYKAGSCULAL
 			transcript_id	gnl|inscripta|HMRQXBUJPYUX
 			codon_start	1
 6756	6843	gene		
 			gene	test_30
 			locus_tag	test_30
+			note	original locus_tag: FEPOIHMA_02080
 6756	6843	tRNA		
 			gene	test_30
 			locus_tag	test_30
-			product	tRNA-Xxx
+			note	original locus_tag: FEPOIHMA_02080
+			product	tRNA-Pro
 7066	6956	gene		
 			gene	test_35
 			locus_tag	test_35
+			note	original locus_tag: FEPOIHMA_02457
 7066	6956	rRNA		
 			gene	test_35
 			locus_tag	test_35
-			product	unknown ribosomal RNA
->Features extraseq
+			note	original locus_tag: FEPOIHMA_02457
+			product	5S ribosomal RNA

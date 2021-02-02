@@ -7,9 +7,7 @@ from itertools import count
 from typing import Optional, Any, Dict, Iterable, Hashable, Set
 from uuid import UUID
 
-from inscripta.biocantor.exc import (
-    EmptyLocationException,
-)
+from inscripta.biocantor.exc import EmptyLocationException
 from inscripta.biocantor.exc import NoncodingTranscriptError
 from inscripta.biocantor.gene.biotype import Biotype
 from inscripta.biocantor.gene.cds import CDSInterval, CDSPhase

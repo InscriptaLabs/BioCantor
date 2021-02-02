@@ -22,6 +22,7 @@ The generic parsing function that interprets the BioPython results to BioCantor 
 """
 import itertools
 import logging
+import pathlib
 from abc import ABC
 from collections import Counter
 from copy import deepcopy
@@ -368,7 +369,7 @@ class IntervalFeature(Feature):
 
 
 def parse_genbank(
-    genbank_handle_or_path: Union[TextIO, str],
+    genbank_handle_or_path: Union[TextIO, str, pathlib.Path],
     parse_func: Optional[Callable[[GeneFeature], Dict[str, Any]]] = GeneFeature.to_gene_model,
     feature_parse_func: Optional[
         Callable[[FeatureIntervalGenBankCollection], Dict[str, Any]]
