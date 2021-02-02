@@ -1,5 +1,3 @@
-from uuid import UUID
-
 import pytest
 from inscripta.biocantor.exc import InvalidAnnotationError, NoncodingTranscriptError, InvalidQueryError
 from inscripta.biocantor.exc import ValidationException
@@ -141,9 +139,11 @@ class TestFeatureIntervalCollection:
         interval_starts=[25], interval_ends=[30], strand=Strand.MINUS.name, feature_types=["a"], feature_name="feat3"
     )
     collection1 = FeatureIntervalCollectionModel.Schema().load(
-        dict(feature_intervals=[feat1, feat2], feature_name="featgrp1")
+        dict(feature_intervals=[feat1, feat2], feature_collection_name="featgrp1")
     )
-    collection2 = FeatureIntervalCollectionModel.Schema().load(dict(feature_intervals=[feat3], feature_name="featgrp2"))
+    collection2 = FeatureIntervalCollectionModel.Schema().load(
+        dict(feature_intervals=[feat3], feature_collection_name="featgrp2")
+    )
 
     def test_feature_collection(self):
         obj = self.collection1.to_feature_collection()
@@ -170,9 +170,9 @@ class TestAnnotationCollection:
             feature_collections=[
                 dict(
                     feature_intervals=[TestFeatureIntervalCollection.feat1, TestFeatureIntervalCollection.feat2],
-                    feature_id="featgrp1",
+                    feature_collection_id="featgrp1",
                 ),
-                dict(feature_intervals=[TestFeatureIntervalCollection.feat3], feature_id="featgrp2"),
+                dict(feature_intervals=[TestFeatureIntervalCollection.feat3], feature_collection_id="featgrp2"),
             ],
             genes=[dict(transcripts=[TestGene.tx1, TestGene.tx2], gene_id="gene1")],
             start=0,
@@ -185,9 +185,9 @@ class TestAnnotationCollection:
             feature_collections=[
                 dict(
                     feature_intervals=[TestFeatureIntervalCollection.feat1, TestFeatureIntervalCollection.feat2],
-                    feature_id="featgrp1",
+                    feature_collection_id="featgrp1",
                 ),
-                dict(feature_intervals=[TestFeatureIntervalCollection.feat3], feature_id="featgrp2"),
+                dict(feature_intervals=[TestFeatureIntervalCollection.feat3], feature_collection_id="featgrp2"),
             ],
             genes=[dict(transcripts=[TestGene.tx1, TestGene.tx2], gene_id="gene1")],
         )
@@ -202,9 +202,9 @@ class TestAnnotationCollection:
             feature_collections=[
                 dict(
                     feature_intervals=[TestFeatureIntervalCollection.feat1, TestFeatureIntervalCollection.feat2],
-                    feature_id="featgrp1",
+                    feature_collection_id="featgrp1",
                 ),
-                dict(feature_intervals=[TestFeatureIntervalCollection.feat3], feature_id="featgrp2"),
+                dict(feature_intervals=[TestFeatureIntervalCollection.feat3], feature_collection_id="featgrp2"),
             ]
         )
     )
@@ -351,7 +351,7 @@ class TestAnnotationCollection:
         if r.is_empty:
             assert len(ids) == 0
         else:
-            assert {x.gene_id for x in r.genes} | {x.feature_id for x in r.feature_collections} == ids
+            assert {x.gene_id for x in r.genes} | {x.feature_collection_id for x in r.feature_collections} == ids
 
     def test_query_by_identifiers_with_extraneous(self):
         obj = self.annot.to_annotation_collection()

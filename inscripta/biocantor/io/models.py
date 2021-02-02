@@ -230,8 +230,8 @@ class FeatureIntervalCollectionModel(BaseModel):
     """
 
     feature_intervals: List[FeatureIntervalModel]
-    feature_name: Optional[str] = None
-    feature_id: Optional[str] = None
+    feature_collection_name: Optional[str] = None
+    feature_collection_id: Optional[str] = None
     locus_tag: Optional[str] = None
     sequence_name: Optional[str] = None
     sequence_guid: Optional[UUID] = None
@@ -245,8 +245,8 @@ class FeatureIntervalCollectionModel(BaseModel):
 
         return FeatureIntervalCollection(
             feature_intervals=feature_intervals,
-            feature_name=self.feature_name,
-            feature_id=self.feature_id,
+            feature_collection_name=self.feature_collection_name,
+            feature_collection_id=self.feature_collection_id,
             locus_tag=self.locus_tag,
             sequence_name=self.sequence_name,
             sequence_guid=self.sequence_guid,

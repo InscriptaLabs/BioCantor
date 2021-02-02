@@ -3,7 +3,7 @@ GenBank parsing constants. Records common feature types and their relationships 
 """
 
 from enum import Enum, IntEnum
-import re
+
 from inscripta.biocantor.util.enum import HasMemberMixin
 
 
@@ -26,6 +26,7 @@ class GeneFeatures(HasMemberMixin):
     """GenBank gene features BioCantor understands."""
 
     GENE = "gene"
+    FEATURE_COLLECTION = "feature"
 
 
 class TranscriptFeatures(HasMemberMixin):
@@ -40,9 +41,14 @@ class TranscriptFeatures(HasMemberMixin):
 
 
 class IntervalFeatures(HasMemberMixin):
-    """GenBank interval features types BioCantor understands."""
+    """GenBank interval features types BioCantor understands. These do not match
+
+    :class:`~biocantor.io.gff3.constants.BioCantorFeatureTypes` because GenBank has length limitations
+    on feature types.
+    """
 
     CDS = "CDS"
+    FEATURE_INTERVAL = "feat_region"
     EXON = "exon"
 
 
@@ -60,6 +66,7 @@ class KnownQualifiers(Enum):
     DBXREF = "db_xref"
     GENE_SYNONYM = "gene_synonym"
     CODON_START = "codon_start"
+    FEATURE_CLASS = "feature_class"
 
 
 GenBankFeatures = HasMemberMixin(
@@ -69,5 +76,8 @@ GenBankFeatures = HasMemberMixin(
 
 
 class GenbankFlavor(Enum):
+    """GenBank files are formatted differently at NCBI if the species is prokaryotic or eukaryotic. The main
+    difference is the presence of a transcript level feature on eukaryotic genomes."""
+
     PROKARYOTIC = 1
     EUKARYOTIC = 2

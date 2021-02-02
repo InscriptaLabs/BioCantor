@@ -3,7 +3,7 @@ from uuid import UUID
 import pytest
 from inscripta.biocantor.gene.biotype import Biotype
 from inscripta.biocantor.gene.cds import CDSFrame
-from inscripta.biocantor.io.genbank.exc import GenBankValidationError
+from inscripta.biocantor.io.genbank.exc import GenBankLocusTagError
 from inscripta.biocantor.io.genbank.parser import parse_genbank, GenBankParserType
 from inscripta.biocantor.io.parser import ParsedAnnotationRecord
 from inscripta.biocantor.location.location_impl import SingleInterval, CompoundInterval, Strand
@@ -447,7 +447,7 @@ class TestGenBankErrors:
     def test_locus_tag_unique(self, test_data_dir):
         """If using the default locus_tag way of detecting groupings, locus tags must be unique"""
         gbk = test_data_dir / "locus_tag_collision.gbk"
-        with pytest.raises(GenBankValidationError):
+        with pytest.raises(GenBankLocusTagError):
             with open(gbk, "r") as fh:
                 _ = list(ParsedAnnotationRecord.parsed_annotation_records_to_model(parse_genbank(fh)))[0]
         # works fine in sorted mode

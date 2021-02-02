@@ -42,7 +42,7 @@ from inscripta.biocantor.io.genbank.constants import (
     GenBankParserType,
     KnownQualifiers,
 )
-from inscripta.biocantor.io.genbank.exc import GenBankValidationError
+from inscripta.biocantor.io.genbank.exc import GenBankParserError, EmptyGenBankError, GenBankLocusTagError
 from inscripta.biocantor.io.models import (
     GeneIntervalModel,
     AnnotationCollectionModel,
@@ -67,7 +67,7 @@ class Feature(ABC):
 
     def __init__(self, feature: SeqFeature, record: SeqRecord):
         if feature.type not in self.types:
-            raise GenBankValidationError(f"Invalid feature type {feature.type}")
+            raise GenBankParserError(f"Invalid feature type {feature.type}")
         self.feature = feature
         self.record = record
         self.children = []
@@ -79,10 +79,7 @@ class Feature(ABC):
             yield from child
 
     def __repr__(self):
-        r = []
-        for x in self:
-            r.append(str(x))
-        return "\n".join(r)
+        return "\n".join((str(x) for x in self))
 
     @property
     def type(self) -> str:
@@ -147,13 +144,6 @@ class FeatureIntervalGenBankCollection:
             if KnownQualifiers.LOCUS_TAG.value in feature.qualifiers:
                 locus_tag = feature.qualifiers[KnownQualifiers.LOCUS_TAG.value][0]
 
-            # try to ensure there is always a name
-            if not feature_name:
-                if feature_id:
-                    feature_name = feature_id
-                elif locus_tag:
-                    feature_name = locus_tag
-
             features.append(
                 dict(
                     interval_starts=interval_starts,
@@ -162,7 +152,7 @@ class FeatureIntervalGenBankCollection:
                     qualifiers=feature.qualifiers,
                     feature_id=feature_id,
                     feature_name=feature_name,
-                    feature_types=list(feature_types),
+                    feature_types=sorted(feature_types),
                     locus_tag=locus_tag,
                     sequence_name=cls.record.id,
                     is_primary_feature=False,
@@ -219,7 +209,7 @@ class GeneFeature(Feature):
             self.children.append(tx)
             tx.add_child(feature)
         else:
-            raise GenBankValidationError(f"Invalid feature type {feature.type}")
+            raise GenBankParserError(f"Invalid feature type {feature.type}")
 
     def finalize(self):
         """Make sure we have a full hierarchy; infer children if necessary.
@@ -420,6 +410,8 @@ def group_gene_records_from_sorted_genbank(
     Yields:
         :class:`ParsedAnnotationRecord`.
     """
+    tot_genes = 0
+    tot_features = 0
     for seqrecord in record_iter:
         gene = None
         source = None
@@ -462,6 +454,10 @@ def group_gene_records_from_sorted_genbank(
             source_qualifiers = None
 
         feature_collections = _extract_generic_features(seqrecord, feature_parse_func)
+
+        tot_features += len(feature_collections) if feature_collections else 0
+        tot_genes += len(genes) if genes else 0
+
         annotation = AnnotationCollectionModel.Schema().load(
             dict(
                 genes=genes,
@@ -473,6 +469,9 @@ def group_gene_records_from_sorted_genbank(
             )
         )
         yield ParsedAnnotationRecord(annotation=annotation, seqrecord=seqrecord)
+
+    if tot_genes + tot_features == 0:
+        raise EmptyGenBankError("GenBank parsing produced zero genes and zero features.")
 
 
 def group_gene_records_by_locus_tag(
@@ -495,6 +494,8 @@ def group_gene_records_by_locus_tag(
     Yields:
         :class:`ParsedAnnotationRecord`.
     """
+    tot_genes = 0
+    tot_features = 0
     for seqrecord in record_iter:
         filtered_features = []
         source = None
@@ -514,12 +515,12 @@ def group_gene_records_by_locus_tag(
             gene = gene_features[0]
 
             if gene.type not in GeneFeature.types:
-                raise GenBankValidationError("Grouping by locus tag produced a mis-ordered interpretation")
+                raise GenBankLocusTagError("Grouping by locus tag produced a mis-ordered interpretation")
             gene = GeneFeature(gene, seqrecord)
 
             for feature in gene_features[1:]:
                 if feature.type in GeneFeature.types:
-                    raise GenBankValidationError("Grouping by locus tag found two genes")
+                    raise GenBankLocusTagError("Grouping by locus tag found two genes")
                 elif feature.type in TranscriptFeature.types:
                     gene.add_child(feature)
                 elif feature.type in IntervalFeature.types:
@@ -539,6 +540,10 @@ def group_gene_records_by_locus_tag(
             source_qualifiers = None
 
         feature_collections = _extract_generic_features(seqrecord, feature_parse_func)
+
+        tot_features += len(feature_collections) if feature_collections else 0
+        tot_genes += len(genes) if genes else 0
+
         annotation = AnnotationCollectionModel.Schema().load(
             dict(
                 genes=genes,
@@ -551,6 +556,9 @@ def group_gene_records_by_locus_tag(
             )
         )
         yield ParsedAnnotationRecord(annotation=annotation, seqrecord=seqrecord)
+
+    if tot_genes + tot_features == 0:
+        raise EmptyGenBankError("GenBank parsing produced zero genes and zero features.")
 
 
 def _extract_generic_features(

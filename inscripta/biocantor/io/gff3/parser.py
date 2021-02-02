@@ -32,7 +32,12 @@ from inscripta.biocantor.io.gff3.constants import (
     BIOCANTOR_QUALIFIERS_REGEX,
 )
 from inscripta.biocantor.io.features import extract_feature_types, extract_feature_name_id, merge_qualifiers
-from inscripta.biocantor.io.gff3.exc import GFF3FastaException, EmptyGFF3Exception, GFF3ParserError
+from inscripta.biocantor.io.gff3.exc import (
+    GFF3FastaException,
+    EmptyGFF3Exception,
+    GFF3ChildParentMismatchError,
+    GFF3LocusTagError,
+)
 from inscripta.biocantor.io.models import AnnotationCollectionModel
 from inscripta.biocantor.io.parser import ParsedAnnotationRecord
 from inscripta.biocantor.location.strand import Strand
@@ -206,7 +211,8 @@ def _find_all_top_level_non_gene_features(chrom: str, db: FeatureDB, feature_typ
 
 def _parse_child_features_to_feature_interval(features: List[Feature]) -> Dict[str, Any]:
     """
-    Extract values from a list of child features and produce a dictionary to build a FeatureIntervalModel from.
+    Extract values from a list of child features and produce a dictionary to build a
+    :class:`~biocantor.io.models.FeatureIntervalModel` from.
 
     This function combines all child features of a top-level non-gene feature
     """
@@ -223,14 +229,16 @@ def _parse_child_features_to_feature_interval(features: List[Feature]) -> Dict[s
     interval_starts = []
     interval_ends = []
     for feature in features:
-        if chrom and chrom != feature.chrom:
-            raise GFF3ParserError("Cannot have multiple child features on the same chromosome.")
-        elif strand and strand != feature.strand:
-            raise GFF3ParserError("Cannot have multiple child features on different strands.")
-        if not strand:
-            strand = Strand.from_symbol(feature.strand).name
         if not chrom:
             chrom = feature.chrom
+        elif chrom != feature.chrom:
+            raise GFF3ChildParentMismatchError("Cannot have multiple child features on different sequences.")
+
+        this_strand = Strand.from_symbol(feature.strand).name
+        if not strand:
+            strand = this_strand
+        elif strand != this_strand:
+            raise GFF3ChildParentMismatchError("Cannot have multiple child features on different strands.")
 
         interval_starts.append(feature.start - 1)
         interval_ends.append(feature.end)
@@ -242,8 +250,8 @@ def _parse_child_features_to_feature_interval(features: List[Feature]) -> Dict[s
 
         if BioCantorQualifiers.LOCUS_TAG.value in feature.attributes:
             this_locus_tag = feature.attributes[BioCantorQualifiers.LOCUS_TAG.value][0]
-            if this_locus_tag == locus_tag:
-                raise GFF3ParserError("Cannot have multiple child features with the same locus_tag.")
+            if this_locus_tag != locus_tag:
+                raise GFF3LocusTagError("Cannot have multiple child features with different locus tags.")
             elif not locus_tag:
                 locus_tag = this_locus_tag
 
@@ -269,7 +277,7 @@ def _parse_child_features_to_feature_interval(features: List[Feature]) -> Dict[s
         qualifiers=filter_and_sort_qualifiers(qualifiers),
         feature_id=feature_id,
         feature_name=feature_name,
-        feature_types=list(feature_types),
+        feature_types=sorted(feature_types),
         locus_tag=locus_tag,
         sequence_name=chrom,
         is_primary_feature=False,
@@ -295,17 +303,34 @@ def _parse_features(chrom: str, db: FeatureDB, feature_types: List[str]) -> List
         children = list(db.children(top_level_feature, level=1))
 
         if not children:
+            # treat this isolated feature as both FeatureIntervalCollection and FeatureInterval
             feature = _parse_child_features_to_feature_interval([top_level_feature])
+            # infer a FeatureCollection from the information on the FeatureInterval
+            feature_collection = dict(
+                feature_intervals=[feature],
+                feature_collection_name=feature["feature_name"],
+                feature_collection_id=feature["feature_id"],
+                locus_tag=feature["locus_tag"],
+                sequence_name=chrom,
+            )
         else:
+            # combine all children into a FeatureInterval
             feature = _parse_child_features_to_feature_interval(children)
+            feature__collection_name, feature__collection_id = extract_feature_name_id(top_level_feature.attributes)
 
-        feature_collection = dict(
-            feature_intervals=[feature],
-            feature_name=feature["feature_name"],
-            feature_id=feature["feature_id"],
-            locus_tag=feature["locus_tag"],
-            sequence_name=chrom,
-        )
+            locus_tag = None
+            if BioCantorQualifiers.LOCUS_TAG.value in top_level_feature.attributes:
+                locus_tag = top_level_feature.attributes[BioCantorQualifiers.LOCUS_TAG.value][0]
+            if locus_tag != feature["locus_tag"]:
+                raise GFF3LocusTagError("Locus tag of parent feature did not match children.")
+
+            feature_collection = dict(
+                feature_intervals=[feature],
+                feature_collection_name=feature__collection_name,
+                feature_collection_id=feature__collection_id,
+                locus_tag=locus_tag,
+                sequence_name=chrom,
+            )
 
         feature_collections.append(feature_collection)
     return feature_collections

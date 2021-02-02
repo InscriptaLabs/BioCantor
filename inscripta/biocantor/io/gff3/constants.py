@@ -1,8 +1,7 @@
-from enum import Enum, IntEnum
+import re
+from enum import Enum
 
 from inscripta.biocantor.util.enum import HasMemberMixin
-import re
-import itertools
 
 # in all GFF3 key-value pairs, we escape equals, semicolon, whitespace, ">" and commas
 ENCODING_MAP = {"\t": "%09", ";": "%3B", "=": "%3D", "\n": "%0A", "\r": "%0D", ">": "%3E", " ": "%20"}
@@ -76,6 +75,9 @@ class BioCantorQualifiers(Enum):
     GENE_TYPE = "gene_biotype"
     FEATURE_ID = "feature_id"
     FEATURE_NAME = "feature_name"
+    FEATURE_SYMBOL = "feature_name"
+    FEATURE_COLLECTION_NAME = "feature_collection_name"
+    FEATURE_COLLECTION_ID = "feature_collection_id"
     FEATURE_TYPE = "feature_type"
     LOCUS_TAG = "locus_tag"
 
@@ -96,7 +98,7 @@ class GFF3GeneFeatureTypes(HasMemberMixin):
     PSEUDOGENE = "pseudogene"
 
 
-class BioCantorFeatureTypes(Enum):
+class BioCantorFeatureTypes(HasMemberMixin):
     """These are the feature types currently supported by BioCantor when writing genes, transcripts,
     and feature collections to GFF3. When exporting features, the type of the feature is used directly.
 
@@ -109,3 +111,5 @@ class BioCantorFeatureTypes(Enum):
     CDS = "CDS"
     EXON = "exon"
     FEATURE_COLLECTION = "biological_region"
+    FEATURE_INTERVAL = "feature_interval"
+    FEATURE_INTERVAL_REGION = "subregion"

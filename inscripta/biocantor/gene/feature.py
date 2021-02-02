@@ -14,6 +14,7 @@ from inscripta.biocantor.gene.cds import CDSPhase
 from inscripta.biocantor.io.bed import BED12, RGB
 from inscripta.biocantor.io.gff3.constants import GFF_SOURCE, NULL_COLUMN, BioCantorFeatureTypes, BioCantorQualifiers
 from inscripta.biocantor.io.gff3.rows import GFFAttributes, GFFRow
+from inscripta.biocantor.io.gff3.exc import GFF3MissingSequenceNameError
 from inscripta.biocantor.location.location import Location
 from inscripta.biocantor.location.location_impl import SingleInterval
 from inscripta.biocantor.location.strand import Strand
@@ -343,6 +344,9 @@ class FeatureInterval(AbstractFeatureInterval):
         Yields:
             :class:`~biocantor.io.gff3.rows.GFFRow`
         """
+        if not self.sequence_name:
+            raise GFF3MissingSequenceNameError("Must have sequence names to export to GFF3.")
+
         qualifiers = self.export_qualifiers(parent_qualifiers)
 
         feature_id = str(self.guid)
@@ -353,7 +357,7 @@ class FeatureInterval(AbstractFeatureInterval):
         row = GFFRow(
             self.sequence_name,
             GFF_SOURCE,
-            BioCantorFeatureTypes.TRANSCRIPT,
+            BioCantorFeatureTypes.FEATURE_INTERVAL,
             self.start + 1,
             self.end,
             NULL_COLUMN,
@@ -367,12 +371,12 @@ class FeatureInterval(AbstractFeatureInterval):
         # re-use qualifiers, updating ID each time
         for i, block in enumerate(self.location.blocks, 1):
             attributes = GFFAttributes(
-                id=f"exon-{feature_id}-{i}", qualifiers=qualifiers, name=self.feature_name, parent=feature_id
+                id=f"feature-{feature_id}-{i}", qualifiers=qualifiers, name=self.feature_name, parent=feature_id
             )
             row = GFFRow(
                 self.sequence_name,
                 GFF_SOURCE,
-                BioCantorFeatureTypes.EXON,
+                BioCantorFeatureTypes.FEATURE_INTERVAL_REGION,
                 block.start + 1,
                 block.end,
                 NULL_COLUMN,

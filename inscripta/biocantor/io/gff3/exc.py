@@ -18,6 +18,14 @@ class GFF3ExportException(BioCantorException):
     pass
 
 
+class GFF3MissingSequenceNameError(GFF3ExportException):
+    """
+    Raised if GFF3 is being exported without a sequence identifier.
+    """
+
+    pass
+
+
 class ReservedKeyWarning(UserWarning):
     """
     Used when a GFF3 writing event has a qualifier with a reserved GFF3 key.
@@ -29,6 +37,20 @@ class ReservedKeyWarning(UserWarning):
 class GFF3ParserError(InvalidInputError):
     """
     Raised when there is a parsing exception.
+    """
+
+    pass
+
+
+class GFF3ChildParentMismatchError(GFF3ParserError):
+    """
+    Raised when there is some sort of mismatch between child and parent.
+    """
+
+
+class GFF3LocusTagError(GFF3ChildParentMismatchError):
+    """
+    Raised when there is a parsing exception involving locus tags.
     """
 
     pass

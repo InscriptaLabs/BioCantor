@@ -4,9 +4,9 @@ This module contains code shared between the Genbank and GFF3 parser for extract
 These regexes, enums and functions are used to identify primary name and ID values, as well as pull
 out possible feature types.
 """
-from enum import IntEnum
 import re
-from typing import Set, Dict, Any, Tuple, Hashable, List
+from enum import IntEnum
+from typing import Set, Dict, Tuple, Hashable, List
 
 
 class FeatureIntervalNameQualifiers(IntEnum):
@@ -42,19 +42,23 @@ class FeatureIntervalIDQualifiers(IntEnum):
 
 FEATURE_INTERVAL_NAME_QUALIFIERS = {"feature_name", "standard_name", "gene", "gene_name", "label", "operon"}
 FEATURE_INTERVAL_NAME_QUALIFIERS_REGEX = re.compile(
-    r"({})".format("|".join(k for k in FEATURE_INTERVAL_NAME_QUALIFIERS))
+    r"({})".format("|".join(k for k in FEATURE_INTERVAL_NAME_QUALIFIERS)), re.IGNORECASE
 )
 
-FEATURE_INTERVAL_ID_QUALIFIERS = {"feature_id" "id"}
-FEATURE_INTERVAL_ID_QUALIFIERS_REGEX = re.compile(r"({})".format("|".join(k for k in FEATURE_INTERVAL_ID_QUALIFIERS)))
+FEATURE_INTERVAL_ID_QUALIFIERS = {"feature_id", "id"}
+FEATURE_INTERVAL_ID_QUALIFIERS_REGEX = re.compile(
+    r"({})".format("|".join(k for k in FEATURE_INTERVAL_ID_QUALIFIERS)), re.IGNORECASE
+)
 
 
 # FEATURE_TYPE_IDENTIFIERS are case-insensitive substrings to match for identifying feature types to include.
 FEATURE_TYPE_IDENTIFIERS = {"_class", "gbkey", "_type"}
-FEATURE_TYPE_IDENTIFIERS_REGEX = re.compile(r"({})".format("|".join(k for k in FEATURE_TYPE_IDENTIFIERS)))
+FEATURE_TYPE_IDENTIFIERS_REGEX = re.compile(
+    r"({})".format("|".join(k for k in FEATURE_TYPE_IDENTIFIERS)), re.IGNORECASE
+)
 
 
-def extract_feature_types(feature_types: Set[str], feature_qualifiers: Dict[str, Any]):
+def extract_feature_types(feature_types: Set[str], feature_qualifiers: Dict[str, List[str]]):
     """
     Extracts feature types from a qualifiers dictionary.
 
@@ -67,7 +71,7 @@ def extract_feature_types(feature_types: Set[str], feature_qualifiers: Dict[str,
             feature_types.update(vals)
 
 
-def extract_feature_name_id(feature_qualifiers: Dict[str, Any]) -> Tuple[str, str]:
+def extract_feature_name_id(feature_qualifiers: Dict[str, List[str]]) -> Tuple[str, str]:
     """
     Extract primary feature name and ID from a qualifiers dictionary based on the hierarchy in
     FeatureIntervalNameKeys.
@@ -87,13 +91,13 @@ def extract_feature_name_id(feature_qualifiers: Dict[str, Any]) -> Tuple[str, st
     for qualifier, vals in feature_qualifiers.items():
         # exact case insensitive match
         if re.match(FEATURE_INTERVAL_NAME_QUALIFIERS_REGEX, qualifier):
-            this_feature_key = FEATURE_INTERVAL_NAME_QUALIFIERS[qualifier.upper()]
-            if feature_key and this_feature_key > feature_key:
+            this_feature_key = FeatureIntervalNameQualifiers[qualifier.upper()]
+            if not feature_key or this_feature_key < feature_key:
                 feature_name = vals[0]
                 feature_key = this_feature_key
         elif re.match(FEATURE_INTERVAL_ID_QUALIFIERS_REGEX, qualifier):
-            this_feature_id_key = FEATURE_INTERVAL_NAME_QUALIFIERS[qualifier.upper()]
-            if feature_id_key and this_feature_id_key > feature_id_key:
+            this_feature_id_key = FeatureIntervalIDQualifiers[qualifier.upper()]
+            if not feature_id_key or this_feature_id_key < feature_id_key:
                 feature_id = vals[0]
                 feature_id_key = this_feature_id_key
     return feature_name, feature_id
@@ -108,4 +112,4 @@ def merge_qualifiers(
         if key not in merged:
             merged[key] = set()
         merged[key].update(vals)
-    return merged
+    return {key: sorted(vals) for key, vals in merged.items()}
