@@ -1,6 +1,3 @@
-# This manually built fake file has one coding gene with two isoforms, as well as one feature collection,
-# with two intervals, one which is contiguous and one which has three subregions.
-##gff-version 3
 chr1	BioCantor	gene	3	18	.	+	.	ID=3ec6849b-9ffe-dfa7-7ae1-a541b4fd0667;gene_biotype=protein_coding;gene_id=gene1
 chr1	BioCantor	transcript	3	18	.	+	.	ID=9f12e4ce-e6ce-0a31-4ae2-06a726a16fab;Parent=3ec6849b-9ffe-dfa7-7ae1-a541b4fd0667;gene_biotype=protein_coding;gene_id=gene1
 chr1	BioCantor	exon	3	18	.	+	.	ID=exon-9f12e4ce-e6ce-0a31-4ae2-06a726a16fab-1;Parent=9f12e4ce-e6ce-0a31-4ae2-06a726a16fab;gene_biotype=protein_coding;gene_id=gene1

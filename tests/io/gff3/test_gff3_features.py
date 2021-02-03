@@ -77,17 +77,9 @@ class TestFeatures:
         lines = [x.rstrip() for x in open(gff) if not x.startswith("#")]
         assert lines == [str(x) for x in self.annot.to_annotation_collection().to_gff()]
 
-    def test_gff3_locus_tag_error(self, tmp_path):
-        tmp_gff3 = tmp_path / "tmp.gff3"
-
-        annot = self.annot.to_annotation_collection().to_dict()
-        annot["feature_collections"][0]["locus_tag"] = "abc"
-        annot = AnnotationCollectionModel.Schema().load(annot).to_annotation_collection()
-
-        with open(tmp_gff3, "w") as fh:
-            collection_to_gff3([annot], fh)
+    def test_gff3_locus_tag_error(self, test_data_dir):
         with pytest.raises(GFF3LocusTagError):
-            _ = list(parse_standard_gff3(tmp_gff3))
+            _ = list(parse_standard_gff3(test_data_dir / "feature_test_locus_tag_error.gff"))
 
     def test_gff3_strand_error(self, tmp_path):
         tmp_gff3 = tmp_path / "tmp.gff3"

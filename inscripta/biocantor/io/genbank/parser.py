@@ -154,7 +154,6 @@ class FeatureIntervalGenBankCollection:
                     feature_id=feature_id,
                     feature_name=feature_name,
                     feature_types=sorted(feature_types),
-                    locus_tag=locus_tag,
                     sequence_name=cls.record.id,
                     is_primary_feature=False,
                 )

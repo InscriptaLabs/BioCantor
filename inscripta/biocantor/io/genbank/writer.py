@@ -279,11 +279,11 @@ def feature_intervals_to_feature(
     for feature in features:
         location = feature.location.to_biopython()
 
-        transcript_qualifiers = {key: list(vals) for key, vals in feature.export_qualifiers().items()}
+        feature_qualifiers = {key: list(vals) for key, vals in feature.export_qualifiers().items()}
         if feature_name:
-            transcript_qualifiers["gene"] = [feature_name]
+            feature_qualifiers["gene"] = [feature_name]
         if locus_tag:
-            transcript_qualifiers["locus_tag"] = [locus_tag]
+            feature_qualifiers["locus_tag"] = [locus_tag]
 
         if location.strand != strand.value:
             warn_str = f"Found strand mismatch between gene and feature on feature {feature}. "
@@ -296,6 +296,6 @@ def feature_intervals_to_feature(
                 continue
 
         feature = SeqFeature(location, type=IntervalFeatures.FEATURE_INTERVAL.value, strand=strand.value)
-        feature.qualifiers = transcript_qualifiers.copy()
+        feature.qualifiers = feature_qualifiers.copy()
 
         yield feature

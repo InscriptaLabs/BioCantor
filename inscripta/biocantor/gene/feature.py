@@ -213,7 +213,7 @@ class FeatureInterval(AbstractFeatureInterval):
     open chromatin sites, etc.
     """
 
-    _identifiers = ["feature_name", "feature_id", "locus_tag"]
+    _identifiers = ["feature_name", "feature_id"]
 
     def __init__(
         self,
@@ -224,7 +224,6 @@ class FeatureInterval(AbstractFeatureInterval):
         feature_types: Optional[List[str]] = None,
         feature_name: Optional[str] = None,
         feature_id: Optional[str] = None,
-        locus_tag: Optional[str] = None,
         guid: Optional[UUID] = None,
         feature_guid: Optional[UUID] = None,
         is_primary_feature: Optional[bool] = None,
@@ -235,7 +234,6 @@ class FeatureInterval(AbstractFeatureInterval):
         self.feature_types = set(feature_types) if feature_types else None  # stored as a set of types
         self.feature_name = feature_name
         self.feature_id = feature_id
-        self.locus_tag = locus_tag
         # qualifiers come in as a List, convert to Set
         self._import_qualifiers_from_list(qualifiers)
         self.bin = bins(self.start, self.end, fmt="bed")
@@ -275,7 +273,6 @@ class FeatureInterval(AbstractFeatureInterval):
             feature_id=self.feature_id,
             feature_name=self.feature_name,
             feature_types=sorted(self.feature_types) if self.feature_types else None,
-            locus_tag=self.locus_tag,
             sequence_name=self.sequence_name,
             sequence_guid=self.sequence_guid,
             feature_interval_guid=self.guid,

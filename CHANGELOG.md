@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+### Fixed
+- Cleaned up GFF3 export code.
+- Bug with Biotype enum.
+
+### Added
+- Parse `FeatureInterval` and `FeatureIntervalCollection` from GFF3 or GenBank, and write back as well.
+
+
+
 ## [0.2.0] 2021-01-06
 ### Fixed
 - `CompoundInterval.relative_interval_to_parent_location()` in the case of overlapping blocks. Had previously been double counting overlap region.

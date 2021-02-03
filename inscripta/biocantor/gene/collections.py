@@ -227,7 +227,6 @@ class GeneInterval(AbstractFeatureIntervalCollection):
             feature_types=[self.gene_type.name],
             feature_name=self.gene_symbol,
             feature_id=self.gene_id,
-            locus_tag=self.locus_tag,
             guid=self.guid,
         )
 

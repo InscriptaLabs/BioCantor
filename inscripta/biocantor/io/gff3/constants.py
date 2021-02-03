@@ -1,3 +1,4 @@
+import itertools
 import re
 from enum import Enum
 
@@ -84,7 +85,16 @@ class BioCantorQualifiers(Enum):
 
 # build a regex of all possible values, case insensitive
 BIOCANTOR_QUALIFIERS_REGEX = re.compile(
-    r"({})".format("|".join(set.union(*[{k.name.lower(), k.value} for k in BioCantorQualifiers])))
+    r"({})".format(
+        "|".join(
+            set.union(
+                *[
+                    {k.name.lower(), k.value}
+                    for k in itertools.chain(BioCantorQualifiers, BioCantorGFF3ReservedQualifiers)
+                ]
+            )
+        )
+    )
 )
 
 

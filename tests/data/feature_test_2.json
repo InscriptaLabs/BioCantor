@@ -12,19 +12,7 @@
                         15
                     ],
                     "strand": "PLUS",
-                    "qualifiers": {
-                        "ID": [
-                            "05628404-7721-859d-7fce-5d7c93451cf3",
-                            "34c9b45a-4f89-0173-60fc-fc26c7c51cd6"
-                        ],
-                        "Parent": [
-                            "fbe86c17-60f0-305e-63ca-f43604c81881"
-                        ],
-                        "Name": [
-                            "feat1",
-                            "feat2"
-                        ]
-                    },
+                    "qualifiers": null,
                     "sequence_name": "chr1",
                     "sequence_guid": null,
                     "feature_interval_guid": null,
@@ -36,7 +24,6 @@
                     ],
                     "feature_name": "feat1",
                     "feature_id": "05628404-7721-859d-7fce-5d7c93451cf3",
-                    "locus_tag": null,
                     "is_primary_feature": false
                 }
             ],
@@ -69,7 +56,7 @@
                     "cds_frames": [
                         "ZERO"
                     ],
-                    "qualifiers": {},
+                    "qualifiers": null,
                     "is_primary_tx": false,
                     "transcript_id": null,
                     "protein_id": null,
@@ -107,7 +94,7 @@
                         "TWO",
                         "TWO"
                     ],
-                    "qualifiers": {},
+                    "qualifiers": null,
                     "is_primary_tx": false,
                     "transcript_id": null,
                     "protein_id": null,
@@ -123,7 +110,7 @@
             "gene_symbol": null,
             "gene_type": "protein_coding",
             "locus_tag": null,
-            "qualifiers": {},
+            "qualifiers": null,
             "sequence_name": "chr1",
             "sequence_guid": null,
             "gene_guid": null

@@ -10,29 +10,7 @@
                         14677990
                     ],
                     "strand": "UNSTRANDED",
-                    "qualifiers": {
-                        "ID": [
-                            "id-GeneID:116309122"
-                        ],
-                        "Dbxref": [
-                            "GeneID:116309122"
-                        ],
-                        "Note": [
-                            "candidate enhancer chr21.70 targeted for multiplex CRISPR interference"
-                        ],
-                        "experiment": [
-                            "EXISTENCE:mutant phenotype evidence [ECO:0000015][PMID:30612741]"
-                        ],
-                        "function": [
-                            "positively regulates SAMSN1 gene expression in K562 cells"
-                        ],
-                        "gbkey": [
-                            "regulatory"
-                        ],
-                        "regulatory_class": [
-                            "transcriptional_cis_regulatory_region"
-                        ]
-                    },
+                    "qualifiers": null,
                     "sequence_name": "NC_000021.9",
                     "sequence_guid": null,
                     "feature_interval_guid": null,
@@ -43,7 +21,6 @@
                     ],
                     "feature_name": null,
                     "feature_id": "id-GeneID:116309122",
-                    "locus_tag": null,
                     "is_primary_feature": false
                 }
             ],
@@ -53,7 +30,26 @@
             "sequence_name": "NC_000021.9",
             "sequence_guid": null,
             "feature_collection_guid": null,
-            "qualifiers": null
+            "qualifiers": {
+                "Dbxref": [
+                    "GeneID:116309122"
+                ],
+                "Note": [
+                    "candidate enhancer chr21.70 targeted for multiplex CRISPR interference"
+                ],
+                "experiment": [
+                    "EXISTENCE:mutant phenotype evidence [ECO:0000015][PMID:30612741]"
+                ],
+                "function": [
+                    "positively regulates SAMSN1 gene expression in K562 cells"
+                ],
+                "gbkey": [
+                    "regulatory"
+                ],
+                "regulatory_class": [
+                    "transcriptional_cis_regulatory_region"
+                ]
+            }
         },
         {
             "feature_intervals": [
@@ -65,20 +61,7 @@
                         14677990
                     ],
                     "strand": "PLUS",
-                    "qualifiers": {
-                        "ID": [
-                            "id-GeneID:116309122-2"
-                        ],
-                        "Dbxref": [
-                            "GeneID:116309122"
-                        ],
-                        "gbkey": [
-                            "Region"
-                        ],
-                        "standard_name": [
-                            "CRISPRi-validated cis-regulatory element chr21.70"
-                        ]
-                    },
+                    "qualifiers": null,
                     "sequence_name": "NC_000021.9",
                     "sequence_guid": null,
                     "feature_interval_guid": null,
@@ -89,7 +72,6 @@
                     ],
                     "feature_name": "CRISPRi-validated cis-regulatory element chr21.70",
                     "feature_id": "id-GeneID:116309122-2",
-                    "locus_tag": null,
                     "is_primary_feature": false
                 }
             ],
@@ -99,7 +81,17 @@
             "sequence_name": "NC_000021.9",
             "sequence_guid": null,
             "feature_collection_guid": null,
-            "qualifiers": null
+            "qualifiers": {
+                "Dbxref": [
+                    "GeneID:116309122"
+                ],
+                "gbkey": [
+                    "Region"
+                ],
+                "standard_name": [
+                    "CRISPRi-validated cis-regulatory element chr21.70"
+                ]
+            }
         },
         {
             "feature_intervals": [
@@ -111,20 +103,7 @@
                         14769403
                     ],
                     "strand": "PLUS",
-                    "qualifiers": {
-                        "ID": [
-                            "id-GeneID:107403153"
-                        ],
-                        "Dbxref": [
-                            "GeneID:107403153"
-                        ],
-                        "gbkey": [
-                            "Region"
-                        ],
-                        "standard_name": [
-                            "meiotic recombination hotspot B"
-                        ]
-                    },
+                    "qualifiers": null,
                     "sequence_name": "NC_000021.9",
                     "sequence_guid": null,
                     "feature_interval_guid": null,
@@ -135,7 +114,6 @@
                     ],
                     "feature_name": "meiotic recombination hotspot B",
                     "feature_id": "id-GeneID:107403153",
-                    "locus_tag": null,
                     "is_primary_feature": false
                 }
             ],
@@ -145,7 +123,17 @@
             "sequence_name": "NC_000021.9",
             "sequence_guid": null,
             "feature_collection_guid": null,
-            "qualifiers": null
+            "qualifiers": {
+                "Dbxref": [
+                    "GeneID:107403153"
+                ],
+                "gbkey": [
+                    "Region"
+                ],
+                "standard_name": [
+                    "meiotic recombination hotspot B"
+                ]
+            }
         },
         {
             "feature_intervals": [
@@ -157,26 +145,7 @@
                         14768598
                     ],
                     "strand": "UNSTRANDED",
-                    "qualifiers": {
-                        "ID": [
-                            "id-GeneID:107403153-2"
-                        ],
-                        "Dbxref": [
-                            "GeneID:107403153"
-                        ],
-                        "Note": [
-                            "this region was identified as a recombination hotspot within the HapMap YRI population"
-                        ],
-                        "experiment": [
-                            "EXISTENCE:nucleotide sequencing assay evidence [ECO:0000219][PMID:20981099]"
-                        ],
-                        "gbkey": [
-                            "misc_recomb"
-                        ],
-                        "recombination_class": [
-                            "meiotic"
-                        ]
-                    },
+                    "qualifiers": null,
                     "sequence_name": "NC_000021.9",
                     "sequence_guid": null,
                     "feature_interval_guid": null,
@@ -188,7 +157,6 @@
                     ],
                     "feature_name": null,
                     "feature_id": "id-GeneID:107403153-2",
-                    "locus_tag": null,
                     "is_primary_feature": false
                 }
             ],
@@ -198,7 +166,23 @@
             "sequence_name": "NC_000021.9",
             "sequence_guid": null,
             "feature_collection_guid": null,
-            "qualifiers": null
+            "qualifiers": {
+                "Dbxref": [
+                    "GeneID:107403153"
+                ],
+                "Note": [
+                    "this region was identified as a recombination hotspot within the HapMap YRI population"
+                ],
+                "experiment": [
+                    "EXISTENCE:nucleotide sequencing assay evidence [ECO:0000219][PMID:20981099]"
+                ],
+                "gbkey": [
+                    "misc_recomb"
+                ],
+                "recombination_class": [
+                    "meiotic"
+                ]
+            }
         },
         {
             "feature_intervals": [
@@ -210,26 +194,7 @@
                         14769402
                     ],
                     "strand": "UNSTRANDED",
-                    "qualifiers": {
-                        "ID": [
-                            "id-GeneID:107403153-3"
-                        ],
-                        "Dbxref": [
-                            "GeneID:107403153"
-                        ],
-                        "Note": [
-                            "this region was identified as a recombination hotspot within the HapMap CEU population"
-                        ],
-                        "experiment": [
-                            "EXISTENCE:nucleotide sequencing assay evidence [ECO:0000219][PMID:20981099]"
-                        ],
-                        "gbkey": [
-                            "misc_recomb"
-                        ],
-                        "recombination_class": [
-                            "meiotic"
-                        ]
-                    },
+                    "qualifiers": null,
                     "sequence_name": "NC_000021.9",
                     "sequence_guid": null,
                     "feature_interval_guid": null,
@@ -241,7 +206,6 @@
                     ],
                     "feature_name": null,
                     "feature_id": "id-GeneID:107403153-3",
-                    "locus_tag": null,
                     "is_primary_feature": false
                 }
             ],
@@ -251,7 +215,23 @@
             "sequence_name": "NC_000021.9",
             "sequence_guid": null,
             "feature_collection_guid": null,
-            "qualifiers": null
+            "qualifiers": {
+                "Dbxref": [
+                    "GeneID:107403153"
+                ],
+                "Note": [
+                    "this region was identified as a recombination hotspot within the HapMap CEU population"
+                ],
+                "experiment": [
+                    "EXISTENCE:nucleotide sequencing assay evidence [ECO:0000219][PMID:20981099]"
+                ],
+                "gbkey": [
+                    "misc_recomb"
+                ],
+                "recombination_class": [
+                    "meiotic"
+                ]
+            }
         },
         {
             "feature_intervals": [
@@ -263,26 +243,7 @@
                         14768846
                     ],
                     "strand": "UNSTRANDED",
-                    "qualifiers": {
-                        "ID": [
-                            "id-GeneID:107403153-4"
-                        ],
-                        "Dbxref": [
-                            "GeneID:107403153"
-                        ],
-                        "Note": [
-                            "meiotic double-strand break mapped by DNA meiotic recombinase 1 chromatin immunoprecipitation followed by single-stranded DNA enrichment and sequencing in the germ cells of some male individuals with the PRDM9 A/A, PRDM9 A/B and PRDM9 A/C genotypes"
-                        ],
-                        "experiment": [
-                            "EXISTENCE:chromatin immunoprecipitation-seq evidence [ECO:0000229][PMID:25395542]"
-                        ],
-                        "gbkey": [
-                            "misc_recomb"
-                        ],
-                        "recombination_class": [
-                            "meiotic"
-                        ]
-                    },
+                    "qualifiers": null,
                     "sequence_name": "NC_000021.9",
                     "sequence_guid": null,
                     "feature_interval_guid": null,
@@ -294,7 +255,6 @@
                     ],
                     "feature_name": null,
                     "feature_id": "id-GeneID:107403153-4",
-                    "locus_tag": null,
                     "is_primary_feature": false
                 }
             ],
@@ -304,7 +264,23 @@
             "sequence_name": "NC_000021.9",
             "sequence_guid": null,
             "feature_collection_guid": null,
-            "qualifiers": null
+            "qualifiers": {
+                "Dbxref": [
+                    "GeneID:107403153"
+                ],
+                "Note": [
+                    "meiotic double-strand break mapped by DNA meiotic recombinase 1 chromatin immunoprecipitation followed by single-stranded DNA enrichment and sequencing in the germ cells of some male individuals with the PRDM9 A/A, PRDM9 A/B and PRDM9 A/C genotypes"
+                ],
+                "experiment": [
+                    "EXISTENCE:chromatin immunoprecipitation-seq evidence [ECO:0000229][PMID:25395542]"
+                ],
+                "gbkey": [
+                    "misc_recomb"
+                ],
+                "recombination_class": [
+                    "meiotic"
+                ]
+            }
         },
         {
             "feature_intervals": [
@@ -316,26 +292,7 @@
                         14768607
                     ],
                     "strand": "UNSTRANDED",
-                    "qualifiers": {
-                        "ID": [
-                            "id-GeneID:107403153-5"
-                        ],
-                        "Dbxref": [
-                            "GeneID:107403153"
-                        ],
-                        "Note": [
-                            "crossovers mapped in sperm cells of males of European ancestry"
-                        ],
-                        "experiment": [
-                            "EXISTENCE:DNA detection assay evidence [ECO:0005519][PMID:18650392]"
-                        ],
-                        "gbkey": [
-                            "misc_recomb"
-                        ],
-                        "recombination_class": [
-                            "meiotic"
-                        ]
-                    },
+                    "qualifiers": null,
                     "sequence_name": "NC_000021.9",
                     "sequence_guid": null,
                     "feature_interval_guid": null,
@@ -347,7 +304,6 @@
                     ],
                     "feature_name": null,
                     "feature_id": "id-GeneID:107403153-5",
-                    "locus_tag": null,
                     "is_primary_feature": false
                 }
             ],
@@ -357,7 +313,23 @@
             "sequence_name": "NC_000021.9",
             "sequence_guid": null,
             "feature_collection_guid": null,
-            "qualifiers": null
+            "qualifiers": {
+                "Dbxref": [
+                    "GeneID:107403153"
+                ],
+                "Note": [
+                    "crossovers mapped in sperm cells of males of European ancestry"
+                ],
+                "experiment": [
+                    "EXISTENCE:DNA detection assay evidence [ECO:0005519][PMID:18650392]"
+                ],
+                "gbkey": [
+                    "misc_recomb"
+                ],
+                "recombination_class": [
+                    "meiotic"
+                ]
+            }
         },
         {
             "feature_intervals": [
@@ -369,23 +341,7 @@
                         14768857
                     ],
                     "strand": "UNSTRANDED",
-                    "qualifiers": {
-                        "ID": [
-                            "id-GeneID:107403153-6"
-                        ],
-                        "Dbxref": [
-                            "GeneID:107403153"
-                        ],
-                        "Note": [
-                            "nucleotide motif; similarity, but not exact identity to the predicted 16-mer PRDM9 C-type binding motif, CCNCNNTNNNCNTNNC"
-                        ],
-                        "feat_class": [
-                            "nucleotide_motif"
-                        ],
-                        "gbkey": [
-                            "misc_feature"
-                        ]
-                    },
+                    "qualifiers": null,
                     "sequence_name": "NC_000021.9",
                     "sequence_guid": null,
                     "feature_interval_guid": null,
@@ -396,7 +352,6 @@
                     ],
                     "feature_name": null,
                     "feature_id": "id-GeneID:107403153-6",
-                    "locus_tag": null,
                     "is_primary_feature": false
                 }
             ],
@@ -406,7 +361,20 @@
             "sequence_name": "NC_000021.9",
             "sequence_guid": null,
             "feature_collection_guid": null,
-            "qualifiers": null
+            "qualifiers": {
+                "Dbxref": [
+                    "GeneID:107403153"
+                ],
+                "Note": [
+                    "nucleotide motif; similarity, but not exact identity to the predicted 16-mer PRDM9 C-type binding motif, CCNCNNTNNNCNTNNC"
+                ],
+                "feat_class": [
+                    "nucleotide_motif"
+                ],
+                "gbkey": [
+                    "misc_feature"
+                ]
+            }
         }
     ],
     "genes": [
