@@ -173,8 +173,8 @@ class FeatureIntervalGenBankCollection:
         feature_collection = FeatureIntervalCollectionModel.Schema().load(
             dict(
                 feature_intervals=features,
-                feature_name=feature_name,
-                feature_id=feature_id,
+                feature_collection_name=feature_name,
+                feature_collection_id=feature_id,
                 locus_tag=locus_tag,
                 qualifiers=merged_qualifiers,
                 sequence_name=cls.record.id,
