@@ -231,7 +231,7 @@ class FeatureInterval(AbstractFeatureInterval):
         self.location = location  # genomic CompoundInterval
         self.sequence_guid = sequence_guid
         self.sequence_name = sequence_name
-        self.feature_types = set(feature_types) if feature_types else None  # stored as a set of types
+        self.feature_types = set(feature_types) if feature_types else set()  # stored as a set of types
         self.feature_name = feature_name
         self.feature_id = feature_id
         # qualifiers come in as a List, convert to Set
