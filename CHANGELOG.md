@@ -6,13 +6,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 ### Fixed
-- Cleaned up GFF3 export code.
-- Bug with Biotype enum.
+- `Biotype` enum improperly mapped `protein_coding` and `protein-coding` to different values. Added `mRNA` as another synonym for this type.
+- GFF3, BED and GenBank export from Interval objects now raise an exception when the sequence name field is null.
 
 ### Added
 - Parse `FeatureInterval` and `FeatureIntervalCollection` from GFF3 or GenBank, and write back as well.
 
-
+### Changed
+- `FeatureInterval` and `FeatureIntervalCollection` now have multiple types, stored as sets.
 
 ## [0.2.0] 2021-01-06
 ### Fixed
@@ -39,10 +40,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Removed
 - `CDSInterval.intersect()` method. Frame math was incorrect for complex CDSs and was deemed too difficult to implement correctly.
 
+
 ## [0.1.1] 2020-11-17
 ### Fixed
 - Remove duplicated code that had been created by a merge issue
 - Don't do modular arithmetic with CDSFrame.NONE (value -1)
+
 
 ## [0.1.0] 2020-10-29
 ### Added
