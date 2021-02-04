@@ -156,7 +156,8 @@ def _parse_genes(chrom: str, db: FeatureDB) -> List[Dict]:
                 cds_starts = cds_ends = cds_frames = None
                 protein_id = None
             else:
-                cds = sorted(cds, key=lambda c: c.start)
+                # sort by start and end in case two blocks start at the same position
+                cds = sorted(cds, key=lambda c: (c.start, c.end))
                 cds_starts = [x.start - 1 for x in cds]
                 cds_ends = [x.end for x in cds]
                 cds_frames = [CDSPhase.from_int(int(f.frame)).to_frame().name for f in cds]
