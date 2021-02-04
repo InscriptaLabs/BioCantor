@@ -54,7 +54,8 @@ class GffutilsParseArgs:
 
 
 def filter_and_sort_qualifiers(qualifiers: Dict[str, List[str]]) -> Optional[Dict[str, List[str]]]:
-    """Filter out the qualifiers for any terms we have elevated and also any GFF3 special terms"""
+    """Filter out the qualifiers for any terms we have extracted as BioCantor identifiers as well as any
+    GFF3 special terms"""
     qualifiers = {
         key: sorted(vals) for key, vals in qualifiers.items() if not re.match(BIOCANTOR_QUALIFIERS_REGEX, key)
     }
