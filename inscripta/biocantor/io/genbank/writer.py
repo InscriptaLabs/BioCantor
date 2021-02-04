@@ -135,7 +135,7 @@ def gene_to_feature(
             gene_or_feature.transcripts, strand, genbank_type, force_strand, symbol, gene_or_feature.locus_tag
         )
     else:
-        yield from feature_intervals_to_feature(
+        yield from feature_intervals_to_features(
             gene_or_feature.feature_intervals, strand, force_strand, symbol, gene_or_feature.locus_tag
         )
 
@@ -249,7 +249,7 @@ def add_cds_feature(
     return feature
 
 
-def feature_intervals_to_feature(
+def feature_intervals_to_features(
     features: List[FeatureInterval],
     strand: Strand,
     force_strand: bool,

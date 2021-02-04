@@ -16,20 +16,20 @@ class GenBankParserType(IntEnum):
     LOCUS_TAG = 2
 
 
-class MetadataFeatures(HasMemberMixin):
+class MetadataFeatures(str, HasMemberMixin):
     """GenBank metadata features BioCantor understands."""
 
     SOURCE = "source"
 
 
-class GeneFeatures(HasMemberMixin):
+class GeneFeatures(str, HasMemberMixin):
     """GenBank gene features BioCantor understands."""
 
     GENE = "gene"
     FEATURE_COLLECTION = "feature"
 
 
-class TranscriptFeatures(HasMemberMixin):
+class TranscriptFeatures(str, HasMemberMixin):
     """GenBank transcript features types BioCantor understands."""
 
     CODING_TRANSCRIPT = "mRNA"
@@ -40,7 +40,7 @@ class TranscriptFeatures(HasMemberMixin):
     TM_RNA = "tmRNA"
 
 
-class IntervalFeatures(HasMemberMixin):
+class IntervalFeatures(str, HasMemberMixin):
     """GenBank interval features types BioCantor understands. These do not match
 
     :class:`~biocantor.io.gff3.constants.BioCantorFeatureTypes` because GenBank has length limitations
@@ -52,7 +52,7 @@ class IntervalFeatures(HasMemberMixin):
     EXON = "exon"
 
 
-class KnownQualifiers(Enum):
+class KnownQualifiers(str, Enum):
     """GenBank qualifiers that have special meaning"""
 
     GENE = "gene"

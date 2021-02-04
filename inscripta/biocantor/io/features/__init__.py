@@ -4,7 +4,9 @@ This module contains code shared between the Genbank and GFF3 parser for extract
 These regexes, enums and functions are used to identify primary name and ID values, as well as pull
 out possible feature types.
 """
+import itertools
 import re
+from collections import defaultdict
 from enum import IntEnum
 from typing import Set, Dict, Tuple, Hashable, List
 
@@ -16,15 +18,18 @@ class FeatureIntervalNameQualifiers(IntEnum):
     The ordering of this enumeration matters, because the key-value pair found with the smallest value is the most
     important.
 
-    NOTE: If this enum is changed, you must also change FEATURE_INTERVAL_NAME_QUALIFIERS.
+    In order to be future proofed, the values of this enum are separated by 10, so that up to 9 new items can be
+    inserted at every level without changing the values.
+
+    NOTE: If names are added to or changd in this enum, you must also change FEATURE_INTERVAL_NAME_QUALIFIERS.
     """
 
     FEATURE_NAME = 0
-    STANDARD_NAME = 5
-    GENE = 10
-    GENE_NAME = 15
-    LABEL = 20
-    OPERON = 25
+    STANDARD_NAME = 10
+    GENE = 20
+    GENE_NAME = 30
+    LABEL = 40
+    OPERON = 50
 
 
 class FeatureIntervalIDQualifiers(IntEnum):
@@ -33,11 +38,14 @@ class FeatureIntervalIDQualifiers(IntEnum):
     The ordering of this enumeration matters, because the key-value pair found with the smallest value is the most
     important.
 
-    NOTE: If this enum is changed, you must also change FEATURE_INTERVAL_ID_QUALIFIERS.
+    In order to be future proofed, the values of this enum are separated by 10, so that up to 9 new items can be
+    inserted at every level without changing the values.
+
+    NOTE: If names are added to or changd in this enum, you must also change FEATURE_INTERVAL_ID_QUALIFIERS.
     """
 
     FEATURE_ID = 0
-    ID = 5
+    ID = 255
 
 
 FEATURE_INTERVAL_NAME_QUALIFIERS = {"feature_name", "standard_name", "gene", "gene_name", "label", "operon"}
@@ -106,10 +114,11 @@ def extract_feature_name_id(feature_qualifiers: Dict[str, List[str]]) -> Tuple[s
 def merge_qualifiers(
     qualifiers: Dict[Hashable, List[str]], other_qualifiers: Dict[Hashable, List[str]]
 ) -> Dict[Hashable, List[str]]:
-    """Merges two dicts of lists using sets."""
-    merged = {key: set(vals) for key, vals in qualifiers.items()}
-    for key, vals in other_qualifiers.items():
-        if key not in merged:
-            merged[key] = set()
+    """Merges two dicts of lists using sets.
+
+    Could be made more efficient, probably.
+    """
+    merged = defaultdict(set)
+    for key, vals in itertools.chain(qualifiers.items(), other_qualifiers.items()):
         merged[key].update(vals)
     return {key: sorted(vals) for key, vals in merged.items()}
