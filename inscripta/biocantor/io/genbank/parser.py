@@ -96,9 +96,17 @@ class Feature(ABC):
 
 
 class FeatureIntervalGenBankCollection:
-    """A collection of generic feature intervals."""
+    """A collection of generic (non-transcribed) feature intervals."""
 
     def __init__(self, features: List[SeqFeature], record: SeqRecord):
+        """
+        Build a generic feature from a grouping of features found in a genbank parsing event.
+
+        Args:
+            features: One or more ``SeqFeature``s found in a GenBank file that are associated together, but which
+                could not be interpreted as a gene.
+            record: The ``SeqRecord`` these features were found on.
+        """
         self.types = {feature.type for feature in features}
         self.record = record
         self.features = features
