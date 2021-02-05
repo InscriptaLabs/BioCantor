@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.3.0]
 ### Fixed
 - `Biotype` enum improperly mapped `protein_coding` and `protein-coding` to different values. Added `mRNA` as another synonym for this type.
 - GFF3, BED and GenBank export from Interval objects now raise an exception when the sequence name field is null.
@@ -13,7 +13,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Parse `FeatureInterval` and `FeatureIntervalCollection` from GFF3 or GenBank, and write back as well.
 
 ### Changed
-- `FeatureInterval` and `FeatureIntervalCollection` now have multiple types, stored as sets.
+- `FeatureInterval` now has multiple types, stored as sets. `FeatureIntervalCollection` stores the union of these types, in addition to optionally having its own type.
+
 
 ## [0.2.0] 2021-01-06
 ### Fixed
