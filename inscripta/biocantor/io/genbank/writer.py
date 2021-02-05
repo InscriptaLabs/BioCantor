@@ -21,7 +21,14 @@ from inscripta.biocantor.gene.collections import AnnotationCollection, GeneInter
 from inscripta.biocantor.gene.feature import FeatureInterval
 from inscripta.biocantor.gene.transcript import TranscriptInterval
 from inscripta.biocantor.io.exc import StrandViolationWarning
-from inscripta.biocantor.io.genbank.constants import GeneFeatures, TranscriptFeatures, IntervalFeatures, GenbankFlavor
+from inscripta.biocantor.io.genbank.constants import (
+    GeneFeatures,
+    TranscriptFeatures,
+    GeneIntervalFeatures,
+    GenbankFlavor,
+    FeatureCollectionFeatures,
+    FeatureIntervalFeatures,
+)
 from inscripta.biocantor.io.genbank.exc import GenBankExportError
 from inscripta.biocantor.location.strand import Strand
 
@@ -122,7 +129,7 @@ def gene_to_feature(
         elif gene_or_feature.feature_collection_id:
             symbol = gene_or_feature.feature_collection_id
 
-        feature_type = GeneFeatures.FEATURE_COLLECTION.value
+        feature_type = FeatureCollectionFeatures.FEATURE_COLLECTION.value
 
     qualifiers[feature_type] = [symbol]
     feature = SeqFeature(location, type=feature_type, strand=strand.value)
@@ -237,7 +244,7 @@ def add_cds_feature(
         ``SeqFeature`` for the CDS of this transcript.
     """
     location = transcript.cds.location.to_biopython()
-    feature = SeqFeature(location, type=IntervalFeatures.CDS.value, strand=strand.value)
+    feature = SeqFeature(location, type=GeneIntervalFeatures.CDS.value, strand=strand.value)
     feature.qualifiers = transcript_qualifiers
 
     # if the sequence has N's, we cannot translate
@@ -295,7 +302,7 @@ def feature_intervals_to_features(
                 warnings.warn(warn_str, StrandViolationWarning)
                 continue
 
-        feature = SeqFeature(location, type=IntervalFeatures.FEATURE_INTERVAL.value, strand=strand.value)
+        feature = SeqFeature(location, type=FeatureIntervalFeatures.FEATURE_INTERVAL.value, strand=strand.value)
         feature.qualifiers = feature_qualifiers.copy()
 
         yield feature

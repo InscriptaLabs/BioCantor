@@ -26,7 +26,12 @@ class GeneFeatures(str, HasMemberMixin):
     """GenBank gene features BioCantor understands."""
 
     GENE = "gene"
-    FEATURE_COLLECTION = "feature"
+
+
+class FeatureCollectionFeatures(str, HasMemberMixin):
+    """GenBank feature collections BioCantor understands."""
+
+    FEATURE_COLLECTION = "misc_feature"
 
 
 class TranscriptFeatures(str, HasMemberMixin):
@@ -40,7 +45,7 @@ class TranscriptFeatures(str, HasMemberMixin):
     TM_RNA = "tmRNA"
 
 
-class IntervalFeatures(str, HasMemberMixin):
+class GeneIntervalFeatures(str, HasMemberMixin):
     """GenBank interval features types BioCantor understands. These do not match
 
     :class:`~biocantor.io.gff3.constants.BioCantorFeatureTypes` because GenBank has length limitations
@@ -48,8 +53,17 @@ class IntervalFeatures(str, HasMemberMixin):
     """
 
     CDS = "CDS"
-    FEATURE_INTERVAL = "feat_region"
     EXON = "exon"
+
+
+class FeatureIntervalFeatures(str, HasMemberMixin):
+    """GenBank interval features types BioCantor understands. These do not match
+
+    :class:`~biocantor.io.gff3.constants.BioCantorFeatureTypes` because GenBank has length limitations
+    on feature types.
+    """
+
+    FEATURE_INTERVAL = "feat_interval"
 
 
 class KnownQualifiers(str, Enum):
@@ -69,10 +83,8 @@ class KnownQualifiers(str, Enum):
     FEATURE_CLASS = "feature_class"
 
 
-GenBankFeatures = HasMemberMixin(
-    "GenBankFeatures",
-    [[i.name, i.value] for j in [GeneFeatures, TranscriptFeatures, IntervalFeatures, MetadataFeatures] for i in j],
-)
+# Feature types that mark genes. Used to separate genes from features.
+GENBANK_GENE_FEATURES = {"gene", "mRNA", "ncRNA", "tRNA", "rRNA", "misc_RNA", "tmRNA", "CDS", "exon"}
 
 
 class GenbankFlavor(Enum):

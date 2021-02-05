@@ -1,5 +1,5 @@
 from uuid import UUID
-
+import json
 import pytest
 from inscripta.biocantor.gene.biotype import Biotype
 from inscripta.biocantor.gene.cds import CDSFrame
@@ -8,6 +8,7 @@ from inscripta.biocantor.io.genbank.parser import parse_genbank, GenBankParserTy
 from inscripta.biocantor.io.parser import ParsedAnnotationRecord
 from inscripta.biocantor.location.location_impl import SingleInterval, CompoundInterval, Strand
 from inscripta.biocantor.util.hashing import digest_object
+from inscripta.biocantor.io.models import AnnotationCollectionModel
 
 
 class TestEukaryoticGenbankParser:
@@ -458,3 +459,17 @@ class TestGenBankErrors:
                 )
             )[0]
             assert rec.genes[0].locus_tag == rec.genes[1].locus_tag
+
+
+class TestGenBankFeatures:
+    @pytest.mark.parametrize("genbank,json_file", [("feature_test_2.gbk", "feature_test_2_gbk.json")])
+    def test_parse_feature_tests(self, test_data_dir, genbank, json_file):
+        recs = list(parse_genbank(test_data_dir / genbank))
+        c = recs[0].annotation
+        assert len(c.feature_collections) == 2
+        assert len(c.feature_collections[0].feature_intervals) == 1
+        assert len(c.feature_collections[1].feature_intervals) == 3
+        assert len(c.genes) == 1
+
+        with open(test_data_dir / json_file) as fh:
+            assert AnnotationCollectionModel.Schema().load(json.load(fh)) == c

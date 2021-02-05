@@ -20,7 +20,8 @@
                     "feature_types": [
                         "a",
                         "b",
-                        "feature_interval"
+                        "feature_interval",
+                        "group"
                     ],
                     "feature_name": "feat1",
                     "feature_id": "05628404-7721-859d-7fce-5d7c93451cf3",
@@ -28,8 +29,9 @@
                 }
             ],
             "feature_collection_name": null,
-            "feature_collection_id": "fbe86c17-60f0-305e-63ca-f43604c81881",
+            "feature_collection_id": "0fd1880e-1468-3190-3fa5-b47d495c97e6",
             "locus_tag": null,
+            "feature_collection_type": "biological_region",
             "sequence_name": "chr1",
             "sequence_guid": null,
             "feature_collection_guid": null,

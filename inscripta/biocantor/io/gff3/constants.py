@@ -79,6 +79,7 @@ class BioCantorQualifiers(Enum):
     FEATURE_SYMBOL = "feature_name"
     FEATURE_COLLECTION_NAME = "feature_collection_name"
     FEATURE_COLLECTION_ID = "feature_collection_id"
+    FEATURE_COLLETION_TYPE = "feature_collection_type"
     FEATURE_TYPE = "feature_type"
     LOCUS_TAG = "locus_tag"
 

@@ -31,17 +31,18 @@ from typing import Optional, TextIO, Iterable, List, Dict, Callable, Tuple, Any,
 from Bio import SeqIO
 from Bio.SeqFeature import SeqFeature
 from Bio.SeqRecord import SeqRecord
+
 from inscripta.biocantor.gene.biotype import Biotype
 from inscripta.biocantor.gene.cds import CDSFrame, CDSInterval
 from inscripta.biocantor.io.features import extract_feature_types, extract_feature_name_id, merge_qualifiers
 from inscripta.biocantor.io.genbank.constants import (
     GeneFeatures,
     TranscriptFeatures,
-    IntervalFeatures,
-    GenBankFeatures,
+    GeneIntervalFeatures,
     MetadataFeatures,
     GenBankParserType,
     KnownQualifiers,
+    GENBANK_GENE_FEATURES,
 )
 from inscripta.biocantor.io.genbank.exc import GenBankParserError, EmptyGenBankError, GenBankLocusTagError
 from inscripta.biocantor.io.models import (
@@ -209,7 +210,7 @@ class GeneFeature(Feature):
             # infer a transcript
             logger.debug(f"Inferring a transcript for {feature}")
             tx_feature = deepcopy(feature)
-            if tx_feature.type == GenBankFeatures.CDS.value:
+            if tx_feature.type == GeneIntervalFeatures.CDS.value:
                 tx_feature.type = TranscriptFeatures.CODING_TRANSCRIPT.value
             else:
                 tx_feature.type = TranscriptFeatures[tx_feature.type].value
@@ -323,12 +324,12 @@ class TranscriptFeature(Feature):
         if len(self.children) == 0 or len(list(self.exon_features)) == 0:
             # add an exon with the same interval as the transcript
             feature = deepcopy(self.feature)
-            feature.type = GenBankFeatures.EXON.value
+            feature.type = GeneIntervalFeatures.EXON.value
             self.add_child(feature)
 
     def construct_frames(self, cds_interval: Location) -> List[str]:
         """We need to build frames. Since GenBank lacks this info, do our best"""
-        if self.feature.type != GenBankFeatures.CODING_TRANSCRIPT.value:
+        if self.feature.type != TranscriptFeatures.CODING_TRANSCRIPT.value:
             return []
         # make 0 based offset, if possible, otherwise assume always in frame
         frame = int(self.children[0].feature.qualifiers.get("codon_start", [1])[0]) - 1
@@ -339,13 +340,13 @@ class TranscriptFeature(Feature):
     @property
     def exon_features(self) -> SeqFeature:
         for f in self.children:
-            if f.type == GenBankFeatures.EXON.value:
+            if f.type == GeneIntervalFeatures.EXON.value:
                 yield f
 
     @property
     def cds_features(self) -> SeqFeature:
         for f in self.children:
-            if f.type == GenBankFeatures.CDS.value:
+            if f.type == GeneIntervalFeatures.CDS.value:
                 yield f
 
     def iterate_intervals(self) -> Iterable[Tuple[int, int]]:
@@ -369,7 +370,7 @@ class TranscriptFeature(Feature):
 class IntervalFeature(Feature):
     """A set of intervals"""
 
-    types = {x.value for x in IntervalFeatures}
+    types = {"CDS", "exon"}
 
     def __str__(self):
         return f"----> {self.feature.__repr__()}"
@@ -424,14 +425,14 @@ def group_gene_records_from_sorted_genbank(
         gene = None
         source = None
         genes = []
+        feature_features = []  # capture non-gene intervals downstream
         for feature in seqrecord.features:
 
             # try to capture the Source field, if it exists
             if feature.type == MetadataFeatures.SOURCE.value:
                 source = feature
-
             # base case for start; iterate until we find a gene
-            if gene is None:
+            elif gene is None:
                 if feature.type in GeneFeature.types:
                     gene = GeneFeature(feature, seqrecord)
                 else:
@@ -449,6 +450,8 @@ def group_gene_records_from_sorted_genbank(
                     gene.add_child(feature)
                 else:
                     gene.children[-1].add_child(feature)
+            else:
+                feature_features.append(feature)
 
         # gene could be None if this record has no annotations
         if gene is not None and gene.has_children:
@@ -461,7 +464,7 @@ def group_gene_records_from_sorted_genbank(
         else:
             source_qualifiers = None
 
-        feature_collections = _extract_generic_features(seqrecord, feature_parse_func)
+        feature_collections = _extract_generic_features(seqrecord, feature_features, feature_parse_func)
 
         tot_features += len(feature_collections) if feature_collections else 0
         tot_genes += len(genes) if genes else 0
@@ -505,19 +508,22 @@ def group_gene_records_by_locus_tag(
     tot_genes = 0
     tot_features = 0
     for seqrecord in record_iter:
-        filtered_features = []
+        gene_filtered_features = []
+        feature_filtered_features = []
         source = None
         for f in seqrecord.features:
-            if GenBankFeatures.has_value(f.type) and "locus_tag" in f.qualifiers:
-                filtered_features.append(f)
+            if f.type in GENBANK_GENE_FEATURES and "locus_tag" in f.qualifiers:
+                gene_filtered_features.append(f)
             elif f.type == MetadataFeatures.SOURCE.value:
                 source = f
+            else:
+                feature_filtered_features.append(f)
 
-        sorted_filtered_features = sorted(filtered_features, key=lambda f: f.qualifiers["locus_tag"])
+        sorted_gene_filtered_features = sorted(gene_filtered_features, key=lambda f: f.qualifiers["locus_tag"])
 
         genes = []
         for locus_tag, gene_features in itertools.groupby(
-            sorted_filtered_features, key=lambda f: f.qualifiers["locus_tag"][0]
+            sorted_gene_filtered_features, key=lambda f: f.qualifiers["locus_tag"][0]
         ):
             gene_features = list(gene_features)
             gene = gene_features[0]
@@ -547,7 +553,7 @@ def group_gene_records_by_locus_tag(
         else:
             source_qualifiers = None
 
-        feature_collections = _extract_generic_features(seqrecord, feature_parse_func)
+        feature_collections = _extract_generic_features(seqrecord, feature_filtered_features, feature_parse_func)
 
         tot_features += len(feature_collections) if feature_collections else 0
         tot_genes += len(genes) if genes else 0
@@ -570,7 +576,9 @@ def group_gene_records_by_locus_tag(
 
 
 def _extract_generic_features(
-    seqrecord: SeqRecord, feature_parse_func: Callable[[FeatureIntervalGenBankCollection], Dict[str, Any]]
+    seqrecord: SeqRecord,
+    filtered_features: List[SeqFeature],
+    feature_parse_func: Callable[[FeatureIntervalGenBankCollection], Dict[str, Any]],
 ) -> Optional[List[Dict[str, Any]]]:
     """
     Extract all generic features from a SeqRecord. These are anything that did not qualify as a gene, based
@@ -581,16 +589,13 @@ def _extract_generic_features(
 
     Args:
         seqrecord: A SeqRecord object.
+        filtered_features: List of SeqFeature objects associated with the SeqRecord that are not gene-like.
         feature_parse_func: Optional feature interval parse function implementation.
 
     Returns:
         A list of dictionary representations of feature interval collections, or ``None`` if no feature intervals were
         found.
     """
-    filtered_features = []
-    for f in seqrecord.features:
-        if not GenBankFeatures.has_value(f.type) and f.type != MetadataFeatures.SOURCE.value:
-            filtered_features.append(f)
 
     # sort by locus tag, or null if no locus tag is provided.
     sorted_filtered_features = sorted(filtered_features, key=lambda f: f.qualifiers.get("locus_tag", [""])[0])

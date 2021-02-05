@@ -231,6 +231,7 @@ class FeatureIntervalCollectionModel(BaseModel):
     feature_collection_name: Optional[str] = None
     feature_collection_id: Optional[str] = None
     locus_tag: Optional[str] = None
+    feature_collection_type: Optional[str] = None
     sequence_name: Optional[str] = None
     sequence_guid: Optional[UUID] = None
     feature_collection_guid: Optional[UUID] = None
@@ -246,6 +247,7 @@ class FeatureIntervalCollectionModel(BaseModel):
             feature_collection_name=self.feature_collection_name,
             feature_collection_id=self.feature_collection_id,
             locus_tag=self.locus_tag,
+            feature_collection_type=self.feature_collection_type,
             sequence_name=self.sequence_name,
             sequence_guid=self.sequence_guid,
             qualifiers=self.qualifiers,

@@ -317,6 +317,7 @@ class FeatureIntervalCollection(AbstractFeatureIntervalCollection):
         feature_intervals: List[FeatureInterval],
         feature_collection_name: Optional[str] = None,
         feature_collection_id: Optional[str] = None,
+        feature_collection_type: Optional[str] = None,
         locus_tag: Optional[str] = None,
         sequence_name: Optional[str] = None,
         sequence_guid: Optional[UUID] = None,
@@ -324,6 +325,9 @@ class FeatureIntervalCollection(AbstractFeatureIntervalCollection):
         qualifiers: Optional[Dict[Hashable, List[QualifierValue]]] = None,
         parent: Optional[Parent] = None,
     ):
+        if not feature_intervals:
+            raise InvalidAnnotationError("Must have at least one feature interval.")
+
         self.feature_intervals = feature_intervals
         self.feature_collection_name = feature_collection_name
         self.feature_collection_id = feature_collection_id
@@ -332,12 +336,11 @@ class FeatureIntervalCollection(AbstractFeatureIntervalCollection):
         self.sequence_guid = sequence_guid
         # qualifiers come in as a List, convert to Set
         self._import_qualifiers_from_list(qualifiers)
-
-        feature_types = [x.feature_types for x in feature_intervals if x.feature_types]
-        if feature_types:
-            self.feature_types = set.union(*feature_types)
-        else:
-            self.feature_types = None
+        self.feature_collection_type = feature_collection_type
+        try:
+            self.feature_types = set.union(*[x.feature_types for x in feature_intervals])
+        except:
+            assert False, self.feature_intervals
 
         if not self.feature_intervals:
             raise InvalidAnnotationError("FeatureCollection must have features")
@@ -354,6 +357,7 @@ class FeatureIntervalCollection(AbstractFeatureIntervalCollection):
                 self.location,
                 self.feature_collection_name,
                 self.feature_collection_id,
+                self.feature_collection_type,
                 self.feature_types,
                 self.locus_tag,
                 self.sequence_name,
@@ -393,6 +397,7 @@ class FeatureIntervalCollection(AbstractFeatureIntervalCollection):
             feature_intervals=[feat.to_dict() for feat in self.feature_intervals],
             feature_collection_name=self.feature_collection_name,
             feature_collection_id=self.feature_collection_id,
+            feature_collection_type=self.feature_collection_type,
             locus_tag=self.locus_tag,
             qualifiers=self._export_qualifiers_to_list(),
             sequence_name=self.sequence_name,
@@ -407,6 +412,7 @@ class FeatureIntervalCollection(AbstractFeatureIntervalCollection):
             [BioCantorQualifiers.FEATURE_COLLECTION_ID.value, self.feature_collection_id],
             [BioCantorQualifiers.FEATURE_COLLECTION_NAME.value, self.feature_collection_name],
             [BioCantorQualifiers.LOCUS_TAG.value, self.locus_tag],
+            [BioCantorQualifiers.FEATURE_COLLETION_TYPE.value, self.feature_collection_type],
         ]:
             if not val:
                 continue

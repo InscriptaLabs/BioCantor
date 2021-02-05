@@ -38,6 +38,7 @@ class TestFeatures:
         feature_intervals=[feat1, feat2],
         feature_collection_name="featgrp1",
         feature_collection_id="abc123",
+        feature_collection_type="group",
         sequence_name="chr1",
     )
 
