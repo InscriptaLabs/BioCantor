@@ -83,12 +83,11 @@ def _parse_genes(chrom: str, db: FeatureDB) -> List[Dict]:
         gene_biotype = gene.attributes.get("gene_biotype", [gene.attributes.get("gene_type", None)])[0]
         gene_qualifiers = {x: y for x, y in gene.attributes.items() if not BioCantorGFF3ReservedQualifiers.has_value(x)}
 
-        if gene_biotype is not None:
-            try:
-                gene_biotype = Biotype[gene_biotype]
-            except KeyError:
-                gene_qualifiers["provided_biotype"] = gene.attributes["gene_biotype"][0]
-                gene_biotype = None
+        if Biotype.has_name(gene_biotype):
+            gene_biotype = Biotype[gene_biotype]
+        else:
+            gene_qualifiers["provided_biotype"] = gene.attributes["gene_biotype"][0]
+            gene_biotype = None
 
         transcripts = []
         for i, transcript in enumerate(db.children(gene, level=1)):
@@ -100,17 +99,17 @@ def _parse_genes(chrom: str, db: FeatureDB) -> List[Dict]:
             transcript_qualifiers = {
                 x: y for x, y in transcript.attributes.items() if not BioCantorGFF3ReservedQualifiers.has_value(x)
             }
-            transcript_biotype = gene.attributes.get(
+            provided_transcript_biotype = gene.attributes.get(
                 "transcript_biotype", [gene.attributes.get("transcript_type", None)]
             )[0]
 
-            if transcript_biotype is not None:
-                try:
-                    transcript_biotype = Biotype[transcript_biotype]
-                except KeyError:
-                    transcript_qualifiers["provided_transcript_biotype"] = gene.attributes["transcript_biotype"][0]
-                    transcript_biotype = None
-            elif gene_biotype is not None:
+            if Biotype.has_name(provided_transcript_biotype):
+                transcript_biotype = Biotype[provided_transcript_biotype]
+            else:
+                # keep track of what they gave us, that did not match the enum
+                if provided_transcript_biotype:
+                    transcript_qualifiers["provided_transcript_biotype"] = provided_transcript_biotype
+                # use the gene biotype
                 transcript_biotype = gene_biotype
 
             if locus_tag is not None:
