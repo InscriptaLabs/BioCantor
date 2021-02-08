@@ -40,7 +40,7 @@
             "gene_symbol": null,
             "gene_type": "ncRNA",
             "locus_tag": "GI526_G0000001",
-            "qualifiers": {},
+            "qualifiers": null,
             "sequence_name": "CM021111.1",
             "sequence_guid": null,
             "gene_guid": null

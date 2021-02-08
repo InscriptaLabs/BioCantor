@@ -7,13 +7,12 @@ from abc import ABC, abstractmethod
 from typing import Optional, Any, Union, Dict, List, Set, Iterable, Hashable, TypeVar
 from uuid import UUID
 
-from inscripta.biocantor.exc import (
-    EmptyLocationException,
-)
+from inscripta.biocantor.exc import EmptyLocationException
 from inscripta.biocantor.gene.cds import CDSPhase
 from inscripta.biocantor.io.bed import BED12, RGB
 from inscripta.biocantor.io.gff3.constants import GFF_SOURCE, NULL_COLUMN, BioCantorFeatureTypes, BioCantorQualifiers
 from inscripta.biocantor.io.gff3.rows import GFFAttributes, GFFRow
+from inscripta.biocantor.io.gff3.exc import GFF3MissingSequenceNameError
 from inscripta.biocantor.location.location import Location
 from inscripta.biocantor.location.location_impl import SingleInterval
 from inscripta.biocantor.location.strand import Strand
@@ -222,7 +221,7 @@ class FeatureInterval(AbstractFeatureInterval):
         qualifiers: Optional[Dict[Hashable, QualifierValue]] = None,
         sequence_guid: Optional[UUID] = None,
         sequence_name: Optional[str] = None,
-        feature_type: Optional[str] = None,
+        feature_types: Optional[List[str]] = None,
         feature_name: Optional[str] = None,
         feature_id: Optional[str] = None,
         guid: Optional[UUID] = None,
@@ -232,7 +231,7 @@ class FeatureInterval(AbstractFeatureInterval):
         self.location = location  # genomic CompoundInterval
         self.sequence_guid = sequence_guid
         self.sequence_name = sequence_name
-        self.feature_type = feature_type
+        self.feature_types = set(feature_types) if feature_types else set()  # stored as a set of types
         self.feature_name = feature_name
         self.feature_id = feature_id
         # qualifiers come in as a List, convert to Set
@@ -245,7 +244,7 @@ class FeatureInterval(AbstractFeatureInterval):
                 self.location,
                 self.qualifiers,
                 self.sequence_name,
-                self.feature_type,
+                self.feature_types,
                 self.feature_name,
                 self.feature_id,
                 self.is_primary_feature,
@@ -264,16 +263,16 @@ class FeatureInterval(AbstractFeatureInterval):
         return "<{}>".format(str(self))
 
     def to_dict(self) -> Dict[str, Any]:
-        """Convert to a dict usable by :class:`FeatureIntervalModel`."""
-        exon_starts, exon_ends = list(zip(*([x.start, x.end] for x in self.location.blocks)))
+        """Convert to a dict usable by :class:`biocantor.io.models.FeatureIntervalModel`."""
+        interval_starts, interval_ends = list(zip(*([x.start, x.end] for x in self.location.blocks)))
         return dict(
-            interval_starts=exon_starts,
-            interval_ends=exon_ends,
+            interval_starts=interval_starts,
+            interval_ends=interval_ends,
             strand=self.strand.name,
             qualifiers=self._export_qualifiers_to_list(),
             feature_id=self.feature_id,
             feature_name=self.feature_name,
-            feature_type=self.feature_type,
+            feature_types=sorted(self.feature_types) if self.feature_types else None,
             sequence_name=self.sequence_name,
             sequence_guid=self.sequence_guid,
             feature_interval_guid=self.guid,
@@ -315,13 +314,14 @@ class FeatureInterval(AbstractFeatureInterval):
         for key, val in [
             [BioCantorQualifiers.FEATURE_SYMBOL.value, self.feature_name],
             [BioCantorQualifiers.FEATURE_ID.value, self.feature_id],
-            [BioCantorQualifiers.FEATURE_TYPE.value, self.feature_type],
         ]:
             if not val:
                 continue
             if key not in qualifiers:
                 qualifiers[key] = set()
             qualifiers[key].add(val)
+        if self.feature_types:
+            qualifiers[BioCantorQualifiers.FEATURE_TYPE.value] = self.feature_types
         return qualifiers
 
     def to_gff(
@@ -339,6 +339,9 @@ class FeatureInterval(AbstractFeatureInterval):
         Yields:
             :class:`~biocantor.io.gff3.rows.GFFRow`
         """
+        if not self.sequence_name:
+            raise GFF3MissingSequenceNameError("Must have sequence names to export to GFF3.")
+
         qualifiers = self.export_qualifiers(parent_qualifiers)
 
         feature_id = str(self.guid)
@@ -349,7 +352,7 @@ class FeatureInterval(AbstractFeatureInterval):
         row = GFFRow(
             self.sequence_name,
             GFF_SOURCE,
-            BioCantorFeatureTypes.TRANSCRIPT,
+            BioCantorFeatureTypes.FEATURE_INTERVAL,
             self.start + 1,
             self.end,
             NULL_COLUMN,
@@ -363,12 +366,12 @@ class FeatureInterval(AbstractFeatureInterval):
         # re-use qualifiers, updating ID each time
         for i, block in enumerate(self.location.blocks, 1):
             attributes = GFFAttributes(
-                id=f"exon-{feature_id}-{i}", qualifiers=qualifiers, name=self.feature_name, parent=feature_id
+                id=f"feature-{feature_id}-{i}", qualifiers=qualifiers, name=self.feature_name, parent=feature_id
             )
             row = GFFRow(
                 self.sequence_name,
                 GFF_SOURCE,
-                BioCantorFeatureTypes.EXON,
+                BioCantorFeatureTypes.FEATURE_INTERVAL_REGION,
                 block.start + 1,
                 block.end,
                 NULL_COLUMN,

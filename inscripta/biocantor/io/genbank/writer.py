@@ -17,11 +17,18 @@ from Bio import SeqIO
 from Bio.Seq import Seq
 from Bio.SeqFeature import SeqFeature
 from Bio.SeqRecord import SeqRecord
-
-from inscripta.biocantor.gene.collections import AnnotationCollection, GeneInterval
+from inscripta.biocantor.gene.collections import AnnotationCollection, GeneInterval, FeatureIntervalCollection
+from inscripta.biocantor.gene.feature import FeatureInterval
 from inscripta.biocantor.gene.transcript import TranscriptInterval
 from inscripta.biocantor.io.exc import StrandViolationWarning
-from inscripta.biocantor.io.genbank.constants import GeneFeatures, TranscriptFeatures, IntervalFeatures, GenbankFlavor
+from inscripta.biocantor.io.genbank.constants import (
+    GeneFeatures,
+    TranscriptFeatures,
+    GeneIntervalFeatures,
+    GenbankFlavor,
+    FeatureCollectionFeatures,
+    FeatureIntervalFeatures,
+)
 from inscripta.biocantor.io.genbank.exc import GenBankExportError
 from inscripta.biocantor.location.strand import Strand
 
@@ -66,16 +73,19 @@ def collection_to_genbank(
         seqrecord.annotations["source"] = source
         seqrecord.annotations["organism"] = organism
 
-        for gene in collection.genes:
-            seqrecord.features.extend(gene_to_feature(gene, genbank_type, force_strand))
+        for gene_or_feature in collection:
+            seqrecord.features.extend(gene_to_feature(gene_or_feature, genbank_type, force_strand))
 
         seqrecords.append(seqrecord)
 
     SeqIO.write(seqrecords, genbank_file_handle_or_path, format="genbank")
 
 
-def gene_to_feature(gene: GeneInterval, genbank_type: GenbankFlavor, force_strand: bool) -> Iterable[SeqFeature]:
-    """Converts a :class:`~biocantor.gene.collections.GeneInterval` to a :class:`Bio.SeqFeature.SeqFeature`.
+def gene_to_feature(
+    gene_or_feature: Union[GeneInterval, FeatureIntervalCollection], genbank_type: GenbankFlavor, force_strand: bool
+) -> Iterable[SeqFeature]:
+    """Converts either a :class:`~biocantor.gene.collections.GeneInterval` or a
+    :class:`~biocantor.gene.collections.FeatureIntervalCollection` to a :class:`Bio.SeqFeature.SeqFeature`.
 
     :class:`Bio.SeqFeature.SeqFeature` are BioPython objects that will then be used to write to a GenBank file. There
     is one :class:`Bio.SeqFeature.SeqFeature` for every feature, or row group, in the output file. There will be one
@@ -86,7 +96,8 @@ def gene_to_feature(gene: GeneInterval, genbank_type: GenbankFlavor, force_stran
     and forces it on all of its children.
 
     Args:
-        gene: A :class:`~biocantor.gene.collections.GeneInterval`.
+        gene_or_feature: A :class:`~biocantor.gene.collections.GeneInterval` or
+            :class:`~biocantor.gene.collections.FeatureIntervalCollection`.
         genbank_type: Are we writing an prokaryotic or eukaryotic style GenBank file?
         force_strand: Boolean flag; if ``True``, then strand on children is forced, if ``False``, then improper
             strands are instead skipped.
@@ -95,25 +106,45 @@ def gene_to_feature(gene: GeneInterval, genbank_type: GenbankFlavor, force_stran
         ``SeqFeature``s, one for the gene, one for each child transcript, and one for each transcript's CDS if it
             exists.
     """
-    location = gene.location.to_biopython()
+    location = gene_or_feature.location.to_biopython()
     # update the strand by picking the most common
-    strands = [tx.strand for tx in gene.transcripts]
+    strands = [child.strand for child in gene_or_feature]
     strand = max(strands, key=strands.count)
-    feature = SeqFeature(location, type=GeneFeatures.GENE.value, strand=strand.value)
 
-    feature.qualifiers = {key: list(vals) for key, vals in gene.export_qualifiers().items()}
+    qualifiers = {key: list(vals) for key, vals in gene_or_feature.export_qualifiers().items()}
 
     # do our best to ensure there is a /gene tag
-    gene_symbol = None
-    if gene.gene_symbol is not None:
-        gene_symbol = gene.gene_symbol
-    elif gene.gene_id is not None:
-        gene_symbol = gene.gene_id
-    feature.qualifiers[GeneFeatures.GENE.value] = [gene_symbol]
+    symbol = None
+    if isinstance(gene_or_feature, GeneInterval):
+        if gene_or_feature.gene_symbol:
+            symbol = gene_or_feature.gene_symbol
+        elif gene_or_feature.gene_id:
+            symbol = gene_or_feature.gene_id
+
+        feature_type = GeneFeatures.GENE.value
+
+    else:
+        if gene_or_feature.feature_collection_name:
+            symbol = gene_or_feature.feature_collection_name
+        elif gene_or_feature.feature_collection_id:
+            symbol = gene_or_feature.feature_collection_id
+
+        feature_type = FeatureCollectionFeatures.FEATURE_COLLECTION.value
+
+    qualifiers[feature_type] = [symbol]
+    feature = SeqFeature(location, type=feature_type, strand=strand.value)
+    feature.qualifiers = qualifiers
 
     yield feature
 
-    yield from transcripts_to_feature(gene.transcripts, strand, genbank_type, force_strand, gene_symbol, gene.locus_tag)
+    if isinstance(gene_or_feature, GeneInterval):
+        yield from transcripts_to_feature(
+            gene_or_feature.transcripts, strand, genbank_type, force_strand, symbol, gene_or_feature.locus_tag
+        )
+    else:
+        yield from feature_intervals_to_features(
+            gene_or_feature.feature_intervals, strand, force_strand, symbol, gene_or_feature.locus_tag
+        )
 
 
 def transcripts_to_feature(
@@ -139,12 +170,12 @@ def transcripts_to_feature(
     In prokaryotic mode, this function will only create biotype features for non-coding genes.
 
     Args:
-        transcripts: A list of :class:`~biocantor.gene.collections.TranscriptInterval`.
+        transcripts: A list of :class:`~biocantor.gene.transcript.TranscriptInterval`.
         strand: ``Strand`` that this gene lives on.
         genbank_type: Are we writing an prokaryotic or eukaryotic style GenBank file?
         force_strand: Boolean flag; if ``True``, then strand is forced, if ``False``, then improper strands are instead
             skipped.
-        gene_symbol: An optional gene symbol. Required if ``iep_v1_compatible`` is set to ``True``.
+        gene_symbol: An optional gene symbol.
         locus_tag: An optional locus tag.
 
     Yields:
@@ -213,7 +244,7 @@ def add_cds_feature(
         ``SeqFeature`` for the CDS of this transcript.
     """
     location = transcript.cds.location.to_biopython()
-    feature = SeqFeature(location, type=IntervalFeatures.CDS.value, strand=strand.value)
+    feature = SeqFeature(location, type=GeneIntervalFeatures.CDS.value, strand=strand.value)
     feature.qualifiers = transcript_qualifiers
 
     # if the sequence has N's, we cannot translate
@@ -223,3 +254,55 @@ def add_cds_feature(
         pass
 
     return feature
+
+
+def feature_intervals_to_features(
+    features: List[FeatureInterval],
+    strand: Strand,
+    force_strand: bool,
+    feature_name: Optional[str] = None,
+    locus_tag: Optional[str] = None,
+) -> Iterable[SeqFeature]:
+    """Converts a :class:`~biocantor.gene.feature.FeatureInterval` to a :class:`Bio.SeqFeature.SeqFeature`.
+
+    :class:`Bio.SeqFeature.SeqFeature` are BioPython objects that will then be used to write to a GenBank file. There
+    is one :class:`Bio.SeqFeature.SeqFeature` for every feature, or row group, in the output file. There will be one
+    joined interval at the transcript level representing the exonic structure.
+
+    While transcript members of a gene can have different strands, for GenBank files that is not allowed. This function
+    will explicitly force the strand and provide a warning that this is happening.
+
+    Args:
+        features: A list of :class:`~biocantor.gene.feature.TranscriptInterval`.
+        strand: ``Strand`` that this gene lives on.
+        force_strand: Boolean flag; if ``True``, then strand is forced, if ``False``, then improper strands are instead
+            skipped.
+        feature_name: An optional feature name.
+        locus_tag: An optional locus tag.
+
+    Yields:
+        A ``SeqFeature``s for each feature.
+    """
+    for feature in features:
+        location = feature.location.to_biopython()
+
+        feature_qualifiers = {key: list(vals) for key, vals in feature.export_qualifiers().items()}
+        if feature_name:
+            feature_qualifiers["gene"] = [feature_name]
+        if locus_tag:
+            feature_qualifiers["locus_tag"] = [locus_tag]
+
+        if location.strand != strand.value:
+            warn_str = f"Found strand mismatch between gene and feature on feature {feature}. "
+            if force_strand:
+                warn_str += "Forcing this transcript to the gene orientation."
+                warnings.warn(warn_str, StrandViolationWarning)
+            else:
+                warn_str += "Skipping this transcript."
+                warnings.warn(warn_str, StrandViolationWarning)
+                continue
+
+        feature = SeqFeature(location, type=FeatureIntervalFeatures.FEATURE_INTERVAL.value, strand=strand.value)
+        feature.qualifiers = feature_qualifiers.copy()
+
+        yield feature

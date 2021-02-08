@@ -1,3 +1,5 @@
+import itertools
+import re
 from enum import Enum
 
 from inscripta.biocantor.util.enum import HasMemberMixin
@@ -58,40 +60,67 @@ GFF3ReservedQualifiers = HasMemberMixin(
 
 
 class BioCantorQualifiers(Enum):
-    """These are qualifiers that are added when exporting from BioCantor to GFF3, if they exist on the object."""
+    """These are qualifiers that are added when exporting from BioCantor to GFF3, if they exist on the object.
+
+    Note that this enum does not filter arbitrary qualifier types, but rather exists to map attributes of an
+    interval object on to the keys in the GFF3 attributes map.
+    """
 
     TRANSCRIPT_ID = "transcript_id"
     TRANSCRIPT_NAME = "transcript_name"
     TRANSCRIPT_TYPE = "transcript_biotype"
     PROTEIN_ID = "protein_id"
     GENE_ID = "gene_id"
+    GENE_SYMBOL = "gene_name"
     GENE_NAME = "gene_name"
     GENE_TYPE = "gene_biotype"
     FEATURE_ID = "feature_id"
+    FEATURE_NAME = "feature_name"
     FEATURE_SYMBOL = "feature_name"
+    FEATURE_COLLECTION_NAME = "feature_collection_name"
+    FEATURE_COLLECTION_ID = "feature_collection_id"
+    FEATURE_COLLETION_TYPE = "feature_collection_type"
     FEATURE_TYPE = "feature_type"
     LOCUS_TAG = "locus_tag"
 
 
-class GFF3FeatureTypes(Enum):
+# build a regex of all possible values, case insensitive
+BIOCANTOR_QUALIFIERS_REGEX = re.compile(
+    r"({})".format(
+        "|".join(
+            set.union(
+                *[
+                    {k.name.lower(), k.value}
+                    for k in itertools.chain(BioCantorQualifiers, BioCantorGFF3ReservedQualifiers)
+                ]
+            )
+        )
+    )
+)
+
+
+class GFF3GeneFeatureTypes(HasMemberMixin):
     """These are feature types seen in GFF3 files we are parsing that we currently understand."""
 
     GENE = "gene"
     TRANSCRIPT = "transcript"
     CDS = "CDS"
     EXON = "exon"
-    START_CODON = "start_codon"
-    STOP_CODON = "stop_codon"
-    INTRON = "intron"
-    ENHANCER = "enhancer"
+    PSEUDOGENE = "pseudogene"
 
 
-BioCantorFeatureTypes = Enum(
-    "BioCantorFeatureTypes",
-    [
-        (f.name, f.value)
-        for f in GFF3FeatureTypes
-        if f in [GFF3FeatureTypes.GENE, GFF3FeatureTypes.TRANSCRIPT, GFF3FeatureTypes.CDS, GFF3FeatureTypes.EXON]
-    ],
-)
-BioCantorFeatureTypes.__doc__ = "These are the feature types currently supported by BioCantor when writing to GFF3."
+class BioCantorFeatureTypes(HasMemberMixin):
+    """These are the feature types currently supported by BioCantor when writing genes, transcripts,
+    and feature collections to GFF3. When exporting features, the type of the feature is used directly.
+
+    TODO: Feature types should be explicitly linked to Sequence Ontology types. Biological region is a catch-all
+        term that matches both the INSDC specification as well as SO:0001411.
+    """
+
+    GENE = "gene"
+    TRANSCRIPT = "transcript"
+    CDS = "CDS"
+    EXON = "exon"
+    FEATURE_COLLECTION = "biological_region"
+    FEATURE_INTERVAL = "feature_interval"
+    FEATURE_INTERVAL_REGION = "subregion"

@@ -445,8 +445,8 @@ class TestCDSInterval:
                     [CDSFrame.ZERO, CDSFrame.TWO],
                 ),
                 [
-                    SingleInterval(2, 5, Strand.MINUS, parent=Sequence("ATACGATCA", alphabet)),  # CGT
-                ],
+                    SingleInterval(2, 5, Strand.MINUS, parent=Sequence("ATACGATCA", alphabet)),
+                ],  # CGT
             ),
         ],
     )

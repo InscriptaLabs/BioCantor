@@ -3,6 +3,7 @@ Write BioCantor data models to the NCBI .tbl format.
 
 The .tbl format is used for NCBI genome submission, and can be validated with the tool ``tbl2asn``.
 """
+import itertools
 import re
 import warnings
 from abc import ABC
@@ -11,7 +12,12 @@ from typing import Optional, TextIO, Iterable, Union, Dict, List, Set, Hashable
 from inscripta.biocantor.gene.biotype import Biotype
 from inscripta.biocantor.gene.codon import TranslationTable
 from inscripta.biocantor.gene.collections import AnnotationCollection, GeneInterval, TranscriptInterval
-from inscripta.biocantor.io.genbank.constants import GeneFeatures, TranscriptFeatures, IntervalFeatures, GenbankFlavor
+from inscripta.biocantor.io.genbank.constants import (
+    GeneFeatures,
+    TranscriptFeatures,
+    GeneIntervalFeatures,
+    GenbankFlavor,
+)
 from inscripta.biocantor.io.ncbi.exc import TblExportException
 from inscripta.biocantor.location import Location
 from inscripta.biocantor.location.strand import Strand
@@ -75,7 +81,7 @@ class TblFeature(ABC):
     """
 
     VALID_KEYS: Optional[Set] = None
-    FEATURE_TYPE: Optional[Union[TranscriptFeatures, GeneFeatures, IntervalFeatures]] = None
+    FEATURE_TYPE: Optional[Union[TranscriptFeatures, GeneFeatures, GeneIntervalFeatures]] = None
     children: Optional[List["TblFeature"]] = None
     chars_to_remove = re.compile(r"[\[\]\(\);]*")  # characters to remove from qualifier values
 
@@ -145,10 +151,10 @@ class TblFeature(ABC):
         """
         s = []
         for key, val in self.qualifiers.items():
-            if val is None or key not in self.VALID_KEYS:
+            if not val or key not in self.VALID_KEYS:
                 continue
             filtered_vals = [str(x) for x in val if x is not None]
-            if len(filtered_vals) == 0:
+            if not filtered_vals:
                 continue
             for val in sorted(filtered_vals):
                 val = re.sub(self.chars_to_remove, "", val)
@@ -187,13 +193,15 @@ class GeneTblFeature(TblFeature):
     """
 
     FEATURE_TYPE = GeneFeatures.GENE
-    VALID_KEYS = {"gene", "locus_tag", "gene_synonym", "db_xref"}
+    VALID_KEYS = {"gene", "locus_tag", "gene_synonym", "db_xref", "note"}
 
     def __init__(
         self,
         gene: GeneInterval,
-        locus_tag: Optional[str] = None,
+        locus_tag,
     ):
+        self.locus_tag = locus_tag
+
         strands = [tx.strand for tx in gene.transcripts]
         strand = max(strands, key=strands.count)
         if len(set(strands)) != 1:
@@ -209,13 +217,18 @@ class GeneTblFeature(TblFeature):
 
         location = gene.location.reset_strand(strand)
 
-        qualifiers = {"gene": [gene.gene_symbol], "locus_tag": [locus_tag] if locus_tag else [gene.locus_tag]}
-        # locus tag and gene can't be the same thing or tbl2asn reports LocusTagProblem
+        qualifiers = {"gene": [gene.gene_symbol], "locus_tag": [locus_tag], "note": []}
+
+        if gene.locus_tag:
+            qualifiers["note"].append(f"original locus_tag: {gene.locus_tag}")
 
         if qualifiers["gene"][0] is None and qualifiers["locus_tag"][0] is None:
             raise TblExportException("Must be able to provide locus_tag or gene.")
+        # locus tag and gene can't be the same thing or tbl2asn reports LocusTagProblem
         elif qualifiers["gene"] == qualifiers["locus_tag"]:
             qualifiers["gene"][0] += "_gene"
+        elif qualifiers["gene"][0] is None:
+            qualifiers["gene"] = qualifiers["locus_tag"]
 
         # try to pull out the special qualifiers
         if gene.qualifiers:
@@ -223,12 +236,10 @@ class GeneTblFeature(TblFeature):
 
         # if we end up pulling out synonyms, but have no gene symbol, pick the first synonym as the new symbol
         if not gene.gene_symbol and "gene_synonym" in qualifiers:
-            qualifiers["gene"] = qualifiers["gene_synonym"].pop(0)
+            qualifiers["gene"] = [qualifiers["gene_synonym"].pop(0)]
             # if we only had one synonym, then remove the key from the qualifiers dictionary
             if not qualifiers["gene_synonym"]:
                 del qualifiers["gene_synonym"]
-
-        self.locus_tag = locus_tag
 
         # incomplete markers are never put on gene features, so these are always false
         super().__init__(
@@ -242,7 +253,7 @@ class MRNATblFeature(TblFeature):
     """
 
     FEATURE_TYPE = TranscriptFeatures.CODING_TRANSCRIPT
-    VALID_KEYS = GeneTblFeature.VALID_KEYS | {"protein_id", "transcript_id"}
+    VALID_KEYS = GeneTblFeature.VALID_KEYS | {"protein_id", "transcript_id", "product"}
 
     def __init__(
         self,
@@ -264,8 +275,8 @@ class CDSTblFeature(TblFeature):
     A CDS feature.
     """
 
-    FEATURE_TYPE = IntervalFeatures.CDS
-    VALID_KEYS = MRNATblFeature.VALID_KEYS | {"product", "codon_start"}
+    FEATURE_TYPE = GeneIntervalFeatures.CDS
+    VALID_KEYS = MRNATblFeature.VALID_KEYS | {"codon_start"}
 
     def __init__(
         self,
@@ -284,16 +295,12 @@ class CDSTblFeature(TblFeature):
             # if we don't have a product, default to "hypothetical protein"
             product = "hypothetical protein"
 
-        # NCBI also does not seem to like the term 'alpha' as the product name
+        # NCBI also does not seem to like the term 'alpha' or 'alpha-1' as the product name
         # it considers it a hypothetical protein
         # NCBI also requires that the product contain string characters, cannot be only numbers
-        if "alpha" in product or not re.search("[A-Za-z]", product):
+        if product in ["alpha", "alpha-1"] or not re.search("[A-Za-z-_]", product):
+            qualifiers["note"].append(f"original product: {product}")
             product = "hypothetical protein"
-
-        # hypothetical proteins cannot have /gene tags
-        if product == "hypothetical protein":
-            del qualifiers["gene"]
-            del gene_feature.qualifiers["gene"]
 
         qualifiers["product"] = [product]
 
@@ -309,13 +316,9 @@ class CDSTblFeature(TblFeature):
         qualifiers["transcript_id"] = [f"gnl|{submitter_lab_name}|{random_uppercase_str(size=12)}"]
 
         # if we have protein or transcript IDs, retain them under the note field
-        qualifiers["note"] = []
         for key, val in [["protein_id", transcript.protein_id], ["transcript_id", transcript.transcript_id]]:
             if val:
                 qualifiers["note"].append(f"original {key}: {val}")
-
-        if not qualifiers["note"]:
-            del qualifiers["note"]
 
         codon_start = next(transcript.cds.frame_iter()).value + 1
         qualifiers["codon_start"] = [codon_start]
@@ -329,6 +332,12 @@ class CDSTblFeature(TblFeature):
             TblFeature.extract_dbxref_synonyms(
                 transcript.qualifiers, gene_feature.qualifiers, gene_symbol=qualifiers.get("gene", [None])[0]
             )
+
+        # hypothetical proteins cannot have /gene tags; items without /gene tags cannot have /gene_synonym tags
+        if product == "hypothetical protein":
+            for key, d in itertools.product(["gene", "gene_synonym"], [qualifiers, gene_feature.qualifiers]):
+                if key in d:
+                    del d[key]
 
         # start codon can look directly at the translation, because we have a codon_start value
         start_is_incomplete = not transcript.cds.has_start_codon_in_specific_translation_table(translation_table)
@@ -509,6 +518,7 @@ def collection_to_tbl(
     genbank_flavor: Optional[GenbankFlavor] = GenbankFlavor.EUKARYOTIC,
     locus_tag_jump_size: Optional[int] = 5,
     submitter_lab_name: Optional[str] = None,
+    random_seed: Optional[int] = None,
 ):
     """
     Take an iterable of :class:`~biocantor.gene.collections.AnnotationCollection` and produce a TBL file.
@@ -527,7 +537,11 @@ def collection_to_tbl(
             genome iterations.
         submitter_lab_name: Name to put in the ``dbname`` section of unique identifiers. This is intended to be a
             string that uniquely labels the submitter lab. If not set, will be a random string.
+        random_seed: A seed value for random string generation. Useful for reproducible runs of this function.
     """
+    if random_seed:
+        random.seed(random_seed)
+
     if not locus_tag_prefix:
         locus_tag_prefix = random_uppercase_str(size=8)
     if not submitter_lab_name:

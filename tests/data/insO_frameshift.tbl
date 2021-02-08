@@ -5,14 +5,15 @@
 97	351	mRNA		
 1909	>2693			
 			locus_tag	test_5
-			protein_id	gnl|inscripta|HRPFEROMYOBA
-			transcript_id	gnl|inscripta|EOGAIZLVINUN
+			product	hypothetical protein
+			protein_id	gnl|inscripta|BICYNIDBMRRK
+			transcript_id	gnl|inscripta|KBFEKRKWHFAN
 			pseudo	
 97	351	CDS		
 1909	>2693			
 			locus_tag	test_5
 			product	hypothetical protein
-			protein_id	gnl|inscripta|HRPFEROMYOBA
-			transcript_id	gnl|inscripta|EOGAIZLVINUN
+			protein_id	gnl|inscripta|BICYNIDBMRRK
+			transcript_id	gnl|inscripta|KBFEKRKWHFAN
 			codon_start	1
 			pseudo	

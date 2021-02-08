@@ -102,6 +102,15 @@ class TestGff3Parser:
         with open(test_data_dir / "INSC1006_chrI.json") as fh:
             assert AnnotationCollectionModel.Schema().load(json.load(fh)) == c
 
+    @pytest.mark.parametrize(
+        "gff3,json_file", [("feature_test_1.gff", "feature_test_1.json"), ("feature_test_2.gff", "feature_test_2.json")]
+    )
+    def test_parse_feature_tests(self, test_data_dir, gff3, json_file):
+        recs = list(parse_standard_gff3(test_data_dir / gff3))
+        c = recs[0].annotation
+        with open(test_data_dir / json_file) as fh:
+            assert AnnotationCollectionModel.Schema().load(json.load(fh)) == c
+
 
 class TestGff3FastaParser:
     """Test GFF3 + FASTA parsing"""

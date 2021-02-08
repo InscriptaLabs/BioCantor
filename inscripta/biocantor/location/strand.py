@@ -19,6 +19,8 @@ class Strand(Enum):
             return Strand.PLUS
         if value == "-":
             return Strand.MINUS
+        elif value == ".":
+            return Strand.UNSTRANDED
         raise ValueError("{} is not a valid string representation of a strand".format(value))
 
     def to_symbol(self) -> str:

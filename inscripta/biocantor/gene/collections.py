@@ -30,6 +30,7 @@ from inscripta.biocantor.gene.feature import FeatureInterval, AbstractInterval, 
 from inscripta.biocantor.gene.transcript import TranscriptInterval
 from inscripta.biocantor.io.gff3.constants import GFF_SOURCE, NULL_COLUMN, BioCantorQualifiers, BioCantorFeatureTypes
 from inscripta.biocantor.io.gff3.rows import GFFRow, GFFAttributes
+from inscripta.biocantor.io.gff3.exc import GFF3MissingSequenceNameError
 from inscripta.biocantor.location import Location
 from inscripta.biocantor.location.location_impl import SingleInterval, CompoundInterval, EmptyLocation
 from inscripta.biocantor.location.strand import Strand
@@ -223,7 +224,7 @@ class GeneInterval(AbstractFeatureIntervalCollection):
             qualifiers=self._export_qualifiers_to_list(),
             sequence_guid=self.sequence_guid,
             sequence_name=self.sequence_name,
-            feature_type=self.gene_type.name,
+            feature_types=[self.gene_type.name],
             feature_name=self.gene_symbol,
             feature_id=self.gene_id,
             guid=self.guid,
@@ -273,6 +274,9 @@ class GeneInterval(AbstractFeatureIntervalCollection):
         Yields:
             :class:`~biocantor.io.gff3.rows.GFFRow`
         """
+        if not self.sequence_name:
+            raise GFF3MissingSequenceNameError("Must have sequence names to export to GFF3.")
+
         qualifiers = self.export_qualifiers()
 
         gene_guid = str(self.guid)
@@ -306,14 +310,14 @@ class FeatureIntervalCollection(AbstractFeatureIntervalCollection):
     This cannot be empty; it must have at least one feature interval.
     """
 
-    _identifiers = ["feature_id", "feature_name", "locus_tag"]
+    _identifiers = ["feature_collection_id", "feature_collection_name", "locus_tag"]
 
     def __init__(
         self,
         feature_intervals: List[FeatureInterval],
-        feature_name: Optional[str] = None,
-        feature_id: Optional[str] = None,
-        feature_type: Optional[str] = None,
+        feature_collection_name: Optional[str] = None,
+        feature_collection_id: Optional[str] = None,
+        feature_collection_type: Optional[str] = None,
         locus_tag: Optional[str] = None,
         sequence_name: Optional[str] = None,
         sequence_guid: Optional[UUID] = None,
@@ -321,15 +325,22 @@ class FeatureIntervalCollection(AbstractFeatureIntervalCollection):
         qualifiers: Optional[Dict[Hashable, List[QualifierValue]]] = None,
         parent: Optional[Parent] = None,
     ):
+        if not feature_intervals:
+            raise InvalidAnnotationError("Must have at least one feature interval.")
+
         self.feature_intervals = feature_intervals
-        self.feature_name = feature_name
-        self.feature_id = feature_id
-        self.feature_type = feature_type
+        self.feature_collection_name = feature_collection_name
+        self.feature_collection_id = feature_collection_id
         self.locus_tag = locus_tag
         self.sequence_name = sequence_name
         self.sequence_guid = sequence_guid
         # qualifiers come in as a List, convert to Set
         self._import_qualifiers_from_list(qualifiers)
+        self.feature_collection_type = feature_collection_type
+        try:
+            self.feature_types = set.union(*[x.feature_types for x in feature_intervals])
+        except:
+            assert False, self.feature_intervals
 
         if not self.feature_intervals:
             raise InvalidAnnotationError("FeatureCollection must have features")
@@ -344,9 +355,10 @@ class FeatureIntervalCollection(AbstractFeatureIntervalCollection):
         if guid is None:
             self.guid = digest_object(
                 self.location,
-                self.feature_name,
-                self.feature_id,
-                self.feature_type,
+                self.feature_collection_name,
+                self.feature_collection_id,
+                self.feature_collection_type,
+                self.feature_types,
                 self.locus_tag,
                 self.sequence_name,
                 self.qualifiers,
@@ -383,9 +395,10 @@ class FeatureIntervalCollection(AbstractFeatureIntervalCollection):
         """Convert to a dict usable by :class:`~biocantor.io.models.FeatureIntervalCollectionModel`."""
         return dict(
             feature_intervals=[feat.to_dict() for feat in self.feature_intervals],
-            feature_name=self.feature_name,
-            feature_id=self.feature_id,
-            feature_type=self.feature_type,
+            feature_collection_name=self.feature_collection_name,
+            feature_collection_id=self.feature_collection_id,
+            feature_collection_type=self.feature_collection_type,
+            locus_tag=self.locus_tag,
             qualifiers=self._export_qualifiers_to_list(),
             sequence_name=self.sequence_name,
             sequence_guid=self.sequence_guid,
@@ -396,16 +409,18 @@ class FeatureIntervalCollection(AbstractFeatureIntervalCollection):
         """Exports qualifiers for GFF3/GenBank export"""
         qualifiers = self.qualifiers.copy()
         for key, val in [
-            [BioCantorQualifiers.FEATURE_ID.value, self.feature_id],
-            [BioCantorQualifiers.FEATURE_SYMBOL.value, self.feature_name],
-            [BioCantorQualifiers.FEATURE_TYPE.value, self.feature_type],
+            [BioCantorQualifiers.FEATURE_COLLECTION_ID.value, self.feature_collection_id],
+            [BioCantorQualifiers.FEATURE_COLLECTION_NAME.value, self.feature_collection_name],
             [BioCantorQualifiers.LOCUS_TAG.value, self.locus_tag],
+            [BioCantorQualifiers.FEATURE_COLLETION_TYPE.value, self.feature_collection_type],
         ]:
             if not val:
                 continue
             if key not in qualifiers:
                 qualifiers[key] = set()
             qualifiers[key].add(val)
+        if self.feature_types:
+            qualifiers[BioCantorQualifiers.FEATURE_TYPE.value] = self.feature_types
         return qualifiers
 
     def to_gff(self) -> Iterable[GFFRow]:
@@ -414,16 +429,21 @@ class FeatureIntervalCollection(AbstractFeatureIntervalCollection):
         Yields:
             :class:`~biocantor.io.gff3.rows.GFFRow`
         """
+        if not self.sequence_name:
+            raise GFF3MissingSequenceNameError("Must have sequence names to export to GFF3.")
+
         qualifiers = self.export_qualifiers()
 
         feat_group_id = str(self.guid)
 
-        attributes = GFFAttributes(id=feat_group_id, qualifiers=qualifiers, name=self.feature_name, parent=None)
+        attributes = GFFAttributes(
+            id=feat_group_id, qualifiers=qualifiers, name=self.feature_collection_name, parent=None
+        )
 
         row = GFFRow(
             self.sequence_name,
             GFF_SOURCE,
-            BioCantorFeatureTypes.GENE,
+            BioCantorFeatureTypes.FEATURE_COLLECTION,
             self.start + 1,
             self.end,
             NULL_COLUMN,
@@ -510,7 +530,7 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
     def __repr__(self):
         return f"{self.__class__.__name__}({','.join(str(f) for f in self.iter_children())})"
 
-    def __iter__(self) -> Iterable[AbstractFeatureIntervalCollection]:
+    def __iter__(self) -> Iterable[Union[GeneInterval, FeatureIntervalCollection]]:
         """Iterate over all intervals in this collection."""
         yield from self.iter_children()
 
@@ -536,7 +556,7 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
 
     def iter_children(self) -> Iterable[Union[GeneInterval, FeatureIntervalCollection]]:
         """Iterate over all intervals in this collection, in sorted order."""
-        chain_iter = itertools.chain.from_iterable([self.genes, self.feature_collections])
+        chain_iter = itertools.chain(self.genes, self.feature_collections)
         sort_iter = sorted(chain_iter, key=lambda x: x.start)
         yield from sort_iter
 
