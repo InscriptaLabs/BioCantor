@@ -1,0 +1,129 @@
+{
+    "feature_collections": [
+        {
+            "feature_intervals": [
+                {
+                    "interval_starts": [
+                        2,
+                        2
+                    ],
+                    "interval_ends": [
+                        5,
+                        15
+                    ],
+                    "strand": "PLUS",
+                    "qualifiers": null,
+                    "sequence_name": "chr1",
+                    "sequence_guid": null,
+                    "feature_interval_guid": null,
+                    "feature_guid": null,
+                    "feature_types": [
+                        "a",
+                        "b",
+                        "feature_interval",
+                        "group"
+                    ],
+                    "feature_name": "feat1",
+                    "feature_id": "05628404-7721-859d-7fce-5d7c93451cf3",
+                    "is_primary_feature": false
+                }
+            ],
+            "feature_collection_name": null,
+            "feature_collection_id": "0fd1880e-1468-3190-3fa5-b47d495c97e6",
+            "locus_tag": null,
+            "feature_collection_type": "biological_region",
+            "sequence_name": "chr1",
+            "sequence_guid": null,
+            "feature_collection_guid": null,
+            "qualifiers": null
+        }
+    ],
+    "genes": [
+        {
+            "transcripts": [
+                {
+                    "exon_starts": [
+                        2
+                    ],
+                    "exon_ends": [
+                        18
+                    ],
+                    "strand": "PLUS",
+                    "cds_starts": [
+                        5
+                    ],
+                    "cds_ends": [
+                        9
+                    ],
+                    "cds_frames": [
+                        "ZERO"
+                    ],
+                    "qualifiers": null,
+                    "is_primary_tx": false,
+                    "transcript_id": null,
+                    "protein_id": null,
+                    "transcript_symbol": null,
+                    "transcript_type": "protein_coding",
+                    "sequence_name": "chr1",
+                    "sequence_guid": null,
+                    "transcript_interval_guid": null,
+                    "transcript_guid": null
+                },
+                {
+                    "exon_starts": [
+                        2,
+                        7,
+                        12
+                    ],
+                    "exon_ends": [
+                        6,
+                        10,
+                        15
+                    ],
+                    "strand": "PLUS",
+                    "cds_starts": [
+                        4,
+                        7,
+                        12
+                    ],
+                    "cds_ends": [
+                        6,
+                        10,
+                        13
+                    ],
+                    "cds_frames": [
+                        "ZERO",
+                        "TWO",
+                        "TWO"
+                    ],
+                    "qualifiers": null,
+                    "is_primary_tx": false,
+                    "transcript_id": null,
+                    "protein_id": null,
+                    "transcript_symbol": null,
+                    "transcript_type": "protein_coding",
+                    "sequence_name": "chr1",
+                    "sequence_guid": null,
+                    "transcript_interval_guid": null,
+                    "transcript_guid": null
+                }
+            ],
+            "gene_id": "gene1",
+            "gene_symbol": null,
+            "gene_type": "protein_coding",
+            "locus_tag": null,
+            "qualifiers": null,
+            "sequence_name": "chr1",
+            "sequence_guid": null,
+            "gene_guid": null
+        }
+    ],
+    "name": null,
+    "sequence_name": "chr1",
+    "sequence_guid": null,
+    "sequence_path": null,
+    "qualifiers": null,
+    "start": null,
+    "end": null,
+    "completely_within": null
+}

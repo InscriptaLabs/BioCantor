@@ -15,6 +15,7 @@ from inscripta.biocantor.gene.feature import AbstractFeatureInterval, QualifierV
 from inscripta.biocantor.io.bed import BED12, RGB
 from inscripta.biocantor.io.gff3.constants import GFF_SOURCE, NULL_COLUMN, BioCantorQualifiers, BioCantorFeatureTypes
 from inscripta.biocantor.io.gff3.rows import GFFAttributes, GFFRow
+from inscripta.biocantor.io.gff3.exc import GFF3MissingSequenceNameError
 from inscripta.biocantor.location.location import Location
 from inscripta.biocantor.location.location_impl import SingleInterval, EmptyLocation
 from inscripta.biocantor.location.strand import Strand
@@ -350,9 +351,12 @@ class TranscriptInterval(AbstractFeatureInterval):
         Yields:
             :class:`~biocantor.util.gff3.rows.GFFRow`
         """
+        if not self.sequence_name:
+            raise GFF3MissingSequenceNameError("Must have sequence names to export to GFF3.")
+
         qualifiers = self.export_qualifiers(parent_qualifiers)
 
-        tx_guid = str(self.guid) if self.guid else str(digest_object(self))
+        tx_guid = str(self.guid)
 
         attributes = GFFAttributes(id=tx_guid, qualifiers=qualifiers, name=self.transcript_symbol, parent=parent)
 

@@ -1,5 +1,5 @@
 """
-Biotypes are types of genes and transcripts, as defined by NCBI and Sequence Ontology.
+Biotypes are types of genes and transcripts, as defined by NCBI (INSDC) and Sequence Ontology.
 """
 
 from inscripta.biocantor.util.enum import HasMemberMixin
@@ -10,6 +10,7 @@ Biotype = HasMemberMixin(
     names=[
         ["protein_coding", 0],
         ["protein-coding", 0],
+        ["mRNA", 0],
         ["ncRNA", 1],
         ["misc_RNA", 2],
         ["miscRNA", 2],

@@ -4,6 +4,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [0.3.0]
+### Fixed
+- `Biotype` enum improperly mapped `protein_coding` and `protein-coding` to different values. Added `mRNA` as another synonym for this type.
+- GFF3, BED and GenBank export from Interval objects now raise an exception when the sequence name field is null.
+
+### Added
+- Parse `FeatureInterval` and `FeatureIntervalCollection` from GFF3 or GenBank, and write back as well.
+
+### Changed
+- `FeatureInterval` now has multiple types, stored as sets. `FeatureIntervalCollection` stores the union of these types, in addition to optionally having its own type.
+
+
 ## [0.2.0] 2021-01-06
 ### Fixed
 - `CompoundInterval.relative_interval_to_parent_location()` in the case of overlapping blocks. Had previously been double counting overlap region.
@@ -29,10 +41,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Removed
 - `CDSInterval.intersect()` method. Frame math was incorrect for complex CDSs and was deemed too difficult to implement correctly.
 
+
 ## [0.1.1] 2020-11-17
 ### Fixed
 - Remove duplicated code that had been created by a merge issue
 - Don't do modular arithmetic with CDSFrame.NONE (value -1)
+
 
 ## [0.1.0] 2020-10-29
 ### Added

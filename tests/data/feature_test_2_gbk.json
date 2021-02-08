@@ -1,0 +1,364 @@
+{
+    "feature_collections": [
+        {
+            "feature_intervals": [
+                {
+                    "interval_starts": [
+                        9
+                    ],
+                    "interval_ends": [
+                        18
+                    ],
+                    "strand": "PLUS",
+                    "qualifiers": {
+                        "feature_collection_id": [
+                            "456"
+                        ],
+                        "feature_collection_name": [
+                            "featgrp2"
+                        ],
+                        "feature_type": [
+                            "a",
+                            "b"
+                        ],
+                        "feature_collection_type": [
+                            "group"
+                        ],
+                        "feature": [
+                            "featgrp1"
+                        ],
+                        "note": [
+                            "no locus tag"
+                        ]
+                    },
+                    "sequence_name": "chr1",
+                    "sequence_guid": null,
+                    "feature_interval_guid": "ab815ceb-1833-71ad-7c92-2413cbbb6a7f",
+                    "feature_guid": null,
+                    "feature_types": [
+                        "a",
+                        "b",
+                        "group",
+                        "misc_feature"
+                    ],
+                    "feature_name": null,
+                    "feature_id": null,
+                    "is_primary_feature": false
+                }
+            ],
+            "feature_collection_name": null,
+            "feature_collection_id": null,
+            "locus_tag": null,
+            "feature_collection_type": null,
+            "sequence_name": "chr1",
+            "sequence_guid": null,
+            "feature_collection_guid": "e54ffdd2-1ebe-cd03-011b-a8f6ae6b81a3",
+            "qualifiers": {
+                "feature_collection_id": [
+                    "456"
+                ],
+                "feature_collection_name": [
+                    "featgrp2"
+                ],
+                "feature_type": [
+                    "a",
+                    "b"
+                ],
+                "feature_collection_type": [
+                    "group"
+                ],
+                "feature": [
+                    "featgrp1"
+                ],
+                "note": [
+                    "no locus tag"
+                ]
+            }
+        },
+        {
+            "feature_intervals": [
+                {
+                    "interval_starts": [
+                        2
+                    ],
+                    "interval_ends": [
+                        15
+                    ],
+                    "strand": "PLUS",
+                    "qualifiers": {
+                        "feature_collection_id": [
+                            "abc123"
+                        ],
+                        "feature_collection_name": [
+                            "featgrp1"
+                        ],
+                        "feature_type": [
+                            "a",
+                            "b"
+                        ],
+                        "feature_collection_type": [
+                            "group"
+                        ],
+                        "feature": [
+                            "featgrp1"
+                        ],
+                        "locus_tag": [
+                            "feat1"
+                        ],
+                        "note": [
+                            "This will be interpreted as three feature intervals under one feature collection"
+                        ]
+                    },
+                    "sequence_name": "chr1",
+                    "sequence_guid": null,
+                    "feature_interval_guid": "173b6d75-8621-34c4-4605-7abcfe0aacfb",
+                    "feature_guid": null,
+                    "feature_types": [
+                        "a",
+                        "b",
+                        "group",
+                        "misc_feature"
+                    ],
+                    "feature_name": null,
+                    "feature_id": null,
+                    "is_primary_feature": false
+                },
+                {
+                    "interval_starts": [
+                        2
+                    ],
+                    "interval_ends": [
+                        5
+                    ],
+                    "strand": "PLUS",
+                    "qualifiers": {
+                        "feature_name": [
+                            "feat1"
+                        ],
+                        "feature_type": [
+                            "a",
+                            "b"
+                        ],
+                        "feature_collection_type": [
+                            "group"
+                        ],
+                        "gene": [
+                            "featgrp1"
+                        ],
+                        "locus_tag": [
+                            "feat1"
+                        ]
+                    },
+                    "sequence_name": "chr1",
+                    "sequence_guid": null,
+                    "feature_interval_guid": "0dac975a-5fca-6292-81eb-05dcc7e4a926",
+                    "feature_guid": null,
+                    "feature_types": [
+                        "a",
+                        "b",
+                        "feat_region",
+                        "group"
+                    ],
+                    "feature_name": "featgrp1",
+                    "feature_id": null,
+                    "is_primary_feature": false
+                },
+                {
+                    "interval_starts": [
+                        2,
+                        7,
+                        12
+                    ],
+                    "interval_ends": [
+                        6,
+                        10,
+                        15
+                    ],
+                    "strand": "PLUS",
+                    "qualifiers": {
+                        "feature_name": [
+                            "feat2"
+                        ],
+                        "feature_type": [
+                            "b"
+                        ],
+                        "feature_collection_type": [
+                            "group"
+                        ],
+                        "gene": [
+                            "featgrp1"
+                        ],
+                        "locus_tag": [
+                            "feat1"
+                        ]
+                    },
+                    "sequence_name": "chr1",
+                    "sequence_guid": null,
+                    "feature_interval_guid": "a62afe33-d0dc-b3d7-348b-5c3bf870184c",
+                    "feature_guid": null,
+                    "feature_types": [
+                        "b",
+                        "feat_region",
+                        "group"
+                    ],
+                    "feature_name": "featgrp1",
+                    "feature_id": null,
+                    "is_primary_feature": false
+                }
+            ],
+            "feature_collection_name": "featgrp1",
+            "feature_collection_id": "feat1",
+            "locus_tag": "feat1",
+            "feature_collection_type": null,
+            "sequence_name": "chr1",
+            "sequence_guid": null,
+            "feature_collection_guid": "8a61c3fe-eab6-1d94-9185-c1156fca0e62",
+            "qualifiers": {
+                "feature_collection_id": [
+                    "abc123"
+                ],
+                "feature_collection_name": [
+                    "featgrp1"
+                ],
+                "feature_type": [
+                    "a",
+                    "b"
+                ],
+                "feature_collection_type": [
+                    "group"
+                ],
+                "feature": [
+                    "featgrp1"
+                ],
+                "locus_tag": [
+                    "feat1"
+                ],
+                "note": [
+                    "This will be interpreted as three feature intervals under one feature collection"
+                ],
+                "feature_name": [
+                    "feat1",
+                    "feat2"
+                ],
+                "gene": [
+                    "featgrp1"
+                ]
+            }
+        }
+    ],
+    "genes": [
+        {
+            "transcripts": [
+                {
+                    "exon_starts": [
+                        2
+                    ],
+                    "exon_ends": [
+                        18
+                    ],
+                    "strand": "PLUS",
+                    "cds_starts": [
+                        5
+                    ],
+                    "cds_ends": [
+                        9
+                    ],
+                    "cds_frames": [
+                        "ZERO"
+                    ],
+                    "qualifiers": {
+                        "gene": [
+                            "gene1"
+                        ],
+                        "locus_tag": [
+                            "gene1"
+                        ]
+                    },
+                    "is_primary_tx": false,
+                    "transcript_id": null,
+                    "protein_id": null,
+                    "transcript_symbol": "gene1",
+                    "transcript_type": "protein_coding",
+                    "sequence_name": "chr1",
+                    "sequence_guid": null,
+                    "transcript_interval_guid": "dabee986-e661-4e78-36ee-06c0e7edf671",
+                    "transcript_guid": null
+                },
+                {
+                    "exon_starts": [
+                        2,
+                        7,
+                        12
+                    ],
+                    "exon_ends": [
+                        6,
+                        10,
+                        15
+                    ],
+                    "strand": "PLUS",
+                    "cds_starts": [
+                        4,
+                        7,
+                        12
+                    ],
+                    "cds_ends": [
+                        6,
+                        10,
+                        13
+                    ],
+                    "cds_frames": [
+                        "ZERO",
+                        "TWO",
+                        "TWO"
+                    ],
+                    "qualifiers": {
+                        "gene": [
+                            "gene1"
+                        ],
+                        "locus_tag": [
+                            "gene1"
+                        ]
+                    },
+                    "is_primary_tx": false,
+                    "transcript_id": null,
+                    "protein_id": null,
+                    "transcript_symbol": "gene1",
+                    "transcript_type": "protein_coding",
+                    "sequence_name": "chr1",
+                    "sequence_guid": null,
+                    "transcript_interval_guid": "fea4fd86-f850-c12d-fa0d-51911f287fec",
+                    "transcript_guid": null
+                }
+            ],
+            "gene_id": "gene1",
+            "gene_symbol": "gene1",
+            "gene_type": "protein_coding",
+            "locus_tag": "gene1",
+            "qualifiers": {
+                "gene_id": [
+                    "gene1"
+                ],
+                "gene_biotype": [
+                    "protein_coding"
+                ],
+                "gene": [
+                    "gene1"
+                ],
+                "locus_tag": [
+                    "gene1"
+                ]
+            },
+            "sequence_name": "chr1",
+            "sequence_guid": null,
+            "gene_guid": "39fe072e-5cdc-a2d5-72d9-415c481cd328"
+        }
+    ],
+    "name": "chr1",
+    "sequence_name": "chr1",
+    "sequence_guid": null,
+    "sequence_path": null,
+    "qualifiers": null,
+    "start": 0,
+    "end": 39,
+    "completely_within": null
+}

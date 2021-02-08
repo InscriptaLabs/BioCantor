@@ -1,13 +1,14 @@
 from uuid import UUID
-
+import json
 import pytest
 from inscripta.biocantor.gene.biotype import Biotype
 from inscripta.biocantor.gene.cds import CDSFrame
-from inscripta.biocantor.io.genbank.exc import GenBankValidationError
+from inscripta.biocantor.io.genbank.exc import GenBankLocusTagError
 from inscripta.biocantor.io.genbank.parser import parse_genbank, GenBankParserType
 from inscripta.biocantor.io.parser import ParsedAnnotationRecord
 from inscripta.biocantor.location.location_impl import SingleInterval, CompoundInterval, Strand
 from inscripta.biocantor.util.hashing import digest_object
+from inscripta.biocantor.io.models import AnnotationCollectionModel
 
 
 class TestEukaryoticGenbankParser:
@@ -447,7 +448,7 @@ class TestGenBankErrors:
     def test_locus_tag_unique(self, test_data_dir):
         """If using the default locus_tag way of detecting groupings, locus tags must be unique"""
         gbk = test_data_dir / "locus_tag_collision.gbk"
-        with pytest.raises(GenBankValidationError):
+        with pytest.raises(GenBankLocusTagError):
             with open(gbk, "r") as fh:
                 _ = list(ParsedAnnotationRecord.parsed_annotation_records_to_model(parse_genbank(fh)))[0]
         # works fine in sorted mode
@@ -458,3 +459,17 @@ class TestGenBankErrors:
                 )
             )[0]
             assert rec.genes[0].locus_tag == rec.genes[1].locus_tag
+
+
+class TestGenBankFeatures:
+    @pytest.mark.parametrize("genbank,json_file", [("feature_test_2.gbk", "feature_test_2_gbk.json")])
+    def test_parse_feature_tests(self, test_data_dir, genbank, json_file):
+        recs = list(parse_genbank(test_data_dir / genbank))
+        c = recs[0].annotation
+        assert len(c.feature_collections) == 2
+        assert len(c.feature_collections[0].feature_intervals) == 1
+        assert len(c.feature_collections[1].feature_intervals) == 3
+        assert len(c.genes) == 1
+
+        with open(test_data_dir / json_file) as fh:
+            assert AnnotationCollectionModel.Schema().load(json.load(fh)) == c
