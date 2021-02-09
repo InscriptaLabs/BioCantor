@@ -169,6 +169,16 @@ class GeneInterval(AbstractFeatureIntervalCollection):
         return any(tx.is_coding for tx in self.transcripts)
 
     @property
+    def id(self) -> str:
+        """Returns the ID of this gene. Provides a shared API across genes/transcripts and features."""
+        return self.gene_id
+
+    @property
+    def name(self) -> str:
+        """Returns the name of this gene. Provides a shared API across genes/transcripts and features."""
+        return self.gene_symbol
+
+    @property
     def children_guids(self):
         return {x.guid for x in self.transcripts}
 
@@ -337,10 +347,7 @@ class FeatureIntervalCollection(AbstractFeatureIntervalCollection):
         # qualifiers come in as a List, convert to Set
         self._import_qualifiers_from_list(qualifiers)
         self.feature_collection_type = feature_collection_type
-        try:
-            self.feature_types = set.union(*[x.feature_types for x in feature_intervals])
-        except:
-            assert False, self.feature_intervals
+        self.feature_types = set.union(*[x.feature_types for x in feature_intervals])
 
         if not self.feature_intervals:
             raise InvalidAnnotationError("FeatureCollection must have features")
@@ -386,8 +393,18 @@ class FeatureIntervalCollection(AbstractFeatureIntervalCollection):
     def children_guids(self) -> Set[UUID]:
         return {x.guid for x in self.feature_intervals}
 
+    @property
+    def id(self) -> str:
+        """Returns the ID of this feature collection. Provides a shared API across genes/transcripts and features."""
+        return self.feature_collection_id
+
+    @property
+    def name(self) -> str:
+        """Returns the name of this feature collection. Provides a shared API across genes/transcripts and features."""
+        return self.feature_collection_name
+
     def get_primary_feature(self) -> Union[FeatureInterval, None]:
-        """Get the primary transcript, if it exists."""
+        """Get the primary feature, if it exists."""
 
         return self.primary_feature
 
@@ -476,6 +493,7 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
         feature_collections: Optional[List[FeatureIntervalCollection]] = None,
         genes: Optional[List[GeneInterval]] = None,
         name: Optional[str] = None,
+        id: Optional[str] = None,
         sequence_name: Optional[str] = None,
         sequence_guid: Optional[UUID] = None,
         qualifiers: Optional[Dict[Hashable, QualifierValue]] = None,
@@ -489,7 +507,8 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
         self.genes = genes if genes else []
         self.sequence_name = sequence_name
         self.sequence_guid = sequence_guid
-        self.name = name
+        self._name = name
+        self._id = id
         # qualifiers come in as a List, convert to Set
         self._import_qualifiers_from_list(qualifiers)
 
@@ -554,6 +573,16 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
             retval[child.guid] = child.children_guids
         return retval
 
+    @property
+    def id(self) -> str:
+        """Returns the ID of this collection. Provides a shared API across genes/transcripts and features."""
+        return self._id
+
+    @property
+    def name(self) -> str:
+        """Returns the name of this collecttion. Provides a shared API across genes/transcripts and features."""
+        return self._name
+
     def iter_children(self) -> Iterable[Union[GeneInterval, FeatureIntervalCollection]]:
         """Iterate over all intervals in this collection, in sorted order."""
         chain_iter = itertools.chain(self.genes, self.feature_collections)
@@ -566,6 +595,7 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
             genes=[gene.to_dict() for gene in self.genes],
             feature_collections=[feature.to_dict() for feature in self.feature_collections],
             name=self.name,
+            id=self.id,
             qualifiers=self._export_qualifiers_to_list(),
             sequence_name=self.sequence_name,
             sequence_guid=self.sequence_guid,
