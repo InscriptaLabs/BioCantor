@@ -493,7 +493,7 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
         feature_collections: Optional[List[FeatureIntervalCollection]] = None,
         genes: Optional[List[GeneInterval]] = None,
         name: Optional[str] = None,
-            id: Optional[str] = None,
+        id: Optional[str] = None,
         sequence_name: Optional[str] = None,
         sequence_guid: Optional[UUID] = None,
         qualifiers: Optional[Dict[Hashable, QualifierValue]] = None,
