@@ -134,6 +134,16 @@ class TranscriptInterval(AbstractFeatureInterval):
         else:
             raise NoncodingTranscriptError("No CDS end for non-coding transcript")
 
+    @property
+    def id(self) -> str:
+        """Returns the ID of this transcript. Provides a shared API across genes/transcripts and features."""
+        return self.transcript_id
+
+    @property
+    def name(self) -> str:
+        """Returns the name of this transcript. Provides a shared API across genes/transcripts and features."""
+        return self.transcript_symbol
+
     def update_parent(self, parent: Parent):
         """Change parent to this new parent."""
         self.location = self.location.reset_parent(parent)

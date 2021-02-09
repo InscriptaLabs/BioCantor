@@ -48,6 +48,11 @@ def test_extract_feature_types(feature_types, feature_qualifiers, expected):
         ({"feature_id": ["123"], "ID": ["234"], "standard_name": ["cool"], "gene": ["notcool"]}, "cool", "234"),
         # case insensitive
         ({"feature_ID": ["123"], "ID": ["234"], "Standard_name": ["cool"], "Gene": ["notcool"]}, "cool", "234"),
+        # must be an exact match
+        ({"gene_synonym": ["123"]}, None, None),
+        ({"my_gene": ["123"]}, None, None),
+        ({"feature_id_id": ["123"]}, None, None),
+        ({"my_feature_id": ["123"]}, None, None),
     ],
 )
 def test_extract_feature_name_id(feature_qualifiers, feature_name, feature_id):

@@ -65,6 +65,16 @@ class AbstractInterval(ABC):
         """
 
     @property
+    @abstractmethod
+    def id(self) -> str:
+        """Returns the ID of this feature. Provides a shared API across genes/transcripts and features."""
+
+    @property
+    @abstractmethod
+    def name(self) -> str:
+        """Returns the name of this feature. Provides a shared API across genes/transcripts and features."""
+
+    @property
     def start(self) -> int:
         """Returns start position."""
         return self.location.start
@@ -261,6 +271,16 @@ class FeatureInterval(AbstractFeatureInterval):
 
     def __repr__(self):
         return "<{}>".format(str(self))
+
+    @property
+    def id(self) -> str:
+        """Returns the ID of this feature. Provides a shared API across genes/transcripts and features."""
+        return self.feature_id
+
+    @property
+    def name(self) -> str:
+        """Returns the name of this feature. Provides a shared API across genes/transcripts and features."""
+        return self.feature_name
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert to a dict usable by :class:`biocantor.io.models.FeatureIntervalModel`."""

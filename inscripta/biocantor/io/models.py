@@ -281,6 +281,7 @@ class AnnotationCollectionModel(BaseModel):
     feature_collections: Optional[List[FeatureIntervalCollectionModel]] = None
     genes: Optional[List[GeneIntervalModel]] = None
     name: Optional[str] = None
+    id: Optional[str] = None
     sequence_name: Optional[str] = None
     sequence_guid: Optional[UUID] = None
     sequence_path: Optional[str] = None
@@ -305,6 +306,7 @@ class AnnotationCollectionModel(BaseModel):
             feature_collections=feature_collections,
             genes=genes,
             name=self.name,
+            id=self.id,
             qualifiers=self.qualifiers,
             sequence_name=self.sequence_name,
             sequence_guid=self.sequence_guid,
