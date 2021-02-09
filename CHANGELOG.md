@@ -8,6 +8,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Fixed
 - Feature interval identifier regex should exactly match qualifier keys
 
+### Added
+- Unified API for identifiers on all interval objects with new property methods `.id` and .`name`.
+
 
 ## [0.3.0]
 ### Fixed
