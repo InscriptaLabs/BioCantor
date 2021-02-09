@@ -50,12 +50,12 @@ class FeatureIntervalIDQualifiers(IntEnum):
 
 FEATURE_INTERVAL_NAME_QUALIFIERS = {"feature_name", "standard_name", "gene", "gene_name", "label", "operon"}
 FEATURE_INTERVAL_NAME_QUALIFIERS_REGEX = re.compile(
-    r"({})".format("|".join(k for k in FEATURE_INTERVAL_NAME_QUALIFIERS)), re.IGNORECASE
+    r"({})".format("|".join(f"^{k}$" for k in FEATURE_INTERVAL_NAME_QUALIFIERS)), re.IGNORECASE
 )
 
 FEATURE_INTERVAL_ID_QUALIFIERS = {"feature_id", "id"}
 FEATURE_INTERVAL_ID_QUALIFIERS_REGEX = re.compile(
-    r"({})".format("|".join(k for k in FEATURE_INTERVAL_ID_QUALIFIERS)), re.IGNORECASE
+    r"({})".format("|".join(f"^{k}$" for k in FEATURE_INTERVAL_ID_QUALIFIERS)), re.IGNORECASE
 )
 
 
