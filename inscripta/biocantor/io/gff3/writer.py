@@ -35,7 +35,9 @@ def collection_to_gff3(
         collections = list(collections)
         for c in collections:
             if c.has_ancestor_of_type("sequence_chunk"):
-                raise GFF3ExportException("Cannot export a chunk-relative collection in chromosome coordinates with sequences.")
+                raise GFF3ExportException(
+                    "Cannot export a chunk-relative collection in chromosome coordinates with sequences."
+                )
 
     if ordered is True:
         collections = sorted(collections, key=lambda c: c.sequence_name)
