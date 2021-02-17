@@ -123,26 +123,26 @@ class TranscriptInterval(AbstractFeatureInterval):
     @property
     def cds_start(self) -> int:
         if self.is_coding:
-            return self.lift_cds_location_to_sequence_location_type("chromosome").start
+            return self.lift_cds_over_to_first_ancestor_of_type("chromosome").start
         else:
             raise NoncodingTranscriptError("No CDS start for non-coding transcript")
 
     @property
     def cds_end(self) -> int:
         if self.is_coding:
-            return self.lift_cds_location_to_sequence_location_type("chromosome").end
+            return self.lift_cds_over_to_first_ancestor_of_type("chromosome").end
         else:
             raise NoncodingTranscriptError("No CDS end for non-coding transcript")
 
     @property
-    def relative_cds_start(self) -> int:
+    def chunk_relative_cds_start(self) -> int:
         if self.is_coding:
             return self.cds.location.start
         else:
             raise NoncodingTranscriptError("No CDS start for non-coding transcript")
 
     @property
-    def relative_cds_end(self) -> int:
+    def chunk_relative_cds_end(self) -> int:
         if self.is_coding:
             return self.cds.location.end
         else:
@@ -152,12 +152,12 @@ class TranscriptInterval(AbstractFeatureInterval):
     def cds_blocks(self) -> Iterable[SingleInterval]:
         """Wrapper for blocks function that reports blocks in chromosome coordinates"""
         if self.is_coding:
-            yield from self.lift_cds_location_to_sequence_location_type("chromosome").blocks
+            yield from self.lift_cds_over_to_first_ancestor_of_type("chromosome").blocks
         else:
             raise NoncodingTranscriptError("No CDS blocks for non-coding transcript")
 
     @property
-    def relative_cds_blocks(self) -> Iterable[SingleInterval]:
+    def chunk_relative_cds_blocks(self) -> Iterable[SingleInterval]:
         """Wrapper for blocks function that reports blocks in chunk-relative coordinates"""
         if self.is_coding:
             yield from self.cds.location.blocks
@@ -183,7 +183,7 @@ class TranscriptInterval(AbstractFeatureInterval):
             self.cds.location = self.cds.location.reset_parent(parent)
         super().reset_parent(parent)
 
-    def lift_cds_location_to_sequence_location_type(self, coordinate_system: Optional[str] = "chromosome") -> Location:
+    def lift_cds_over_to_first_ancestor_of_type(self, sequence_type: Optional[str] = "chromosome") -> Location:
         """
         Lifts the CDS location member to another coordinate system. Is a no-op if there is no parent assigned.
 
@@ -193,7 +193,7 @@ class TranscriptInterval(AbstractFeatureInterval):
         if self.is_coding:
             if self.cds.location.parent is None:
                 return self.cds.location
-            return self.cds.location.lift_over_to_first_ancestor_of_type(coordinate_system)
+            return self.cds.location.lift_over_to_first_ancestor_of_type(sequence_type)
         else:
             raise NoncodingTranscriptError("No CDS location for non-coding transcript")
 
@@ -202,7 +202,7 @@ class TranscriptInterval(AbstractFeatureInterval):
         blocks = self.blocks if chromosome_relative_coordinates else self.relative_blocks
         exon_starts, exon_ends = list(zip(*([x.start, x.end] for x in blocks)))
         if self.cds:
-            cds_blocks = self.cds_blocks if chromosome_relative_coordinates else self.relative_cds_blocks
+            cds_blocks = self.cds_blocks if chromosome_relative_coordinates else self.chunk_relative_cds_blocks
             cds_starts, cds_ends = list(zip(*([x.start, x.end] for x in cds_blocks)))
             cds_frames = [f.name for f in self.cds.frames]
         else:
@@ -279,45 +279,49 @@ class TranscriptInterval(AbstractFeatureInterval):
         """Converts sequence position to relative position along this transcript."""
         return self.sequence_pos_to_feature(pos)
 
-    def relative_sequence_pos_to_transcript(self, pos: int) -> int:
+    def chunk_relative_sequence_pos_to_transcript(self, pos: int) -> int:
         """Converts chunk-relative sequence position to relative position along this transcript."""
-        return self.relative_sequence_pos_to_feature(pos)
+        return self.chunk_relative_sequence_pos_to_feature(pos)
 
     def sequence_interval_to_transcript(self, chr_start: int, chr_end: int, chr_strand: Strand) -> Location:
         """Converts a contiguous interval on the sequence to a relative location within this transcript."""
         return self.sequence_interval_to_feature(chr_start, chr_end, chr_strand)
 
-    def relative_sequence_interval_to_transcript(self, chr_start: int, chr_end: int, chr_strand: Strand) -> Location:
+    def chunk_relative_sequence_interval_to_transcript(
+        self, chr_start: int, chr_end: int, chr_strand: Strand
+    ) -> Location:
         """
         Converts a contiguous interval on the chunk-relative sequence to a relative location within this transcript.
         """
-        return self.sequence_interval_to_feature(chr_start, chr_end, chr_strand)
+        return self.chunk_relative_sequence_interval_to_feature(chr_start, chr_end, chr_strand)
 
     def transcript_pos_to_sequence(self, pos: int) -> int:
         """Converts a relative position along this transcript to sequence coordinate."""
         return self.feature_pos_to_sequence(pos)
 
-    def transcript_pos_to_relative_sequence(self, pos: int) -> int:
+    def transcript_pos_to_chunk_relative_sequence(self, pos: int) -> int:
         """Converts a relative position along this transcript to chunk-relative sequence coordinate."""
-        return self.feature_pos_to_relative_sequence(pos)
+        return self.feature_pos_to_chunk_relative_sequence(pos)
 
     def transcript_interval_to_sequence(self, rel_start: int, rel_end: int, rel_strand: Strand) -> Location:
         """Converts a contiguous interval relative to this transcript to a spliced location on the sequence."""
         return self.feature_interval_to_sequence(rel_start, rel_end, rel_strand)
 
-    def transcript_interval_to_relative_sequence(self, rel_start: int, rel_end: int, rel_strand: Strand) -> Location:
+    def transcript_interval_to_chunk_relative_sequence(
+        self, rel_start: int, rel_end: int, rel_strand: Strand
+    ) -> Location:
         """
         Converts a contiguous interval relative to this transcript to a spliced location on the chunk-relative sequence.
         """
-        return self.feature_interval_to_relative_sequence(rel_start, rel_end, rel_strand)
+        return self.feature_interval_to_chunk_relative_sequence(rel_start, rel_end, rel_strand)
 
     def cds_pos_to_sequence(self, pos: int) -> int:
         """Converts a relative position along the CDS to sequence coordinate."""
         if not self.is_coding:
             raise NoncodingTranscriptError("No CDS positions on non-coding transcript")
-        return self.lift_cds_location_to_sequence_location_type("chromosome").relative_to_parent_pos(pos)
+        return self.lift_cds_over_to_first_ancestor_of_type("chromosome").relative_to_parent_pos(pos)
 
-    def cds_pos_to_relative_sequence(self, pos: int) -> int:
+    def cds_pos_to_chunk_relative_sequence(self, pos: int) -> int:
         """Converts a relative position along the CDS to chunk-relative sequence coordinate."""
         if not self.is_coding:
             raise NoncodingTranscriptError("No CDS positions on non-coding transcript")
@@ -327,11 +331,11 @@ class TranscriptInterval(AbstractFeatureInterval):
         """Converts a contiguous interval relative to the CDS to a spliced location on the sequence."""
         if not self.is_coding:
             raise NoncodingTranscriptError("No CDS positions on non-coding transcript")
-        return self.lift_cds_location_to_sequence_location_type("chromosome").relative_interval_to_parent_location(
+        return self.lift_cds_over_to_first_ancestor_of_type("chromosome").relative_interval_to_parent_location(
             rel_start, rel_end, rel_strand
         )
 
-    def cds_interval_to_relative_sequence(self, rel_start: int, rel_end: int, rel_strand: Strand) -> Location:
+    def cds_interval_to_chunk_relative_sequence(self, rel_start: int, rel_end: int, rel_strand: Strand) -> Location:
         """Converts a contiguous interval relative to the CDS to a spliced location on the chunk-relative sequence."""
         if not self.is_coding:
             raise NoncodingTranscriptError("No CDS positions on non-coding transcript")
@@ -341,9 +345,9 @@ class TranscriptInterval(AbstractFeatureInterval):
         """Converts sequence position to relative position along the CDS."""
         if not self.is_coding:
             raise NoncodingTranscriptError("No CDS positions on non-coding transcript")
-        return self.lift_cds_location_to_sequence_location_type("chromosome").parent_to_relative_pos(pos)
+        return self.lift_cds_over_to_first_ancestor_of_type("chromosome").parent_to_relative_pos(pos)
 
-    def relative_sequence_pos_to_cds(self, pos: int) -> int:
+    def chunk_relative_sequence_pos_to_cds(self, pos: int) -> int:
         """Converts chunk-relative sequence position to relative position along the CDS."""
         if not self.is_coding:
             raise NoncodingTranscriptError("No CDS positions on non-coding transcript")
@@ -353,7 +357,7 @@ class TranscriptInterval(AbstractFeatureInterval):
         """Converts a contiguous interval on the sequence to a relative location within the CDS."""
         if not self.is_coding:
             raise NoncodingTranscriptError("No CDS positions on non-coding transcript")
-        return self.lift_cds_location_to_sequence_location_type("chromosome").parent_to_relative_location(
+        return self.lift_cds_over_to_first_ancestor_of_type("chromosome").parent_to_relative_location(
             SingleInterval(chr_start, chr_end, chr_strand, parent=self.location.parent)
         )
 
@@ -467,6 +471,7 @@ class TranscriptInterval(AbstractFeatureInterval):
         Raises:
             NoSuchAncestorException: If ``chromosome_relative_coordinates`` is ``False`` but there is no
             ``sequence_chunk`` ancestor type.
+            GFF3MissingSequenceNameError: If there are no sequence names associated with this transcript.
         """
 
         if not self.sequence_name:
@@ -483,8 +488,8 @@ class TranscriptInterval(AbstractFeatureInterval):
             self.sequence_name,
             GFF_SOURCE,
             BioCantorFeatureTypes.TRANSCRIPT,
-            (self.start if chromosome_relative_coordinates else self.relative_start) + 1,
-            self.end if chromosome_relative_coordinates else self.relative_end,
+            (self.start if chromosome_relative_coordinates else self.chunk_relative_start) + 1,
+            self.end if chromosome_relative_coordinates else self.chunk_relative_end,
             NULL_COLUMN,
             self.strand,
             CDSPhase.NONE,
@@ -514,7 +519,7 @@ class TranscriptInterval(AbstractFeatureInterval):
 
         # add CDS features, if applicable
         if self.cds:
-            cds_blocks = self.cds_blocks if chromosome_relative_coordinates else self.relative_cds_blocks
+            cds_blocks = self.cds_blocks if chromosome_relative_coordinates else self.chunk_relative_cds_blocks
             for i, block, frame in zip(count(1), cds_blocks, self.cds.frames):
                 attributes = GFFAttributes(
                     id=f"cds-{tx_guid}-{i}",
@@ -562,6 +567,7 @@ class TranscriptInterval(AbstractFeatureInterval):
             NoSuchAncestorException: If ``chromosome_relative_coordinates`` is ``False`` but there is no
             ``sequence_chunk`` ancestor type.
         """
+        # since blocks are iterated over twice, must be turned into a list otherwise the iterator is exhausted
         blocks = list(self.blocks) if chromosome_relative_coordinates else list(self.relative_blocks)
         block_sizes = [b.end - b.start for b in blocks]
         block_starts = [b.start - self.start for b in blocks]
@@ -575,11 +581,11 @@ class TranscriptInterval(AbstractFeatureInterval):
             else:
                 cds_start = cds_end = 0
         else:
-            start = self.relative_start
-            end = self.relative_end
+            start = self.chunk_relative_start
+            end = self.chunk_relative_end
             if self.cds:
-                cds_start = self.relative_cds_start
-                cds_end = self.relative_cds_end
+                cds_start = self.chunk_relative_cds_start
+                cds_end = self.chunk_relative_cds_end
             else:
                 cds_start = cds_end = 0
 

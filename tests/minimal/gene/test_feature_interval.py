@@ -17,32 +17,57 @@ parent_genome2_minus = Parent(
     sequence=Sequence(genome2, Alphabet.NT_STRICT), strand=Strand.MINUS, sequence_type="chromosome"
 )
 
+# slice the genome down to contain some of the transcripts
+parent_genome2_1_15 = Parent(
+    sequence=Sequence(
+        genome2[1:15],
+        Alphabet.NT_EXTENDED_GAPPED,
+        type="sequence_chunk",
+        parent=Parent(
+            location=SingleInterval(1, 15, Strand.PLUS, parent=Parent(id="genome_0_15", sequence_type="chromosome"))
+        ),
+    )
+)
+
+# slice the genome down to contain none the transcripts
+parent_genome2_2_8 = Parent(
+    sequence=Sequence(
+        genome2[2:8],
+        Alphabet.NT_EXTENDED_GAPPED,
+        type="sequence_chunk",
+        parent=Parent(
+            location=SingleInterval(2, 8, Strand.PLUS, parent=Parent(id="genome_0_18", sequence_type="chromosome"))
+        ),
+    )
+)
+
+
+# Integer feature definitions
+# a single exon feature that is this entire genome
+se_unspliced = FeatureIntervalModel.Schema().load(
+    dict(interval_starts=[0], interval_ends=[18], strand=Strand.PLUS.name)
+)
+se_unspliced_repr = "FeatureInterval((0-18:+), name=None)"
+# a three exon feature
+e3_spliced = FeatureIntervalModel.Schema().load(
+    dict(interval_starts=[2, 7, 12], interval_ends=[6, 10, 15], strand=Strand.PLUS.name)
+)
+e3_spliced_repr = "FeatureInterval((2-6:+, 7-10:+, 12-15:+), name=None)"
+# Negative strand feature definitions
+# a single exon feature that is this entire genome
+se_unspliced_minus = FeatureIntervalModel.Schema().load(
+    dict(interval_starts=[0], interval_ends=[18], strand=Strand.MINUS.name)
+)
+se_unspliced_repr_minus = "FeatureInterval((0-18:-), name=None)"
+# a three exon negative strand feature
+e3_spliced_minus = FeatureIntervalModel.Schema().load(
+    dict(interval_starts=[2, 7, 12], interval_ends=[6, 10, 15], strand=Strand.MINUS.name)
+)
+e3_spliced_repr_minus = "FeatureInterval((2-6:-, 7-10:-, 12-15:-), name=None)"
+
 
 class TestFeatureInterval:
     """Test constructing features of various types"""
-
-    # Integer feature definitions
-    # a single exon feature that is this entire genome
-    se_unspliced = FeatureIntervalModel.Schema().load(
-        dict(interval_starts=[0], interval_ends=[18], strand=Strand.PLUS.name)
-    )
-    se_unspliced_repr = "FeatureInterval((0-18:+), name=None)"
-    # a three exon feature
-    e3_spliced = FeatureIntervalModel.Schema().load(
-        dict(interval_starts=[2, 7, 12], interval_ends=[6, 10, 15], strand=Strand.PLUS.name)
-    )
-    e3_spliced_repr = "FeatureInterval((2-6:+, 7-10:+, 12-15:+), name=None)"
-    # Negative strand feature definitions
-    # a single exon feature that is this entire genome
-    se_unspliced_minus = FeatureIntervalModel.Schema().load(
-        dict(interval_starts=[0], interval_ends=[18], strand=Strand.MINUS.name)
-    )
-    se_unspliced_repr_minus = "FeatureInterval((0-18:-), name=None)"
-    # a three exon negative strand feature
-    e3_spliced_minus = FeatureIntervalModel.Schema().load(
-        dict(interval_starts=[2, 7, 12], interval_ends=[6, 10, 15], strand=Strand.MINUS.name)
-    )
-    e3_spliced_repr_minus = "FeatureInterval((2-6:-, 7-10:-, 12-15:-), name=None)"
 
     @pytest.mark.parametrize(
         "schema,expected",
@@ -99,6 +124,7 @@ class TestFeatureInterval:
     def test_sequence_pos_to_feature(self, schema, value, expected):
         feat = schema.to_feature_interval()
         assert feat.sequence_pos_to_feature(value) == expected
+        assert feat.chunk_relative_sequence_pos_to_feature(value) == expected
 
     @pytest.mark.parametrize(
         "schema,value,expected",
@@ -110,6 +136,7 @@ class TestFeatureInterval:
     def test_sequence_interval_to_feature(self, schema, value, expected):
         feat = schema.to_feature_interval()
         assert feat.sequence_interval_to_feature(*value) == expected
+        assert feat.chunk_relative_sequence_interval_to_feature(*value) == expected
 
     @pytest.mark.parametrize(
         "schema,value,expected",
@@ -125,8 +152,10 @@ class TestFeatureInterval:
     def test_feature_pos_to_sequence(self, schema, value, expected):
         feat = schema.to_feature_interval()
         assert feat.feature_pos_to_sequence(value) == expected
+        assert feat.feature_pos_to_chunk_relative_sequence(value) == expected
         feat = schema.to_feature_interval(parent_or_seq_chunk_parent=parent)
         assert feat.feature_pos_to_sequence(value) == expected
+        assert feat.feature_pos_to_chunk_relative_sequence(value) == expected
 
     @pytest.mark.parametrize(
         "schema,value,expected",
@@ -138,6 +167,7 @@ class TestFeatureInterval:
     def test_feature_interval_to_sequence(self, schema, value, expected):
         feat = schema.to_feature_interval()
         assert feat.feature_interval_to_sequence(*value).reset_parent(None) == expected
+        assert feat.feature_interval_to_chunk_relative_sequence(*value).reset_parent(None) == expected
 
     @pytest.mark.parametrize(
         "schema,value,expected",
@@ -149,6 +179,7 @@ class TestFeatureInterval:
     def test_feature_interval_to_sequence_parent(self, schema, value, expected):
         feat = schema.to_feature_interval(parent_or_seq_chunk_parent=parent)
         assert feat.feature_interval_to_sequence(*value) == expected
+        assert feat.feature_interval_to_chunk_relative_sequence(*value) == expected
 
     @pytest.mark.parametrize(
         "schema,value,expected",
@@ -194,7 +225,7 @@ class TestFeatureInterval:
 
     def test_no_such_ancestor(self):
         with pytest.raises(NullSequenceException):
-            _ = self.se_unspliced.to_feature_interval(parent_or_seq_chunk_parent=Parent(sequence_type="chromosome"))
+            _ = se_unspliced.to_feature_interval(parent_or_seq_chunk_parent=Parent(sequence_type="chromosome"))
 
     @pytest.mark.parametrize(
         "schema,parent,expected_spliced",
@@ -260,7 +291,7 @@ class TestFeatureInterval:
         assert str(feat.get_spliced_sequence()) == str(expected)
 
     def test_object_conversion(self):
-        for model in [self.se_unspliced, self.e3_spliced_minus, self.e3_spliced]:
+        for model in [se_unspliced, e3_spliced_minus, e3_spliced]:
             obj = model.to_feature_interval()
             new_model = FeatureIntervalModel.from_feature_interval(obj)
             new_model.feature_interval_guid = None
@@ -271,7 +302,7 @@ class TestFeatureInterval:
             assert model == new_model
 
     def test_identifiers(self):
-        feat = self.se_unspliced.to_feature_interval()
+        feat = se_unspliced.to_feature_interval()
         feat.feature_name = "test"
         feat.feature_id = "testid"
         assert feat.identifiers == {"test", "testid"}
@@ -285,3 +316,155 @@ class TestFeatureInterval:
         s = SingleInterval(0, 5, Strand.PLUS)
         with pytest.raises(EmptyLocationException):
             _ = feat.intersect(s)
+
+
+class TestFeatureIntervalSequenceSubset:
+    """Test the ability to slice the genomic sequence of a feature interval and still get useful results."""
+
+    @pytest.mark.parametrize(
+        "schema,absolute_value,relative_value,expected,parent",
+        [
+            (e3_spliced, 2, 1, 0, parent_genome2_1_15),
+            (e3_spliced, 7, 6, 4, parent_genome2_1_15),
+            (e3_spliced, 14, 13, 9, parent_genome2_1_15),
+            (e3_spliced_minus, 2, 1, 9, parent_genome2_1_15),
+            (e3_spliced_minus, 7, 6, 5, parent_genome2_1_15),
+            (e3_spliced_minus, 14, 13, 0, parent_genome2_1_15),
+        ],
+    )
+    def test_sequence_pos_to_feature(self, schema, absolute_value, relative_value, expected, parent):
+        feat = schema.to_feature_interval(parent)
+        assert feat.sequence_pos_to_feature(absolute_value) == expected
+        assert feat.chunk_relative_sequence_pos_to_feature(relative_value) == expected
+
+    @pytest.mark.parametrize(
+        "schema,absolute_value,relative_value,expected,parent",
+        [
+            (
+                e3_spliced,
+                (7, 13, Strand.PLUS),
+                (6, 12, Strand.PLUS),
+                SingleInterval(4, 8, Strand.PLUS),
+                parent_genome2_1_15,
+            ),
+            (
+                e3_spliced_minus,
+                (7, 13, Strand.PLUS),
+                (6, 12, Strand.PLUS),
+                (SingleInterval(2, 6, Strand.MINUS)),
+                parent_genome2_1_15,
+            ),
+        ],
+    )
+    def test_sequence_interval_to_feature(self, schema, absolute_value, relative_value, expected, parent):
+        feat = schema.to_feature_interval(parent)
+        assert feat.sequence_interval_to_feature(*absolute_value) == expected
+        assert feat.chunk_relative_sequence_interval_to_feature(*relative_value) == expected
+
+    @pytest.mark.parametrize(
+        "schema,value,absolute_expected,relative_expected,parent",
+        [
+            (e3_spliced, 0, 2, 1, parent_genome2_1_15),
+            (e3_spliced, 9, 14, 13, parent_genome2_1_15),
+            (e3_spliced, 4, 7, 6, parent_genome2_1_15),
+            (e3_spliced_minus, 0, 14, 13, parent_genome2_1_15),
+            (e3_spliced_minus, 9, 2, 1, parent_genome2_1_15),
+            (e3_spliced_minus, 5, 7, 6, parent_genome2_1_15),
+        ],
+    )
+    def test_feature_pos_to_sequence(self, schema, value, absolute_expected, relative_expected, parent):
+        feat = schema.to_feature_interval(parent_or_seq_chunk_parent=parent)
+        assert feat.feature_pos_to_sequence(value) == absolute_expected
+        assert feat.feature_pos_to_chunk_relative_sequence(value) == relative_expected
+
+    @pytest.mark.parametrize(
+        "schema,value,absolute_expected,relative_expected,parent",
+        [
+            (
+                e3_spliced,
+                (0, 5, Strand.PLUS),
+                CompoundInterval([2, 7], [6, 8], Strand.PLUS),
+                CompoundInterval([1, 6], [5, 7], Strand.PLUS),
+                parent_genome2_1_15,
+            ),
+            (
+                e3_spliced_minus,
+                (0, 5, Strand.PLUS),
+                CompoundInterval([8, 12], [10, 15], Strand.MINUS),
+                CompoundInterval([7, 11], [9, 14], Strand.MINUS),
+                parent_genome2_1_15,
+            ),
+        ],
+    )
+    def test_feature_interval_to_sequence(self, schema, value, absolute_expected, relative_expected, parent):
+        feat = schema.to_feature_interval(parent)
+        assert feat.feature_interval_to_sequence(*value).reset_parent(None) == absolute_expected
+        assert feat.feature_interval_to_chunk_relative_sequence(*value).reset_parent(None) == relative_expected
+
+    @pytest.mark.parametrize(
+        "schema,parent,expected_spliced",
+        [
+            (e3_spliced, parent_genome2_1_15, "GTATCTTACC"),
+            (
+                e3_spliced,
+                parent_genome2_1_15,
+                "GTATCTTACC",
+            ),
+            (e3_spliced_minus, parent_genome2_1_15, "GGTAAGATAC"),
+            (
+                e3_spliced_minus,
+                parent_genome2_1_15,
+                "GGTAAGATAC",
+            ),
+        ],
+    )
+    def test_spliced_sequence(self, schema, parent, expected_spliced):
+        feat = schema.to_feature_interval(parent_or_seq_chunk_parent=parent)
+        assert str(feat.get_spliced_sequence()) == expected_spliced
+
+    @pytest.mark.parametrize(
+        "schema,parent,expected_genomic,expected_stranded_genomic",
+        [
+            (e3_spliced, parent_genome2_1_15, "GTATTCTTGGACC", "GTATTCTTGGACC"),
+            (
+                e3_spliced,
+                parent_genome2_1_15,
+                "GTATTCTTGGACC",
+                "GTATTCTTGGACC",
+            ),
+            (e3_spliced_minus, parent_genome2_1_15, "GTATTCTTGGACC", "GGTCCAAGAATAC"),
+        ],
+    )
+    def test_genomic_sequence(self, schema, parent, expected_genomic, expected_stranded_genomic):
+        feat = schema.to_feature_interval(parent_or_seq_chunk_parent=parent)
+        assert str(feat.get_reference_sequence()) == expected_genomic
+        assert str(feat.get_genomic_sequence()) == expected_stranded_genomic
+
+    def test_start_end(self):
+        feat = e3_spliced.to_feature_interval(parent_or_seq_chunk_parent=parent_genome2_1_15)
+        assert feat.chunk_relative_start + 1 == feat.start
+        assert feat.chunk_relative_end + 1 == feat.end
+
+    @pytest.mark.parametrize(
+        "schema,parent,expected_exception",
+        [
+            [e3_spliced, parent_genome2_2_8, ValidationException],
+            [e3_spliced_minus, parent_genome2_2_8, ValidationException],
+            [se_unspliced, parent_genome2_1_15, ValidationException],
+        ],
+    )
+    def test_position_exceptions(self, schema, parent, expected_exception):
+        with pytest.raises(expected_exception):
+            _ = schema.to_feature_interval(parent)
+
+    @pytest.mark.parametrize(
+        "schema,parent,expected_exception",
+        [
+            [e3_spliced, Parent(), ValidationException],
+            [e3_spliced_minus, Parent(sequence_type="chromosome"), NullSequenceException],
+            [se_unspliced, Parent(sequence_type="sequence_chunk"), NullSequenceException],
+        ],
+    )
+    def test_constructor_exceptions(self, schema, parent, expected_exception):
+        with pytest.raises(expected_exception):
+            _ = schema.to_feature_interval(parent)

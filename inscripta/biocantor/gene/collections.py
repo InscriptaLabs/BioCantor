@@ -135,8 +135,8 @@ class GeneInterval(AbstractFeatureIntervalCollection):
         if not self.transcripts:
             raise InvalidAnnotationError("GeneInterval must have transcripts")
 
-        start = min(tx.relative_start for tx in self.transcripts)
-        end = max(tx.relative_end for tx in self.transcripts)
+        start = min(tx.chunk_relative_start for tx in self.transcripts)
+        end = max(tx.chunk_relative_end for tx in self.transcripts)
         self.location = SingleInterval(start, end, Strand.PLUS, parent=parent_or_seq_chunk_parent)
         self.bin = bins(start, end, fmt="bed")
         self.primary_transcript = AbstractFeatureIntervalCollection._find_primary_feature(self.transcripts)
@@ -310,8 +310,8 @@ class GeneInterval(AbstractFeatureIntervalCollection):
             self.sequence_name,
             GFF_SOURCE,
             BioCantorFeatureTypes.GENE,
-            (self.start if chromosome_relative_coordinates else self.relative_start) + 1,
-            self.end if chromosome_relative_coordinates else self.relative_end,
+            (self.start if chromosome_relative_coordinates else self.chunk_relative_start) + 1,
+            self.end if chromosome_relative_coordinates else self.chunk_relative_end,
             NULL_COLUMN,
             self.location.strand,
             CDSPhase.NONE,
@@ -366,8 +366,8 @@ class FeatureIntervalCollection(AbstractFeatureIntervalCollection):
         if not self.feature_intervals:
             raise InvalidAnnotationError("FeatureCollection must have features")
 
-        start = min(f.relative_start for f in self.feature_intervals)
-        end = max(f.relative_end for f in self.feature_intervals)
+        start = min(f.chunk_relative_start for f in self.feature_intervals)
+        end = max(f.chunk_relative_end for f in self.feature_intervals)
         self.location = SingleInterval(start, end, Strand.PLUS, parent=parent_or_seq_chunk_parent)
         self.bin = bins(start, end, fmt="bed")
 
@@ -489,8 +489,8 @@ class FeatureIntervalCollection(AbstractFeatureIntervalCollection):
             self.sequence_name,
             GFF_SOURCE,
             BioCantorFeatureTypes.FEATURE_COLLECTION,
-            (self.start if chromosome_relative_coordinates else self.relative_start) + 1,
-            self.end if chromosome_relative_coordinates else self.relative_end,
+            (self.start if chromosome_relative_coordinates else self.chunk_relative_start) + 1,
+            self.end if chromosome_relative_coordinates else self.chunk_relative_end,
             NULL_COLUMN,
             self.location.strand,
             CDSPhase.NONE,
@@ -553,9 +553,9 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
             # if we have nothing, we cannot infer a range
             if not self.is_empty:
                 if start is None:
-                    start = min(f.relative_start for f in self.iter_children())
+                    start = min(f.chunk_relative_start for f in self.iter_children())
                 if end is None:
-                    end = max(f.relative_end for f in self.iter_children())
+                    end = max(f.chunk_relative_end for f in self.iter_children())
 
         if start is None and end is None:
             # if we still have nothing, we are empty
@@ -631,8 +631,8 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
             qualifiers=self._export_qualifiers_to_list(),
             sequence_name=self.sequence_name,
             sequence_guid=self.sequence_guid,
-            start=self.start if chromosome_relative_coordinates else self.relative_start,
-            end=self.end if chromosome_relative_coordinates else self.relative_end,
+            start=self.start if chromosome_relative_coordinates else self.chunk_relative_start,
+            end=self.end if chromosome_relative_coordinates else self.chunk_relative_end,
             completely_within=self.completely_within,
         )
 

@@ -68,11 +68,18 @@ class BaseModel:
 
         .. code:: python
 
-            chr1_parent = Parent(id="chr1", sequence_type="chromosome")
-            sequence_chunk = Sequence(genome[3:12], Alphabet.NT_EXTENDED_GAPPED,
-                                      type="sequence_chunk",
-                                      parent=Parent(location=SingleInterval(3, 12, Strand.PLUS, parent=chr1_parent)))
-            seq_chunk_parent = Parent(sequence=sequence_chunk)
+            chr1_parent = Parent(
+                sequence=Sequence(
+                    genome[0:18],
+                    Alphabet.NT_EXTENDED_GAPPED,
+                    type="sequence_chunk",
+                    parent=Parent(
+                        location=SingleInterval(0, 18, Strand.PLUS),
+                        id="genome_0_18",
+                        sequence_type="chromosome"
+                    ),
+                )
+            )
 
         Alternatively, if the sequence is coming straight from a file, it will be a :class:`Parent` with a
         :class:`Sequence` attached:
@@ -108,6 +115,10 @@ class BaseModel:
             sequence_chunk = chunk_parent.sequence
             interval_location_rel_to_chunk = sequence_chunk.location_on_parent.parent_to_relative_location(location)
             interval_rel_to_chunk = interval_location_rel_to_chunk.reset_parent(parent_or_seq_chunk_parent)
+
+            if len(interval_rel_to_chunk) != len(location):
+                raise ValidationException("Lifted location is no longer the same length as the input.")
+
             return interval_rel_to_chunk
 
         # since this is a whole genome, we don't need to lift anything up

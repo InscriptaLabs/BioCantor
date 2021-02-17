@@ -87,20 +87,20 @@ class AbstractInterval(ABC):
     @property
     def start(self) -> int:
         """Returns genome relative start position."""
-        return self.lift_location_to_sequence_location_type("chromosome").start
+        return self.lift_over_to_first_ancestor_of_type("chromosome").start
 
     @property
     def end(self) -> int:
         """Returns genome relative end position."""
-        return self.lift_location_to_sequence_location_type("chromosome").end
+        return self.lift_over_to_first_ancestor_of_type("chromosome").end
 
     @property
-    def relative_start(self) -> int:
+    def chunk_relative_start(self) -> int:
         """Returns chunk relative start position."""
         return self.location.start
 
     @property
-    def relative_end(self) -> int:
+    def chunk_relative_end(self) -> int:
         """Returns chunk relative end position."""
         return self.location.end
 
@@ -137,15 +137,7 @@ class AbstractInterval(ABC):
         """
         return self.location.first_ancestor_of_type(ancestor_type)
 
-    def first_parent_with_sequence(self) -> Optional[Parent]:
-        """
-        Convenience function that returns the first parent with a sequence.
-
-        TODO: How do you do this? Is this still necessary?
-        """
-        raise NotImplementedError
-
-    def lift_location_to_sequence_location_type(self, coordinate_system: Optional[str] = "chromosome") -> Location:
+    def lift_over_to_first_ancestor_of_type(self, sequence_type: Optional[str] = "chromosome") -> Location:
         """
         Lifts the location member to another coordinate system. Is a no-op if there is no parent assigned.
 
@@ -154,21 +146,7 @@ class AbstractInterval(ABC):
         """
         if self.location.parent is None:
             return self.location
-        return self.location.lift_over_to_first_ancestor_of_type(coordinate_system)
-
-    def extract_sequence_referenced_position(self, pos: int) -> int:
-        """
-        Detect the case where the location for this interval is referenced on a sequence subset, and if so lift the
-        requested coordinate up to that position.
-        Args:
-            pos: Current location reference
-
-        Returns:
-            Sequence relative position
-        """
-        if self.location.parent is None:
-            return pos
-        return self.location.parent.sequence.location_on_parent.relative_to_parent_pos(pos)
+        return self.location.lift_over_to_first_ancestor_of_type(sequence_type)
 
     def _import_qualifiers_from_list(self, qualifiers: Optional[Dict[Hashable, List[Hashable]]] = None):
         """Import input qualifiers to sets and store."""
@@ -205,7 +183,7 @@ class AbstractFeatureInterval(AbstractInterval, ABC):
     @property
     def blocks(self) -> Iterable[SingleInterval]:
         """Wrapper for blocks function that reports blocks in chromosome coordinates"""
-        yield from self.lift_location_to_sequence_location_type("chromosome").blocks
+        yield from self.lift_over_to_first_ancestor_of_type("chromosome").blocks
 
     @property
     def relative_blocks(self) -> Iterable[SingleInterval]:
@@ -269,37 +247,39 @@ class AbstractFeatureInterval(AbstractInterval, ABC):
 
     def sequence_pos_to_feature(self, pos: int) -> int:
         """Converts sequence position to relative position along this feature."""
-        return self.lift_location_to_sequence_location_type("chromosome").parent_to_relative_pos(pos)
+        return self.lift_over_to_first_ancestor_of_type("chromosome").parent_to_relative_pos(pos)
 
     def sequence_interval_to_feature(self, chr_start: int, chr_end: int, chr_strand: Strand) -> Location:
         """Converts a contiguous interval on the sequence to a relative location within this feature."""
-        return self.lift_location_to_sequence_location_type("chromosome").parent_to_relative_location(
-            SingleInterval(chr_start, chr_end, chr_strand)
-        )
+        loc = self.lift_over_to_first_ancestor_of_type("chromosome")
+        i = SingleInterval(chr_start, chr_end, chr_strand, parent=loc.parent)
+        return loc.parent_to_relative_location(i)
 
     def feature_pos_to_sequence(self, pos: int) -> int:
         """Converts a relative position along this feature to sequence coordinate."""
-        return self.lift_location_to_sequence_location_type("chromosome").relative_to_parent_pos(pos)
+        return self.lift_over_to_first_ancestor_of_type("chromosome").relative_to_parent_pos(pos)
 
     def feature_interval_to_sequence(self, rel_start: int, rel_end: int, rel_strand: Strand) -> Location:
         """Converts a contiguous interval relative to this feature to a spliced location on the sequence."""
-        return self.lift_location_to_sequence_location_type("chromosome").relative_interval_to_parent_location(
+        return self.lift_over_to_first_ancestor_of_type("chromosome").relative_interval_to_parent_location(
             rel_start, rel_end, rel_strand
         )
 
-    def relative_sequence_pos_to_feature(self, pos: int) -> int:
+    def chunk_relative_sequence_pos_to_feature(self, pos: int) -> int:
         """Converts chunk-relative sequence position to relative position along this feature."""
         return self.location.parent_to_relative_pos(pos)
 
-    def relative_sequence_interval_to_feature(self, chr_start: int, chr_end: int, chr_strand: Strand) -> Location:
+    def chunk_relative_sequence_interval_to_feature(self, chr_start: int, chr_end: int, chr_strand: Strand) -> Location:
         """Converts a contiguous chunk-relative interval on the sequence to a relative location within this feature."""
-        return self.location.parent_to_relative_location(SingleInterval(chr_start, chr_end, chr_strand))
+        return self.location.parent_to_relative_location(
+            SingleInterval(chr_start, chr_end, chr_strand, parent=self.location.parent)
+        )
 
-    def feature_pos_to_relative_sequence(self, pos: int) -> int:
+    def feature_pos_to_chunk_relative_sequence(self, pos: int) -> int:
         """Converts a relative position along this feature to chunk-relative sequence coordinate."""
         return self.location.relative_to_parent_pos(pos)
 
-    def feature_interval_to_relative_sequence(self, rel_start: int, rel_end: int, rel_strand: Strand) -> Location:
+    def feature_interval_to_chunk_relative_sequence(self, rel_start: int, rel_end: int, rel_strand: Strand) -> Location:
         """
         Converts a contiguous interval relative to this feature to a chunk-relative spliced location on the sequence.
         """
@@ -484,6 +464,7 @@ class FeatureInterval(AbstractFeatureInterval):
         Raises:
             NoSuchAncestorException: If ``chromosome_relative_coordinates`` is ``False`` but there is no
             ``sequence_chunk`` ancestor type.
+            GFF3MissingSequenceNameError: If there are no sequence names associated with this feature.
         """
 
         if not self.sequence_name:
@@ -505,8 +486,8 @@ class FeatureInterval(AbstractFeatureInterval):
             self.sequence_name,
             GFF_SOURCE,
             BioCantorFeatureTypes.FEATURE_INTERVAL,
-            (self.start if chromosome_relative_coordinates else self.relative_start) + 1,
-            self.end if chromosome_relative_coordinates else self.relative_end,
+            (self.start if chromosome_relative_coordinates else self.chunk_relative_start) + 1,
+            self.end if chromosome_relative_coordinates else self.chunk_relative_end,
             NULL_COLUMN,
             self.strand,
             CDSPhase.NONE,
@@ -562,6 +543,7 @@ class FeatureInterval(AbstractFeatureInterval):
             NoSuchAncestorException: If ``chromosome_relative_coordinates`` is ``False`` but there is no
             ``sequence_chunk`` ancestor type.
         """
+        # since blocks are iterated over twice, must be turned into a list otherwise the iterator is exhausted
         blocks = list(self.blocks) if chromosome_relative_coordinates else list(self.relative_blocks)
         block_sizes = [b.end - b.start for b in blocks]
         block_starts = [b.start - self.start for b in blocks]
@@ -570,8 +552,8 @@ class FeatureInterval(AbstractFeatureInterval):
             start = self.start
             end = self.end
         else:
-            start = self.relative_start
-            end = self.relative_end
+            start = self.chunk_relative_start
+            end = self.chunk_relative_end
 
         return BED12(
             self.sequence_name,
