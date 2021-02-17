@@ -9,13 +9,12 @@ from inscripta.biocantor.sequence.sequence import Sequence
 
 # these features will be shared across all tests
 genome = "GTATTCTTGGACCTAATT"
-parent = Parent(sequence=Sequence(genome, Alphabet.NT_STRICT))
+parent = Parent(sequence=Sequence(genome, Alphabet.NT_STRICT), sequence_type="chromosome")
 # offset the genome to show parent
 genome2 = "AAGTATTCTTGGACCTAATT"
-parent_genome2 = Parent(sequence=Sequence(genome2, Alphabet.NT_STRICT))
+parent_genome2 = Parent(sequence=Sequence(genome2, Alphabet.NT_STRICT), sequence_type="chromosome")
 parent_genome2_minus = Parent(
-    sequence=Sequence(genome2, Alphabet.NT_STRICT),
-    strand=Strand.MINUS,
+    sequence=Sequence(genome2, Alphabet.NT_STRICT), strand=Strand.MINUS, sequence_type="chromosome"
 )
 
 
@@ -57,7 +56,7 @@ class TestFeatureInterval:
     )
     def test_feature_constructor(self, schema, expected):
         assert str(schema.to_feature_interval()) == expected
-        assert str(schema.to_feature_interval(parent=parent)) == expected
+        assert str(schema.to_feature_interval(parent_or_seq_chunk_parent=parent)) == expected
 
     @pytest.mark.parametrize(
         "schema,expected_exception",
@@ -126,7 +125,7 @@ class TestFeatureInterval:
     def test_feature_pos_to_sequence(self, schema, value, expected):
         feat = schema.to_feature_interval()
         assert feat.feature_pos_to_sequence(value) == expected
-        feat = schema.to_feature_interval(parent=parent)
+        feat = schema.to_feature_interval(parent_or_seq_chunk_parent=parent)
         assert feat.feature_pos_to_sequence(value) == expected
 
     @pytest.mark.parametrize(
@@ -148,7 +147,7 @@ class TestFeatureInterval:
         ],
     )
     def test_feature_interval_to_sequence_parent(self, schema, value, expected):
-        feat = schema.to_feature_interval(parent=parent)
+        feat = schema.to_feature_interval(parent_or_seq_chunk_parent=parent)
         assert feat.feature_interval_to_sequence(*value) == expected
 
     @pytest.mark.parametrize(
@@ -167,9 +166,9 @@ class TestFeatureInterval:
         ],
     )
     def test_intersection(self, schema, value, expected):
-        feat = schema.to_feature_interval(parent=parent)
+        feat = schema.to_feature_interval(parent_or_seq_chunk_parent=parent)
         val = feat.intersect(value)
-        expected = FeatureIntervalModel.Schema().load(expected).to_feature_interval(parent=parent)
+        expected = FeatureIntervalModel.Schema().load(expected).to_feature_interval(parent_or_seq_chunk_parent=parent)
         assert str(expected) == str(val)
 
     @pytest.mark.parametrize(
@@ -195,7 +194,7 @@ class TestFeatureInterval:
 
     def test_no_such_ancestor(self):
         with pytest.raises(NullSequenceException):
-            _ = self.se_unspliced.to_feature_interval(parent=Parent())
+            _ = self.se_unspliced.to_feature_interval(parent_or_seq_chunk_parent=Parent(sequence_type="chromosome"))
 
     @pytest.mark.parametrize(
         "schema,parent,expected_spliced",
@@ -219,7 +218,7 @@ class TestFeatureInterval:
         ],
     )
     def test_spliced_sequence(self, schema, parent, expected_spliced):
-        feat = schema.to_feature_interval(parent=parent)
+        feat = schema.to_feature_interval(parent_or_seq_chunk_parent=parent)
         assert str(feat.get_spliced_sequence()) == expected_spliced
 
     @pytest.mark.parametrize(
@@ -247,7 +246,7 @@ class TestFeatureInterval:
         ],
     )
     def test_genomic_sequence(self, schema, parent, expected_genomic, expected_stranded_genomic):
-        feat = schema.to_feature_interval(parent=parent)
+        feat = schema.to_feature_interval(parent_or_seq_chunk_parent=parent)
         assert str(feat.get_reference_sequence()) == expected_genomic
         assert str(feat.get_genomic_sequence()) == expected_stranded_genomic
 
@@ -256,8 +255,8 @@ class TestFeatureInterval:
         [(e3_spliced, "GTATCTTACC"), (e3_spliced_minus, "GGTAAGATAC")],
     )
     def test_reset_parent(self, schema, expected):
-        feat = schema.to_feature_interval(parent=parent)
-        feat.update_parent(parent_genome2)
+        feat = schema.to_feature_interval(parent_or_seq_chunk_parent=parent)
+        feat.reset_parent(parent_genome2)
         assert str(feat.get_spliced_sequence()) == str(expected)
 
     def test_object_conversion(self):
@@ -266,7 +265,7 @@ class TestFeatureInterval:
             new_model = FeatureIntervalModel.from_feature_interval(obj)
             new_model.feature_interval_guid = None
             assert model == new_model
-            obj = model.to_feature_interval(parent=parent)
+            obj = model.to_feature_interval(parent_or_seq_chunk_parent=parent)
             new_model = FeatureIntervalModel.from_feature_interval(obj)
             new_model.feature_interval_guid = None
             assert model == new_model

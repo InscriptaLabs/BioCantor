@@ -23,14 +23,15 @@ from inscripta.biocantor.exc import (
     NoncodingTranscriptError,
     InvalidAnnotationError,
     InvalidQueryError,
+    NoSuchAncestorException,
 )
 from inscripta.biocantor.gene.biotype import Biotype
 from inscripta.biocantor.gene.cds import CDSInterval, CDSPhase
 from inscripta.biocantor.gene.feature import FeatureInterval, AbstractInterval, QualifierValue
 from inscripta.biocantor.gene.transcript import TranscriptInterval
 from inscripta.biocantor.io.gff3.constants import GFF_SOURCE, NULL_COLUMN, BioCantorQualifiers, BioCantorFeatureTypes
-from inscripta.biocantor.io.gff3.rows import GFFRow, GFFAttributes
 from inscripta.biocantor.io.gff3.exc import GFF3MissingSequenceNameError
+from inscripta.biocantor.io.gff3.rows import GFFRow, GFFAttributes
 from inscripta.biocantor.location import Location
 from inscripta.biocantor.location.location_impl import SingleInterval, CompoundInterval, EmptyLocation
 from inscripta.biocantor.location.strand import Strand
@@ -119,7 +120,7 @@ class GeneInterval(AbstractFeatureIntervalCollection):
         qualifiers: Optional[Dict[Hashable, List[QualifierValue]]] = None,
         sequence_name: Optional[str] = None,
         sequence_guid: Optional[UUID] = None,
-        parent: Optional[Parent] = None,
+        parent_or_seq_chunk_parent: Optional[Parent] = None,
     ):
         self.transcripts = transcripts
         self.gene_id = gene_id
@@ -134,9 +135,9 @@ class GeneInterval(AbstractFeatureIntervalCollection):
         if not self.transcripts:
             raise InvalidAnnotationError("GeneInterval must have transcripts")
 
-        start = min(tx.start for tx in self.transcripts)
-        end = max(tx.end for tx in self.transcripts)
-        self.location = SingleInterval(start, end, Strand.PLUS, parent=parent)
+        start = min(tx.relative_start for tx in self.transcripts)
+        end = max(tx.relative_end for tx in self.transcripts)
+        self.location = SingleInterval(start, end, Strand.PLUS, parent=parent_or_seq_chunk_parent)
         self.bin = bins(start, end, fmt="bed")
         self.primary_transcript = AbstractFeatureIntervalCollection._find_primary_feature(self.transcripts)
 
@@ -182,10 +183,10 @@ class GeneInterval(AbstractFeatureIntervalCollection):
     def children_guids(self):
         return {x.guid for x in self.transcripts}
 
-    def to_dict(self) -> Dict[Any, str]:
+    def to_dict(self, chromosome_relative_coordinates: bool = True) -> Dict[str, Any]:
         """Convert to a dict usable by :class:`~biocantor.io.models.GeneIntervalModel`."""
         return dict(
-            transcripts=[tx.to_dict() for tx in self.transcripts],
+            transcripts=[tx.to_dict(chromosome_relative_coordinates) for tx in self.transcripts],
             gene_id=self.gene_id,
             gene_symbol=self.gene_symbol,
             gene_type=self.gene_type.name if self.gene_type else None,
@@ -278,14 +279,27 @@ class GeneInterval(AbstractFeatureIntervalCollection):
             qualifiers[key].add(val)
         return qualifiers
 
-    def to_gff(self) -> Iterable[GFFRow]:
+    def to_gff(self, chromosome_relative_coordinates: bool = True) -> Iterable[GFFRow]:
         """Produces iterable of :class:`~biocantor.io.gff3.rows.GFFRow` for this gene and its children.
+
+        Args:
+            chromosome_relative_coordinates: Output GFF in chromosome-relative coordinates? Will raise an exception
+                if there is not a ``sequence_chunk`` ancestor type.
 
         Yields:
             :class:`~biocantor.io.gff3.rows.GFFRow`
+
+        Raises:
+            NoSuchAncestorException: If ``chromosome_relative_coordinates`` is ``False`` but there is no
+            ``sequence_chunk`` ancestor type.
         """
         if not self.sequence_name:
             raise GFF3MissingSequenceNameError("Must have sequence names to export to GFF3.")
+
+        if not chromosome_relative_coordinates and not self.has_ancestor_of_type("sequence_chunk"):
+            raise NoSuchAncestorException(
+                "Cannot export GFF in relative coordinates without a sequence_chunk ancestor."
+            )
 
         qualifiers = self.export_qualifiers()
 
@@ -296,8 +310,8 @@ class GeneInterval(AbstractFeatureIntervalCollection):
             self.sequence_name,
             GFF_SOURCE,
             BioCantorFeatureTypes.GENE,
-            self.start + 1,
-            self.end,
+            (self.start if chromosome_relative_coordinates else self.relative_start) + 1,
+            self.end if chromosome_relative_coordinates else self.relative_end,
             NULL_COLUMN,
             self.location.strand,
             CDSPhase.NONE,
@@ -305,7 +319,7 @@ class GeneInterval(AbstractFeatureIntervalCollection):
         )
         yield row
         for tx in self.transcripts:
-            yield from tx.to_gff(gene_guid, qualifiers)
+            yield from tx.to_gff(gene_guid, qualifiers, chromosome_relative_coordinates=chromosome_relative_coordinates)
 
 
 class FeatureIntervalCollection(AbstractFeatureIntervalCollection):
@@ -333,7 +347,7 @@ class FeatureIntervalCollection(AbstractFeatureIntervalCollection):
         sequence_guid: Optional[UUID] = None,
         guid: Optional[UUID] = None,
         qualifiers: Optional[Dict[Hashable, List[QualifierValue]]] = None,
-        parent: Optional[Parent] = None,
+        parent_or_seq_chunk_parent: Optional[Parent] = None,
     ):
         if not feature_intervals:
             raise InvalidAnnotationError("Must have at least one feature interval.")
@@ -352,9 +366,9 @@ class FeatureIntervalCollection(AbstractFeatureIntervalCollection):
         if not self.feature_intervals:
             raise InvalidAnnotationError("FeatureCollection must have features")
 
-        start = min(f.start for f in self.feature_intervals)
-        end = max(f.end for f in self.feature_intervals)
-        self.location = SingleInterval(start, end, Strand.PLUS, parent=parent)
+        start = min(f.relative_start for f in self.feature_intervals)
+        end = max(f.relative_end for f in self.feature_intervals)
+        self.location = SingleInterval(start, end, Strand.PLUS, parent=parent_or_seq_chunk_parent)
         self.bin = bins(start, end, fmt="bed")
 
         self.primary_feature = AbstractFeatureIntervalCollection._find_primary_feature(self.feature_intervals)
@@ -408,10 +422,10 @@ class FeatureIntervalCollection(AbstractFeatureIntervalCollection):
 
         return self.primary_feature
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self, chromosome_relative_coordinates: bool = True) -> Dict[str, Any]:
         """Convert to a dict usable by :class:`~biocantor.io.models.FeatureIntervalCollectionModel`."""
         return dict(
-            feature_intervals=[feat.to_dict() for feat in self.feature_intervals],
+            feature_intervals=[feat.to_dict(chromosome_relative_coordinates) for feat in self.feature_intervals],
             feature_collection_name=self.feature_collection_name,
             feature_collection_id=self.feature_collection_id,
             feature_collection_type=self.feature_collection_type,
@@ -440,14 +454,28 @@ class FeatureIntervalCollection(AbstractFeatureIntervalCollection):
             qualifiers[BioCantorQualifiers.FEATURE_TYPE.value] = self.feature_types
         return qualifiers
 
-    def to_gff(self) -> Iterable[GFFRow]:
-        """Produces iterable of :class:`~biocantor.io.gff3.rows.GFFRow` for this feature and its children.
+    def to_gff(self, chromosome_relative_coordinates: bool = True) -> Iterable[GFFRow]:
+        """Produces iterable of :class:`~biocantor.io.gff3.rows.GFFRow` for this feature collection and its
+        children.
+
+        Args:
+            chromosome_relative_coordinates: Output GFF in chromosome-relative coordinates? Will raise an exception
+                if there is not a ``sequence_chunk`` ancestor type.
 
         Yields:
             :class:`~biocantor.io.gff3.rows.GFFRow`
+
+        Raises:
+            NoSuchAncestorException: If ``chromosome_relative_coordinates`` is ``False`` but there is no
+            ``sequence_chunk`` ancestor type.
         """
         if not self.sequence_name:
             raise GFF3MissingSequenceNameError("Must have sequence names to export to GFF3.")
+
+        if not chromosome_relative_coordinates and not self.has_ancestor_of_type("sequence_chunk"):
+            raise NoSuchAncestorException(
+                "Cannot export GFF in relative coordinates without a sequence_chunk ancestor."
+            )
 
         qualifiers = self.export_qualifiers()
 
@@ -461,8 +489,8 @@ class FeatureIntervalCollection(AbstractFeatureIntervalCollection):
             self.sequence_name,
             GFF_SOURCE,
             BioCantorFeatureTypes.FEATURE_COLLECTION,
-            self.start + 1,
-            self.end,
+            (self.start if chromosome_relative_coordinates else self.relative_start) + 1,
+            self.end if chromosome_relative_coordinates else self.relative_end,
             NULL_COLUMN,
             self.location.strand,
             CDSPhase.NONE,
@@ -471,7 +499,9 @@ class FeatureIntervalCollection(AbstractFeatureIntervalCollection):
         yield row
 
         for feature in self.feature_intervals:
-            yield from feature.to_gff(feat_group_id, qualifiers)
+            yield from feature.to_gff(
+                feat_group_id, qualifiers, chromosome_relative_coordinates=chromosome_relative_coordinates
+            )
 
 
 class AnnotationCollection(AbstractFeatureIntervalCollection):
@@ -500,7 +530,7 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
         start: Optional[int] = None,
         end: Optional[int] = None,
         completely_within: Optional[bool] = None,
-        parent: Optional[Parent] = None,
+        parent_or_seq_chunk_parent: Optional[Parent] = None,
     ):
 
         self.feature_collections = feature_collections if feature_collections else []
@@ -514,8 +544,8 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
 
         # we store the sequence explicitly, because this is how we can retain sequence information
         # for empty collections
-        if parent and parent.sequence:
-            self.sequence = parent.sequence
+        if parent_or_seq_chunk_parent and parent_or_seq_chunk_parent.sequence:
+            self.sequence = parent_or_seq_chunk_parent.sequence
         else:
             self.sequence = None
 
@@ -523,16 +553,16 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
             # if we have nothing, we cannot infer a range
             if not self.is_empty:
                 if start is None:
-                    start = min(f.start for f in self.iter_children())
+                    start = min(f.relative_start for f in self.iter_children())
                 if end is None:
-                    end = max(f.end for f in self.iter_children())
+                    end = max(f.relative_end for f in self.iter_children())
 
         if start is None and end is None:
             # if we still have nothing, we are empty
             self.location = EmptyLocation()
         else:
             assert start is not None and end is not None
-            self.location = SingleInterval(start, end, Strand.PLUS, parent=parent)
+            self.location = SingleInterval(start, end, Strand.PLUS, parent=parent_or_seq_chunk_parent)
             self.bin = bins(self.start, self.end, fmt="bed")
         self.completely_within = completely_within
 
@@ -589,18 +619,20 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
         sort_iter = sorted(chain_iter, key=lambda x: x.start)
         yield from sort_iter
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self, chromosome_relative_coordinates: bool = True) -> Dict[str, Any]:
         """Convert to a dict usable by :class:`~biocantor.io.models.AnnotationCollectionModel`."""
         return dict(
-            genes=[gene.to_dict() for gene in self.genes],
-            feature_collections=[feature.to_dict() for feature in self.feature_collections],
+            genes=[gene.to_dict(chromosome_relative_coordinates) for gene in self.genes],
+            feature_collections=[
+                feature.to_dict(chromosome_relative_coordinates) for feature in self.feature_collections
+            ],
             name=self.name,
             id=self.id,
             qualifiers=self._export_qualifiers_to_list(),
             sequence_name=self.sequence_name,
             sequence_guid=self.sequence_guid,
-            start=self.start,
-            end=self.end,
+            start=self.start if chromosome_relative_coordinates else self.relative_start,
+            end=self.end if chromosome_relative_coordinates else self.relative_end,
             completely_within=self.completely_within,
         )
 
@@ -667,7 +699,7 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
             start=start,
             end=end,
             completely_within=completely_within,
-            parent=self.location.parent,
+            parent_or_seq_chunk_parent=self.location.parent,
         )
 
     def _build_guid_cache(self):
@@ -713,7 +745,7 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
             qualifiers=self._export_qualifiers_to_list(),
             start=self.start,
             end=self.end,
-            parent=self.location.parent,
+            parent_or_seq_chunk_parent=self.location.parent,
             completely_within=self.completely_within,
         )
 
@@ -751,15 +783,24 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
             qualifiers=self._export_qualifiers_to_list(),
             start=self.start,
             end=self.end,
-            parent=self.location.parent,
+            parent_or_seq_chunk_parent=self.location.parent,
             completely_within=self.completely_within,
         )
 
-    def to_gff(self, ordered: Optional[bool] = False) -> Iterable[GFFRow]:
-        """Produces iterable of :class:`~biocantor.io.gff3.rows.GFFRow` for this feature and its children.
+    def to_gff(self, chromosome_relative_coordinates: bool = True) -> Iterable[GFFRow]:
+        """Produces iterable of :class:`~biocantor.io.gff3.rows.GFFRow` for this annotation collection and its
+        children.
+
+        Args:
+            chromosome_relative_coordinates: Output GFF in chromosome-relative coordinates? Will raise an exception
+                if there is not a ``sequence_chunk`` ancestor type.
 
         Yields:
             :class:`~biocantor.io.gff3.rows.GFFRow`
+
+        Raises:
+            NoSuchAncestorException: If ``chromosome_relative_coordinates`` is ``False`` but there is no
+            ``sequence_chunk`` ancestor type.
         """
         for item in self.iter_children():
-            yield from item.to_gff()
+            yield from item.to_gff(chromosome_relative_coordinates=chromosome_relative_coordinates)

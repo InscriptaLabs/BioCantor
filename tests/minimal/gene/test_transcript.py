@@ -1,8 +1,6 @@
 import pytest
-
 from inscripta.biocantor.exc import (
     InvalidCDSIntervalError,
-    LocationException,
     EmptyLocationException,
     NullParentException,
     NoncodingTranscriptError,
@@ -10,19 +8,19 @@ from inscripta.biocantor.exc import (
 )
 from inscripta.biocantor.gene.cds import CDSInterval, CDSFrame
 from inscripta.biocantor.gene.transcript import TranscriptInterval
+from inscripta.biocantor.io.models import TranscriptIntervalModel
 from inscripta.biocantor.location.location_impl import SingleInterval, CompoundInterval, EmptyLocation
 from inscripta.biocantor.location.strand import Strand
-from inscripta.biocantor.io.models import TranscriptIntervalModel
 from inscripta.biocantor.parent.parent import Parent
 from inscripta.biocantor.sequence.alphabet import Alphabet
 from inscripta.biocantor.sequence.sequence import Sequence
 
 # these features will be shared across all tests
 genome = "GTATTCTTGGACCTAATT"
-parent = Parent(sequence=Sequence(genome, Alphabet.NT_STRICT))
+parent = Parent(sequence=Sequence(genome, Alphabet.NT_STRICT), sequence_type="chromosome")
 # offset the genome to show parent
 genome2 = "AAGTATTCTTGGACCTAATT"
-parent_genome2 = Parent(sequence=Sequence(genome2, Alphabet.NT_STRICT))
+parent_genome2 = Parent(sequence=Sequence(genome2, Alphabet.NT_STRICT), sequence_type="chromosome")
 
 
 class TestTranscript:
@@ -197,7 +195,7 @@ class TestTranscript:
     )
     def test_transcript_constructor(self, schema, expected):
         assert str(schema.to_transcript_interval()) == expected
-        assert str(schema.to_transcript_interval(parent=parent)) == expected
+        assert str(schema.to_transcript_interval(parent_or_seq_chunk_parent=parent)) == expected
 
     @pytest.mark.parametrize(
         "schema,expected",
@@ -215,12 +213,12 @@ class TestTranscript:
         ],
     )
     def test_translations(self, schema, expected):
-        tx = schema.to_transcript_interval(parent=parent)
+        tx = schema.to_transcript_interval(parent_or_seq_chunk_parent=parent)
         assert str(tx.get_protein_sequence()) == expected
 
     @pytest.mark.parametrize("schema,expected", [(se_unspliced_minus, "N*")])
     def test_truncations(self, schema, expected):
-        tx = schema.to_transcript_interval(parent=parent)
+        tx = schema.to_transcript_interval(parent_or_seq_chunk_parent=parent)
         assert str(tx.get_protein_sequence(truncate_at_in_frame_stop=True)) == expected
 
     @pytest.mark.parametrize("schema,expected_exception", [(se_unspliced_minus, NullParentException)])
@@ -417,18 +415,18 @@ class TestTranscript:
                         cds_ends=[0],
                     )
                 ),
-                LocationException,
+                InvalidCDSIntervalError,
             ),
         ],
     )
     def test_transcript_from_transcript_exceptions(self, schema, expected_exception):
         with pytest.raises(expected_exception):
             _ = schema.to_transcript_interval()
-            _ = schema.to_transcript_interval(parent=parent)
+            _ = schema.to_transcript_interval(parent_or_seq_chunk_parent=parent)
 
     def test_no_such_ancestor(self):
         with pytest.raises(NullSequenceException):
-            _ = self.se_unspliced.to_transcript_interval(parent=Parent())
+            _ = self.se_unspliced.to_transcript_interval(parent_or_seq_chunk_parent=Parent(sequence_type="chromosome"))
 
     @pytest.mark.parametrize(
         "schema,value,expected",
@@ -470,7 +468,7 @@ class TestTranscript:
     def test_transcript_pos_to_sequence(self, schema, value, expected):
         tx = schema.to_transcript_interval()
         assert tx.transcript_pos_to_sequence(value) == expected
-        tx = schema.to_transcript_interval(parent=parent)
+        tx = schema.to_transcript_interval(parent_or_seq_chunk_parent=parent)
         assert tx.transcript_pos_to_sequence(value) == expected
 
     @pytest.mark.parametrize(
@@ -496,7 +494,7 @@ class TestTranscript:
         ],
     )
     def test_transcript_interval_to_sequence_parent(self, schema, value, expected):
-        tx = schema.to_transcript_interval(parent=parent)
+        tx = schema.to_transcript_interval(parent_or_seq_chunk_parent=parent)
         assert tx.transcript_interval_to_sequence(*value) == expected
 
     @pytest.mark.parametrize(
@@ -513,7 +511,7 @@ class TestTranscript:
     def test_cds_pos_to_sequence(self, schema, value, expected):
         tx = schema.to_transcript_interval()
         assert tx.cds_pos_to_sequence(value) == expected
-        tx = schema.to_transcript_interval(parent=parent)
+        tx = schema.to_transcript_interval(parent_or_seq_chunk_parent=parent)
         assert tx.cds_pos_to_sequence(value) == expected
 
     @pytest.mark.parametrize(
@@ -534,7 +532,7 @@ class TestTranscript:
     def test_cds_interval_to_sequence(self, schema, value, expected):
         tx = schema.to_transcript_interval()
         assert tx.cds_interval_to_sequence(*value).reset_parent(None) == expected
-        tx = schema.to_transcript_interval(parent=parent)
+        tx = schema.to_transcript_interval(parent_or_seq_chunk_parent=parent)
         assert tx.cds_interval_to_sequence(*value).reset_parent(None) == expected
 
     @pytest.mark.parametrize(
@@ -551,7 +549,7 @@ class TestTranscript:
     def test_sequence_pos_to_cds(self, schema, value, expected):
         tx = schema.to_transcript_interval()
         assert tx.sequence_pos_to_cds(value) == expected
-        tx = schema.to_transcript_interval(parent=parent)
+        tx = schema.to_transcript_interval(parent_or_seq_chunk_parent=parent)
         assert tx.sequence_pos_to_cds(value) == expected
 
     @pytest.mark.parametrize(
@@ -568,7 +566,7 @@ class TestTranscript:
     def test_sequence_interval_to_cds(self, schema, value, expected):
         tx = schema.to_transcript_interval()
         assert tx.sequence_interval_to_cds(*value).reset_parent(None) == expected
-        tx = schema.to_transcript_interval(parent=parent)
+        tx = schema.to_transcript_interval(parent_or_seq_chunk_parent=parent)
         assert tx.sequence_interval_to_cds(*value).reset_parent(None) == expected
 
     @pytest.mark.parametrize(
@@ -600,7 +598,7 @@ class TestTranscript:
     def test_transcript_pos_to_cds(self, schema, value, expected):
         tx = schema.to_transcript_interval()
         assert tx.transcript_pos_to_cds(value) == expected
-        tx = schema.to_transcript_interval(parent=parent)
+        tx = schema.to_transcript_interval(parent_or_seq_chunk_parent=parent)
         assert tx.transcript_pos_to_cds(value) == expected
 
     def test_position_exceptions(self):
@@ -691,9 +689,11 @@ class TestTranscript:
         ],
     )
     def test_intersection(self, schema, value, expected):
-        tx = schema.to_transcript_interval(parent=parent)
+        tx = schema.to_transcript_interval(parent_or_seq_chunk_parent=parent)
         val = tx.intersect(value)
-        expected = TranscriptIntervalModel.Schema().load(expected).to_transcript_interval(parent=parent)
+        expected = (
+            TranscriptIntervalModel.Schema().load(expected).to_transcript_interval(parent_or_seq_chunk_parent=parent)
+        )
         assert str(expected) == str(val)
 
     def test_intersection_exception(self):
@@ -746,8 +746,8 @@ class TestTranscript:
         ],
     )
     def test_reset_parent(self, schema, expected):
-        tx = schema.to_transcript_interval(parent=parent)
-        tx.update_parent(parent_genome2)
+        tx = schema.to_transcript_interval(parent_or_seq_chunk_parent=parent)
+        tx.reset_parent(parent_genome2)
         assert str(tx.get_protein_sequence()) == str(expected)
 
     def test_object_conversion(self):
@@ -761,7 +761,7 @@ class TestTranscript:
             new_model = TranscriptIntervalModel.from_transcript_interval(obj)
             new_model.transcript_interval_guid = None
             assert model == new_model
-            obj = model.to_transcript_interval(parent=parent)
+            obj = model.to_transcript_interval(parent_or_seq_chunk_parent=parent)
             new_model = TranscriptIntervalModel.from_transcript_interval(obj)
             new_model.transcript_interval_guid = None
             assert model == new_model
@@ -776,7 +776,7 @@ class TestTranscript:
         ],
     )
     def test_transcript_sequence(self, schema, expected):
-        tx = schema.to_transcript_interval(parent=parent)
+        tx = schema.to_transcript_interval(parent_or_seq_chunk_parent=parent)
         assert str(tx.get_transcript_sequence()) == str(tx.get_spliced_sequence()) == expected
 
     @pytest.mark.parametrize(
@@ -789,7 +789,7 @@ class TestTranscript:
         ],
     )
     def test_genomic_sequence(self, schema, expected_genomic, expected_stranded_genomic):
-        tx = schema.to_transcript_interval(parent=parent)
+        tx = schema.to_transcript_interval(parent_or_seq_chunk_parent=parent)
         assert str(tx.get_reference_sequence()) == expected_genomic
         assert str(tx.get_genomic_sequence()) == expected_stranded_genomic
 
@@ -805,7 +805,7 @@ class TestTranscript:
         ],
     )
     def test_cds_sequence(self, schema, expected_cds):
-        tx = schema.to_transcript_interval(parent=parent)
+        tx = schema.to_transcript_interval(parent_or_seq_chunk_parent=parent)
         assert str(tx.get_cds_sequence()) == expected_cds
 
     @pytest.mark.parametrize(
@@ -885,7 +885,7 @@ class TestTranscript:
 
     def test_frameshifted(self):
         genome = "ATGGGGTGATGA"
-        parent_genome = Parent(sequence=Sequence(genome, Alphabet.NT_STRICT))
+        parent_genome = Parent(sequence=Sequence(genome, Alphabet.NT_STRICT), sequence_type="chromosome")
         tx = dict(
             exon_starts=[0],
             exon_ends=[12],
@@ -895,7 +895,7 @@ class TestTranscript:
             cds_frames=[CDSFrame.ZERO.name],
         )
         schema = TranscriptIntervalModel.Schema().load(tx)
-        obj = schema.to_transcript_interval(parent=parent_genome)
+        obj = schema.to_transcript_interval(parent_or_seq_chunk_parent=parent_genome)
         assert obj.has_in_frame_stop
         tx2 = dict(
             exon_starts=[0],
@@ -906,7 +906,7 @@ class TestTranscript:
             cds_frames=[CDSFrame.ZERO.name],
         )
         schema2 = TranscriptIntervalModel.Schema().load(tx2)
-        obj2 = schema2.to_transcript_interval(parent=parent_genome)
+        obj2 = schema2.to_transcript_interval(parent_or_seq_chunk_parent=parent_genome)
         assert not obj2.has_in_frame_stop
 
 

@@ -4,9 +4,11 @@ Write BioCantor data models to the NCBI .tbl format.
 The .tbl format is used for NCBI genome submission, and can be validated with the tool ``tbl2asn``.
 """
 import itertools
+import random
 import re
 import warnings
 from abc import ABC
+from string import ascii_uppercase
 from typing import Optional, TextIO, Iterable, Union, Dict, List, Set, Hashable
 
 from inscripta.biocantor.gene.biotype import Biotype
@@ -20,9 +22,8 @@ from inscripta.biocantor.io.genbank.constants import (
 )
 from inscripta.biocantor.io.ncbi.exc import TblExportException
 from inscripta.biocantor.location import Location
+from inscripta.biocantor.location.location_impl import CompoundInterval
 from inscripta.biocantor.location.strand import Strand
-import random
-from string import ascii_uppercase
 
 
 def random_uppercase_str(size=10) -> str:
@@ -478,9 +479,11 @@ class TblGene:
         # potentially overlapping representation was able to properly represent the ORF. This is an inherent limitation
         # of the TBL format (as well as the GenBank format).
         for tx in gene.transcripts:
-            tx.location = tx.location.optimize_and_combine_blocks()
+            if isinstance(tx.location, CompoundInterval):
+                tx.location = tx.location.optimize_and_combine_blocks()
             if gene.is_coding:
-                tx.cds = tx.cds.optimize_and_combine_blocks()
+                if isinstance(tx.cds.location, CompoundInterval):
+                    tx.cds = tx.cds.optimize_and_combine_blocks()
 
         self.gene_tbl = GeneTblFeature(self.gene, locus_tag)
 

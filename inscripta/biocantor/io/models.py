@@ -5,13 +5,18 @@ and deserializing the models.
 from typing import List, Optional, ClassVar, Type, Dict, Union
 from uuid import UUID
 
-from inscripta.biocantor.exc import InvalidCDSIntervalError, LocationException, ValidationException
+from inscripta.biocantor.exc import (
+    InvalidCDSIntervalError,
+    ValidationException,
+    NullSequenceException,
+)
 from inscripta.biocantor.gene.biotype import Biotype
 from inscripta.biocantor.gene.cds import CDSFrame, CDSInterval
 from inscripta.biocantor.gene.collections import GeneInterval, FeatureIntervalCollection, AnnotationCollection
 from inscripta.biocantor.gene.feature import FeatureInterval
 from inscripta.biocantor.gene.transcript import TranscriptInterval
-from inscripta.biocantor.location.location_impl import CompoundInterval
+from inscripta.biocantor.location.location import Location
+from inscripta.biocantor.location.location_impl import CompoundInterval, SingleInterval
 from inscripta.biocantor.location.strand import Strand
 from inscripta.biocantor.parent import Parent
 from marshmallow import Schema  # noqa: F401
@@ -26,6 +31,94 @@ class BaseModel:
 
     class Meta:
         ordered = True
+
+    @staticmethod
+    def initialize_location(
+        starts: List[int],
+        ends: List[int],
+        strand: Strand,
+        parent_or_seq_chunk_parent: Optional[Parent] = None,
+    ) -> Location:
+        """
+        Initialize the :class:`Location` object for this interval.
+
+        Args:
+            starts: Start positions relative to the chromosome.
+            ends: End positions relative to the chromosome.
+            strand: Strand relative to the chromosome.
+            parent_or_seq_chunk_parent: An optional parent, either as a full chromosome or as a sequence chunk.
+        """
+        if len(starts) != len(ends):
+            raise ValidationException("Number of interval starts does not match number of interval ends")
+        elif len(starts) == len(ends) == 1:
+            location = SingleInterval(starts[0], ends[0], strand)
+        else:
+            location = CompoundInterval(starts, ends, strand)
+        return BaseModel.liftover_location_parent(location, parent_or_seq_chunk_parent)
+
+    @staticmethod
+    def liftover_location_parent(
+        location: Location,
+        parent_or_seq_chunk_parent: Optional[Parent] = None,
+    ) -> Location:
+        """
+        BioCantor supports constructing any of the interval classes from a subset of the chromosome. In order to
+        be able to set up the coordinate relationship and successfully pull down sequence, this function
+        lifts the coordinates from the original annotation object on to this new coordinate system.
+
+        .. code:: python
+
+            chr1_parent = Parent(id="chr1", sequence_type="chromosome")
+            sequence_chunk = Sequence(genome[3:12], Alphabet.NT_EXTENDED_GAPPED,
+                                      type="sequence_chunk",
+                                      parent=Parent(location=SingleInterval(3, 12, Strand.PLUS, parent=chr1_parent)))
+            seq_chunk_parent = Parent(sequence=sequence_chunk)
+
+        Alternatively, if the sequence is coming straight from a file, it will be a :class:`Parent` with a
+        :class:`Sequence` attached:
+
+        .. code:: python
+
+            parent = Parent(id="chr1", sequence=Sequence(genome, Alphabet.NT_STRICT, type="chromosome"))
+
+        This convenience function detects which kind of parent is given, and sets up the appropriate location.
+
+        Args:
+            location: A location object, likely produced by :meth:`initialize_location()`.
+            parent_or_seq_chunk_parent: An optional parent, either as a full chromosome or as a sequence chunk.
+
+        Returns:
+            A :class:`Location` object.
+
+        Raises:
+            ValidationException: If ``parent_or_seq_chunk_parent`` has no ancestor of type ``chromosome`` or
+                ``sequence_chunk``.
+            NullSequenceException: If ``parent_or_seq_chunk_parent`` has no usable sequence ancestor.
+        """
+        if parent_or_seq_chunk_parent is None:
+            return location
+
+        elif parent_or_seq_chunk_parent.has_ancestor_of_type("sequence_chunk"):
+
+            chunk_parent = parent_or_seq_chunk_parent.first_ancestor_of_type("sequence_chunk")
+            if not chunk_parent.sequence:
+                raise NullSequenceException("Must have a sequence if a parent is provided.")
+
+            location = location.reset_parent(chunk_parent.parent)
+            sequence_chunk = chunk_parent.sequence
+            interval_location_rel_to_chunk = sequence_chunk.location_on_parent.parent_to_relative_location(location)
+            interval_rel_to_chunk = interval_location_rel_to_chunk.reset_parent(parent_or_seq_chunk_parent)
+            return interval_rel_to_chunk
+
+        # since this is a whole genome, we don't need to lift anything up
+        elif parent_or_seq_chunk_parent.has_ancestor_of_type("chromosome"):
+            if not parent_or_seq_chunk_parent.first_ancestor_of_type("chromosome").sequence:
+                raise NullSequenceException("Must have a sequence if a parent is provided.")
+
+            return location.reset_parent(parent_or_seq_chunk_parent)
+
+        else:
+            raise ValidationException("Provided Parent has no sequence of type 'chromosome' or 'sequence_chunk'.")
 
 
 @dataclass
@@ -51,21 +144,18 @@ class FeatureIntervalModel(BaseModel):
 
     def to_feature_interval(
         self,
-        parent: Optional[Parent] = None,  # should have a sequence associated
+        parent_or_seq_chunk_parent: Optional[Parent] = None,
     ) -> "FeatureInterval":
         """Construct a :class:`~biocantor.gene.feature.FeatureInterval` from a :class:`FeatureIntervalModel`.
 
         A :class:`~biocantor.parent.Parent` can be provided to allow the sequence-retrieval functions to work.
         """
 
-        if len(self.interval_starts) != len(self.interval_ends):
-            raise ValidationException("Number of interval starts does not match number of interval ends")
-
-        location = CompoundInterval(
+        location = BaseModel.initialize_location(
             self.interval_starts,
             self.interval_ends,
             self.strand,
-            parent=parent,
+            parent_or_seq_chunk_parent=parent_or_seq_chunk_parent,
         )
 
         return FeatureInterval(
@@ -112,17 +202,12 @@ class TranscriptIntervalModel(BaseModel):
 
     def to_transcript_interval(
         self,
-        parent: Optional[Parent] = None,  # should have a sequence associated
+        parent_or_seq_chunk_parent: Optional[Parent] = None,
     ) -> "TranscriptInterval":
         """Construct a :class:`~biocantor.gene.transcript.TranscriptInterval` from a :class:`TranscriptIntervalModel`.
 
         A :class:`~biocantor.parent.Parent can be provided to allow the sequence-retrieval functions to work.
         """
-
-        if len(self.exon_starts) != len(self.exon_ends):
-            raise LocationException("Number of exon starts does not match number of exon ends")
-
-        location = CompoundInterval(self.exon_starts, self.exon_ends, self.strand, parent=parent)
 
         if self.cds_starts is not None and self.cds_ends is None:
             raise InvalidCDSIntervalError("If CDS start is defined, CDS end must be defined")
@@ -140,7 +225,9 @@ class TranscriptIntervalModel(BaseModel):
             elif len(self.cds_frames) != len(self.cds_starts):
                 raise InvalidCDSIntervalError("Number of CDS frames must match number of CDS starts/ends")
 
-            cds_interval = CompoundInterval(self.cds_starts, self.cds_ends, self.strand, parent=parent)
+            cds_interval = BaseModel.initialize_location(
+                self.cds_starts, self.cds_ends, self.strand, parent_or_seq_chunk_parent=parent_or_seq_chunk_parent
+            )
             if not cds_interval:
                 raise InvalidCDSIntervalError("CDS must have a non-zero length")
 
@@ -148,6 +235,13 @@ class TranscriptIntervalModel(BaseModel):
             cds = CDSInterval(cds_interval, self.cds_frames)
         else:
             cds = None
+
+        location = BaseModel.initialize_location(
+            self.exon_starts,
+            self.exon_ends,
+            self.strand,
+            parent_or_seq_chunk_parent=parent_or_seq_chunk_parent,
+        )
 
         return TranscriptInterval(
             location=location,
@@ -191,13 +285,13 @@ class GeneIntervalModel(BaseModel):
     sequence_guid: Optional[UUID] = None
     gene_guid: Optional[UUID] = None
 
-    def to_gene_interval(self, parent: Optional[Parent] = None) -> GeneInterval:
+    def to_gene_interval(self, parent_or_seq_chunk_parent: Optional[Parent] = None) -> GeneInterval:
         """Produce a :class:`~biocantor.gene.collections.GeneInterval` from a :class:`GeneIntervalModel`.
 
         This is the primary method of constructing a :class:`biocantor.gene.collections.GeneInterval`.
         """
 
-        transcripts = [tx.to_transcript_interval(parent) for tx in self.transcripts]
+        transcripts = [tx.to_transcript_interval(parent_or_seq_chunk_parent) for tx in self.transcripts]
 
         return GeneInterval(
             transcripts=transcripts,
@@ -209,7 +303,7 @@ class GeneIntervalModel(BaseModel):
             qualifiers=self.qualifiers,
             sequence_name=self.sequence_name,
             sequence_guid=self.sequence_guid,
-            parent=parent,
+            parent_or_seq_chunk_parent=parent_or_seq_chunk_parent,
         )
 
     @staticmethod
@@ -237,10 +331,10 @@ class FeatureIntervalCollectionModel(BaseModel):
     feature_collection_guid: Optional[UUID] = None
     qualifiers: Optional[Dict[str, List[Union[str, int, bool, float]]]] = None
 
-    def to_feature_collection(self, parent: Optional[Parent] = None) -> FeatureIntervalCollection:
+    def to_feature_collection(self, parent_or_seq_chunk_parent: Optional[Parent] = None) -> FeatureIntervalCollection:
         """Produce a feature collection from a :class:`FeatureIntervalCollectionModel`."""
 
-        feature_intervals = [feat.to_feature_interval(parent) for feat in self.feature_intervals]
+        feature_intervals = [feat.to_feature_interval(parent_or_seq_chunk_parent) for feat in self.feature_intervals]
 
         return FeatureIntervalCollection(
             feature_intervals=feature_intervals,
@@ -252,7 +346,7 @@ class FeatureIntervalCollectionModel(BaseModel):
             sequence_guid=self.sequence_guid,
             qualifiers=self.qualifiers,
             guid=self.feature_collection_guid,
-            parent=parent,
+            parent_or_seq_chunk_parent=parent_or_seq_chunk_parent,
         )
 
     @staticmethod
@@ -290,15 +384,17 @@ class AnnotationCollectionModel(BaseModel):
     end: Optional[int] = None
     completely_within: Optional[bool] = None
 
-    def to_annotation_collection(self, parent: Optional[Parent] = None) -> "AnnotationCollection":
-        """Produce an :class:`~biocantor.gene.collections.AnnotationCollection` directly from lists of data."""
+    def to_annotation_collection(self, parent_or_seq_chunk_parent: Optional[Parent] = None) -> "AnnotationCollection":
+        """Produce an :class:`~biocantor.gene.collections.AnnotationCollection` from this model."""
         if self.genes:
-            genes = [gene.to_gene_interval(parent) for gene in self.genes]
+            genes = [gene.to_gene_interval(parent_or_seq_chunk_parent) for gene in self.genes]
         else:
             genes = None
 
         if self.feature_collections:
-            feature_collections = [feat.to_feature_collection(parent) for feat in self.feature_collections]
+            feature_collections = [
+                feat.to_feature_collection(parent_or_seq_chunk_parent) for feat in self.feature_collections
+            ]
         else:
             feature_collections = None
 
@@ -313,7 +409,7 @@ class AnnotationCollectionModel(BaseModel):
             start=self.start,
             end=self.end,
             completely_within=self.completely_within,
-            parent=parent,
+            parent_or_seq_chunk_parent=parent_or_seq_chunk_parent,
         )
 
     @staticmethod

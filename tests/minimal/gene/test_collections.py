@@ -16,7 +16,7 @@ from inscripta.biocantor.sequence.alphabet import Alphabet
 from inscripta.biocantor.sequence.sequence import Sequence
 
 genome = "AAGTATTCTTGGACCTAATTAAAAAAAAAAAAAAAAAAA"
-parent_genome = Parent(sequence=Sequence(genome, Alphabet.NT_STRICT))
+parent_genome = Parent(sequence=Sequence(genome, Alphabet.NT_STRICT), sequence_type="chromosome")
 
 
 class TestGene:
@@ -118,7 +118,7 @@ class TestGene:
         assert obj.get_primary_transcript() == expected
 
     def test_get_sequence(self):
-        obj = self.gene.to_gene_interval(parent=parent_genome)
+        obj = self.gene.to_gene_interval(parent_or_seq_chunk_parent=parent_genome)
         assert str(obj.get_primary_transcript_sequence()) == "GTATCTTACC"
         assert str(obj.get_primary_cds_sequence()) == "ATCTTA"
         assert str(obj.get_primary_protein()) == "IL"
@@ -359,7 +359,7 @@ class TestAnnotationCollection:
         assert len(r.genes) == 1 and r.genes[0].gene_id == "gene1"
 
     def test_extract_sequence(self):
-        obj = self.annot.to_annotation_collection(parent=parent_genome)
+        obj = self.annot.to_annotation_collection(parent_or_seq_chunk_parent=parent_genome)
         seq = obj.get_reference_sequence()
         assert str(seq) == genome[:30]
 

@@ -7,12 +7,12 @@ from abc import ABC, abstractmethod
 from typing import Optional, Any, Union, Dict, List, Set, Iterable, Hashable, TypeVar
 from uuid import UUID
 
-from inscripta.biocantor.exc import EmptyLocationException
+from inscripta.biocantor.exc import EmptyLocationException, NoSuchAncestorException
 from inscripta.biocantor.gene.cds import CDSPhase
 from inscripta.biocantor.io.bed import BED12, RGB
 from inscripta.biocantor.io.gff3.constants import GFF_SOURCE, NULL_COLUMN, BioCantorFeatureTypes, BioCantorQualifiers
-from inscripta.biocantor.io.gff3.rows import GFFAttributes, GFFRow
 from inscripta.biocantor.io.gff3.exc import GFF3MissingSequenceNameError
+from inscripta.biocantor.io.gff3.rows import GFFAttributes, GFFRow
 from inscripta.biocantor.location.location import Location
 from inscripta.biocantor.location.location_impl import SingleInterval
 from inscripta.biocantor.location.strand import Strand
@@ -22,7 +22,6 @@ from inscripta.biocantor.util.bins import bins
 from inscripta.biocantor.util.hashing import digest_object
 from inscripta.biocantor.util.object_validation import ObjectValidation
 from methodtools import lru_cache
-
 
 # primitive data types possible as values of the list in a qualifiers dictionary
 QualifierValue = TypeVar("QualifierValue", str, int, bool, float)
@@ -53,15 +52,26 @@ class AbstractInterval(ABC):
         return hash(self.guid)
 
     @abstractmethod
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self, chromosome_relative_coordinates: bool = True) -> Dict[str, Any]:
         """Dictionary to build Model representation"""
 
     @abstractmethod
-    def to_gff(self):
+    def to_gff(
+        self,
+        chromosome_relative_coordinates: bool = True,
+    ) -> Iterable[GFFRow]:
         """Writes a GFF format list of lists for this feature.
 
-        Return:
-            List of list of GFF-formatted strings.
+        Args:
+            chromosome_relative_coordinates: Output GFF in chromosome-relative coordinates? Will raise an exception
+                if there is not a ``sequence_chunk`` ancestor type.
+
+        Yields:
+            :class:`~biocantor.io.gff3.rows.GFFRow`
+
+        Raises:
+            NoSuchAncestorException: If ``chromosome_relative_coordinates`` is ``False`` but there is no
+            ``sequence_chunk`` ancestor type.
         """
 
     @property
@@ -76,12 +86,22 @@ class AbstractInterval(ABC):
 
     @property
     def start(self) -> int:
-        """Returns start position."""
-        return self.location.start
+        """Returns genome relative start position."""
+        return self.lift_location_to_sequence_location_type("chromosome").start
 
     @property
     def end(self) -> int:
-        """Returns end position."""
+        """Returns genome relative end position."""
+        return self.lift_location_to_sequence_location_type("chromosome").end
+
+    @property
+    def relative_start(self) -> int:
+        """Returns chunk relative start position."""
+        return self.location.start
+
+    @property
+    def relative_end(self) -> int:
+        """Returns chunk relative end position."""
         return self.location.end
 
     @property
@@ -98,6 +118,57 @@ class AbstractInterval(ABC):
     def identifiers_dict(self) -> Dict[str, Union[str, UUID]]:
         """Returns the identifiers and their keys for this FeatureInterval, if they exist"""
         return {key: getattr(self, key) for key in self._identifiers if getattr(self, key) is not None}
+
+    def reset_parent(self, parent: Parent):
+        """
+        Convenience function that wraps location.reset_parent().
+        """
+        self.location = self.location.reset_parent(parent)
+
+    def has_ancestor_of_type(self, ancestor_type: str) -> bool:
+        """
+        Convenience function that wraps location.has_ancestor_of_type().
+        """
+        return self.location.has_ancestor_of_type(ancestor_type)
+
+    def first_ancestor_of_type(self, ancestor_type: str) -> Parent:
+        """
+        Convenience function that returns the first ancestor of this type.
+        """
+        return self.location.first_ancestor_of_type(ancestor_type)
+
+    def first_parent_with_sequence(self) -> Optional[Parent]:
+        """
+        Convenience function that returns the first parent with a sequence.
+
+        TODO: How do you do this? Is this still necessary?
+        """
+        raise NotImplementedError
+
+    def lift_location_to_sequence_location_type(self, coordinate_system: Optional[str] = "chromosome") -> Location:
+        """
+        Lifts the location member to another coordinate system. Is a no-op if there is no parent assigned.
+
+        Returns:
+            The lifted Location.
+        """
+        if self.location.parent is None:
+            return self.location
+        return self.location.lift_over_to_first_ancestor_of_type(coordinate_system)
+
+    def extract_sequence_referenced_position(self, pos: int) -> int:
+        """
+        Detect the case where the location for this interval is referenced on a sequence subset, and if so lift the
+        requested coordinate up to that position.
+        Args:
+            pos: Current location reference
+
+        Returns:
+            Sequence relative position
+        """
+        if self.location.parent is None:
+            return pos
+        return self.location.parent.sequence.location_on_parent.relative_to_parent_pos(pos)
 
     def _import_qualifiers_from_list(self, qualifiers: Optional[Dict[Hashable, List[Hashable]]] = None):
         """Import input qualifiers to sets and store."""
@@ -131,13 +202,23 @@ class AbstractFeatureInterval(AbstractInterval, ABC):
         """Is this the primary feature?"""
         return self._is_primary_feature is True
 
-    @abstractmethod
-    def update_parent(self, parent: Parent):
-        """Update parent"""
+    @property
+    def blocks(self) -> Iterable[SingleInterval]:
+        """Wrapper for blocks function that reports blocks in chromosome coordinates"""
+        yield from self.lift_location_to_sequence_location_type("chromosome").blocks
+
+    @property
+    def relative_blocks(self) -> Iterable[SingleInterval]:
+        """Wrapper for blocks function that reports blocks in chunk-relative coordinates"""
+        yield from self.location.blocks
 
     @abstractmethod
     def to_bed12(
-        self, score: Optional[int] = 0, rgb: Optional[RGB] = RGB(0, 0, 0), name: Optional[str] = "feature_name"
+        self,
+        score: Optional[int] = 0,
+        rgb: Optional[RGB] = RGB(0, 0, 0),
+        name: Optional[str] = "feature_name",
+        chromosome_relative_coordinates: bool = True,
     ) -> BED12:
         """Write a BED12 format representation of this :class:`AbstractFeatureInterval`.
 
@@ -149,13 +230,24 @@ class AbstractFeatureInterval(AbstractInterval, ABC):
                 on a single UCSC track.
             name: Which identifier in this record to use as 'name'. feature_name to guid. If the supplied string
                 is not a valid attribute, it is used directly.
+            chromosome_relative_coordinates: Output GFF in chromosome-relative coordinates? Will raise an exception
+                if there is not a ``sequence_chunk`` ancestor type.
 
         Return:
             A :class:`~biocantor.io.bed.BED12` object.
+
+        Raises:
+            NoSuchAncestorException: If ``chromosome_relative_coordinates`` is ``False`` but there is no
+            ``sequence_chunk`` ancestor type.
         """
 
     @abstractmethod
-    def to_gff(self, parent: Optional[str] = None, parent_qualifiers: Optional[Dict] = None) -> Iterable[GFFRow]:
+    def to_gff(
+        self,
+        parent: Optional[str] = None,
+        parent_qualifiers: Optional[Dict] = None,
+        chromosome_relative_coordinates: bool = True,
+    ) -> Iterable[GFFRow]:
         """Writes a GFF format list of lists for this feature.
 
         The additional qualifiers are used when writing a hierarchical relationship back to files. GFF files
@@ -164,25 +256,53 @@ class AbstractFeatureInterval(AbstractInterval, ABC):
         Args:
             parent: ID of the Parent of this transcript.
             parent_qualifiers: Directly pull qualifiers in from this dictionary.
+            chromosome_relative_coordinates: Output GFF in chromosome-relative coordinates? Will raise an exception
+                if there is not a ``sequence_chunk`` ancestor type.
 
         Yields:
             :class:`~biocantor.io.gff3.rows.GFFRow`
+
+        Raises:
+            NoSuchAncestorException: If ``chromosome_relative_coordinates`` is ``False`` but there is no
+            ``sequence_chunk`` ancestor type.
         """
 
     def sequence_pos_to_feature(self, pos: int) -> int:
         """Converts sequence position to relative position along this feature."""
-        return self.location.parent_to_relative_pos(pos)
+        return self.lift_location_to_sequence_location_type("chromosome").parent_to_relative_pos(pos)
 
     def sequence_interval_to_feature(self, chr_start: int, chr_end: int, chr_strand: Strand) -> Location:
         """Converts a contiguous interval on the sequence to a relative location within this feature."""
-        return self.location.parent_to_relative_location(SingleInterval(chr_start, chr_end, chr_strand))
+        return self.lift_location_to_sequence_location_type("chromosome").parent_to_relative_location(
+            SingleInterval(chr_start, chr_end, chr_strand)
+        )
 
     def feature_pos_to_sequence(self, pos: int) -> int:
         """Converts a relative position along this feature to sequence coordinate."""
-        return self.location.relative_to_parent_pos(pos)
+        return self.lift_location_to_sequence_location_type("chromosome").relative_to_parent_pos(pos)
 
     def feature_interval_to_sequence(self, rel_start: int, rel_end: int, rel_strand: Strand) -> Location:
         """Converts a contiguous interval relative to this feature to a spliced location on the sequence."""
+        return self.lift_location_to_sequence_location_type("chromosome").relative_interval_to_parent_location(
+            rel_start, rel_end, rel_strand
+        )
+
+    def relative_sequence_pos_to_feature(self, pos: int) -> int:
+        """Converts chunk-relative sequence position to relative position along this feature."""
+        return self.location.parent_to_relative_pos(pos)
+
+    def relative_sequence_interval_to_feature(self, chr_start: int, chr_end: int, chr_strand: Strand) -> Location:
+        """Converts a contiguous chunk-relative interval on the sequence to a relative location within this feature."""
+        return self.location.parent_to_relative_location(SingleInterval(chr_start, chr_end, chr_strand))
+
+    def feature_pos_to_relative_sequence(self, pos: int) -> int:
+        """Converts a relative position along this feature to chunk-relative sequence coordinate."""
+        return self.location.relative_to_parent_pos(pos)
+
+    def feature_interval_to_relative_sequence(self, rel_start: int, rel_end: int, rel_strand: Strand) -> Location:
+        """
+        Converts a contiguous interval relative to this feature to a chunk-relative spliced location on the sequence.
+        """
         return self.location.relative_interval_to_parent_location(rel_start, rel_end, rel_strand)
 
     @lru_cache(maxsize=1)
@@ -282,9 +402,10 @@ class FeatureInterval(AbstractFeatureInterval):
         """Returns the name of this feature. Provides a shared API across genes/transcripts and features."""
         return self.feature_name
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self, chromosome_relative_coordinates: bool = True) -> Dict[str, Any]:
         """Convert to a dict usable by :class:`biocantor.io.models.FeatureIntervalModel`."""
-        interval_starts, interval_ends = list(zip(*([x.start, x.end] for x in self.location.blocks)))
+        blocks = self.blocks if chromosome_relative_coordinates else self.relative_blocks
+        interval_starts, interval_ends = list(zip(*([x.start, x.end] for x in blocks)))
         return dict(
             interval_starts=interval_starts,
             interval_ends=interval_ends,
@@ -299,10 +420,6 @@ class FeatureInterval(AbstractFeatureInterval):
             feature_guid=self.feature_guid,
             is_primary_feature=self._is_primary_feature,
         )
-
-    def update_parent(self, parent: Parent):
-        """Change parent to this new parent."""
-        self.location = self.location.reset_parent(parent)
 
     def intersect(
         self,
@@ -345,7 +462,10 @@ class FeatureInterval(AbstractFeatureInterval):
         return qualifiers
 
     def to_gff(
-        self, parent: Optional[str] = None, parent_qualifiers: Optional[Dict[Hashable, Set[str]]] = None
+        self,
+        parent: Optional[str] = None,
+        parent_qualifiers: Optional[Dict[Hashable, Set[str]]] = None,
+        chromosome_relative_coordinates: bool = True,
     ) -> Iterable[GFFRow]:
         """Writes a GFF format list of lists for this feature.
 
@@ -355,12 +475,24 @@ class FeatureInterval(AbstractFeatureInterval):
         Args:
             parent: ID of the Parent of this transcript.
             parent_qualifiers: Directly pull qualifiers in from this dictionary.
+            chromosome_relative_coordinates: Output GFF in chromosome-relative coordinates? Will raise an exception
+                if there is not a ``sequence_chunk`` ancestor type.
 
         Yields:
             :class:`~biocantor.io.gff3.rows.GFFRow`
+
+        Raises:
+            NoSuchAncestorException: If ``chromosome_relative_coordinates`` is ``False`` but there is no
+            ``sequence_chunk`` ancestor type.
         """
+
         if not self.sequence_name:
             raise GFF3MissingSequenceNameError("Must have sequence names to export to GFF3.")
+
+        if not chromosome_relative_coordinates and not self.has_ancestor_of_type("sequence_chunk"):
+            raise NoSuchAncestorException(
+                "Cannot export GFF in relative coordinates without a sequence_chunk ancestor."
+            )
 
         qualifiers = self.export_qualifiers(parent_qualifiers)
 
@@ -368,13 +500,13 @@ class FeatureInterval(AbstractFeatureInterval):
 
         attributes = GFFAttributes(id=feature_id, qualifiers=qualifiers, name=self.feature_name, parent=parent)
 
-        # transcript feature
+        # "transcript" (feature interval) feature
         row = GFFRow(
             self.sequence_name,
             GFF_SOURCE,
             BioCantorFeatureTypes.FEATURE_INTERVAL,
-            self.start + 1,
-            self.end,
+            (self.start if chromosome_relative_coordinates else self.relative_start) + 1,
+            self.end if chromosome_relative_coordinates else self.relative_end,
             NULL_COLUMN,
             self.strand,
             CDSPhase.NONE,
@@ -384,7 +516,9 @@ class FeatureInterval(AbstractFeatureInterval):
 
         # start adding exon features
         # re-use qualifiers, updating ID each time
-        for i, block in enumerate(self.location.blocks, 1):
+        blocks = self.blocks if chromosome_relative_coordinates else self.relative_blocks
+        for i, block in enumerate(blocks, 1):
+
             attributes = GFFAttributes(
                 id=f"feature-{feature_id}-{i}", qualifiers=qualifiers, name=self.feature_name, parent=feature_id
             )
@@ -402,21 +536,54 @@ class FeatureInterval(AbstractFeatureInterval):
             yield row
 
     def to_bed12(
-        self, score: Optional[int] = 0, rgb: Optional[RGB] = RGB(0, 0, 0), name: Optional[str] = "feature_name"
+        self,
+        score: Optional[int] = 0,
+        rgb: Optional[RGB] = RGB(0, 0, 0),
+        name: Optional[str] = "feature_name",
+        chromosome_relative_coordinates: bool = True,
     ) -> BED12:
-        block_sizes = [b.end - b.start for b in self.location.blocks]
-        block_starts = [b.start - self.start for b in self.location.blocks]
+        """Write a BED12 format representation of this :class:`FeatureInterval`.
+
+        Both of these optional arguments are specific to the BED12 format.
+
+        Args:
+            score: An optional score associated with a interval. UCSC requires an integer between 0 and 1000.
+            rgb: An optional RGB string for visualization on a browser. This allows you to have multiple colors
+                on a single UCSC track.
+            name: Which identifier in this record to use as 'name'. feature_name to guid. If the supplied string
+                is not a valid attribute, it is used directly.
+            chromosome_relative_coordinates: Output GFF in chromosome-relative coordinates? Will raise an exception
+                if there is not a ``sequence_chunk`` ancestor type.
+
+        Return:
+            A :class:`~biocantor.io.bed.BED12` object.
+
+        Raises:
+            NoSuchAncestorException: If ``chromosome_relative_coordinates`` is ``False`` but there is no
+            ``sequence_chunk`` ancestor type.
+        """
+        blocks = list(self.blocks) if chromosome_relative_coordinates else list(self.relative_blocks)
+        block_sizes = [b.end - b.start for b in blocks]
+        block_starts = [b.start - self.start for b in blocks]
+
+        if chromosome_relative_coordinates:
+            start = self.start
+            end = self.end
+        else:
+            start = self.relative_start
+            end = self.relative_end
+
         return BED12(
             self.sequence_name,
-            self.start,
-            self.end,
+            start,
+            end,
             getattr(self, name, name),
             score,
             self.strand,
             0,  # thickStart always 0 for non-coding
             0,  # thickEnd always 0 for non-coding
             rgb,
-            len(self.location.blocks),
+            self.location.num_blocks,
             block_sizes,
             block_starts,
         )
