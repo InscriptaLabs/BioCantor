@@ -468,3 +468,17 @@ class TestFeatureIntervalSequenceSubset:
     def test_constructor_exceptions(self, schema, parent, expected_exception):
         with pytest.raises(expected_exception):
             _ = schema.to_feature_interval(parent)
+
+    def test_dict(self):
+        feat = e3_spliced.to_feature_interval(parent_genome2_1_15)
+        feat2 = e3_spliced.to_feature_interval()
+        d = feat.to_dict()
+        d2 = feat2.to_dict()
+        del d["feature_interval_guid"]
+        del d2["feature_interval_guid"]
+        assert d == d2
+
+        rel_d = feat.to_dict(chromosome_relative_coordinates=False)
+        del rel_d["feature_interval_guid"]
+        assert rel_d != d
+        assert [x + 1 for x in rel_d["interval_starts"]] == list(d["interval_starts"])

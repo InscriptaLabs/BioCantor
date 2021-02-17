@@ -1,6 +1,6 @@
 from enum import Enum
 from methodtools import lru_cache
-from typing import Iterable, List, Union, Optional
+from typing import Iterator, List, Union, Optional
 
 from inscripta.biocantor.exc import LocationException
 from inscripta.biocantor.gene.codon import Codon, TranslationTable
@@ -158,14 +158,14 @@ class CDSInterval:
         """Pass up the end of this CDS's Location"""
         return self.location.end
 
-    def frame_iter(self) -> Iterable[CDSFrame]:
+    def frame_iter(self) -> Iterator[CDSFrame]:
         """Iterate over frames taking strand into account"""
         if self.location.strand == Strand.PLUS or self.location.strand == Strand.UNSTRANDED:
             yield from self.frames
         else:
             yield from reversed(self.frames)
 
-    def exon_iter(self) -> Iterable[SingleInterval]:
+    def exon_iter(self) -> Iterator[SingleInterval]:
         """Iterate over exons in transcription direction"""
         if self.location.strand == Strand.PLUS or self.location.strand == Strand.UNSTRANDED:
             yield from self.location.blocks
@@ -203,7 +203,7 @@ class CDSInterval:
         """
         return len(list(self.scan_codon_locations()))
 
-    def scan_codons(self, truncate_at_in_frame_stop: Optional[bool] = False) -> Iterable[Codon]:
+    def scan_codons(self, truncate_at_in_frame_stop: Optional[bool] = False) -> Iterator[Codon]:
         """
         Iterator along codons. If truncate_at_in_frame_stop is True,
         this will stop iteration at the first in-frame stop.
@@ -215,7 +215,7 @@ class CDSInterval:
             if truncate_at_in_frame_stop and c.is_stop_codon:
                 break
 
-    def scan_codon_locations(self) -> Iterable[Location]:
+    def scan_codon_locations(self) -> Iterator[Location]:
         """
         Returns an iterator over codon locations.
 
