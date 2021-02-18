@@ -68,7 +68,7 @@ class BaseModel:
 
         .. code:: python
 
-            paren_1_15 = Parent(
+            parent_1_15 = Parent(
                 sequence=Sequence(
                     genome2[1:15],
                     Alphabet.NT_EXTENDED_GAPPED,
