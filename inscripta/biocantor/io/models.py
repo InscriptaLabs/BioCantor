@@ -54,10 +54,10 @@ class BaseModel:
             location = SingleInterval(starts[0], ends[0], strand)
         else:
             location = CompoundInterval(starts, ends, strand)
-        return BaseModel.liftover_location_parent(location, parent_or_seq_chunk_parent)
+        return BaseModel.liftover_location_to_seq_chunk_parent(location, parent_or_seq_chunk_parent)
 
     @staticmethod
-    def liftover_location_parent(
+    def liftover_location_to_seq_chunk_parent(
         location: Location,
         parent_or_seq_chunk_parent: Optional[Parent] = None,
     ) -> Location:
@@ -68,15 +68,14 @@ class BaseModel:
 
         .. code:: python
 
-            chr1_parent = Parent(
+            paren_1_15 = Parent(
                 sequence=Sequence(
-                    genome[0:18],
+                    genome2[1:15],
                     Alphabet.NT_EXTENDED_GAPPED,
                     type="sequence_chunk",
                     parent=Parent(
-                        location=SingleInterval(0, 18, Strand.PLUS),
-                        id="genome_0_18",
-                        sequence_type="chromosome"
+                        location=SingleInterval(1, 15, Strand.PLUS,
+                                               parent=Parent(id="genome_1_15", sequence_type="chromosome"))
                     ),
                 )
             )
