@@ -36,7 +36,7 @@ parent_genome2_2_8 = Parent(
         Alphabet.NT_EXTENDED_GAPPED,
         type="sequence_chunk",
         parent=Parent(
-            location=SingleInterval(2, 8, Strand.PLUS, parent=Parent(id="genome_0_18", sequence_type="chromosome"))
+            location=SingleInterval(2, 8, Strand.PLUS, parent=Parent(id="genome_2_8", sequence_type="chromosome"))
         ),
     )
 )
