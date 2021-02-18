@@ -7,7 +7,11 @@ from abc import ABC, abstractmethod
 from typing import Optional, Any, Union, Dict, List, Set, Iterable, Hashable, TypeVar
 from uuid import UUID
 
-from inscripta.biocantor.exc import EmptyLocationException, NoSuchAncestorException
+from inscripta.biocantor.exc import (
+    EmptyLocationException,
+    NoSuchAncestorException,
+    ValidationException,
+)
 from inscripta.biocantor.gene.cds import CDSPhase
 from inscripta.biocantor.io.bed import BED12, RGB
 from inscripta.biocantor.io.gff3.constants import GFF_SOURCE, NULL_COLUMN, BioCantorFeatureTypes, BioCantorQualifiers
@@ -38,6 +42,7 @@ class AbstractInterval(ABC):
     sequence_guid: Optional[UUID] = None
     sequence_name: Optional[str] = None
     bin: int
+    is_partial: Optional[bool] = False
 
     def __len__(self):
         return len(self.location)
@@ -118,6 +123,31 @@ class AbstractInterval(ABC):
     def identifiers_dict(self) -> Dict[str, Union[str, UUID]]:
         """Returns the identifiers and their keys for this FeatureInterval, if they exist"""
         return {key: getattr(self, key) for key in self._identifiers if getattr(self, key) is not None}
+
+    def liftover_location_to_seq_chunk(
+        self,
+        seq_chunk_parent: Parent,
+    ):
+        """Lift this interval to a new subset.
+
+        This could happen as the result of a subsetting operation.
+
+        This will introduce chunk-relative coordinates to this interval, or reduce the size of existing chunk-relative
+        coordinates.
+        """
+        if not seq_chunk_parent.has_ancestor_of_type("chromosome"):
+            raise ValidationException("Provided Parent has no sequence of type 'chromosome'.")
+
+        location = self.location.reset_parent(seq_chunk_parent.parent)
+        sequence_chunk = seq_chunk_parent.sequence
+        interval_location_rel_to_chunk = sequence_chunk.location_on_parent.parent_to_relative_location(location)
+        interval_rel_to_chunk = interval_location_rel_to_chunk.reset_parent(seq_chunk_parent)
+
+        # keep track if we have now sliced this interval into a subset of the original interval
+        if len(interval_rel_to_chunk) != len(location):
+            self.is_partial = True
+
+        self.location = interval_rel_to_chunk
 
     def reset_parent(self, parent: Parent):
         """
@@ -327,7 +357,7 @@ class FeatureInterval(AbstractFeatureInterval):
 
     def __init__(
         self,
-        location: Location,  # exons
+        location: Location,
         qualifiers: Optional[Dict[Hashable, QualifierValue]] = None,
         sequence_guid: Optional[UUID] = None,
         sequence_name: Optional[str] = None,
@@ -338,7 +368,7 @@ class FeatureInterval(AbstractFeatureInterval):
         feature_guid: Optional[UUID] = None,
         is_primary_feature: Optional[bool] = None,
     ):
-        self.location = location  # genomic CompoundInterval
+        self.location = location
         self.sequence_guid = sequence_guid
         self.sequence_name = sequence_name
         self.feature_types = set(feature_types) if feature_types else set()  # stored as a set of types

@@ -183,6 +183,14 @@ class TranscriptInterval(AbstractFeatureInterval):
             self.cds.location = self.cds.location.reset_parent(parent)
         super().reset_parent(parent)
 
+    def liftover_location_to_seq_chunk(
+        self,
+        parent_or_seq_chunk_parent: Optional[Parent] = None,
+    ):
+        """Lift over this specific interval"""
+        # self.cds.location = liftover_location_parent(self.cds.location, parent_or_seq_chunk_parent)
+        super().liftover_location_to_seq_chunk(parent_or_seq_chunk_parent)
+
     def lift_cds_over_to_first_ancestor_of_type(self, sequence_type: Optional[str] = "chromosome") -> Location:
         """
         Lifts the CDS location member to another coordinate system. Is a no-op if there is no parent assigned.

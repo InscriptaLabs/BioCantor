@@ -51,11 +51,75 @@ class AbstractFeatureIntervalCollection(AbstractInterval, ABC):
     """
 
     @abstractmethod
+    def __iter__(self):
+        """Iterate over all children of this collection"""
+
+    @abstractmethod
     def children_guids(self) -> Set[UUID]:
         """Get all of the GUIDs for children.
 
         Returns: A set of UUIDs
         """
+
+    def reset_parent(self, parent: Parent):
+        """Reset parent of this collection, and all of its children.
+
+        This overrides :meth:`~biocantor.gene.feature.AbstractInterval.reset_parent()`. The original function
+        will remain applied on the leaf nodes.
+        """
+        self.reset_parent(parent)
+        for child in self:
+            child.reset_parent(parent)
+
+    def _subset_parent(self, start: int, end: int) -> Optional[Parent]:
+        """
+        Subset the Parent of this collection to a new interval, building a chunk parent.
+
+        Args:
+            start: Start position relative to the current sequence.
+            end: End position relative to the current sequence.
+
+        Returns:
+            A parent. Is a no-op if this collection has no parent.
+        """
+        if not self.location.parent:
+            return None
+
+        seq = self.location.parent.sequence
+
+        return Parent(
+            id=f"{self.sequence_name}:{start}-{end}",
+            sequence=Sequence(
+                str(seq[start:end]),
+                seq.alphabet,
+                type="sequence_chunk",
+                parent=Parent(
+                    location=SingleInterval(
+                        start,
+                        end,
+                        Strand.PLUS,
+                        parent=Parent(id=self.sequence_name, sequence_type="chromosome"),
+                    )
+                ),
+            ),
+        )
+
+    def _initialize_location(self, start: int, end: int, parent_or_seq_chunk_parent: Optional[Parent] = None):
+        """
+        Initialize the location for this collection. Assumes that the start/end coordinates are genome-relative,
+        and builds a chunk-relative location for this.
+
+        Args:
+            start: genome-relative start
+            end: genome-relative end
+            parent_or_seq_chunk_parent: A parent that could be null, genome relative, or sequence chunk relative.
+        """
+        self.location = SingleInterval(start, end, Strand.PLUS)
+        if parent_or_seq_chunk_parent:
+            if parent_or_seq_chunk_parent.has_ancestor_of_type("sequence_chunk"):
+                super().liftover_location_to_seq_chunk(parent_or_seq_chunk_parent)
+            else:
+                self.location = self.location.reset_parent(parent_or_seq_chunk_parent)
 
     def get_reference_sequence(self) -> Sequence:
         """Returns the *plus strand* sequence for this interval"""
@@ -88,6 +152,15 @@ class AbstractFeatureIntervalCollection(AbstractInterval, ABC):
             )
             primary_feature = intervals[interval_sizes[0][2]]
         return primary_feature
+
+    def liftover_location_to_seq_chunk(
+        self,
+        parent_or_seq_chunk_parent: Parent,
+    ):
+        """Lift over this collection and all of its children"""
+        super().liftover_location_to_seq_chunk(parent_or_seq_chunk_parent)
+        for obj in self:
+            obj.liftover_location_to_seq_chunk(parent_or_seq_chunk_parent)
 
 
 class GeneInterval(AbstractFeatureIntervalCollection):
@@ -122,6 +195,9 @@ class GeneInterval(AbstractFeatureIntervalCollection):
         sequence_guid: Optional[UUID] = None,
         parent_or_seq_chunk_parent: Optional[Parent] = None,
     ):
+        if not transcripts:
+            raise InvalidAnnotationError("GeneInterval must have transcripts")
+
         self.transcripts = transcripts
         self.gene_id = gene_id
         self.gene_symbol = gene_symbol
@@ -131,15 +207,14 @@ class GeneInterval(AbstractFeatureIntervalCollection):
         self.sequence_guid = sequence_guid
         # qualifiers come in as a List, convert to Set
         self._import_qualifiers_from_list(qualifiers)
-
-        if not self.transcripts:
-            raise InvalidAnnotationError("GeneInterval must have transcripts")
-
-        start = min(tx.chunk_relative_start for tx in self.transcripts)
-        end = max(tx.chunk_relative_end for tx in self.transcripts)
-        self.location = SingleInterval(start, end, Strand.PLUS, parent=parent_or_seq_chunk_parent)
-        self.bin = bins(start, end, fmt="bed")
         self.primary_transcript = AbstractFeatureIntervalCollection._find_primary_feature(self.transcripts)
+
+        # start/end are assumed to be in genomic coordinates, and then _initialize_location
+        # will transform them into chunk-relative coordinates if necessary
+        start = min(tx.start for tx in self.transcripts)
+        end = max(tx.end for tx in self.transcripts)
+        self._initialize_location(start, end, parent_or_seq_chunk_parent)
+        self.bin = bins(start, end, fmt="bed")
 
         if guid is None:
             self.guid = digest_object(
@@ -366,9 +441,11 @@ class FeatureIntervalCollection(AbstractFeatureIntervalCollection):
         if not self.feature_intervals:
             raise InvalidAnnotationError("FeatureCollection must have features")
 
-        start = min(f.chunk_relative_start for f in self.feature_intervals)
-        end = max(f.chunk_relative_end for f in self.feature_intervals)
-        self.location = SingleInterval(start, end, Strand.PLUS, parent=parent_or_seq_chunk_parent)
+        # start/end are assumed to be in genomic coordinates, and then _initialize_location
+        # will transform them into chunk-relative coordinates if necessary
+        start = min(f.start for f in self.feature_intervals)
+        end = max(f.end for f in self.feature_intervals)
+        self._initialize_location(start, end, parent_or_seq_chunk_parent)
         self.bin = bins(start, end, fmt="bed")
 
         self.primary_feature = AbstractFeatureIntervalCollection._find_primary_feature(self.feature_intervals)
@@ -549,21 +626,24 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
         else:
             self.sequence = None
 
+        # start/end are assumed to be in genomic coordinates, and then _initialize_location
+        # will transform them into chunk-relative coordinates if necessary
         if start is None and end is None:
             # if we have nothing, we cannot infer a range
             if not self.is_empty:
                 if start is None:
-                    start = min(f.chunk_relative_start for f in self.iter_children())
+                    start = min(f.start for f in self.iter_children())
                 if end is None:
-                    end = max(f.chunk_relative_end for f in self.iter_children())
+                    end = max(f.end for f in self.iter_children())
 
         if start is None and end is None:
             # if we still have nothing, we are empty
             self.location = EmptyLocation()
         else:
             assert start is not None and end is not None
-            self.location = SingleInterval(start, end, Strand.PLUS, parent=parent_or_seq_chunk_parent)
+            self._initialize_location(start, end, parent_or_seq_chunk_parent)
             self.bin = bins(self.start, self.end, fmt="bed")
+
         self.completely_within = completely_within
 
         self._guid_map = {}
@@ -689,6 +769,11 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
                 else:
                     genes_to_keep.append(gene_or_feature)
 
+        seq_chunk_parent = self._subset_parent(start, end)
+        for gene_or_feature in itertools.chain(genes_to_keep, features_to_keep):
+            if seq_chunk_parent:
+                gene_or_feature.liftover_location_to_seq_chunk(seq_chunk_parent)
+
         return AnnotationCollection(
             feature_collections=features_to_keep,
             genes=genes_to_keep,
@@ -699,7 +784,7 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
             start=start,
             end=end,
             completely_within=completely_within,
-            parent_or_seq_chunk_parent=self.location.parent,
+            parent_or_seq_chunk_parent=seq_chunk_parent,
         )
 
     def _build_guid_cache(self):
