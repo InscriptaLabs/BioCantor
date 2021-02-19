@@ -71,42 +71,6 @@ class AbstractFeatureIntervalCollection(AbstractInterval, ABC):
         for child in self:
             child.reset_parent(parent)
 
-    def _subset_parent(self, start: int, end: int) -> Optional[Parent]:
-        """
-        Subset the Parent of this collection to a new interval, building a chunk parent.
-
-        Args:
-            start: Start position relative to the current sequence.
-            end: End position relative to the current sequence.
-
-        Returns:
-            A parent. Is a no-op if this collection has no parent.
-        """
-        if not self.location.parent:
-            return None
-        # edge case for a now null interval
-        elif start == end == 0:
-            return None
-
-        seq = self.location.parent.sequence
-
-        return Parent(
-            id=f"{self.sequence_name}:{start}-{end}",
-            sequence=Sequence(
-                str(seq[start:end]),
-                seq.alphabet,
-                type="sequence_chunk",
-                parent=Parent(
-                    location=SingleInterval(
-                        start,
-                        end,
-                        Strand.PLUS,
-                        parent=Parent(id=self.sequence_name, sequence_type="chromosome"),
-                    )
-                ),
-            ),
-        )
-
     def _initialize_location(self, start: int, end: int, parent_or_seq_chunk_parent: Optional[Parent] = None):
         """
         Initialize the location for this collection. Assumes that the start/end coordinates are genome-relative,
@@ -732,6 +696,49 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
             completely_within=self.completely_within,
         )
 
+    def _subset_parent(self, start: int, end: int) -> Optional[Parent]:
+        """
+        Subset the Parent of this collection to a new interval, building a chunk parent.
+
+        Args:
+            start: Genome relative start position.
+            end: Genome relative end position.
+
+        Returns:
+            A parent, or ``None`` if this location has no parent, or if start == end (empty interval).
+        """
+        if not self.location.parent:
+            return None
+        # edge case for a now null interval
+        elif start == end:
+            return None
+
+        seq = self.location.parent.sequence
+        chunk_relative_start = self.lift_over_to_first_ancestor_of_type("chromosome").parent_to_relative_pos(start)
+
+        # handle the edge case where the end is the end of the current chunk
+        if end == self.chunk_relative_end:
+            chunk_relative_end = self.chunk_relative_end
+        else:
+            chunk_relative_end = self.lift_over_to_first_ancestor_of_type("chromosome").parent_to_relative_pos(end)
+
+        return Parent(
+            id=f"{self.sequence_name}:{start}-{end}",
+            sequence=Sequence(
+                str(seq[chunk_relative_start:chunk_relative_end]),
+                seq.alphabet,
+                type="sequence_chunk",
+                parent=Parent(
+                    location=SingleInterval(
+                        start,
+                        end,
+                        Strand.PLUS,
+                        parent=Parent(id=self.sequence_name, sequence_type="chromosome"),
+                    )
+                ),
+            ),
+        )
+
     def query_by_position(
         self,
         start: Optional[int] = None,
@@ -742,8 +749,8 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
         """Filter this annotation collection object based on positions, sequence, and boolean flags.
 
         Args:
-            start: Start position. If not set, will be 0.
-            end: End position. If not set, will be unbounded.
+            start: Genome relative start position. If not set, will be 0.
+            end: Genome relative end position. If not set, will be unbounded.
             coding_only: Filter for coding genes only?
             completely_within: Strict boundaries? If False, features that partially overlap
                 will be included in the output. Bins optimization cannot be used.
@@ -765,6 +772,10 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
             raise InvalidQueryError("Start must be positive")
         elif start > end:
             raise InvalidQueryError("Start must be less than or equal to end")
+        elif start < self.start:
+            raise InvalidQueryError("Start must be within bounds of current interval")
+        elif end > self.end:
+            raise InvalidQueryError("End must be within bounds of current interval")
 
         genes_to_keep = []
         features_to_keep = []
