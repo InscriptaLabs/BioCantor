@@ -138,7 +138,13 @@ class AbstractInterval(ABC):
         if not seq_chunk_parent.has_ancestor_of_type("chromosome"):
             raise ValidationException("Provided Parent has no sequence of type 'chromosome'.")
 
-        location = self.location.reset_parent(seq_chunk_parent.parent)
+        # if we are already a seq chunk, we need to lift ourselves back to genomic coordinates first
+        if self.has_ancestor_of_type("sequence_chunk"):
+            location = self.location.lift_over_to_first_ancestor_of_type("chromosome").reset_parent(
+                seq_chunk_parent.parent
+            )
+        else:
+            location = self.location.reset_parent(seq_chunk_parent.parent)
         sequence_chunk = seq_chunk_parent.sequence
         interval_location_rel_to_chunk = sequence_chunk.location_on_parent.parent_to_relative_location(location)
         interval_rel_to_chunk = interval_location_rel_to_chunk.reset_parent(seq_chunk_parent)

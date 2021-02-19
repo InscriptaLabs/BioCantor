@@ -115,12 +115,6 @@ class BaseModel:
             interval_location_rel_to_chunk = sequence_chunk.location_on_parent.parent_to_relative_location(location)
             interval_rel_to_chunk = interval_location_rel_to_chunk.reset_parent(parent_or_seq_chunk_parent)
 
-            if len(interval_rel_to_chunk) != len(location):
-                raise ValidationException(
-                    f"Lifted location is no longer the same length as the input "
-                    f"(({len(interval_rel_to_chunk)} != ({len(location)})."
-                )
-
             return interval_rel_to_chunk
 
         # since this is a whole genome, we don't need to lift anything up

@@ -314,6 +314,19 @@ class TestAnnotationCollection:
             orig_gene = next(obj.query_by_feature_identifiers(gene.identifiers).iter_children())
             assert orig_gene.get_primary_feature_sequence() == gene.get_primary_feature_sequence()
 
+    def test_nested_position_queries(self):
+        obj = self.annot.to_annotation_collection(parent_genome)
+        r = obj.query_by_position(0, 25, completely_within=False)
+        assert len(r) == 2
+        for gene in r:
+            orig_gene = next(obj.query_by_feature_identifiers(gene.identifiers).iter_children())
+            assert orig_gene.get_primary_feature_sequence() == gene.get_primary_feature_sequence()
+        r2 = r.query_by_position(0, 10, completely_within=False)
+        assert len(r2) == 2
+        for gene in r2:
+            orig_gene = next(obj.query_by_feature_identifiers(gene.identifiers).iter_children())
+            assert orig_gene.get_primary_feature_sequence() == gene.get_primary_feature_sequence()
+
     @pytest.mark.parametrize(
         "start,end,coding_only,completely_within,expected",
         [
