@@ -312,7 +312,11 @@ class TestAnnotationCollection:
             assert set.union(*[x.identifiers for x in r]) == expected
         for gene in r:
             orig_gene = next(obj.query_by_feature_identifiers(gene.identifiers).iter_children())
-            assert orig_gene.get_primary_feature_sequence() == gene.get_primary_feature_sequence()
+            for tx1, tx2 in zip(gene, orig_gene):
+                if len(tx1) == len(tx2):
+                     assert tx1.get_spliced_sequence() == tx2.get_spliced_sequence()
+                else:
+                    assert str(tx1.get_spliced_sequence()) in str(tx2.get_spliced_sequence())
 
     def test_nested_position_queries(self):
         obj = self.annot.to_annotation_collection(parent_genome)
@@ -320,12 +324,27 @@ class TestAnnotationCollection:
         assert len(r) == 2
         for gene in r:
             orig_gene = next(obj.query_by_feature_identifiers(gene.identifiers).iter_children())
-            assert orig_gene.get_primary_feature_sequence() == gene.get_primary_feature_sequence()
+            for tx1, tx2 in zip(gene, orig_gene):
+                assert tx1.get_spliced_sequence() == tx2.get_spliced_sequence()
         r2 = r.query_by_position(0, 10, completely_within=False)
         assert len(r2) == 2
+        # this slice cut some of transcripts into chunks, so now the sequences are a subset
         for gene in r2:
             orig_gene = next(obj.query_by_feature_identifiers(gene.identifiers).iter_children())
-            assert orig_gene.get_primary_feature_sequence() == gene.get_primary_feature_sequence()
+            for tx1, tx2 in zip(gene, orig_gene):
+                assert str(tx1.get_spliced_sequence()) in str(tx2.get_spliced_sequence())
+        r3 = r.query_by_position(0, 8, completely_within=False)
+        assert len(r3) == 2
+        for gene in r3:
+            orig_gene = next(obj.query_by_feature_identifiers(gene.identifiers).iter_children())
+            for tx1, tx2 in zip(gene, orig_gene):
+                assert str(tx1.get_spliced_sequence()) in str(tx2.get_spliced_sequence())
+
+    def test_nested_position_query_out_of_bounds(self):
+        obj = self.annot.to_annotation_collection(parent_genome)
+        r = obj.query_by_position(0, 25, completely_within=False)
+        with pytest.raises(InvalidQueryError):
+            _ = r.query_by_position(0, 30)
 
     @pytest.mark.parametrize(
         "start,end,coding_only,completely_within,expected",
@@ -352,6 +371,8 @@ class TestAnnotationCollection:
             _ = obj.query_by_position(-1, 10)
         with pytest.raises(InvalidQueryError):
             _ = obj.query_by_position(15, 10)
+        with pytest.raises(InvalidQueryError):
+            _ = obj.query_by_position(0, 40)
 
     @pytest.mark.parametrize(
         "ids",

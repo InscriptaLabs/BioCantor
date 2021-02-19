@@ -239,6 +239,22 @@ class GeneInterval(AbstractFeatureIntervalCollection):
             gene_guid=self.guid,
         )
 
+    @staticmethod
+    def from_dict(vals: Dict[str, Any], parent_or_seq_chunk_parent: Optional[Parent] = None) -> "GeneInterval":
+        """Build an :class:`GeneInterval` from a dictionary representation"""
+        return GeneInterval(
+            transcripts=[TranscriptInterval.from_dict(x, parent_or_seq_chunk_parent) for x in vals["transcripts"]],
+            gene_id=vals["gene_id"],
+            gene_symbol=vals["gene_symbol"],
+            gene_type=Biotype[vals["gene_type"]] if vals["gene_type"] else None,
+            locus_tag=vals["locus_tag"],
+            qualifiers=vals["qualifiers"],
+            sequence_name=vals["sequence_name"],
+            sequence_guid=vals["sequence_guid"],
+            guid=vals["gene_guid"],
+            parent_or_seq_chunk_parent=parent_or_seq_chunk_parent
+        )
+
     def get_primary_transcript(self) -> Union[TranscriptInterval, None]:
         """Get the primary transcript, if it exists."""
 
@@ -493,6 +509,26 @@ class FeatureIntervalCollection(AbstractFeatureIntervalCollection):
             feature_collection_guid=self.guid,
         )
 
+    @staticmethod
+    def from_dict(
+        vals: Dict[str, Any], parent_or_seq_chunk_parent: Optional[Parent] = None
+    ) -> "FeatureIntervalCollection":
+        """Build an :class:`FeatureIntervalCollection` from a dictionary representation"""
+        return FeatureIntervalCollection(
+            feature_intervals=[
+                FeatureInterval.from_dict(x, parent_or_seq_chunk_parent) for x in vals["feature_intervals"]
+            ],
+            feature_collection_name=vals["feature_collection_name"],
+            feature_collection_id=vals["feature_collection_id"],
+            feature_collection_type=vals["feature_collection_type"],
+            locus_tag=vals["locus_tag"],
+            qualifiers=vals["qualifiers"],
+            sequence_name=vals["sequence_name"],
+            sequence_guid=vals["sequence_guid"],
+            guid=vals["feature_collection_guid"],
+            parent_or_seq_chunk_parent=parent_or_seq_chunk_parent
+        )
+
     def export_qualifiers(self) -> Dict[Hashable, Set[str]]:
         """Exports qualifiers for GFF3/GenBank export"""
         qualifiers = self.qualifiers.copy()
@@ -696,6 +732,23 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
             completely_within=self.completely_within,
         )
 
+    @staticmethod
+    def from_dict(vals: Dict[str, Any], parent_or_seq_chunk_parent: Optional[Parent] = None) -> "AnnotationCollection":
+        """Build an :class:`FeatureIntervalCollection` from a dictionary representation"""
+        return AnnotationCollection(
+            genes=[GeneInterval.from_dict(x, parent_or_seq_chunk_parent) for x in vals["genes"]],
+            feature_collections=[FeatureIntervalCollection.from_dict(x, parent_or_seq_chunk_parent) for x in vals["feature_collections"]],
+            name=vals["name"],
+            id=vals["id"],
+            qualifiers=vals["qualifiers"],
+            sequence_name=vals["sequence_name"],
+            sequence_guid=vals["sequence_guid"],
+            start=vals["start"],
+            end=vals["end"],
+            completely_within=vals["completely_within"],
+            parent_or_seq_chunk_parent=parent_or_seq_chunk_parent
+        )
+
     def _subset_parent(self, start: int, end: int) -> Optional[Parent]:
         """
         Subset the Parent of this collection to a new interval, building a chunk parent.
@@ -756,7 +809,8 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
                 will be included in the output. Bins optimization cannot be used.
 
         Returns:
-           :class:`AnnotationCollection` that may be empty.
+           :class:`AnnotationCollection` that may be empty, and otherwise will contain new copies of every
+            constituent member.
         """
         # bins are only valid if we have start, end and completely_within
         if completely_within and start and end:
@@ -787,30 +841,30 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
                 continue
             if completely_within and gene_or_feature.start >= start and gene_or_feature.end <= end:
                 if isinstance(gene_or_feature, FeatureIntervalCollection):
-                    features_to_keep.append(gene_or_feature)
+                    features_to_keep.append(gene_or_feature.to_dict())
                 else:
-                    genes_to_keep.append(gene_or_feature)
+                    genes_to_keep.append(gene_or_feature.to_dict())
             elif not completely_within and gene_or_feature.start < end and gene_or_feature.end > start:
                 if isinstance(gene_or_feature, FeatureIntervalCollection):
-                    features_to_keep.append(gene_or_feature)
+                    features_to_keep.append(gene_or_feature.to_dict())
                 else:
-                    genes_to_keep.append(gene_or_feature)
+                    genes_to_keep.append(gene_or_feature.to_dict())
 
         seq_chunk_parent = self._subset_parent(start, end)
-        for gene_or_feature in itertools.chain(genes_to_keep, features_to_keep):
-            if seq_chunk_parent:
-                gene_or_feature.liftover_location_to_seq_chunk(seq_chunk_parent)
 
-        return AnnotationCollection(
-            feature_collections=features_to_keep,
-            genes=genes_to_keep,
-            name=self.name,
-            sequence_name=self.sequence_name,
-            sequence_guid=self.sequence_guid,
-            qualifiers=self._export_qualifiers_to_list(),
-            start=start,
-            end=end,
-            completely_within=completely_within,
+        return AnnotationCollection.from_dict(
+            dict(
+                feature_collections=features_to_keep,
+                genes=genes_to_keep,
+                name=self.name,
+                id=self.id,
+                sequence_name=self.sequence_name,
+                sequence_guid=self.sequence_guid,
+                qualifiers=self._export_qualifiers_to_list(),
+                start=start,
+                end=end,
+                completely_within=completely_within,
+            ),
             parent_or_seq_chunk_parent=seq_chunk_parent,
         )
 

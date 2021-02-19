@@ -7,10 +7,9 @@ from itertools import count
 from typing import Optional, Any, Dict, Iterable, Hashable, Set
 from uuid import UUID
 
-from inscripta.biocantor.exc import EmptyLocationException
-from inscripta.biocantor.exc import NoncodingTranscriptError
+from inscripta.biocantor.exc import EmptyLocationException, LocationOverlapException, NoncodingTranscriptError
 from inscripta.biocantor.gene.biotype import Biotype
-from inscripta.biocantor.gene.cds import CDSInterval, CDSPhase
+from inscripta.biocantor.gene.cds import CDSInterval, CDSPhase, CDSFrame
 from inscripta.biocantor.gene.feature import AbstractFeatureInterval, QualifierValue
 from inscripta.biocantor.io.bed import BED12, RGB
 from inscripta.biocantor.io.gff3.constants import GFF_SOURCE, NULL_COLUMN, BioCantorQualifiers, BioCantorFeatureTypes
@@ -234,6 +233,46 @@ class TranscriptInterval(AbstractFeatureInterval):
             protein_id=self.protein_id,
             transcript_guid=self.transcript_guid,
             transcript_interval_guid=self.guid,
+        )
+
+    @staticmethod
+    def from_dict(vals: Dict[str, Any], parent_or_seq_chunk_parent: Optional[Parent] = None) -> "TranscriptInterval":
+        """Build a :class:`TranscriptInterval` from a dictionary."""
+        location = TranscriptInterval.initialize_location(
+            vals["exon_starts"], vals["exon_ends"], Strand[vals["strand"]], parent_or_seq_chunk_parent
+        )
+
+        # could be a non-coding transcript
+        if vals["cds_starts"]:
+            # as a result of a parent or seq chunk parent constructor, it may be the case that this CDS is entirely
+            # sliced out. Check this case, and then void out the CDS.
+            try:
+                cds_interval = TranscriptInterval.initialize_location(
+                    vals["cds_starts"],
+                    vals["cds_ends"],
+                    Strand[vals["strand"]],
+                    parent_or_seq_chunk_parent=parent_or_seq_chunk_parent,
+                )
+                # we may end up having a reduced number of CDSFrames now due to this region being a subset of this gene
+                cds = CDSInterval(cds_interval, [CDSFrame[x] for x in vals["cds_frames"][:len(cds_interval.blocks)]])
+            except LocationOverlapException:
+                cds = None
+        else:
+            cds = None
+
+        return TranscriptInterval(
+            location,
+            cds,
+            guid=vals["transcript_interval_guid"],
+            transcript_guid=vals["transcript_guid"],
+            qualifiers=vals["qualifiers"],
+            is_primary_tx=vals["is_primary_tx"],
+            transcript_id=vals["transcript_id"],
+            transcript_symbol=vals["transcript_symbol"],
+            transcript_type=Biotype[vals["transcript_type"]] if vals["transcript_type"] else None,
+            sequence_name=vals["sequence_name"],
+            sequence_guid=vals["sequence_guid"],
+            protein_id=vals["protein_id"],
         )
 
     def merge_overlapping(self) -> "TranscriptInterval":

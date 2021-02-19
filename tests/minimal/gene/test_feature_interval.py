@@ -448,18 +448,6 @@ class TestFeatureIntervalSequenceSubset:
     @pytest.mark.parametrize(
         "schema,parent,expected_exception",
         [
-            [e3_spliced, parent_genome2_2_8, ValidationException],
-            [e3_spliced_minus, parent_genome2_2_8, ValidationException],
-            [se_unspliced, parent_genome2_1_15, ValidationException],
-        ],
-    )
-    def test_position_exceptions(self, schema, parent, expected_exception):
-        with pytest.raises(expected_exception):
-            _ = schema.to_feature_interval(parent)
-
-    @pytest.mark.parametrize(
-        "schema,parent,expected_exception",
-        [
             [e3_spliced, Parent(), ValidationException],
             [e3_spliced_minus, Parent(sequence_type="chromosome"), NullSequenceException],
             [se_unspliced, Parent(sequence_type="sequence_chunk"), NullSequenceException],

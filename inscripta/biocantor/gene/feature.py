@@ -11,6 +11,7 @@ from inscripta.biocantor.exc import (
     EmptyLocationException,
     NoSuchAncestorException,
     ValidationException,
+    NullSequenceException,
 )
 from inscripta.biocantor.gene.cds import CDSPhase
 from inscripta.biocantor.io.bed import BED12, RGB
@@ -18,7 +19,7 @@ from inscripta.biocantor.io.gff3.constants import GFF_SOURCE, NULL_COLUMN, BioCa
 from inscripta.biocantor.io.gff3.exc import GFF3MissingSequenceNameError
 from inscripta.biocantor.io.gff3.rows import GFFAttributes, GFFRow
 from inscripta.biocantor.location.location import Location
-from inscripta.biocantor.location.location_impl import SingleInterval
+from inscripta.biocantor.location.location_impl import SingleInterval, CompoundInterval
 from inscripta.biocantor.location.strand import Strand
 from inscripta.biocantor.parent.parent import Parent
 from inscripta.biocantor.sequence.sequence import Sequence
@@ -42,7 +43,6 @@ class AbstractInterval(ABC):
     sequence_guid: Optional[UUID] = None
     sequence_name: Optional[str] = None
     bin: int
-    is_partial: Optional[bool] = False
 
     def __len__(self):
         return len(self.location)
@@ -58,7 +58,13 @@ class AbstractInterval(ABC):
 
     @abstractmethod
     def to_dict(self, chromosome_relative_coordinates: bool = True) -> Dict[str, Any]:
-        """Dictionary to build Model representation"""
+        """Dictionary to build Model representation. Defaults to always exporting in original chromosome
+        relative coordinates, but this can be disabled to export in sequence-chunk relative coordinates."""
+
+    @staticmethod
+    @abstractmethod
+    def from_dict(vals: Dict[str, Any], parent_or_seq_chunk_parent: Optional[Parent] = None) -> "AbstractInterval":
+        """Build an interval from a dictionary representation"""
 
     @abstractmethod
     def to_gff(
@@ -124,6 +130,101 @@ class AbstractInterval(ABC):
         """Returns the identifiers and their keys for this FeatureInterval, if they exist"""
         return {key: getattr(self, key) for key in self._identifiers if getattr(self, key) is not None}
 
+    @staticmethod
+    def initialize_location(
+        starts: List[int],
+        ends: List[int],
+        strand: Strand,
+        parent_or_seq_chunk_parent: Optional[Parent] = None,
+    ) -> Location:
+        """
+        Initialize the :class:`Location` object for this interval.
+
+        Args:
+            starts: Start positions relative to the chromosome.
+            ends: End positions relative to the chromosome.
+            strand: Strand relative to the chromosome.
+            parent_or_seq_chunk_parent: An optional parent, either as a full chromosome or as a sequence chunk.
+        """
+        if len(starts) != len(ends):
+            raise ValidationException("Number of interval starts does not match number of interval ends")
+        elif len(starts) == len(ends) == 1:
+            location = SingleInterval(starts[0], ends[0], strand)
+        else:
+            location = CompoundInterval(starts, ends, strand)
+        return AbstractInterval.liftover_location_to_seq_chunk_parent(location, parent_or_seq_chunk_parent)
+
+    @staticmethod
+    def liftover_location_to_seq_chunk_parent(
+        location: Location,
+        parent_or_seq_chunk_parent: Optional[Parent] = None,
+    ) -> Location:
+        """
+        BioCantor supports constructing any of the interval classes from a subset of the chromosome. In order to
+        be able to set up the coordinate relationship and successfully pull down sequence, this function
+        lifts the coordinates from the original annotation object on to this new coordinate system.
+
+        .. code:: python
+
+            parent_1_15 = Parent(
+                sequence=Sequence(
+                    genome2[1:15],
+                    Alphabet.NT_EXTENDED_GAPPED,
+                    type="sequence_chunk",
+                    parent=Parent(
+                        location=SingleInterval(1, 15, Strand.PLUS,
+                                               parent=Parent(id="genome_1_15", sequence_type="chromosome"))
+                    ),
+                )
+            )
+
+        Alternatively, if the sequence is coming straight from a file, it will be a :class:`Parent` with a
+        :class:`Sequence` attached:
+
+        .. code:: python
+
+            parent = Parent(id="chr1", sequence=Sequence(genome, Alphabet.NT_STRICT, type="chromosome"))
+
+        This convenience function detects which kind of parent is given, and sets up the appropriate location.
+
+        Args:
+            location: A location object, likely produced by :meth:`initialize_location()`.
+            parent_or_seq_chunk_parent: An optional parent, either as a full chromosome or as a sequence chunk.
+
+        Returns:
+            A :class:`Location` object.
+
+        Raises:
+            ValidationException: If ``parent_or_seq_chunk_parent`` has no ancestor of type ``chromosome`` or
+                ``sequence_chunk``.
+            NullSequenceException: If ``parent_or_seq_chunk_parent`` has no usable sequence ancestor.
+        """
+        if parent_or_seq_chunk_parent is None:
+            return location
+
+        elif parent_or_seq_chunk_parent.has_ancestor_of_type("sequence_chunk"):
+
+            chunk_parent = parent_or_seq_chunk_parent.first_ancestor_of_type("sequence_chunk")
+            if not chunk_parent.sequence:
+                raise NullSequenceException("Must have a sequence if a parent is provided.")
+
+            location = location.reset_parent(chunk_parent.parent)
+            sequence_chunk = chunk_parent.sequence
+            interval_location_rel_to_chunk = sequence_chunk.location_on_parent.parent_to_relative_location(location)
+            interval_rel_to_chunk = interval_location_rel_to_chunk.reset_parent(parent_or_seq_chunk_parent)
+
+            return interval_rel_to_chunk
+
+        # since this is a whole genome, we don't need to lift anything up
+        elif parent_or_seq_chunk_parent.has_ancestor_of_type("chromosome"):
+            if not parent_or_seq_chunk_parent.first_ancestor_of_type("chromosome").sequence:
+                raise NullSequenceException("Must have a sequence if a parent is provided.")
+
+            return location.reset_parent(parent_or_seq_chunk_parent)
+
+        else:
+            raise ValidationException("Provided Parent has no sequence of type 'chromosome' or 'sequence_chunk'.")
+
     def liftover_location_to_seq_chunk(
         self,
         seq_chunk_parent: Parent,
@@ -148,10 +249,6 @@ class AbstractInterval(ABC):
         sequence_chunk = seq_chunk_parent.sequence
         interval_location_rel_to_chunk = sequence_chunk.location_on_parent.parent_to_relative_location(location)
         interval_rel_to_chunk = interval_location_rel_to_chunk.reset_parent(seq_chunk_parent)
-
-        # keep track if we have now sliced this interval into a subset of the original interval
-        if len(interval_rel_to_chunk) != len(location):
-            self.is_partial = True
 
         self.location = interval_rel_to_chunk
 
@@ -435,6 +532,25 @@ class FeatureInterval(AbstractFeatureInterval):
             feature_interval_guid=self.guid,
             feature_guid=self.feature_guid,
             is_primary_feature=self._is_primary_feature,
+        )
+
+    @staticmethod
+    def from_dict(vals: Dict[str, Any], parent_or_seq_chunk_parent: Optional[Parent] = None) -> "FeatureInterval":
+        """Build a :class:`FeatureInterval` from a dictionary."""
+        location = FeatureInterval.initialize_location(
+            vals["interval_starts"], vals["interval_ends"], Strand[vals["strand"]], parent_or_seq_chunk_parent
+        )
+        return FeatureInterval(
+            location,
+            qualifiers=vals["qualifiers"],
+            sequence_guid=vals["sequence_guid"],
+            sequence_name=vals["sequence_name"],
+            feature_types=vals["feature_types"],
+            feature_name=vals["feature_name"],
+            feature_id=vals["feature_id"],
+            guid=vals["feature_interval_guid"],
+            feature_guid=vals["feature_guid"],
+            is_primary_feature=vals["is_primary_feature"],
         )
 
     def intersect(
