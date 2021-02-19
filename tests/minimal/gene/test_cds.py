@@ -6,6 +6,7 @@ from inscripta.biocantor.location.location_impl import CompoundInterval, SingleI
 from inscripta.biocantor.location.strand import Strand
 from inscripta.biocantor.sequence.alphabet import Alphabet
 from inscripta.biocantor.sequence import Sequence
+from inscripta.biocantor.exc import LocationException
 
 
 class TestCDSPhase:
@@ -828,3 +829,27 @@ class TestCDSInterval:
     )
     def test_optimize_and_combine_blocks(self, cds, expected):
         assert list(cds.optimize_and_combine_blocks().scan_codons()) == expected
+
+    def test_frame_exception(self):
+        with pytest.raises(LocationException):
+            _ = CDSInterval(
+                CompoundInterval(
+                    [2, 8, 12],
+                    [5, 13, 18],
+                    Strand.PLUS,
+                    parent=Sequence("AAAGGAAAGTCCCTGAAAAAA", Alphabet.NT_EXTENDED_GAPPED),
+                ),
+                [CDSFrame.ONE, CDSFrame.ONE],
+            )
+
+    def test_frame_to_phase(self):
+        cds = CDSInterval(
+            CompoundInterval(
+                [2, 8, 12],
+                [5, 13, 18],
+                Strand.PLUS,
+                parent=Sequence("AAAGGAAAGTCCCTGAAAAAA", Alphabet.NT_EXTENDED_GAPPED),
+            ),
+            [CDSFrame.ONE.to_phase(), CDSFrame.ONE.to_phase(), CDSFrame.ZERO.to_phase()],
+        )
+        assert list(cds.scan_codons()) == [Codon.TCC, Codon.CTG, Codon.AAA]

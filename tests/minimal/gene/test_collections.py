@@ -322,18 +322,21 @@ class TestAnnotationCollection:
         obj = self.annot.to_annotation_collection(parent_genome)
         r = obj.query_by_position(0, 25, completely_within=False)
         assert len(r) == 2
+        assert r.location.parent
         for gene in r:
             orig_gene = next(obj.query_by_feature_identifiers(gene.identifiers).iter_children())
             for tx1, tx2 in zip(gene, orig_gene):
                 assert tx1.get_spliced_sequence() == tx2.get_spliced_sequence()
         r2 = r.query_by_position(0, 10, completely_within=False)
         assert len(r2) == 2
+        assert r2.location.parent
         # this slice cut some of transcripts into chunks, so now the sequences are a subset
         for gene in r2:
             orig_gene = next(obj.query_by_feature_identifiers(gene.identifiers).iter_children())
             for tx1, tx2 in zip(gene, orig_gene):
                 assert str(tx1.get_spliced_sequence()) in str(tx2.get_spliced_sequence())
         r3 = r.query_by_position(0, 8, completely_within=False)
+        assert r3.location.parent
         assert len(r3) == 2
         for gene in r3:
             orig_gene = next(obj.query_by_feature_identifiers(gene.identifiers).iter_children())

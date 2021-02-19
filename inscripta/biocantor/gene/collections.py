@@ -84,7 +84,7 @@ class AbstractFeatureIntervalCollection(AbstractInterval, ABC):
         self.location = SingleInterval(start, end, Strand.PLUS)
         if parent_or_seq_chunk_parent:
             if parent_or_seq_chunk_parent.has_ancestor_of_type("sequence_chunk"):
-                super().liftover_location_to_seq_chunk(parent_or_seq_chunk_parent)
+                super()._liftover_this_location_to_seq_chunk_parent(parent_or_seq_chunk_parent)
             else:
                 self.location = self.location.reset_parent(parent_or_seq_chunk_parent)
 
@@ -120,14 +120,14 @@ class AbstractFeatureIntervalCollection(AbstractInterval, ABC):
             primary_feature = intervals[interval_sizes[0][2]]
         return primary_feature
 
-    def liftover_location_to_seq_chunk(
+    def _liftover_this_location_to_seq_chunk_parent(
         self,
         parent_or_seq_chunk_parent: Parent,
     ):
         """Lift over this collection and all of its children"""
-        super().liftover_location_to_seq_chunk(parent_or_seq_chunk_parent)
-        for obj in self:
-            obj.liftover_location_to_seq_chunk(parent_or_seq_chunk_parent)
+        super()._liftover_this_location_to_seq_chunk_parent(parent_or_seq_chunk_parent)
+        for child in self:
+            child._liftover_this_location_to_seq_chunk_parent(parent_or_seq_chunk_parent)
 
 
 class GeneInterval(AbstractFeatureIntervalCollection):

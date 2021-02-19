@@ -7,14 +7,20 @@ from itertools import count
 from typing import Optional, Any, Dict, Iterable, Hashable, Set
 from uuid import UUID
 
-from inscripta.biocantor.exc import EmptyLocationException, LocationOverlapException, NoncodingTranscriptError
+from methodtools import lru_cache
+
+from inscripta.biocantor.exc import (
+    EmptyLocationException,
+    LocationOverlapException,
+    NoncodingTranscriptError,
+)
 from inscripta.biocantor.gene.biotype import Biotype
 from inscripta.biocantor.gene.cds import CDSInterval, CDSPhase, CDSFrame
 from inscripta.biocantor.gene.feature import AbstractFeatureInterval, QualifierValue
 from inscripta.biocantor.io.bed import BED12, RGB
 from inscripta.biocantor.io.gff3.constants import GFF_SOURCE, NULL_COLUMN, BioCantorQualifiers, BioCantorFeatureTypes
-from inscripta.biocantor.io.gff3.rows import GFFAttributes, GFFRow
 from inscripta.biocantor.io.gff3.exc import GFF3MissingSequenceNameError
+from inscripta.biocantor.io.gff3.rows import GFFAttributes, GFFRow
 from inscripta.biocantor.location.location import Location
 from inscripta.biocantor.location.location_impl import SingleInterval, EmptyLocation
 from inscripta.biocantor.location.strand import Strand
@@ -23,7 +29,6 @@ from inscripta.biocantor.sequence.sequence import Sequence
 from inscripta.biocantor.util.bins import bins
 from inscripta.biocantor.util.hashing import digest_object
 from inscripta.biocantor.util.object_validation import ObjectValidation
-from methodtools import lru_cache
 
 
 class TranscriptInterval(AbstractFeatureInterval):
@@ -182,13 +187,32 @@ class TranscriptInterval(AbstractFeatureInterval):
             self.cds.location = self.cds.location.reset_parent(parent)
         super().reset_parent(parent)
 
-    def liftover_location_to_seq_chunk(
+    def _liftover_this_location_to_seq_chunk_parent(
         self,
-        parent_or_seq_chunk_parent: Optional[Parent] = None,
+        seq_chunk_parent: Parent,
     ):
-        """Lift over this specific interval"""
-        # self.cds.location = liftover_location_parent(self.cds.location, parent_or_seq_chunk_parent)
-        super().liftover_location_to_seq_chunk(parent_or_seq_chunk_parent)
+        """Lift *this* transcript interval to a new subset. Overrides the parent method in order to perform
+        this task on the CDS interval as well.
+
+        This could happen as the result of a subsetting operation.
+
+        This will introduce chunk-relative coordinates to this interval, or reduce the size of existing chunk-relative
+        coordinates.
+
+        This function calls the parent static method :meth:`AbstractInterval.liftover_location_to_seq_chunk_parent()`,
+        but differs in two key ways:
+
+        1. It acts on an instantiated subclass of this abstract class, modifying the location.
+        2. It handles the case where a subclass is already a slice, by first lifting up to genomic coordinates.
+
+        For these reasons, and particularly #1, this is a private method that is intended to be used during
+        construction of a subclass. Modifying the locations in-place are generally a bad idea after initial
+        construction of a interval class.
+        """
+        super()._liftover_this_location_to_seq_chunk_parent(seq_chunk_parent)
+        self.cds.location = self.liftover_location_to_seq_chunk_parent(
+            self.cds.location.lift_over_to_first_ancestor_of_type("chromosome").reset_parent(seq_chunk_parent.parent)
+        )
 
     def lift_cds_over_to_first_ancestor_of_type(self, sequence_type: Optional[str] = "chromosome") -> Location:
         """

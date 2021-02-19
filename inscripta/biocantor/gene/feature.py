@@ -225,32 +225,35 @@ class AbstractInterval(ABC):
         else:
             raise ValidationException("Provided Parent has no sequence of type 'chromosome' or 'sequence_chunk'.")
 
-    def liftover_location_to_seq_chunk(
+    def _liftover_this_location_to_seq_chunk_parent(
         self,
         seq_chunk_parent: Parent,
     ):
-        """Lift this interval to a new subset.
+        """Lift *this* interval to a new subset.
 
         This could happen as the result of a subsetting operation.
 
         This will introduce chunk-relative coordinates to this interval, or reduce the size of existing chunk-relative
         coordinates.
-        """
-        if not seq_chunk_parent.has_ancestor_of_type("chromosome"):
-            raise ValidationException("Provided Parent has no sequence of type 'chromosome'.")
 
-        # if we are already a seq chunk, we need to lift ourselves back to genomic coordinates first
-        if self.has_ancestor_of_type("sequence_chunk"):
+        This function calls the parent static method :meth:`AbstractInterval.liftover_location_to_seq_chunk_parent()`,
+        but differs in two key ways:
+
+        1. It acts on an instantiated subclass of this abstract class, modifying the location.
+        2. It handles the case where a subclass is already a slice, by first lifting up to genomic coordinates.
+
+        For these reasons, and particularly #1, this is a private method that is intended to be used during
+        construction of a subclass. Modifying the locations in-place are generally a bad idea after initial
+        construction of a interval class.
+        """
+        # if we are already a subset, we need to first lift back to genomic coordinates before lifting to this chunk
+        if self.location.has_ancestor_of_type("sequence_chunk"):
             location = self.location.lift_over_to_first_ancestor_of_type("chromosome").reset_parent(
                 seq_chunk_parent.parent
             )
         else:
-            location = self.location.reset_parent(seq_chunk_parent.parent)
-        sequence_chunk = seq_chunk_parent.sequence
-        interval_location_rel_to_chunk = sequence_chunk.location_on_parent.parent_to_relative_location(location)
-        interval_rel_to_chunk = interval_location_rel_to_chunk.reset_parent(seq_chunk_parent)
-
-        self.location = interval_rel_to_chunk
+            location = self.location
+        self.location = self.liftover_location_to_seq_chunk_parent(location, seq_chunk_parent)
 
     def reset_parent(self, parent: Parent):
         """
