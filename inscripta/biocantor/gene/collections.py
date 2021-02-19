@@ -252,7 +252,7 @@ class GeneInterval(AbstractFeatureIntervalCollection):
             sequence_name=vals["sequence_name"],
             sequence_guid=vals["sequence_guid"],
             guid=vals["gene_guid"],
-            parent_or_seq_chunk_parent=parent_or_seq_chunk_parent
+            parent_or_seq_chunk_parent=parent_or_seq_chunk_parent,
         )
 
     def get_primary_transcript(self) -> Union[TranscriptInterval, None]:
@@ -526,7 +526,7 @@ class FeatureIntervalCollection(AbstractFeatureIntervalCollection):
             sequence_name=vals["sequence_name"],
             sequence_guid=vals["sequence_guid"],
             guid=vals["feature_collection_guid"],
-            parent_or_seq_chunk_parent=parent_or_seq_chunk_parent
+            parent_or_seq_chunk_parent=parent_or_seq_chunk_parent,
         )
 
     def export_qualifiers(self) -> Dict[Hashable, Set[str]]:
@@ -737,7 +737,9 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
         """Build an :class:`FeatureIntervalCollection` from a dictionary representation"""
         return AnnotationCollection(
             genes=[GeneInterval.from_dict(x, parent_or_seq_chunk_parent) for x in vals["genes"]],
-            feature_collections=[FeatureIntervalCollection.from_dict(x, parent_or_seq_chunk_parent) for x in vals["feature_collections"]],
+            feature_collections=[
+                FeatureIntervalCollection.from_dict(x, parent_or_seq_chunk_parent) for x in vals["feature_collections"]
+            ],
             name=vals["name"],
             id=vals["id"],
             qualifiers=vals["qualifiers"],
@@ -746,7 +748,7 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
             start=vals["start"],
             end=vals["end"],
             completely_within=vals["completely_within"],
-            parent_or_seq_chunk_parent=parent_or_seq_chunk_parent
+            parent_or_seq_chunk_parent=parent_or_seq_chunk_parent,
         )
 
     def _subset_parent(self, start: int, end: int) -> Optional[Parent]:

@@ -254,7 +254,7 @@ class TranscriptInterval(AbstractFeatureInterval):
                     parent_or_seq_chunk_parent=parent_or_seq_chunk_parent,
                 )
                 # we may end up having a reduced number of CDSFrames now due to this region being a subset of this gene
-                cds = CDSInterval(cds_interval, [CDSFrame[x] for x in vals["cds_frames"][:len(cds_interval.blocks)]])
+                cds = CDSInterval(cds_interval, [CDSFrame[x] for x in vals["cds_frames"][: len(cds_interval.blocks)]])
             except LocationOverlapException:
                 cds = None
         else:

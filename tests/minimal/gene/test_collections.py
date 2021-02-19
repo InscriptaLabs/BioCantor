@@ -314,7 +314,7 @@ class TestAnnotationCollection:
             orig_gene = next(obj.query_by_feature_identifiers(gene.identifiers).iter_children())
             for tx1, tx2 in zip(gene, orig_gene):
                 if len(tx1) == len(tx2):
-                     assert tx1.get_spliced_sequence() == tx2.get_spliced_sequence()
+                    assert tx1.get_spliced_sequence() == tx2.get_spliced_sequence()
                 else:
                     assert str(tx1.get_spliced_sequence()) in str(tx2.get_spliced_sequence())
 
