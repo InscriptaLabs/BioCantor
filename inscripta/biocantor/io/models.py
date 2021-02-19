@@ -5,22 +5,19 @@ and deserializing the models.
 from typing import List, Optional, ClassVar, Type, Dict, Union
 from uuid import UUID
 
+from marshmallow import Schema  # noqa: F401
+from marshmallow_dataclass import dataclass
+
 from inscripta.biocantor.exc import (
     InvalidCDSIntervalError,
-    ValidationException,
-    NullSequenceException,
 )
 from inscripta.biocantor.gene.biotype import Biotype
 from inscripta.biocantor.gene.cds import CDSFrame, CDSInterval
 from inscripta.biocantor.gene.collections import GeneInterval, FeatureIntervalCollection, AnnotationCollection
 from inscripta.biocantor.gene.feature import FeatureInterval
 from inscripta.biocantor.gene.transcript import TranscriptInterval
-from inscripta.biocantor.location.location import Location
-from inscripta.biocantor.location.location_impl import CompoundInterval, SingleInterval
 from inscripta.biocantor.location.strand import Strand
 from inscripta.biocantor.parent import Parent
-from marshmallow import Schema  # noqa: F401
-from marshmallow_dataclass import dataclass
 
 
 @dataclass
