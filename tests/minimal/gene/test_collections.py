@@ -303,13 +303,16 @@ class TestAnnotationCollection:
             (0, None, True, False, {"gene1"}),
         ],
     )
-    def test_position_queries(self, start, end, completely_within, coding_only, expected):
-        obj = self.annot.to_annotation_collection()
+    def test_position_queries(self, start, end, coding_only, completely_within, expected):
+        obj = self.annot.to_annotation_collection(parent_genome)
         r = obj.query_by_position(start, end, coding_only, completely_within)
         if r.is_empty:
             assert len(expected) == 0
         else:
             assert set.union(*[x.identifiers for x in r]) == expected
+        for gene in r:
+            orig_gene = next(obj.query_by_feature_identifiers(gene.identifiers).iter_children())
+            assert orig_gene.get_primary_feature_sequence() == gene.get_primary_feature_sequence()
 
     @pytest.mark.parametrize(
         "start,end,coding_only,completely_within,expected",
@@ -347,15 +350,27 @@ class TestAnnotationCollection:
     )
     def test_query_by_identifiers(self, ids):
         obj = self.annot.to_annotation_collection()
-        r = obj.query_by_feature_identifier(ids)
+        r = obj.query_by_feature_identifiers(ids)
         if r.is_empty:
             assert len(ids) == 0
         else:
             assert {x.gene_id for x in r.genes} | {x.feature_collection_id for x in r.feature_collections} == ids
 
+    @pytest.mark.parametrize(
+        "i",
+        (
+            "gene1",
+            "featgrp1",
+        ),
+    )
+    def test_query_by_identifiers_str(self, i):
+        obj = self.annot.to_annotation_collection()
+        r = obj.query_by_feature_identifiers(i)
+        assert {x.gene_id for x in r.genes} | {x.feature_collection_id for x in r.feature_collections} == {i}
+
     def test_query_by_identifiers_with_extraneous(self):
         obj = self.annot.to_annotation_collection()
-        r = obj.query_by_feature_identifier(["gene1", "abc"])
+        r = obj.query_by_feature_identifiers(["gene1", "abc"])
         assert len(r.genes) == 1 and r.genes[0].gene_id == "gene1"
 
     def test_extract_sequence(self):

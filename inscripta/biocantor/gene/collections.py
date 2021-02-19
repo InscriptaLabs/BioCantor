@@ -84,6 +84,9 @@ class AbstractFeatureIntervalCollection(AbstractInterval, ABC):
         """
         if not self.location.parent:
             return None
+        # edge case for a now null interval
+        elif start == end == 0:
+            return None
 
         seq = self.location.parent.sequence
 
@@ -286,6 +289,14 @@ class GeneInterval(AbstractFeatureIntervalCollection):
         """Get the sequence of the primary transcript, if it exists."""
         if self.get_primary_transcript() is not None:
             return self.primary_transcript.get_spliced_sequence()
+
+    def get_primary_feature(self) -> Union[TranscriptInterval, None]:
+        """Convenience function that provides shared API between features and transcripts"""
+        return self.get_primary_transcript()
+
+    def get_primary_feature_sequence(self) -> Union[Sequence, None]:
+        """Convenience function that provides shared API between features and transcripts"""
+        return self.get_primary_transcript_sequence()
 
     def get_primary_cds_sequence(self) -> Union[Sequence, None]:
         """Get the sequence of the primary transcript, if it exists."""
@@ -498,6 +509,11 @@ class FeatureIntervalCollection(AbstractFeatureIntervalCollection):
         """Get the primary feature, if it exists."""
 
         return self.primary_feature
+
+    def get_primary_feature_sequence(self) -> Union[Sequence, None]:
+        """Convenience function that provides shared API between features and transcripts"""
+        if self.get_primary_feature() is not None:
+            return self.get_primary_feature().get_spliced_sequence()
 
     def to_dict(self, chromosome_relative_coordinates: bool = True) -> Dict[str, Any]:
         """Convert to a dict usable by :class:`~biocantor.io.models.FeatureIntervalCollectionModel`."""
@@ -834,8 +850,8 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
             completely_within=self.completely_within,
         )
 
-    def query_by_feature_identifier(self, ids: List[str]) -> "AnnotationCollection":
-        """Filter this annotation collection object by a list of identifiers.
+    def query_by_feature_identifiers(self, id_or_ids: Union[str, List[str]]) -> "AnnotationCollection":
+        """Filter this annotation collection object by a list of identifiers, or a single identifier.
 
         Identifiers are not necessarily unique; if your identifier matches more than one interval,
         all matching intervals will be returned. These ambiguous results will be adjacent in the resulting collection,
@@ -844,16 +860,20 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
         This method is ``O(n_ids * m_identifiers)``.
 
         Args:
-            ids: List of identifiers.
+            id_or_ids: List of identifiers, or a single identifier.
 
         Returns:
            :class:`AnnotationCollection` that may be empty.
         """
-        ids = set(ids)
+        if isinstance(id_or_ids, str):
+            ids = {id_or_ids}
+        else:
+            ids = set(id_or_ids)
+
         genes_to_keep = []
         features_to_keep = []
         for gene_or_feature in self.iter_children():
-            if any(i in ids for i in gene_or_feature.identifiers):
+            if ids & gene_or_feature.identifiers:
                 if isinstance(gene_or_feature, FeatureIntervalCollection):
                     features_to_keep.append(gene_or_feature)
                 else:

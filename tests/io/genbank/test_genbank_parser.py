@@ -285,7 +285,7 @@ class TestGenbank:
         with open(gbk, "r") as fh:
             annot_collection = list(ParsedAnnotationRecord.parsed_annotation_records_to_model(parse_genbank(fh)))[0]
 
-        result = annot_collection.query_by_feature_identifier(identifiers)
+        result = annot_collection.query_by_feature_identifiers(identifiers)
         assert all(x.locus_tag in locus_tags for x in result.genes)
 
     @pytest.mark.parametrize(
@@ -297,7 +297,7 @@ class TestGenbank:
         with open(gbk, "r") as fh:
             annot_collection = list(ParsedAnnotationRecord.parsed_annotation_records_to_model(parse_genbank(fh)))[0]
 
-        result = annot_collection.query_by_feature_identifier(identifiers)
+        result = annot_collection.query_by_feature_identifiers(identifiers)
         assert result.is_empty
 
 
