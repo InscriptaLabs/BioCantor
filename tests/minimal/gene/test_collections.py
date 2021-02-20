@@ -1,6 +1,11 @@
 import pytest
-from inscripta.biocantor.exc import InvalidAnnotationError, NoncodingTranscriptError, InvalidQueryError
-from inscripta.biocantor.exc import ValidationException
+from inscripta.biocantor.exc import (
+    InvalidAnnotationError,
+    NoncodingTranscriptError,
+    InvalidQueryError,
+    NoSuchAncestorException,
+    ValidationException,
+)
 from inscripta.biocantor.gene.biotype import Biotype
 from inscripta.biocantor.gene.cds import CDSFrame
 from inscripta.biocantor.io.models import (
@@ -301,6 +306,7 @@ class TestAnnotationCollection:
                 {"featgrp1", "gene1"},
             ),
             (0, None, True, False, {"gene1"}),
+            (5, 20, False, False, {"gene1"}),
         ],
     )
     def test_position_queries(self, start, end, coding_only, completely_within, expected):
@@ -425,3 +431,25 @@ class TestAnnotationCollection:
         assert obj.query_by_guids([my_ids[0]]).children_guids == {my_ids[0]}
         # query none
         assert obj.query_by_guids([]).children_guids == set()
+
+    def test_gff3_export(self, test_data_dir):
+        obj = self.annot.to_annotation_collection()
+        # populate sequence names; normally this is done via the model constructors
+        obj.sequence_name = "chr1"
+        for item in obj:
+            item.sequence_name = "chr1"
+            for subitem in item:
+                subitem.sequence_name = "chr1"
+        with open(test_data_dir / "collection_gff3_export_chromosome_coordinates.gff") as fh:
+            assert fh.read() == "\n".join(str(x) for x in obj.to_gff())
+
+    def test_gff3_export_exception(self, test_data_dir):
+        """Cannot export to GFF3 in relative coordinates without having sequence."""
+        obj = self.annot.to_annotation_collection()
+        obj.sequence_name = "chr1"
+        for item in obj:
+            item.sequence_name = "chr1"
+            for subitem in item:
+                subitem.sequence_name = "chr1"
+        with pytest.raises(NoSuchAncestorException):
+            _ = "\n".join(str(x) for x in obj.to_gff(chromosome_relative_coordinates=False))

@@ -1,6 +1,8 @@
 import pytest
-from inscripta.biocantor.exc import ValidationException, EmptyLocationException, NullSequenceException
+from inscripta.biocantor.exc import ValidationException, EmptyLocationException, NoSuchAncestorException
+from inscripta.biocantor.io.gff3.exc import GFF3MissingSequenceNameError
 from inscripta.biocantor.io.models import FeatureIntervalModel
+from inscripta.biocantor.gene.feature import NullSequenceException
 from inscripta.biocantor.location.location_impl import SingleInterval, CompoundInterval
 from inscripta.biocantor.location.strand import Strand
 from inscripta.biocantor.parent.parent import Parent
@@ -316,6 +318,48 @@ class TestFeatureInterval:
         s = SingleInterval(0, 5, Strand.PLUS)
         with pytest.raises(EmptyLocationException):
             _ = feat.intersect(s)
+
+    def test_gff_export_exceptions(self):
+        feat = se_unspliced.to_feature_interval(parent_or_seq_chunk_parent=parent)
+        with pytest.raises(GFF3MissingSequenceNameError):
+            _ = "\n".join(str(x) for x in feat.to_gff())
+        feat.sequence_name = "myseq"
+        with pytest.raises(NoSuchAncestorException):
+            _ = "\n".join(str(x) for x in feat.to_gff(chromosome_relative_coordinates=False))
+
+    def test_gff_export(self):
+        feat = se_unspliced.to_feature_interval(parent_or_seq_chunk_parent=parent)
+        feat.sequence_name = "myseq"
+        assert (
+            "\n".join(str(x) for x in feat.to_gff())
+            == "myseq\tBioCantor\tfeature_interval\t1\t18\t.\t+\t.\tID=b1e88354-ea8c-f67d-27ec-0f0f641562fd\n"
+            "myseq\tBioCantor\tsubregion\t1\t18\t.\t+\t.\tID=feature-b1e88354-ea8c-f67d-27ec-0f0f641562fd-1;"
+            "Parent=b1e88354-ea8c-f67d-27ec-0f0f641562fd"
+        )
+
+    def test_gff_export_subset(self):
+        feat = e3_spliced.to_feature_interval(parent_or_seq_chunk_parent=parent_genome2_1_15)
+        feat.sequence_name = "myseq"
+        assert (
+            "\n".join(str(x) for x in feat.to_gff())
+            == "myseq\tBioCantor\tfeature_interval\t3\t15\t.\t+\t.\tID=52e2687b-8483-266a-3cc3-3fb497fa9860\n"
+            "myseq\tBioCantor\tsubregion\t3\t6\t.\t+\t.\tID=feature-52e2687b-8483-266a-3cc3-3fb497fa9860-1;"
+            "Parent=52e2687b-8483-266a-3cc3-3fb497fa9860\n"
+            "myseq\tBioCantor\tsubregion\t8\t10\t.\t+\t.\tID=feature-52e2687b-8483-266a-3cc3-3fb497fa9860-2;"
+            "Parent=52e2687b-8483-266a-3cc3-3fb497fa9860\n"
+            "myseq\tBioCantor\tsubregion\t13\t15\t.\t+\t.\tID=feature-52e2687b-8483-266a-3cc3-3fb497fa9860-3;"
+            "Parent=52e2687b-8483-266a-3cc3-3fb497fa9860"
+        )
+        assert (
+            "\n".join(str(x) for x in feat.to_gff(chromosome_relative_coordinates=False))
+            == "myseq\tBioCantor\tfeature_interval\t2\t14\t.\t+\t.\tID=52e2687b-8483-266a-3cc3-3fb497fa9860\n"
+            "myseq\tBioCantor\tsubregion\t2\t5\t.\t+\t.\tID=feature-52e2687b-8483-266a-3cc3-3fb497fa9860-1;"
+            "Parent=52e2687b-8483-266a-3cc3-3fb497fa9860\n"
+            "myseq\tBioCantor\tsubregion\t7\t9\t.\t+\t.\tID=feature-52e2687b-8483-266a-3cc3-3fb497fa9860-2;"
+            "Parent=52e2687b-8483-266a-3cc3-3fb497fa9860\n"
+            "myseq\tBioCantor\tsubregion\t12\t14\t.\t+\t.\tID=feature-52e2687b-8483-266a-3cc3-3fb497fa9860-3;"
+            "Parent=52e2687b-8483-266a-3cc3-3fb497fa9860"
+        )
 
 
 class TestFeatureIntervalSequenceSubset:

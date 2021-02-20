@@ -662,8 +662,7 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
 
         self.completely_within = completely_within
 
-        self._guid_map = {}
-        self._guid_cached = False
+        self._guid_map = {x.guid: x for x in self.iter_children()}
 
         self.guid = digest_object(
             self.location, self.name, self.sequence_name, self.qualifiers, self.completely_within, self.children_guids
@@ -833,6 +832,12 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
         elif end > self.end:
             raise InvalidQueryError("End must be within bounds of current interval")
 
+        query_loc = SingleInterval(start, end, Strand.PLUS, parent=self.location.parent)
+        if completely_within:
+            coordinate_fn = query_loc.contains
+        else:
+            coordinate_fn = query_loc.has_overlap
+
         genes_to_keep = []
         features_to_keep = []
         for gene_or_feature in self.iter_children():
@@ -841,12 +846,7 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
             # my_bins only exists if completely_within, start and end
             if my_bins and gene_or_feature.bin not in my_bins:
                 continue
-            if completely_within and gene_or_feature.start >= start and gene_or_feature.end <= end:
-                if isinstance(gene_or_feature, FeatureIntervalCollection):
-                    features_to_keep.append(gene_or_feature.to_dict())
-                else:
-                    genes_to_keep.append(gene_or_feature.to_dict())
-            elif not completely_within and gene_or_feature.start < end and gene_or_feature.end > start:
+            if coordinate_fn(gene_or_feature.location):
                 if isinstance(gene_or_feature, FeatureIntervalCollection):
                     features_to_keep.append(gene_or_feature.to_dict())
                 else:
@@ -870,14 +870,6 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
             parent_or_seq_chunk_parent=seq_chunk_parent,
         )
 
-    def _build_guid_cache(self):
-        """
-        If :meth:`AnnotationCollection.query_by_guids()` is called, then this function is called
-        to populate the ``_guid_map`` member. Subsequent lookups are now ``O(1)``.
-        """
-        self._guid_map = {x.guid: x for x in self.iter_children()}
-        self._guid_cached = True
-
     def query_by_guids(self, ids: List[UUID]) -> "AnnotationCollection":
         """Filter this annotation collection object by a list of unique IDs.
 
@@ -890,9 +882,6 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
         Returns:
            :class:`AnnotationCollection` that may be empty.
         """
-        if self._guid_cached is False:
-            self._build_guid_cache()
-
         ids = set(ids)
         genes_to_keep = []
         features_to_keep = []
@@ -962,6 +951,10 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
     def to_gff(self, chromosome_relative_coordinates: bool = True) -> Iterable[GFFRow]:
         """Produces iterable of :class:`~biocantor.io.gff3.rows.GFFRow` for this annotation collection and its
         children.
+
+        TODO: It shouldn't be strictly necessary that a sequence is associated with this collection
+            in order to be able to export to GFF3 in chunk-relative coordinates. However, changing this
+            is challenging due to all of the validation that exists to make sure that parents have sequences.
 
         Args:
             chromosome_relative_coordinates: Output GFF in chromosome-relative coordinates? Will raise an exception
