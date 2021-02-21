@@ -1,14 +1,14 @@
-from uuid import UUID
 import json
+
 import pytest
+
 from inscripta.biocantor.gene.biotype import Biotype
 from inscripta.biocantor.gene.cds import CDSFrame
 from inscripta.biocantor.io.genbank.exc import GenBankLocusTagError
 from inscripta.biocantor.io.genbank.parser import parse_genbank, GenBankParserType
+from inscripta.biocantor.io.models import AnnotationCollectionModel
 from inscripta.biocantor.io.parser import ParsedAnnotationRecord
 from inscripta.biocantor.location.location_impl import SingleInterval, CompoundInterval, Strand
-from inscripta.biocantor.util.hashing import digest_object
-from inscripta.biocantor.io.models import AnnotationCollectionModel
 
 
 class TestEukaryoticGenbankParser:
