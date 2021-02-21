@@ -128,6 +128,17 @@ class TestGene:
         assert str(obj.get_primary_cds_sequence()) == "ATCTTA"
         assert str(obj.get_primary_protein()) == "IL"
 
+    def test_query_by_guid(self):
+        # query by all
+        obj = self.gene.to_gene_interval(parent_or_seq_chunk_parent=parent_genome)
+        assert obj.query_by_guids(list(obj.guid_map.keys())) == obj
+        # query by none produces invalid gene
+        with pytest.raises(InvalidAnnotationError):
+            _ = obj.query_by_guids([])
+        # query one
+        guids = list(obj.guid_map.keys())[:1]
+        assert {x.guid for x in obj.query_by_guids(guids)} == set(guids)
+
 
 class TestFeatureIntervalCollection:
     feat1 = dict(
@@ -167,6 +178,17 @@ class TestFeatureIntervalCollection:
     def test_iter(self):
         obj = self.collection1.to_feature_collection()
         assert list(obj) == obj.feature_intervals
+
+    def test_query_by_guid(self):
+        # query by all
+        obj = self.collection1.to_feature_collection()
+        assert obj.query_by_guids(list(obj.guid_map.keys())) == obj
+        # query by none produces invalid gene
+        with pytest.raises(InvalidAnnotationError):
+            _ = obj.query_by_guids([])
+        # query one
+        guids = list(obj.guid_map.keys())[:1]
+        assert {x.guid for x in obj.query_by_guids(guids)} == set(guids)
 
 
 class TestAnnotationCollection:
@@ -306,7 +328,7 @@ class TestAnnotationCollection:
                 {"featgrp1", "gene1"},
             ),
             (0, None, True, False, {"gene1"}),
-            (5, 20, False, False, {"gene1"}),
+            (5, 20, False, False, {"featgrp1", "gene1"}),
         ],
     )
     def test_position_queries(self, start, end, coding_only, completely_within, expected):
@@ -316,13 +338,16 @@ class TestAnnotationCollection:
             assert len(expected) == 0
         else:
             assert set.union(*[x.identifiers for x in r]) == expected
-        for gene in r:
-            orig_gene = next(obj.query_by_feature_identifiers(gene.identifiers).iter_children())
-            for tx1, tx2 in zip(gene, orig_gene):
-                if len(tx1) == len(tx2):
-                    assert tx1.get_spliced_sequence() == tx2.get_spliced_sequence()
+        for gene_or_feature in r:
+            orig_gene_or_feature = obj.guid_map[gene_or_feature.guid]
+            for new_tx_or_feature in gene_or_feature:
+                orig_tx_or_feature = orig_gene_or_feature.guid_map[new_tx_or_feature.guid]
+                if len(new_tx_or_feature) == len(orig_tx_or_feature):
+                    assert new_tx_or_feature.get_spliced_sequence() == orig_tx_or_feature.get_spliced_sequence()
                 else:
-                    assert str(tx1.get_spliced_sequence()) in str(tx2.get_spliced_sequence())
+                    assert str(new_tx_or_feature.get_spliced_sequence()) in str(
+                        orig_tx_or_feature.get_spliced_sequence()
+                    )
 
     def test_nested_position_queries(self):
         obj = self.annot.to_annotation_collection(parent_genome)
