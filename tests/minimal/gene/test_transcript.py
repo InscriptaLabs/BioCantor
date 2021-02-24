@@ -1117,7 +1117,7 @@ class TestTranscriptIntervalSequenceSubset:
         assert tx.sequence_pos_to_cds(pos) == expected
 
     @pytest.mark.parametrize("pos,expected", [(6, 0), (8, 2)])
-    def test_sequence_pos_to_cds(self, pos, expected):
+    def chunk_relative_pos_to_cds(self, pos, expected):
         tx = e3_spliced_utr.to_transcript_interval(parent_or_seq_chunk_parent=parent_genome2_1_15)
         assert tx.chunk_relative_pos_to_cds(pos) == expected
 
