@@ -254,9 +254,13 @@ class AbstractInterval(ABC):
             location = self.location
         self.location = self.liftover_location_to_seq_chunk_parent(location, seq_chunk_parent)
 
-    def reset_parent(self, parent: Parent):
+    def reset_parent(self, parent: Optional[Parent] = None):
         """
         Convenience function that wraps location.reset_parent().
+
+        NOTE: Using this function presents the risk that you will change the sequence of this interval. There are no
+        checks that the new parent provides the same sequence basis as the original parent.
+
         """
         self.location = self.location.reset_parent(parent)
 

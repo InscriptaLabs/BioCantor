@@ -478,3 +478,27 @@ class TestAnnotationCollection:
                 subitem.sequence_name = "chr1"
         with pytest.raises(NoSuchAncestorException):
             _ = "\n".join(str(x) for x in obj.to_gff(chromosome_relative_coordinates=False))
+
+    def test_reset_parent_noop(self):
+        obj = self.annot.to_annotation_collection()
+        # no-op
+        obj.reset_parent()
+        # equivalent
+        obj.reset_parent(None)
+
+    def test_reset_parent_null(self):
+        obj = self.annot.to_annotation_collection(parent_genome)
+        for child in obj:
+            assert child.location.parent
+        obj.reset_parent()
+        for child in obj:
+            assert not child.location.parent
+
+    def test_reset_parent(self):
+        obj = self.annot.to_annotation_collection(parent_genome)
+        obj2 = obj.query_by_position(10, 30)
+        obj2.reset_parent(parent_genome)
+        # the coordinates are now broken, so the sequences are wrong
+        for rec in obj2:
+            orig_rec = next(obj.query_by_guids([rec.guid]).__iter__()).feature_intervals[0]
+            assert orig_rec.get_spliced_sequence() != rec.feature_intervals[0].get_spliced_sequence()

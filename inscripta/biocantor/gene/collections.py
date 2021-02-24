@@ -69,13 +69,16 @@ class AbstractFeatureIntervalCollection(AbstractInterval, ABC):
             ids: List of GUIDs, or unique IDs.
         """
 
-    def reset_parent(self, parent: Parent):
+    def reset_parent(self, parent: Optional[Parent] = None):
         """Reset parent of this collection, and all of its children.
+
+        NOTE: Using this function presents the risk that you will change the sequence of this interval. There are no
+        checks that the new parent provides the same sequence basis as the original parent.
 
         This overrides :meth:`~biocantor.gene.feature.AbstractInterval.reset_parent()`. The original function
         will remain applied on the leaf nodes.
         """
-        self.reset_parent(parent)
+        self.location = self.location.reset_parent(parent)
         for child in self:
             child.reset_parent(parent)
 
@@ -94,7 +97,7 @@ class AbstractFeatureIntervalCollection(AbstractInterval, ABC):
             if parent_or_seq_chunk_parent.has_ancestor_of_type("sequence_chunk"):
                 super()._liftover_this_location_to_seq_chunk_parent(parent_or_seq_chunk_parent)
             else:
-                self.location = self.location.reset_parent(parent_or_seq_chunk_parent)
+                self.reset_parent(parent_or_seq_chunk_parent)
 
     def get_reference_sequence(self) -> Sequence:
         """Returns the *plus strand* sequence for this interval"""
