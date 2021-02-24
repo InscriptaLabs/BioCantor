@@ -367,13 +367,8 @@ class GeneInterval(AbstractFeatureIntervalCollection):
         Returns:
            :class:`AnnotationCollection` that may be empty.
         """
-        transcripts_to_keep = []
-        for i in ids:
-            if i in self.guid_map:
-                transcripts_to_keep.append(self.guid_map[i])
-
         return GeneInterval(
-            transcripts=transcripts_to_keep,
+            transcripts=[self.guid_map[i] for i in ids if i in self.guid_map],
             gene_symbol=self.gene_symbol,
             gene_id=self.gene_id,
             gene_type=self.gene_type,
@@ -601,13 +596,8 @@ class FeatureIntervalCollection(AbstractFeatureIntervalCollection):
         Returns:
            :class:`AnnotationCollection` that may be empty.
         """
-        features_to_keep = []
-        for i in ids:
-            if i in self.guid_map:
-                features_to_keep.append(self.guid_map[i])
-
         return FeatureIntervalCollection(
-            feature_intervals=features_to_keep,
+            feature_intervals=[self.guid_map[i] for i in ids if i in self.guid_map],
             feature_collection_name=self.feature_collection_name,
             feature_collection_id=self.feature_collection_id,
             feature_collection_type=self.feature_collection_type,
@@ -900,11 +890,10 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
             Returns:
                 The filtered dictionary representation.
             """
-            valid_children = []
-            for child in gene_or_feature_collection:
-                if query_loc.has_overlap(child.location):
-                    valid_children.append(child.guid)
-            return gene_or_feature_collection.query_by_guids(valid_children).to_dict()
+            valid_children_guids = [
+                child.guid for child in gene_or_feature_collection if query_loc.has_overlap(child.location)
+            ]
+            return gene_or_feature_collection.query_by_guids(valid_children_guids).to_dict()
 
         # bins are only valid if we have start, end and completely_within
         if completely_within and start and end:
