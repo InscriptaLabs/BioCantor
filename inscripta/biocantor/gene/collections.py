@@ -69,8 +69,12 @@ class AbstractFeatureIntervalCollection(AbstractInterval, ABC):
             ids: List of GUIDs, or unique IDs.
         """
 
-    def reset_parent(self, parent: Optional[Parent] = None):
+    def reset_parent(self, parent: Optional[Parent] = None) -> None:
         """Reset parent of this collection, and all of its children.
+
+        NOTE: This function modifies this collection in-place, and does not return a new copy. This is different
+        behavior than the base function, and is this way because all of the children of this collection are also
+        recursively modified.
 
         NOTE: Using this function presents the risk that you will change the sequence of this interval. There are no
         checks that the new parent provides the same sequence basis as the original parent.
