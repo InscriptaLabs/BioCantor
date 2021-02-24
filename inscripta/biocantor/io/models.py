@@ -315,6 +315,7 @@ class AnnotationCollectionModel(BaseModel):
             qualifiers=self.qualifiers,
             sequence_name=self.sequence_name,
             sequence_guid=self.sequence_guid,
+            sequence_path=self.sequence_path,
             start=self.start,
             end=self.end,
             completely_within=self.completely_within,

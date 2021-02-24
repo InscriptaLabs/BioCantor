@@ -681,6 +681,7 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
         id: Optional[str] = None,
         sequence_name: Optional[str] = None,
         sequence_guid: Optional[UUID] = None,
+        sequence_path: Optional[str] = None,
         qualifiers: Optional[Dict[Hashable, QualifierValue]] = None,
         start: Optional[int] = None,
         end: Optional[int] = None,
@@ -692,6 +693,7 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
         self.genes = genes if genes else []
         self.sequence_name = sequence_name
         self.sequence_guid = sequence_guid
+        self.sequence_path = sequence_path
         self._name = name
         self._id = id
         # qualifiers come in as a List, convert to Set
@@ -788,6 +790,7 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
             qualifiers=self._export_qualifiers_to_list(),
             sequence_name=self.sequence_name,
             sequence_guid=self.sequence_guid,
+            sequence_path=self.sequence_path,
             start=self.start if chromosome_relative_coordinates else self.chunk_relative_start,
             end=self.end if chromosome_relative_coordinates else self.chunk_relative_end,
             completely_within=self.completely_within,
@@ -806,6 +809,7 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
             qualifiers=vals["qualifiers"],
             sequence_name=vals["sequence_name"],
             sequence_guid=vals["sequence_guid"],
+            sequence_path=vals["sequence_path"],
             start=vals["start"],
             end=vals["end"],
             completely_within=vals["completely_within"],
@@ -954,6 +958,7 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
                 id=self.id,
                 sequence_name=self.sequence_name,
                 sequence_guid=self.sequence_guid,
+                sequence_path=self.sequence_path,
                 qualifiers=self._export_qualifiers_to_list(),
                 start=start,
                 end=end,
@@ -987,6 +992,7 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
             name=self.name,
             sequence_name=self.sequence_name,
             sequence_guid=self.sequence_guid,
+            sequence_path=self.sequence_path,
             qualifiers=self._export_qualifiers_to_list(),
             start=self.start,
             end=self.end,
@@ -1029,6 +1035,7 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
             name=self.name,
             sequence_name=self.sequence_name,
             sequence_guid=self.sequence_guid,
+            sequence_path=self.sequence_path,
             qualifiers=self._export_qualifiers_to_list(),
             start=self.start,
             end=self.end,
