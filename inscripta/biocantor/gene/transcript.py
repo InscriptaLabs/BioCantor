@@ -350,41 +350,37 @@ class TranscriptInterval(AbstractFeatureInterval):
         """Converts sequence position to relative position along this transcript."""
         return self.sequence_pos_to_feature(pos)
 
-    def chunk_relative_sequence_pos_to_transcript(self, pos: int) -> int:
+    def chunk_relative_pos_to_transcript(self, pos: int) -> int:
         """Converts chunk-relative sequence position to relative position along this transcript."""
-        return self.chunk_relative_sequence_pos_to_feature(pos)
+        return self.chunk_relative_pos_to_feature(pos)
 
     def sequence_interval_to_transcript(self, chr_start: int, chr_end: int, chr_strand: Strand) -> Location:
         """Converts a contiguous interval on the sequence to a relative location within this transcript."""
         return self.sequence_interval_to_feature(chr_start, chr_end, chr_strand)
 
-    def chunk_relative_sequence_interval_to_transcript(
-        self, chr_start: int, chr_end: int, chr_strand: Strand
-    ) -> Location:
+    def chunk_relative_interval_to_transcript(self, chr_start: int, chr_end: int, chr_strand: Strand) -> Location:
         """
         Converts a contiguous interval on the chunk-relative sequence to a relative location within this transcript.
         """
-        return self.chunk_relative_sequence_interval_to_feature(chr_start, chr_end, chr_strand)
+        return self.chunk_relative_interval_to_feature(chr_start, chr_end, chr_strand)
 
     def transcript_pos_to_sequence(self, pos: int) -> int:
         """Converts a relative position along this transcript to sequence coordinate."""
         return self.feature_pos_to_sequence(pos)
 
-    def transcript_pos_to_chunk_relative_sequence(self, pos: int) -> int:
+    def transcript_pos_to_chunk_relative(self, pos: int) -> int:
         """Converts a relative position along this transcript to chunk-relative sequence coordinate."""
-        return self.feature_pos_to_chunk_relative_sequence(pos)
+        return self.feature_pos_to_chunk_relative(pos)
 
     def transcript_interval_to_sequence(self, rel_start: int, rel_end: int, rel_strand: Strand) -> Location:
         """Converts a contiguous interval relative to this transcript to a spliced location on the sequence."""
         return self.feature_interval_to_sequence(rel_start, rel_end, rel_strand)
 
-    def transcript_interval_to_chunk_relative_sequence(
-        self, rel_start: int, rel_end: int, rel_strand: Strand
-    ) -> Location:
+    def transcript_interval_to_chunk_relative(self, rel_start: int, rel_end: int, rel_strand: Strand) -> Location:
         """
         Converts a contiguous interval relative to this transcript to a spliced location on the chunk-relative sequence.
         """
-        return self.feature_interval_to_chunk_relative_sequence(rel_start, rel_end, rel_strand)
+        return self.feature_interval_to_chunk_relative(rel_start, rel_end, rel_strand)
 
     def cds_pos_to_sequence(self, pos: int) -> int:
         """Converts a relative position along the CDS to sequence coordinate."""
@@ -392,7 +388,7 @@ class TranscriptInterval(AbstractFeatureInterval):
             raise NoncodingTranscriptError("No CDS positions on non-coding transcript")
         return self.lift_cds_over_to_first_ancestor_of_type("chromosome").relative_to_parent_pos(pos)
 
-    def cds_pos_to_chunk_relative_sequence(self, pos: int) -> int:
+    def cds_pos_to_chunk_relative(self, pos: int) -> int:
         """Converts a relative position along the CDS to chunk-relative sequence coordinate."""
         if not self.is_coding:
             raise NoncodingTranscriptError("No CDS positions on non-coding transcript")
@@ -406,7 +402,7 @@ class TranscriptInterval(AbstractFeatureInterval):
             rel_start, rel_end, rel_strand
         )
 
-    def cds_interval_to_chunk_relative_sequence(self, rel_start: int, rel_end: int, rel_strand: Strand) -> Location:
+    def cds_interval_to_chunk_relative(self, rel_start: int, rel_end: int, rel_strand: Strand) -> Location:
         """Converts a contiguous interval relative to the CDS to a spliced location on the chunk-relative sequence."""
         if not self.is_coding:
             raise NoncodingTranscriptError("No CDS positions on non-coding transcript")
@@ -418,7 +414,7 @@ class TranscriptInterval(AbstractFeatureInterval):
             raise NoncodingTranscriptError("No CDS positions on non-coding transcript")
         return self.lift_cds_over_to_first_ancestor_of_type("chromosome").parent_to_relative_pos(pos)
 
-    def chunk_relative_sequence_pos_to_cds(self, pos: int) -> int:
+    def chunk_relative_pos_to_cds(self, pos: int) -> int:
         """Converts chunk-relative sequence position to relative position along the CDS."""
         if not self.is_coding:
             raise NoncodingTranscriptError("No CDS positions on non-coding transcript")
@@ -428,16 +424,16 @@ class TranscriptInterval(AbstractFeatureInterval):
         """Converts a contiguous interval on the sequence to a relative location within the CDS."""
         if not self.is_coding:
             raise NoncodingTranscriptError("No CDS positions on non-coding transcript")
-        return self.lift_cds_over_to_first_ancestor_of_type("chromosome").parent_to_relative_location(
-            SingleInterval(chr_start, chr_end, chr_strand, parent=self.location.parent)
-        )
+        loc = self.lift_cds_over_to_first_ancestor_of_type("chromosome")
+        i = SingleInterval(chr_start, chr_end, chr_strand, parent=loc.parent)
+        return loc.parent_to_relative_location(i)
 
-    def relative_sequence_interval_to_cds(self, chr_start: int, chr_end: int, chr_strand: Strand) -> Location:
+    def chunk_relative_interval_to_cds(self, chr_start: int, chr_end: int, chr_strand: Strand) -> Location:
         """Converts a contiguous interval on the chunk-relative sequence to a relative location within the CDS."""
         if not self.is_coding:
             raise NoncodingTranscriptError("No CDS positions on non-coding transcript")
         return self.cds.location.parent_to_relative_location(
-            SingleInterval(chr_start, chr_end, chr_strand, parent=self.location.parent)
+            SingleInterval(chr_start, chr_end, chr_strand, parent=self.cds.location.parent)
         )
 
     def cds_pos_to_transcript(self, pos: int) -> int:

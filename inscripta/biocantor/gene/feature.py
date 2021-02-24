@@ -408,21 +408,21 @@ class AbstractFeatureInterval(AbstractInterval, ABC):
             rel_start, rel_end, rel_strand
         )
 
-    def chunk_relative_sequence_pos_to_feature(self, pos: int) -> int:
+    def chunk_relative_pos_to_feature(self, pos: int) -> int:
         """Converts chunk-relative sequence position to relative position along this feature."""
         return self.location.parent_to_relative_pos(pos)
 
-    def chunk_relative_sequence_interval_to_feature(self, chr_start: int, chr_end: int, chr_strand: Strand) -> Location:
+    def chunk_relative_interval_to_feature(self, chr_start: int, chr_end: int, chr_strand: Strand) -> Location:
         """Converts a contiguous chunk-relative interval on the sequence to a relative location within this feature."""
         return self.location.parent_to_relative_location(
             SingleInterval(chr_start, chr_end, chr_strand, parent=self.location.parent)
         )
 
-    def feature_pos_to_chunk_relative_sequence(self, pos: int) -> int:
+    def feature_pos_to_chunk_relative(self, pos: int) -> int:
         """Converts a relative position along this feature to chunk-relative sequence coordinate."""
         return self.location.relative_to_parent_pos(pos)
 
-    def feature_interval_to_chunk_relative_sequence(self, rel_start: int, rel_end: int, rel_strand: Strand) -> Location:
+    def feature_interval_to_chunk_relative(self, rel_start: int, rel_end: int, rel_strand: Strand) -> Location:
         """
         Converts a contiguous interval relative to this feature to a chunk-relative spliced location on the sequence.
         """

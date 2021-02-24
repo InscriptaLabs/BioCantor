@@ -126,7 +126,7 @@ class TestFeatureInterval:
     def test_sequence_pos_to_feature(self, schema, value, expected):
         feat = schema.to_feature_interval()
         assert feat.sequence_pos_to_feature(value) == expected
-        assert feat.chunk_relative_sequence_pos_to_feature(value) == expected
+        assert feat.chunk_relative_pos_to_feature(value) == expected
 
     @pytest.mark.parametrize(
         "schema,value,expected",
@@ -138,7 +138,7 @@ class TestFeatureInterval:
     def test_sequence_interval_to_feature(self, schema, value, expected):
         feat = schema.to_feature_interval()
         assert feat.sequence_interval_to_feature(*value) == expected
-        assert feat.chunk_relative_sequence_interval_to_feature(*value) == expected
+        assert feat.chunk_relative_interval_to_feature(*value) == expected
 
     @pytest.mark.parametrize(
         "schema,value,expected",
@@ -154,10 +154,10 @@ class TestFeatureInterval:
     def test_feature_pos_to_sequence(self, schema, value, expected):
         feat = schema.to_feature_interval()
         assert feat.feature_pos_to_sequence(value) == expected
-        assert feat.feature_pos_to_chunk_relative_sequence(value) == expected
+        assert feat.feature_pos_to_chunk_relative(value) == expected
         feat = schema.to_feature_interval(parent_or_seq_chunk_parent=parent)
         assert feat.feature_pos_to_sequence(value) == expected
-        assert feat.feature_pos_to_chunk_relative_sequence(value) == expected
+        assert feat.feature_pos_to_chunk_relative(value) == expected
 
     @pytest.mark.parametrize(
         "schema,value,expected",
@@ -169,7 +169,7 @@ class TestFeatureInterval:
     def test_feature_interval_to_sequence(self, schema, value, expected):
         feat = schema.to_feature_interval()
         assert feat.feature_interval_to_sequence(*value).reset_parent(None) == expected
-        assert feat.feature_interval_to_chunk_relative_sequence(*value).reset_parent(None) == expected
+        assert feat.feature_interval_to_chunk_relative(*value).reset_parent(None) == expected
 
     @pytest.mark.parametrize(
         "schema,value,expected",
@@ -181,7 +181,7 @@ class TestFeatureInterval:
     def test_feature_interval_to_sequence_parent(self, schema, value, expected):
         feat = schema.to_feature_interval(parent_or_seq_chunk_parent=parent)
         assert feat.feature_interval_to_sequence(*value) == expected
-        assert feat.feature_interval_to_chunk_relative_sequence(*value) == expected
+        assert feat.feature_interval_to_chunk_relative(*value) == expected
 
     @pytest.mark.parametrize(
         "schema,value,expected",
@@ -379,7 +379,7 @@ class TestFeatureIntervalSequenceSubset:
     def test_sequence_pos_to_feature(self, schema, absolute_value, relative_value, expected, parent):
         feat = schema.to_feature_interval(parent)
         assert feat.sequence_pos_to_feature(absolute_value) == expected
-        assert feat.chunk_relative_sequence_pos_to_feature(relative_value) == expected
+        assert feat.chunk_relative_pos_to_feature(relative_value) == expected
 
     @pytest.mark.parametrize(
         "schema,absolute_value,relative_value,expected,parent",
@@ -403,7 +403,7 @@ class TestFeatureIntervalSequenceSubset:
     def test_sequence_interval_to_feature(self, schema, absolute_value, relative_value, expected, parent):
         feat = schema.to_feature_interval(parent)
         assert feat.sequence_interval_to_feature(*absolute_value) == expected
-        assert feat.chunk_relative_sequence_interval_to_feature(*relative_value) == expected
+        assert feat.chunk_relative_interval_to_feature(*relative_value) == expected
 
     @pytest.mark.parametrize(
         "schema,value,absolute_expected,relative_expected,parent",
@@ -419,7 +419,7 @@ class TestFeatureIntervalSequenceSubset:
     def test_feature_pos_to_sequence(self, schema, value, absolute_expected, relative_expected, parent):
         feat = schema.to_feature_interval(parent_or_seq_chunk_parent=parent)
         assert feat.feature_pos_to_sequence(value) == absolute_expected
-        assert feat.feature_pos_to_chunk_relative_sequence(value) == relative_expected
+        assert feat.feature_pos_to_chunk_relative(value) == relative_expected
 
     @pytest.mark.parametrize(
         "schema,value,absolute_expected,relative_expected,parent",
@@ -443,7 +443,7 @@ class TestFeatureIntervalSequenceSubset:
     def test_feature_interval_to_sequence(self, schema, value, absolute_expected, relative_expected, parent):
         feat = schema.to_feature_interval(parent)
         assert feat.feature_interval_to_sequence(*value).reset_parent(None) == absolute_expected
-        assert feat.feature_interval_to_chunk_relative_sequence(*value).reset_parent(None) == relative_expected
+        assert feat.feature_interval_to_chunk_relative(*value).reset_parent(None) == relative_expected
 
     @pytest.mark.parametrize(
         "schema,parent,expected_spliced",

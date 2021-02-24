@@ -1010,3 +1010,135 @@ class TestTranscriptIntervalSequenceSubset:
         assert tx.chunk_relative_end + 1 == tx.end
         assert tx.chunk_relative_cds_start + 1 == tx.cds_start
         assert tx.chunk_relative_cds_end + 1 == tx.cds_end
+
+    @pytest.mark.parametrize("pos,expected", [(2, 0), (14, 9), (7, 4), (8, 5)])
+    def test_sequence_pos_to_transcript(self, pos, expected):
+        tx = e3_spliced_utr.to_transcript_interval(parent_or_seq_chunk_parent=parent_genome2_1_15)
+        assert tx.sequence_pos_to_transcript(pos) == expected
+
+    @pytest.mark.parametrize("pos,expected", [(1, 0), (13, 9), (6, 4), (7, 5)])
+    def test_chunk_relative_pos_to_transcript(self, pos, expected):
+        tx = e3_spliced_utr.to_transcript_interval(parent_or_seq_chunk_parent=parent_genome2_1_15)
+        assert tx.chunk_relative_pos_to_transcript(pos) == expected
+
+    @pytest.mark.parametrize(
+        "start,end,strand,expected",
+        [
+            (0, 10, Strand.PLUS, SingleInterval(0, 7, Strand.PLUS)),
+            (0, 3, Strand.PLUS, SingleInterval(0, 1, Strand.PLUS)),
+            (0, 13, Strand.PLUS, SingleInterval(0, 8, Strand.PLUS)),
+        ],
+    )
+    def test_sequence_interval_to_transcript(self, start, end, strand, expected):
+        tx = e3_spliced_utr.to_transcript_interval(parent_or_seq_chunk_parent=parent_genome2_1_15)
+        assert tx.sequence_interval_to_transcript(start, end, strand) == expected
+
+    @pytest.mark.parametrize(
+        "start,end,strand,expected",
+        [
+            (0, 10, Strand.PLUS, SingleInterval(0, 7, Strand.PLUS)),
+            (0, 3, Strand.PLUS, SingleInterval(0, 2, Strand.PLUS)),
+            (0, 13, Strand.PLUS, SingleInterval(0, 9, Strand.PLUS)),
+        ],
+    )
+    def test_chunk_relative_interval_to_transcript(self, start, end, strand, expected):
+        tx = e3_spliced_utr.to_transcript_interval(parent_or_seq_chunk_parent=parent_genome2_1_15)
+        assert tx.chunk_relative_interval_to_transcript(start, end, strand) == expected
+
+    @pytest.mark.parametrize("pos,expected", [(0, 2), (9, 14), (4, 7), (5, 8)])
+    def test_transcript_pos_to_sequence(self, pos, expected):
+        tx = e3_spliced_utr.to_transcript_interval(parent_or_seq_chunk_parent=parent_genome2_1_15)
+        assert tx.transcript_pos_to_sequence(pos) == expected
+
+    @pytest.mark.parametrize("pos,expected", [(0, 1), (9, 13), (4, 6), (5, 7)])
+    def test_transcript_pos_to_chunk_relative(self, pos, expected):
+        tx = e3_spliced_utr.to_transcript_interval(parent_or_seq_chunk_parent=parent_genome2_1_15)
+        assert tx.transcript_pos_to_chunk_relative(pos) == expected
+
+    @pytest.mark.parametrize(
+        "start,end,strand,expected",
+        [
+            (0, 7, Strand.PLUS, CompoundInterval([2, 7], [6, 10], Strand.PLUS)),
+            (0, 1, Strand.PLUS, SingleInterval(2, 3, Strand.PLUS)),
+            (0, 8, Strand.PLUS, CompoundInterval([2, 7, 12], [6, 10, 13], Strand.PLUS)),
+        ],
+    )
+    def test_transcript_interval_to_sequence(self, start, end, strand, expected):
+        tx = e3_spliced_utr.to_transcript_interval(parent_or_seq_chunk_parent=parent_genome2_1_15)
+        assert tx.transcript_interval_to_sequence(start, end, strand).reset_parent(new_parent=None) == expected
+
+    @pytest.mark.parametrize(
+        "start,end,strand,expected",
+        [
+            (0, 7, Strand.PLUS, CompoundInterval([1, 6], [5, 9], Strand.PLUS)),
+            (0, 1, Strand.PLUS, SingleInterval(1, 2, Strand.PLUS)),
+            (0, 8, Strand.PLUS, CompoundInterval([1, 6, 11], [5, 9, 12], Strand.PLUS)),
+        ],
+    )
+    def test_transcript_interval_to_chunk_relative(self, start, end, strand, expected):
+        tx = e3_spliced_utr.to_transcript_interval(parent_or_seq_chunk_parent=parent_genome2_1_15)
+        assert tx.transcript_interval_to_chunk_relative(start, end, strand).reset_parent(new_parent=None) == expected
+
+    @pytest.mark.parametrize("pos,expected", [(0, 7), (1, 8)])
+    def test_cds_pos_to_sequence(self, pos, expected):
+        tx = e3_spliced_utr.to_transcript_interval(parent_or_seq_chunk_parent=parent_genome2_1_15)
+        assert tx.cds_pos_to_sequence(pos) == expected
+
+    @pytest.mark.parametrize("pos,expected", [(0, 6), (1, 7)])
+    def test_cds_pos_to_chunk_relative(self, pos, expected):
+        tx = e3_spliced_utr.to_transcript_interval(parent_or_seq_chunk_parent=parent_genome2_1_15)
+        assert tx.cds_pos_to_chunk_relative(pos) == expected
+
+    @pytest.mark.parametrize(
+        "start,end,strand,expected",
+        [
+            (0, 1, Strand.PLUS, SingleInterval(7, 8, Strand.PLUS)),
+            (0, 3, Strand.PLUS, SingleInterval(7, 10, Strand.PLUS)),
+        ],
+    )
+    def test_cds_interval_to_sequence(self, start, end, strand, expected):
+        tx = e3_spliced_utr.to_transcript_interval(parent_or_seq_chunk_parent=parent_genome2_1_15)
+        assert tx.cds_interval_to_sequence(start, end, strand).reset_parent(new_parent=None) == expected
+
+    @pytest.mark.parametrize(
+        "start,end,strand,expected",
+        [
+            (0, 1, Strand.PLUS, SingleInterval(6, 7, Strand.PLUS)),
+            (0, 3, Strand.PLUS, SingleInterval(6, 9, Strand.PLUS)),
+        ],
+    )
+    def test_cds_interval_to_chunk_relative(self, start, end, strand, expected):
+        tx = e3_spliced_utr.to_transcript_interval(parent_or_seq_chunk_parent=parent_genome2_1_15)
+        assert tx.cds_interval_to_chunk_relative(start, end, strand).reset_parent(new_parent=None) == expected
+
+    @pytest.mark.parametrize("pos,expected", [(7, 0), (9, 2)])
+    def test_sequence_pos_to_cds(self, pos, expected):
+        tx = e3_spliced_utr.to_transcript_interval(parent_or_seq_chunk_parent=parent_genome2_1_15)
+        assert tx.sequence_pos_to_cds(pos) == expected
+
+    @pytest.mark.parametrize("pos,expected", [(6, 0), (8, 2)])
+    def test_sequence_pos_to_cds(self, pos, expected):
+        tx = e3_spliced_utr.to_transcript_interval(parent_or_seq_chunk_parent=parent_genome2_1_15)
+        assert tx.chunk_relative_pos_to_cds(pos) == expected
+
+    @pytest.mark.parametrize(
+        "start,end,strand,expected",
+        [
+            (7, 10, Strand.PLUS, SingleInterval(0, 3, Strand.PLUS)),
+            (7, 8, Strand.PLUS, SingleInterval(0, 1, Strand.PLUS)),
+        ],
+    )
+    def test_sequence_interval_to_cds(self, start, end, strand, expected):
+        tx = e3_spliced_utr.to_transcript_interval(parent_or_seq_chunk_parent=parent_genome2_1_15)
+        assert tx.sequence_interval_to_cds(start, end, strand).reset_parent(new_parent=None) == expected
+
+    @pytest.mark.parametrize(
+        "start,end,strand,expected",
+        [
+            (6, 9, Strand.PLUS, SingleInterval(0, 3, Strand.PLUS)),
+            (6, 7, Strand.PLUS, SingleInterval(0, 1, Strand.PLUS)),
+        ],
+    )
+    def test_chunk_relative_interval_to_cds(self, start, end, strand, expected):
+        tx = e3_spliced_utr.to_transcript_interval(parent_or_seq_chunk_parent=parent_genome2_1_15)
+        assert tx.chunk_relative_interval_to_cds(start, end, strand).reset_parent(new_parent=None) == expected
