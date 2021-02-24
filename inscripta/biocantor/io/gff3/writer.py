@@ -32,6 +32,8 @@ def collection_to_gff3(
     # if we are in chromosome relative coordinates and we are exporting sequences, we need to verify that
     # none of the collections are chunk-relative
     if chromosome_relative_coordinates and add_sequences:
+        # this is turned into a list here because under these conditions, the collections iterable
+        # must be validated before export.
         collections = list(collections)
         for c in collections:
             if c.has_ancestor_of_type("sequence_chunk"):
