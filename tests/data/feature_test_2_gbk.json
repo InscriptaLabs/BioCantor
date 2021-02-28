@@ -33,7 +33,7 @@
                     },
                     "sequence_name": "chr1",
                     "sequence_guid": null,
-                    "feature_interval_guid": "ab815ceb-1833-71ad-7c92-2413cbbb6a7f",
+                    "feature_interval_guid": "c5792890-36f2-7f85-886b-ad087730ba44",
                     "feature_guid": null,
                     "feature_types": [
                         "a",
@@ -41,18 +41,18 @@
                         "group",
                         "misc_feature"
                     ],
-                    "feature_name": null,
-                    "feature_id": null,
+                    "feature_name": "no",
+                    "feature_id": "no",
                     "is_primary_feature": false
                 }
             ],
-            "feature_collection_name": null,
-            "feature_collection_id": null,
+            "feature_collection_name": "no",
+            "feature_collection_id": "no",
             "locus_tag": null,
             "feature_collection_type": null,
             "sequence_name": "chr1",
             "sequence_guid": null,
-            "feature_collection_guid": "e54ffdd2-1ebe-cd03-011b-a8f6ae6b81a3",
+            "feature_collection_guid": "1dc02ee5-cf96-fef0-fc05-865c04cc1af5",
             "qualifiers": {
                 "feature_collection_id": [
                     "456"
@@ -111,7 +111,7 @@
                     },
                     "sequence_name": "chr1",
                     "sequence_guid": null,
-                    "feature_interval_guid": "173b6d75-8621-34c4-4605-7abcfe0aacfb",
+                    "feature_interval_guid": "e561fabf-b1dd-4382-72cf-492e6443d8d8",
                     "feature_guid": null,
                     "feature_types": [
                         "a",
@@ -119,8 +119,8 @@
                         "group",
                         "misc_feature"
                     ],
-                    "feature_name": null,
-                    "feature_id": null,
+                    "feature_name": "This",
+                    "feature_id": "This",
                     "is_primary_feature": false
                 },
                 {
@@ -207,12 +207,12 @@
                 }
             ],
             "feature_collection_name": "featgrp1",
-            "feature_collection_id": "feat1",
+            "feature_collection_id": "This",
             "locus_tag": "feat1",
             "feature_collection_type": null,
             "sequence_name": "chr1",
             "sequence_guid": null,
-            "feature_collection_guid": "8a61c3fe-eab6-1d94-9185-c1156fca0e62",
+            "feature_collection_guid": "439ff4c4-4270-aba8-2141-96a0312b6e55",
             "qualifiers": {
                 "feature_collection_id": [
                     "abc123"
@@ -354,6 +354,7 @@
         }
     ],
     "name": "chr1",
+    "id": null,
     "sequence_name": "chr1",
     "sequence_guid": null,
     "sequence_path": null,

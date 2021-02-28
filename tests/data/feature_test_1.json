@@ -553,6 +553,7 @@
         }
     ],
     "name": null,
+    "id": null,
     "sequence_name": "NC_000021.9",
     "sequence_guid": null,
     "sequence_path": null,

@@ -119,6 +119,7 @@
         }
     ],
     "name": null,
+    "id": null,
     "sequence_name": "chr1",
     "sequence_guid": null,
     "sequence_path": null,
