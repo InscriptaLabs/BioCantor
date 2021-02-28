@@ -839,6 +839,9 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
         # edge case for a now null interval
         elif start == end:
             return None
+        # edge case -- we are not actually subsetting at all
+        if start == self.start and end == self.end:
+            return self.location.parent
 
         seq = self.location.parent.sequence
         chunk_relative_start = self.lift_over_to_first_ancestor_of_type("chromosome").parent_to_relative_pos(start)
@@ -993,18 +996,30 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
                 genes_to_keep.append(gene_or_feature_collection)
             # otherwise this is None, which means we do not have a match.
 
-        return AnnotationCollection(
-            feature_collections=features_collections_to_keep,
-            genes=genes_to_keep,
-            name=self.name,
-            sequence_name=self.sequence_name,
-            sequence_guid=self.sequence_guid,
-            sequence_path=self.sequence_path,
-            qualifiers=self._export_qualifiers_to_list(),
-            start=self.start,
-            end=self.end,
-            parent_or_seq_chunk_parent=self.location.parent,
-            completely_within=self.completely_within,
+        if genes_to_keep or features_collections_to_keep:
+            start = min(x.start for x in itertools.chain(genes_to_keep, features_collections_to_keep))
+            end = max(x.end for x in itertools.chain(genes_to_keep, features_collections_to_keep))
+        else:
+            start = self.start
+            end = self.end
+
+        seq_chunk_parent = self._subset_parent(start, end)
+
+        return AnnotationCollection.from_dict(
+            dict(
+                feature_collections=[x.to_dict() for x in features_collections_to_keep],
+                genes=[x.to_dict() for x in genes_to_keep],
+                name=self.name,
+                id=self.id,
+                sequence_name=self.sequence_name,
+                sequence_guid=self.sequence_guid,
+                sequence_path=self.sequence_path,
+                qualifiers=self._export_qualifiers_to_list(),
+                start=start,
+                end=end,
+                completely_within=self.completely_within,
+            ),
+            parent_or_seq_chunk_parent=seq_chunk_parent,
         )
 
     def query_by_feature_identifiers(self, id_or_ids: Union[str, List[str]]) -> "AnnotationCollection":
@@ -1028,26 +1043,38 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
             ids = set(id_or_ids)
 
         genes_to_keep = []
-        features_to_keep = []
+        features_collections_to_keep = []
         for gene_or_feature in self.iter_children():
             if ids & gene_or_feature.identifiers:
                 if isinstance(gene_or_feature, FeatureIntervalCollection):
-                    features_to_keep.append(gene_or_feature)
+                    features_collections_to_keep.append(gene_or_feature)
                 else:
                     genes_to_keep.append(gene_or_feature)
 
-        return AnnotationCollection(
-            feature_collections=features_to_keep,
-            genes=genes_to_keep,
-            name=self.name,
-            sequence_name=self.sequence_name,
-            sequence_guid=self.sequence_guid,
-            sequence_path=self.sequence_path,
-            qualifiers=self._export_qualifiers_to_list(),
-            start=self.start,
-            end=self.end,
-            parent_or_seq_chunk_parent=self.location.parent,
-            completely_within=self.completely_within,
+        if genes_to_keep or features_collections_to_keep:
+            start = min(x.start for x in itertools.chain(genes_to_keep, features_collections_to_keep))
+            end = max(x.end for x in itertools.chain(genes_to_keep, features_collections_to_keep))
+        else:
+            start = self.start
+            end = self.end
+
+        seq_chunk_parent = self._subset_parent(start, end)
+
+        return AnnotationCollection.from_dict(
+            dict(
+                feature_collections=[x.to_dict() for x in features_collections_to_keep],
+                genes=[x.to_dict() for x in genes_to_keep],
+                name=self.name,
+                id=self.id,
+                sequence_name=self.sequence_name,
+                sequence_guid=self.sequence_guid,
+                sequence_path=self.sequence_path,
+                qualifiers=self._export_qualifiers_to_list(),
+                start=start,
+                end=end,
+                completely_within=self.completely_within,
+            ),
+            parent_or_seq_chunk_parent=seq_chunk_parent,
         )
 
     def to_gff(self, chromosome_relative_coordinates: bool = True) -> Iterable[GFFRow]:
