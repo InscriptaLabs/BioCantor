@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+### Added
+- All Interval objects now have the ability to be built from subsets of genome sequence (called `sequence_chunk`).
+- Querying `AnnotationCollection` objects by coordinates produce new objects with sliced sequences with chunk-relative coordinates. 
+- Interval objects built from sequence subsets can be exported in chunk-relative coordinates to GFF3/GenBank.
+- Interval objects have new coordinate translation methods that operate in chunk-relative space. Coordinate methods that operate in genomic coordinate space were retained.
+
+
 ## [0.3.1]
 ### Fixed
 - Feature interval identifier regex should exactly match qualifier keys
