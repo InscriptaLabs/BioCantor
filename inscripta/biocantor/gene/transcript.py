@@ -217,14 +217,14 @@ class TranscriptInterval(AbstractFeatureInterval):
     @property
     def chunk_relative_cds_start(self) -> int:
         if self.is_coding:
-            return self._cds._location.start
+            return self.cds_chunk_relative_location.start
         else:
             raise NoncodingTranscriptError("No CDS start for non-coding transcript")
 
     @property
     def chunk_relative_cds_end(self) -> int:
         if self.is_coding:
-            return self._cds._location.end
+            return self.cds_chunk_relative_location.end
         else:
             raise NoncodingTranscriptError("No CDS end for non-coding transcript")
 
