@@ -216,7 +216,7 @@ class GeneTblFeature(TblFeature):
         else:
             is_pseudo = False
 
-        location = gene._location.reset_strand(strand)
+        location = gene.location.reset_strand(strand)
 
         qualifiers = {"gene": [gene.gene_symbol], "locus_tag": [locus_tag], "note": []}
 
@@ -262,7 +262,7 @@ class MRNATblFeature(TblFeature):
         cds_feature: "CDSTblFeature",
     ):
         super().__init__(
-            transcript._location,
+            transcript.location,
             start_is_incomplete=cds_feature.start_is_incomplete,
             end_is_complete=cds_feature.end_is_complete,
             is_pseudo=cds_feature.is_pseudo,
@@ -321,7 +321,7 @@ class CDSTblFeature(TblFeature):
             if val:
                 qualifiers["note"].append(f"original {key}: {val}")
 
-        codon_start = next(transcript.cds.frame_iter()).value + 1
+        codon_start = next(transcript._cds.frame_iter()).value + 1
         qualifiers["codon_start"] = [codon_start]
 
         # try to pull out the special qualifiers
@@ -341,13 +341,13 @@ class CDSTblFeature(TblFeature):
                     del d[key]
 
         # start codon can look directly at the translation, because we have a codon_start value
-        start_is_incomplete = not transcript.cds.has_start_codon_in_specific_translation_table(translation_table)
+        start_is_incomplete = not transcript._cds.has_start_codon_in_specific_translation_table(translation_table)
 
         # End completeness requires that there be a in-frame stop codon that is in the last mod3 position
-        end_is_incomplete = len(transcript.cds) % 3 != (codon_start - 1) or not transcript.cds.has_valid_stop
+        end_is_incomplete = len(transcript._cds) % 3 != (codon_start - 1) or not transcript._cds.has_valid_stop
 
         super().__init__(
-            transcript.cds._location,
+            transcript.cds_location,
             start_is_incomplete=start_is_incomplete,
             end_is_complete=end_is_incomplete,
             is_pseudo=gene_feature.is_pseudo,
@@ -369,7 +369,7 @@ class NcRNATblFeature(TblFeature):
         qualifiers["ncRNA_class"] = [transcript.transcript_type.name]
 
         super().__init__(
-            transcript._location,
+            transcript.location,
             start_is_incomplete=False,
             end_is_complete=False,
             is_pseudo=False,
@@ -395,7 +395,7 @@ class MiscRNATblFeature(TblFeature):
             qualifiers["product"] = qualifiers["gene"]
 
         super().__init__(
-            transcript._location,
+            transcript.location,
             start_is_incomplete=False,
             end_is_complete=False,
             is_pseudo=False,
@@ -423,7 +423,7 @@ class TRNATblFeature(TblFeature):
             qualifiers["product"] = ["tRNA-Xxx"]
 
         super().__init__(
-            transcript._location,
+            transcript.location,
             start_is_incomplete=False,
             end_is_complete=False,
             is_pseudo=False,
@@ -451,7 +451,7 @@ class RRNATblFeature(TblFeature):
             qualifiers["product"] = ["unknown ribosomal RNA"]
 
         super().__init__(
-            transcript._location,
+            transcript.location,
             start_is_incomplete=False,
             end_is_complete=False,
             is_pseudo=False,
@@ -479,11 +479,11 @@ class TblGene:
         # potentially overlapping representation was able to properly represent the ORF. This is an inherent limitation
         # of the TBL format (as well as the GenBank format).
         for tx in gene.transcripts:
-            if isinstance(tx._location, CompoundInterval):
-                tx._location = tx._location.optimize_and_combine_blocks()
+            if isinstance(tx.location, CompoundInterval):
+                tx._location = tx.location.optimize_and_combine_blocks()
             if gene.is_coding:
-                if isinstance(tx.cds._location, CompoundInterval):
-                    tx.cds = tx.cds.optimize_and_combine_blocks()
+                if isinstance(tx.cds_location, CompoundInterval):
+                    tx._cds = tx._cds.optimize_and_combine_blocks()
 
         self.gene_tbl = GeneTblFeature(self.gene, locus_tag)
 

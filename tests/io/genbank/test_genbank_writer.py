@@ -31,6 +31,6 @@ def test_sequences(test_data_dir, tmp_path, gbk, flavor):
         tx_b = gene_b.transcripts[0]
         assert tx_a._location == tx_b._location
         if tx_a.is_coding:
-            assert tx_a.cds._location == tx_b.cds._location
+            assert tx_a._cds._location == tx_b._cds._location
             assert tx_a.get_protein_sequence() == tx_b.get_protein_sequence()
         assert tx_a.get_transcript_sequence() == tx_b.get_transcript_sequence()

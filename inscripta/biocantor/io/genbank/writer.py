@@ -243,7 +243,7 @@ def add_cds_feature(
     Returns:
         ``SeqFeature`` for the CDS of this transcript.
     """
-    location = transcript.cds._location.to_biopython()
+    location = transcript._cds._location.to_biopython()
     feature = SeqFeature(location, type=GeneIntervalFeatures.CDS.value, strand=strand.value)
     feature.qualifiers = transcript_qualifiers
 
