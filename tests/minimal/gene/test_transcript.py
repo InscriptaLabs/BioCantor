@@ -616,7 +616,7 @@ class TestTranscript:
             _ = tx.transcript_pos_to_cds(0)
 
         with pytest.raises(NoncodingTranscriptError):
-            _ = tx.get_coding_interval()
+            _ = tx.cds_location
 
         with pytest.raises(NoncodingTranscriptError):
             _ = tx.get_5p_interval()

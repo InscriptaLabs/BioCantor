@@ -133,26 +133,24 @@ class CDSInterval:
         return self._location.lift_over_to_first_ancestor_of_type(sequence_type)
 
     @property
-    def has_canonical_start_codon(self) -> bool:
-        """Does this CDS have a canonical valid start? Requires a sequence be associated."""
-        return next(self.scan_codons()).is_canonical_start_codon
-
-    def has_start_codon_in_specific_translation_table(
-        self, translation_table: Optional[TranslationTable] = TranslationTable.DEFAULT
-    ) -> bool:
-        """
-        Does this CDS have a valid start in a provided translation table? Requires a sequence be associated.
-
-        Defaults to the ``DEFAULT`` table, which is just ``ATG``.
-        """
-        return next(self.scan_codons()).is_start_codon_in_specific_translation_table(translation_table)
+    def location(self) -> Location:
+        """Returns the Location of this in *chromosome coordinates*"""
+        return self.lift_over_to_first_ancestor_of_type("chromosome")
 
     @property
-    def has_valid_stop(self) -> bool:
-        """Does this CDS have a valid stop? Requires a sequence be associated."""
-        seq = self.extract_sequence()
-        c = Codon(seq[-3:].sequence.upper())
-        return c.is_stop_codon
+    def chunk_relative_location(self) -> Location:
+        """Returns the Location of this in *chunk relative coordinates*"""
+        return self._location
+
+    @property
+    def blocks(self) -> List[Location]:
+        """Returns the blocks of this location"""
+        return self.location.blocks
+
+    @property
+    def chunk_relative_blocks(self) -> List[Location]:
+        """Returns the chunk relative blocks of this location"""
+        return self._location.blocks
 
     @property
     def strand(self) -> Strand:
@@ -178,6 +176,28 @@ class CDSInterval:
     def chunk_relative_end(self) -> int:
         """Returns chunk relative end position."""
         return self._location.end
+
+    @property
+    def has_canonical_start_codon(self) -> bool:
+        """Does this CDS have a canonical valid start? Requires a sequence be associated."""
+        return next(self.scan_codons()).is_canonical_start_codon
+
+    def has_start_codon_in_specific_translation_table(
+        self, translation_table: Optional[TranslationTable] = TranslationTable.DEFAULT
+    ) -> bool:
+        """
+        Does this CDS have a valid start in a provided translation table? Requires a sequence be associated.
+
+        Defaults to the ``DEFAULT`` table, which is just ``ATG``.
+        """
+        return next(self.scan_codons()).is_start_codon_in_specific_translation_table(translation_table)
+
+    @property
+    def has_valid_stop(self) -> bool:
+        """Does this CDS have a valid stop? Requires a sequence be associated."""
+        seq = self.extract_sequence()
+        c = Codon(seq[-3:].sequence.upper())
+        return c.is_stop_codon
 
     def frame_iter(self) -> Iterator[CDSFrame]:
         """Iterate over frames taking strand into account"""
