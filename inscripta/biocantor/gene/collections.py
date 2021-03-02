@@ -82,7 +82,7 @@ class AbstractFeatureIntervalCollection(AbstractInterval, ABC):
         This overrides :meth:`~biocantor.gene.feature.AbstractInterval.reset_parent()`. The original function
         will remain applied on the leaf nodes.
         """
-        self.location = self.location.reset_parent(parent)
+        self._location = self._location.reset_parent(parent)
         for child in self:
             child.reset_parent(parent)
 
@@ -96,7 +96,7 @@ class AbstractFeatureIntervalCollection(AbstractInterval, ABC):
             end: genome-relative end
             parent_or_seq_chunk_parent: A parent that could be null, genome relative, or sequence chunk relative.
         """
-        self.location = SingleInterval(start, end, Strand.PLUS)
+        self._location = SingleInterval(start, end, Strand.PLUS)
         if parent_or_seq_chunk_parent:
             if parent_or_seq_chunk_parent.has_ancestor_of_type("sequence_chunk"):
                 super()._liftover_this_location_to_seq_chunk_parent(parent_or_seq_chunk_parent)
@@ -105,7 +105,7 @@ class AbstractFeatureIntervalCollection(AbstractInterval, ABC):
 
     def get_reference_sequence(self) -> Sequence:
         """Returns the *plus strand* sequence for this interval"""
-        return self.location.extract_sequence()
+        return self._location.extract_sequence()
 
     @staticmethod
     def _find_primary_feature(
@@ -200,7 +200,7 @@ class GeneInterval(AbstractFeatureIntervalCollection):
 
         if guid is None:
             self.guid = digest_object(
-                self.location,
+                self._location,
                 self.gene_id,
                 self.gene_symbol,
                 self.gene_type,
@@ -214,8 +214,8 @@ class GeneInterval(AbstractFeatureIntervalCollection):
 
         self.guid_map = {x.guid: x for x in self.transcripts}
 
-        if self.location.parent:
-            ObjectValidation.require_location_has_parent_with_sequence(self.location)
+        if self._location.parent:
+            ObjectValidation.require_location_has_parent_with_sequence(self._location)
 
     def __repr__(self):
         return (
@@ -319,7 +319,7 @@ class GeneInterval(AbstractFeatureIntervalCollection):
         return FeatureInterval(
             interval_starts=interval_starts,
             interval_ends=interval_ends,
-            strand=self.location.strand,
+            strand=self._location.strand,
             qualifiers=self._export_qualifiers_to_list(),
             sequence_guid=self.sequence_guid,
             sequence_name=self.sequence_name,
@@ -327,7 +327,7 @@ class GeneInterval(AbstractFeatureIntervalCollection):
             feature_name=self.gene_symbol,
             feature_id=self.gene_id,
             guid=self.guid,
-            parent_or_seq_chunk_parent=self.location.parent,
+            parent_or_seq_chunk_parent=self._location.parent,
         )
 
     def get_merged_transcript(self) -> FeatureInterval:
@@ -337,7 +337,7 @@ class GeneInterval(AbstractFeatureIntervalCollection):
         """
         intervals = []
         for tx in self.transcripts:
-            for i in tx.location.blocks:
+            for i in tx._location.blocks:
                 intervals.append(i)
         return self._produce_merged_feature(intervals)
 
@@ -346,7 +346,7 @@ class GeneInterval(AbstractFeatureIntervalCollection):
         intervals = []
         for tx in self.transcripts:
             if tx.is_coding:
-                for i in tx.cds.location.blocks:
+                for i in tx.cds._location.blocks:
                     intervals.append(i)
         if not intervals:
             raise NoncodingTranscriptError("No CDS transcripts found on this gene")
@@ -387,7 +387,7 @@ class GeneInterval(AbstractFeatureIntervalCollection):
             sequence_name=self.sequence_name,
             sequence_guid=self.sequence_guid,
             guid=self.guid,
-            parent_or_seq_chunk_parent=self.location.parent,
+            parent_or_seq_chunk_parent=self._location.parent,
         )
 
     def to_gff(self, chromosome_relative_coordinates: bool = True) -> Iterable[GFFRow]:
@@ -424,7 +424,7 @@ class GeneInterval(AbstractFeatureIntervalCollection):
             (self.start if chromosome_relative_coordinates else self.chunk_relative_start) + 1,
             self.end if chromosome_relative_coordinates else self.chunk_relative_end,
             NULL_COLUMN,
-            self.location.strand,
+            self._location.strand,
             CDSPhase.NONE,
             attributes,
         )
@@ -488,7 +488,7 @@ class FeatureIntervalCollection(AbstractFeatureIntervalCollection):
 
         if guid is None:
             self.guid = digest_object(
-                self.location,
+                self._location,
                 self.feature_collection_name,
                 self.feature_collection_id,
                 self.feature_collection_type,
@@ -503,8 +503,8 @@ class FeatureIntervalCollection(AbstractFeatureIntervalCollection):
 
         self.guid_map = {x.guid: x for x in self.feature_intervals}
 
-        if self.location.parent:
-            ObjectValidation.require_location_has_parent_with_sequence(self.location)
+        if self._location.parent:
+            ObjectValidation.require_location_has_parent_with_sequence(self._location)
 
     def __repr__(self):
         return (
@@ -616,7 +616,7 @@ class FeatureIntervalCollection(AbstractFeatureIntervalCollection):
             sequence_name=self.sequence_name,
             sequence_guid=self.sequence_guid,
             guid=self.guid,
-            parent_or_seq_chunk_parent=self.location.parent,
+            parent_or_seq_chunk_parent=self._location.parent,
         )
 
     def to_gff(self, chromosome_relative_coordinates: bool = True) -> Iterable[GFFRow]:
@@ -657,7 +657,7 @@ class FeatureIntervalCollection(AbstractFeatureIntervalCollection):
             (self.start if chromosome_relative_coordinates else self.chunk_relative_start) + 1,
             self.end if chromosome_relative_coordinates else self.chunk_relative_end,
             NULL_COLUMN,
-            self.location.strand,
+            self._location.strand,
             CDSPhase.NONE,
             attributes,
         )
@@ -728,7 +728,7 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
 
         if start is None and end is None:
             # if we still have nothing, we are empty
-            self.location = EmptyLocation()
+            self._location = EmptyLocation()
         else:
             assert start is not None and end is not None
             self._initialize_location(start, end, parent_or_seq_chunk_parent)
@@ -741,11 +741,11 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
         self.guid_map = {x.guid: x for x in self.iter_children()}
 
         self.guid = digest_object(
-            self.location, self.name, self.sequence_name, self.qualifiers, self.completely_within, self.children_guids
+            self._location, self.name, self.sequence_name, self.qualifiers, self.completely_within, self.children_guids
         )
 
-        if self.location.parent:
-            ObjectValidation.require_location_has_parent_with_sequence(self.location)
+        if self._location.parent:
+            ObjectValidation.require_location_has_parent_with_sequence(self._location)
 
     def __repr__(self):
         return f"{self.__class__.__name__}({','.join(str(f) for f in self.iter_children())})"
@@ -839,16 +839,16 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
         Returns:
             A parent, or ``None`` if this location has no parent, or if start == end (empty interval).
         """
-        if not self.location.parent:
+        if not self._location.parent:
             return None
         # edge case for a now null interval
         elif start == end:
             return None
         # edge case -- we are not actually subsetting at all
         if start == self.start and end == self.end:
-            return self.location.parent
+            return self._location.parent
 
-        seq = self.location.parent.sequence
+        seq = self._location.parent.sequence
         chunk_relative_start = self.lift_over_to_first_ancestor_of_type("chromosome").parent_to_relative_pos(start)
 
         # handle the edge case where the end is the end of the current chunk
@@ -910,7 +910,7 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
                 A interval collection with only the appropriate children, or None if the resulting interval
                 is empty.
             """
-            valid_children_guids = [child.guid for child in g_or_fc if query_loc.has_overlap(child.location)]
+            valid_children_guids = [child.guid for child in g_or_fc if query_loc.has_overlap(child._location)]
             try:
                 return g_or_fc.query_by_guids(valid_children_guids)
             except InvalidAnnotationError:
@@ -937,7 +937,7 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
         elif end > self.end:
             raise InvalidQueryError(f"End {end} must be within bounds of current interval [{self.start}-{self.end})")
 
-        query_loc = SingleInterval(start, end, Strand.PLUS, parent=self.location.parent)
+        query_loc = SingleInterval(start, end, Strand.PLUS, parent=self._location.parent)
         if completely_within:
             coordinate_fn = query_loc.contains
         else:
@@ -954,7 +954,7 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
             elif my_bins and gene_or_feature_collection.bin not in my_bins:
                 continue
 
-            elif coordinate_fn(gene_or_feature_collection.location):
+            elif coordinate_fn(gene_or_feature_collection._location):
 
                 # make sure that every transcript/feature also overlap. Only necessary for partial overlap
                 if coordinate_fn == query_loc.has_overlap:

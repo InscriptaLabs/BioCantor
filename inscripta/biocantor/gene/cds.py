@@ -90,7 +90,7 @@ class CDSInterval:
     """
 
     def __init__(self, location: Location, frames: List[Union[CDSFrame, CDSPhase]]):
-        self.location = location
+        self._location = location
         if len(frames) != location.num_blocks:
             raise LocationException("Number of frame entries must match number of exons")
         # internally we work with Frame, but support Phase
@@ -103,7 +103,7 @@ class CDSInterval:
 
     def __str__(self):
         frame_str = ", ".join([str(p) for p in self.frames])
-        return f"CDS(({self.location}), ({frame_str})"
+        return f"CDS(({self._location}), ({frame_str})"
 
     def __repr__(self):
         return "<{}>".format(str(self))
@@ -113,13 +113,13 @@ class CDSInterval:
             return False
         elif self.frames != other.frames:
             return False
-        return self.location == other.location
+        return self._location == other._location
 
     def __hash__(self):
-        return hash((self.location, self.frames[0]))
+        return hash((self._location, self.frames[0]))
 
     def __len__(self) -> int:
-        return len(self.location)
+        return len(self._location)
 
     def lift_over_to_first_ancestor_of_type(self, sequence_type: Optional[str] = "chromosome") -> Location:
         """
@@ -128,9 +128,9 @@ class CDSInterval:
         Returns:
             The lifted Location.
         """
-        if self.location.parent is None:
-            return self.location
-        return self.location.lift_over_to_first_ancestor_of_type(sequence_type)
+        if self._location.parent is None:
+            return self._location
+        return self._location.lift_over_to_first_ancestor_of_type(sequence_type)
 
     @property
     def has_canonical_start_codon(self) -> bool:
@@ -157,7 +157,7 @@ class CDSInterval:
     @property
     def strand(self) -> Strand:
         """Pass up the Strand of this CDS's Location"""
-        return self.location.strand
+        return self._location.strand
 
     @property
     def start(self) -> int:
@@ -172,26 +172,26 @@ class CDSInterval:
     @property
     def chunk_relative_start(self) -> int:
         """Returns chunk relative start position."""
-        return self.location.start
+        return self._location.start
 
     @property
     def chunk_relative_end(self) -> int:
         """Returns chunk relative end position."""
-        return self.location.end
+        return self._location.end
 
     def frame_iter(self) -> Iterator[CDSFrame]:
         """Iterate over frames taking strand into account"""
-        if self.location.strand == Strand.PLUS or self.location.strand == Strand.UNSTRANDED:
+        if self._location.strand == Strand.PLUS or self._location.strand == Strand.UNSTRANDED:
             yield from self.frames
         else:
             yield from reversed(self.frames)
 
     def exon_iter(self) -> Iterator[SingleInterval]:
         """Iterate over exons in transcription direction"""
-        if self.location.strand == Strand.PLUS or self.location.strand == Strand.UNSTRANDED:
-            yield from self.location.blocks
+        if self._location.strand == Strand.PLUS or self._location.strand == Strand.UNSTRANDED:
+            yield from self._location.blocks
         else:
-            yield from reversed(self.location.blocks)
+            yield from reversed(self._location.blocks)
 
     @lru_cache(maxsize=1)
     def extract_sequence(self) -> Sequence:
@@ -251,8 +251,8 @@ class CDSInterval:
         cleaned_rel_starts = []
         cleaned_rel_ends = []
         for exon, frame in zip(self.exon_iter(), self.frame_iter()):
-            start_to_rel = self.location.parent_to_relative_pos(exon.start)
-            end_to_rel_inclusive = self.location.parent_to_relative_pos(exon.end - 1)
+            start_to_rel = self._location.parent_to_relative_pos(exon.start)
+            end_to_rel_inclusive = self._location.parent_to_relative_pos(exon.end - 1)
             rel_start = min(start_to_rel, end_to_rel_inclusive)
             rel_end = max(start_to_rel, end_to_rel_inclusive) + 1
             if next_frame != frame:
@@ -272,7 +272,7 @@ class CDSInterval:
             # this is what we expect the next frame to be, if no frameshift occurred
             next_frame = next_frame.shift(rel_end - rel_start)
         cleaned_blocks = [
-            self.location.relative_interval_to_parent_location(cleaned_rel_starts[i], cleaned_rel_ends[i], Strand.PLUS)
+            self._location.relative_interval_to_parent_location(cleaned_rel_starts[i], cleaned_rel_ends[i], Strand.PLUS)
             for i in range(len(cleaned_rel_starts))
         ]
         cleaned_location = CompoundInterval.from_single_intervals(cleaned_blocks)
@@ -398,7 +398,7 @@ class CDSInterval:
         Returns:
             A new :class:`CDSInterval` that has been merged.
         """
-        new_loc = self.location.optimize_blocks()
+        new_loc = self._location.optimize_blocks()
         first_frame = next(self.frame_iter())
         frames = CDSInterval.construct_frames_from_location(new_loc, first_frame)
         return CDSInterval(new_loc, frames)
@@ -413,7 +413,7 @@ class CDSInterval:
         Returns:
             A new :class:`CDSInterval` that has been merged.
         """
-        new_loc = self.location.optimize_and_combine_blocks()
+        new_loc = self._location.optimize_and_combine_blocks()
         first_frame = next(self.frame_iter())
         frames = CDSInterval.construct_frames_from_location(new_loc, first_frame)
         return CDSInterval(new_loc, frames)

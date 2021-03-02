@@ -106,7 +106,7 @@ def gene_to_feature(
         ``SeqFeature``s, one for the gene, one for each child transcript, and one for each transcript's CDS if it
             exists.
     """
-    location = gene_or_feature.location.to_biopython()
+    location = gene_or_feature._location.to_biopython()
     # update the strand by picking the most common
     strands = [child.strand for child in gene_or_feature]
     strand = max(strands, key=strands.count)
@@ -182,7 +182,7 @@ def transcripts_to_feature(
         ``SeqFeature``s, one for each transcript and then one for each CDS of the transcript, if it exists.
     """
     for transcript in transcripts:
-        location = transcript.location.to_biopython()
+        location = transcript._location.to_biopython()
 
         transcript_qualifiers = {key: list(vals) for key, vals in transcript.export_qualifiers().items()}
         if gene_symbol is not None:
@@ -243,7 +243,7 @@ def add_cds_feature(
     Returns:
         ``SeqFeature`` for the CDS of this transcript.
     """
-    location = transcript.cds.location.to_biopython()
+    location = transcript.cds._location.to_biopython()
     feature = SeqFeature(location, type=GeneIntervalFeatures.CDS.value, strand=strand.value)
     feature.qualifiers = transcript_qualifiers
 
@@ -284,7 +284,7 @@ def feature_intervals_to_features(
         A ``SeqFeature``s for each feature.
     """
     for feature in features:
-        location = feature.location.to_biopython()
+        location = feature._location.to_biopython()
 
         feature_qualifiers = {key: list(vals) for key, vals in feature.export_qualifiers().items()}
         if feature_name:

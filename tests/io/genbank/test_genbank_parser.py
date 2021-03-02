@@ -113,16 +113,16 @@ class TestGenbank:
 
         assert len(parsed.genes) == 4
         assert all(
-            gene.transcripts[0].location.parent.id == gene.sequence_name == "CM021111.1" for gene in parsed.genes
+            gene.transcripts[0]._location.parent.id == gene.sequence_name == "CM021111.1" for gene in parsed.genes
         )
         assert not parsed.genes[0].transcripts[0].is_coding
         assert parsed.genes[1].transcripts[0].is_coding
         assert parsed.genes[2].transcripts[0].is_coding
         assert not parsed.genes[3].transcripts[0].is_coding
         # has UTR
-        assert parsed.genes[1].transcripts[0].location != parsed.genes[1].transcripts[0].cds.location
+        assert parsed.genes[1].transcripts[0]._location != parsed.genes[1].transcripts[0].cds._location
         # does not have UTR
-        assert parsed.genes[2].transcripts[0].location == parsed.genes[2].transcripts[0].cds.location
+        assert parsed.genes[2].transcripts[0]._location == parsed.genes[2].transcripts[0].cds._location
 
         # validate positions; gene always has + strand location
         for gene, expected_gene_loc, expected_tx_loc in zip(
@@ -130,8 +130,8 @@ class TestGenbank:
             ["16174-18079:+", "37461-39103:+", "39518-40772:+", "41085-42503:+"],
             ["16174-18079:-", "37461-39103:+", "39518-40772:+", "41085-42503:+"],
         ):
-            assert str(gene.location) == expected_gene_loc
-            assert str(gene.transcripts[0].location) == expected_tx_loc
+            assert str(gene._location) == expected_gene_loc
+            assert str(gene.transcripts[0]._location) == expected_tx_loc
 
         # has UTR
         assert parsed.genes[1].transcripts[0].cds_size == 1374
@@ -312,11 +312,11 @@ class TestSplicedGenbank:
 
         spliced = annot_collection.genes[0]
         assert spliced.gene_symbol == "MPT5"
-        assert spliced.location.reset_parent(None) == SingleInterval(1000, 4220, Strand.PLUS)
-        assert spliced.get_primary_transcript().location.reset_parent(None) == CompoundInterval(
+        assert spliced._location.reset_parent(None) == SingleInterval(1000, 4220, Strand.PLUS)
+        assert spliced.get_primary_transcript()._location.reset_parent(None) == CompoundInterval(
             [1000, 1643], [1003, 4220], Strand.PLUS
         )
-        assert spliced.get_primary_cds().location.reset_parent(None) == CompoundInterval(
+        assert spliced.get_primary_cds()._location.reset_parent(None) == CompoundInterval(
             [1000, 1643], [1003, 4220], Strand.PLUS
         )
         assert (

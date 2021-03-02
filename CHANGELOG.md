@@ -10,7 +10,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Querying `AnnotationCollection` objects by coordinates produce new objects with sliced sequences with chunk-relative coordinates. 
 - Interval objects built from sequence subsets can be exported in chunk-relative coordinates to GFF3/GenBank.
 - Interval objects have new coordinate translation methods that operate in chunk-relative space. Coordinate methods that operate in genomic coordinate space were retained.
+- Non-transcribed feature identifier parsing looks in the `note` special field for identifiers.
 
+### Changed
+- All Interval objects now must be built directly from coordinates, and do not accept Location objects.
+- All Interval objects now hide their Location member. This is to avoid confusion about what coordinate system the Location may be on.
 
 ## [0.3.1]
 ### Fixed

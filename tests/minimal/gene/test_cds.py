@@ -507,9 +507,9 @@ class TestCDSInterval:
 
     def test_accessors(self):
         cds = CDSInterval(SingleInterval(0, 10, Strand.PLUS), [CDSFrame.ZERO])
-        assert cds.start == cds.location.start
-        assert cds.end == cds.location.end
-        assert cds.strand == cds.location.strand
+        assert cds.start == cds._location.start
+        assert cds.end == cds._location.end
+        assert cds.strand == cds._location.strand
 
     @pytest.mark.parametrize(
         "cds,expected",

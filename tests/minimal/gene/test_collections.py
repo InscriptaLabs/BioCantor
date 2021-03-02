@@ -263,7 +263,7 @@ class TestAnnotationCollection:
 
     def test_annot_no_range(self):
         obj = self.annot_no_range.to_annotation_collection()
-        assert obj.location == SingleInterval(2, 30, Strand.PLUS)
+        assert obj._location == SingleInterval(2, 30, Strand.PLUS)
 
     def test_annot_no_features(self):
         obj = self.annot_no_features.to_annotation_collection()
@@ -353,21 +353,21 @@ class TestAnnotationCollection:
         obj = self.annot.to_annotation_collection(parent_genome)
         r = obj.query_by_position(0, 25, completely_within=False)
         assert len(r) == 2
-        assert r.location.parent
+        assert r._location.parent
         for gene in r:
             orig_gene = next(obj.query_by_feature_identifiers(gene.identifiers).iter_children())
             for tx1, tx2 in zip(gene, orig_gene):
                 assert tx1.get_spliced_sequence() == tx2.get_spliced_sequence()
         r2 = r.query_by_position(0, 10, completely_within=False)
         assert len(r2) == 2
-        assert r2.location.parent
+        assert r2._location.parent
         # this slice cut some of transcripts into chunks, so now the sequences are a subset
         for gene in r2:
             orig_gene = next(obj.query_by_feature_identifiers(gene.identifiers).iter_children())
             for tx1, tx2 in zip(gene, orig_gene):
                 assert str(tx1.get_spliced_sequence()) in str(tx2.get_spliced_sequence())
         r3 = r.query_by_position(0, 8, completely_within=False)
-        assert r3.location.parent
+        assert r3._location.parent
         assert len(r3) == 2
         for gene in r3:
             orig_gene = next(obj.query_by_feature_identifiers(gene.identifiers).iter_children())
@@ -397,7 +397,7 @@ class TestAnnotationCollection:
     def test_position_queries_location(self, start, end, completely_within, coding_only, expected):
         obj = self.annot.to_annotation_collection()
         r = obj.query_by_position(start, end, coding_only, completely_within)
-        assert r.location == expected
+        assert r._location == expected
 
     def test_query_position_exceptions(self):
         obj = self.annot.to_annotation_collection()
@@ -489,10 +489,10 @@ class TestAnnotationCollection:
     def test_reset_parent_null(self):
         obj = self.annot.to_annotation_collection(parent_genome)
         for child in obj:
-            assert child.location.parent
+            assert child._location.parent
         obj.reset_parent()
         for child in obj:
-            assert not child.location.parent
+            assert not child._location.parent
 
     def test_reset_parent(self):
         obj = self.annot.to_annotation_collection(parent_genome)
