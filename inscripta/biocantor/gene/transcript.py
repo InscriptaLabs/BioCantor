@@ -179,18 +179,6 @@ class TranscriptInterval(AbstractFeatureInterval):
         return self._cds._location
 
     @property
-    def cds_blocks(self) -> List[Location]:
-        """Returns the blocks of the CDS, if it exists."""
-        if not self.is_coding:
-            raise NoncodingTranscriptError("No blocks on a non-coding transcript")
-        return self.cds_location.blocks
-
-    @property
-    def cds_chunk_relative_blocks(self) -> List[Location]:
-        """Returns the chunk relative blocks of the CDS, if it exists."""
-        return self.cds_chunk_relative_location.blocks
-
-    @property
     def is_coding(self) -> bool:
         return self._cds is not None
 
@@ -249,10 +237,10 @@ class TranscriptInterval(AbstractFeatureInterval):
             raise NoncodingTranscriptError("No CDS blocks for non-coding transcript")
 
     @property
-    def chunk_relative_cds_blocks(self) -> Iterable[SingleInterval]:
+    def chunk_relative_cds_blocks(self) -> List[Location]:
         """Wrapper for blocks function that reports blocks in chunk-relative coordinates"""
         if self.is_coding:
-            yield from self._cds._location.blocks
+            return self.chunk_relative_location.blocks
         else:
             raise NoncodingTranscriptError("No relative CDS blocks for non-coding transcript")
 
