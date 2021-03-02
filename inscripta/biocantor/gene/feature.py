@@ -43,9 +43,11 @@ class AbstractInterval(ABC):
     sequence_guid: Optional[UUID] = None
     sequence_name: Optional[str] = None
     bin: int
+    start: int
+    end: int
 
     def __len__(self):
-        return len(self.location)
+        return self.end - self.start
 
     def __eq__(self, other):
         if not isinstance(other, self.__class__):
@@ -86,6 +88,10 @@ class AbstractInterval(ABC):
         """
 
     @property
+    def chunk_relative_size(self) -> int:
+        return len(self.location)
+
+    @property
     @abstractmethod
     def id(self) -> str:
         """Returns the ID of this feature. Provides a shared API across genes/transcripts and features."""
@@ -94,16 +100,6 @@ class AbstractInterval(ABC):
     @abstractmethod
     def name(self) -> str:
         """Returns the name of this feature. Provides a shared API across genes/transcripts and features."""
-
-    @property
-    def start(self) -> int:
-        """Returns genome relative start position."""
-        return self.lift_over_to_first_ancestor_of_type("chromosome").start
-
-    @property
-    def end(self) -> int:
-        """Returns genome relative end position."""
-        return self.lift_over_to_first_ancestor_of_type("chromosome").end
 
     @property
     def chunk_relative_start(self) -> int:
@@ -186,6 +182,7 @@ class AbstractInterval(ABC):
             parent = Parent(id="chr1", sequence=Sequence(genome, Alphabet.NT_STRICT, type="chromosome"))
 
         This convenience function detects which kind of parent is given, and sets up the appropriate location.
+
 
         Args:
             location: A location object, likely produced by :meth:`initialize_location()`.
@@ -310,7 +307,12 @@ class AbstractFeatureInterval(AbstractInterval, ABC):
     """This is a wrapper over :class:`~AbstractInterval` that adds functions shared across
     :class:`~biocantor.gene.transcript.TranscriptInterval` and :class:`FeatureInterval`."""
 
+    _genomic_ends: List[int]
+    _genomic_starts: List[int]
     _is_primary_feature: Optional[bool] = None
+
+    def __len__(self):
+        return sum((end - start) for end, start in zip(self._genomic_ends, self._genomic_starts))
 
     @abstractmethod
     def export_qualifiers(
@@ -470,7 +472,9 @@ class FeatureInterval(AbstractFeatureInterval):
 
     def __init__(
         self,
-        location: Location,
+        interval_starts: List[int],
+        interval_ends: List[int],
+        strand: Strand,
         qualifiers: Optional[Dict[Hashable, QualifierValue]] = None,
         sequence_guid: Optional[UUID] = None,
         sequence_name: Optional[str] = None,
@@ -480,8 +484,16 @@ class FeatureInterval(AbstractFeatureInterval):
         guid: Optional[UUID] = None,
         feature_guid: Optional[UUID] = None,
         is_primary_feature: Optional[bool] = None,
+        parent_or_seq_chunk_parent: Optional[Parent] = None,
     ):
-        self.location = location
+        self.location = self.initialize_location(interval_starts, interval_ends, strand, parent_or_seq_chunk_parent)
+        if self.location.parent:
+            ObjectValidation.require_location_has_parent_with_sequence(self.location)
+
+        self._genomic_starts = interval_starts
+        self._genomic_ends = interval_ends
+        self.start = self.genomic_start = interval_starts[0]
+        self.end = self.genomic_end = interval_ends[-1]
         self.sequence_guid = sequence_guid
         self.sequence_name = sequence_name
         self.feature_types = set(feature_types) if feature_types else set()  # stored as a set of types
@@ -494,7 +506,8 @@ class FeatureInterval(AbstractFeatureInterval):
 
         if guid is None:
             self.guid = digest_object(
-                self.location,
+                self._genomic_starts,
+                self._genomic_ends,
                 self.qualifiers,
                 self.sequence_name,
                 self.feature_types,
@@ -505,9 +518,6 @@ class FeatureInterval(AbstractFeatureInterval):
         else:
             self.guid = guid
         self.feature_guid = feature_guid
-
-        if self.location.parent:
-            ObjectValidation.require_location_has_parent_with_sequence(self.location)
 
     def __str__(self):
         return f"FeatureInterval(({self.location}), name={self.feature_name})"
@@ -527,8 +537,12 @@ class FeatureInterval(AbstractFeatureInterval):
 
     def to_dict(self, chromosome_relative_coordinates: bool = True) -> Dict[str, Any]:
         """Convert to a dict usable by :class:`biocantor.io.models.FeatureIntervalModel`."""
-        blocks = self.blocks if chromosome_relative_coordinates else self.relative_blocks
-        interval_starts, interval_ends = list(zip(*([x.start, x.end] for x in blocks)))
+        if chromosome_relative_coordinates:
+            interval_starts = self._genomic_starts
+            interval_ends = self._genomic_ends
+        else:
+            interval_starts, interval_ends = list(zip(*((x.start, x.end) for x in self.relative_blocks)))
+
         return dict(
             interval_starts=interval_starts,
             interval_ends=interval_ends,
@@ -547,11 +561,10 @@ class FeatureInterval(AbstractFeatureInterval):
     @staticmethod
     def from_dict(vals: Dict[str, Any], parent_or_seq_chunk_parent: Optional[Parent] = None) -> "FeatureInterval":
         """Build a :class:`FeatureInterval` from a dictionary."""
-        location = FeatureInterval.initialize_location(
-            vals["interval_starts"], vals["interval_ends"], Strand[vals["strand"]], parent_or_seq_chunk_parent
-        )
         return FeatureInterval(
-            location,
+            interval_starts=vals["interval_starts"],
+            interval_ends=vals["interval_ends"],
+            strand=Strand[vals["strand"]],
             qualifiers=vals["qualifiers"],
             sequence_guid=vals["sequence_guid"],
             sequence_name=vals["sequence_name"],
@@ -561,6 +574,7 @@ class FeatureInterval(AbstractFeatureInterval):
             guid=vals["feature_interval_guid"],
             feature_guid=vals["feature_guid"],
             is_primary_feature=vals["is_primary_feature"],
+            parent_or_seq_chunk_parent=parent_or_seq_chunk_parent,
         )
 
     def intersect(
@@ -583,7 +597,16 @@ class FeatureInterval(AbstractFeatureInterval):
         if intersection.is_empty:
             raise EmptyLocationException("Can't intersect disjoint intervals")
 
-        return FeatureInterval(location=intersection, guid=new_guid, qualifiers=new_qualifiers)
+        starts = [x.start for x in intersection.blocks]
+        ends = [x.end for x in intersection.blocks]
+        return FeatureInterval(
+            starts,
+            ends,
+            strand=intersection.strand,
+            guid=new_guid,
+            qualifiers=new_qualifiers,
+            parent_or_seq_chunk_parent=intersection.parent,
+        )
 
     def export_qualifiers(
         self, parent_qualifiers: Optional[Dict[Hashable, Set[str]]] = None
@@ -659,8 +682,12 @@ class FeatureInterval(AbstractFeatureInterval):
 
         # start adding exon features
         # re-use qualifiers, updating ID each time
-        blocks = self.blocks if chromosome_relative_coordinates else self.relative_blocks
-        for i, block in enumerate(blocks, 1):
+        if chromosome_relative_coordinates:
+            blocks = zip(self._genomic_starts, self._genomic_ends)
+        else:
+            blocks = [[x.start, x.end] for x in self.relative_blocks]
+
+        for i, (start, end) in enumerate(blocks, 1):
 
             attributes = GFFAttributes(
                 id=f"feature-{feature_id}-{i}", qualifiers=qualifiers, name=self.feature_name, parent=feature_id
@@ -669,8 +696,8 @@ class FeatureInterval(AbstractFeatureInterval):
                 self.sequence_name,
                 GFF_SOURCE,
                 BioCantorFeatureTypes.FEATURE_INTERVAL_REGION,
-                block.start + 1,
-                block.end,
+                start + 1,
+                end,
                 NULL_COLUMN,
                 self.strand,
                 CDSPhase.NONE,
@@ -705,10 +732,14 @@ class FeatureInterval(AbstractFeatureInterval):
             NoSuchAncestorException: If ``chromosome_relative_coordinates`` is ``False`` but there is no
             ``sequence_chunk`` ancestor type.
         """
-        # since blocks are iterated over twice, must be turned into a list otherwise the iterator is exhausted
-        blocks = list(self.blocks) if chromosome_relative_coordinates else list(self.relative_blocks)
-        block_sizes = [b.end - b.start for b in blocks]
-        block_starts = [b.start - self.start for b in blocks]
+        if chromosome_relative_coordinates:
+            blocks = list(zip(self._genomic_starts, self._genomic_ends))
+            num_blocks = len(self._genomic_starts)
+        else:
+            blocks = [[x.start, x.end] for x in self.relative_blocks]
+            num_blocks = self.location.num_blocks
+        block_sizes = [end - start for start, end in blocks]
+        block_starts = [start - self.start for start, _ in blocks]
 
         if chromosome_relative_coordinates:
             start = self.start
@@ -727,7 +758,7 @@ class FeatureInterval(AbstractFeatureInterval):
             0,  # thickStart always 0 for non-coding
             0,  # thickEnd always 0 for non-coding
             rgb,
-            self.location.num_blocks,
+            num_blocks,
             block_sizes,
             block_starts,
         )

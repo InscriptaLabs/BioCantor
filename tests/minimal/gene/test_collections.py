@@ -342,7 +342,7 @@ class TestAnnotationCollection:
             orig_gene_or_feature = obj.guid_map[gene_or_feature.guid]
             for new_tx_or_feature in gene_or_feature:
                 orig_tx_or_feature = orig_gene_or_feature.guid_map[new_tx_or_feature.guid]
-                if len(new_tx_or_feature) == len(orig_tx_or_feature):
+                if len(new_tx_or_feature) == new_tx_or_feature.chunk_relative_size:
                     assert new_tx_or_feature.get_spliced_sequence() == orig_tx_or_feature.get_spliced_sequence()
                 else:
                     assert str(new_tx_or_feature.get_spliced_sequence()) in str(

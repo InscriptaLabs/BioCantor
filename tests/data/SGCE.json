@@ -2095,6 +2095,7 @@
         }
     ],
     "name": null,
+    "id": null,
     "sequence_name": "NC_000007.14",
     "sequence_guid": null,
     "sequence_path": null,

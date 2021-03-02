@@ -33,7 +33,7 @@
                     },
                     "sequence_name": "chr1",
                     "sequence_guid": null,
-                    "feature_interval_guid": "c5792890-36f2-7f85-886b-ad087730ba44",
+                    "feature_interval_guid": "4c55408b-dcb5-55c6-d49b-3935eab9a2dc",
                     "feature_guid": null,
                     "feature_types": [
                         "a",
@@ -52,7 +52,7 @@
             "feature_collection_type": null,
             "sequence_name": "chr1",
             "sequence_guid": null,
-            "feature_collection_guid": "1dc02ee5-cf96-fef0-fc05-865c04cc1af5",
+            "feature_collection_guid": "ab5b8d34-5ca7-5ec6-9e9c-38b41804347d",
             "qualifiers": {
                 "feature_collection_id": [
                     "456"
@@ -111,7 +111,7 @@
                     },
                     "sequence_name": "chr1",
                     "sequence_guid": null,
-                    "feature_interval_guid": "e561fabf-b1dd-4382-72cf-492e6443d8d8",
+                    "feature_interval_guid": "4a2f84db-30a7-63e7-e18b-9c66fe3f383a",
                     "feature_guid": null,
                     "feature_types": [
                         "a",
@@ -151,7 +151,7 @@
                     },
                     "sequence_name": "chr1",
                     "sequence_guid": null,
-                    "feature_interval_guid": "0dac975a-5fca-6292-81eb-05dcc7e4a926",
+                    "feature_interval_guid": "843e548a-704a-ebd1-d035-f61778ee42d2",
                     "feature_guid": null,
                     "feature_types": [
                         "a",
@@ -194,7 +194,7 @@
                     },
                     "sequence_name": "chr1",
                     "sequence_guid": null,
-                    "feature_interval_guid": "a62afe33-d0dc-b3d7-348b-5c3bf870184c",
+                    "feature_interval_guid": "b5fc0593-b992-ec40-4380-61463c29d209",
                     "feature_guid": null,
                     "feature_types": [
                         "b",
@@ -212,7 +212,7 @@
             "feature_collection_type": null,
             "sequence_name": "chr1",
             "sequence_guid": null,
-            "feature_collection_guid": "439ff4c4-4270-aba8-2141-96a0312b6e55",
+            "feature_collection_guid": "b975e30d-6aa9-5c0a-990f-9df49375fd88",
             "qualifiers": {
                 "feature_collection_id": [
                     "abc123"
@@ -281,7 +281,7 @@
                     "transcript_type": "protein_coding",
                     "sequence_name": "chr1",
                     "sequence_guid": null,
-                    "transcript_interval_guid": "dabee986-e661-4e78-36ee-06c0e7edf671",
+                    "transcript_interval_guid": "091e4f39-d756-c2d7-83af-a30ca92dcd81",
                     "transcript_guid": null
                 },
                 {
@@ -326,7 +326,7 @@
                     "transcript_type": "protein_coding",
                     "sequence_name": "chr1",
                     "sequence_guid": null,
-                    "transcript_interval_guid": "fea4fd86-f850-c12d-fa0d-51911f287fec",
+                    "transcript_interval_guid": "c4af4386-2b62-d958-d7fd-496f3c69fffe",
                     "transcript_guid": null
                 }
             ],
@@ -350,7 +350,7 @@
             },
             "sequence_name": "chr1",
             "sequence_guid": null,
-            "gene_guid": "39fe072e-5cdc-a2d5-72d9-415c481cd328"
+            "gene_guid": "0d0d716e-e504-ca80-400b-4aae0e80a20a"
         }
     ],
     "name": "chr1",

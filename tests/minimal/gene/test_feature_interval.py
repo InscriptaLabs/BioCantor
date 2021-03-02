@@ -332,9 +332,9 @@ class TestFeatureInterval:
         feat.sequence_name = "myseq"
         assert (
             "\n".join(str(x) for x in feat.to_gff())
-            == "myseq\tBioCantor\tfeature_interval\t1\t18\t.\t+\t.\tID=b1e88354-ea8c-f67d-27ec-0f0f641562fd\n"
-            "myseq\tBioCantor\tsubregion\t1\t18\t.\t+\t.\tID=feature-b1e88354-ea8c-f67d-27ec-0f0f641562fd-1;"
-            "Parent=b1e88354-ea8c-f67d-27ec-0f0f641562fd"
+            == "myseq\tBioCantor\tfeature_interval\t1\t18\t.\t+\t.\tID=6940c467-070a-3524-2dcb-a478a6fa0388\n"
+            "myseq\tBioCantor\tsubregion\t1\t18\t.\t+\t.\tID=feature-6940c467-070a-3524-2dcb-a478a6fa0388-1;"
+            "Parent=6940c467-070a-3524-2dcb-a478a6fa0388"
         )
 
     def test_gff_export_subset(self):
@@ -342,23 +342,23 @@ class TestFeatureInterval:
         feat.sequence_name = "myseq"
         assert (
             "\n".join(str(x) for x in feat.to_gff())
-            == "myseq\tBioCantor\tfeature_interval\t3\t15\t.\t+\t.\tID=52e2687b-8483-266a-3cc3-3fb497fa9860\n"
-            "myseq\tBioCantor\tsubregion\t3\t6\t.\t+\t.\tID=feature-52e2687b-8483-266a-3cc3-3fb497fa9860-1;"
-            "Parent=52e2687b-8483-266a-3cc3-3fb497fa9860\n"
-            "myseq\tBioCantor\tsubregion\t8\t10\t.\t+\t.\tID=feature-52e2687b-8483-266a-3cc3-3fb497fa9860-2;"
-            "Parent=52e2687b-8483-266a-3cc3-3fb497fa9860\n"
-            "myseq\tBioCantor\tsubregion\t13\t15\t.\t+\t.\tID=feature-52e2687b-8483-266a-3cc3-3fb497fa9860-3;"
-            "Parent=52e2687b-8483-266a-3cc3-3fb497fa9860"
+            == "myseq\tBioCantor\tfeature_interval\t3\t15\t.\t+\t.\tID=c45e8d7b-cbd6-43b2-bb08-429d9cb7fe80\n"
+            "myseq\tBioCantor\tsubregion\t3\t6\t.\t+\t.\tID=feature-c45e8d7b-cbd6-43b2-bb08-429d9cb7fe80-1;"
+            "Parent=c45e8d7b-cbd6-43b2-bb08-429d9cb7fe80\n"
+            "myseq\tBioCantor\tsubregion\t8\t10\t.\t+\t.\tID=feature-c45e8d7b-cbd6-43b2-bb08-429d9cb7fe80-2;"
+            "Parent=c45e8d7b-cbd6-43b2-bb08-429d9cb7fe80\n"
+            "myseq\tBioCantor\tsubregion\t13\t15\t.\t+\t.\tID=feature-c45e8d7b-cbd6-43b2-bb08-429d9cb7fe80-3;"
+            "Parent=c45e8d7b-cbd6-43b2-bb08-429d9cb7fe80"
         )
         assert (
             "\n".join(str(x) for x in feat.to_gff(chromosome_relative_coordinates=False))
-            == "myseq\tBioCantor\tfeature_interval\t2\t14\t.\t+\t.\tID=52e2687b-8483-266a-3cc3-3fb497fa9860\n"
-            "myseq\tBioCantor\tsubregion\t2\t5\t.\t+\t.\tID=feature-52e2687b-8483-266a-3cc3-3fb497fa9860-1;"
-            "Parent=52e2687b-8483-266a-3cc3-3fb497fa9860\n"
-            "myseq\tBioCantor\tsubregion\t7\t9\t.\t+\t.\tID=feature-52e2687b-8483-266a-3cc3-3fb497fa9860-2;"
-            "Parent=52e2687b-8483-266a-3cc3-3fb497fa9860\n"
-            "myseq\tBioCantor\tsubregion\t12\t14\t.\t+\t.\tID=feature-52e2687b-8483-266a-3cc3-3fb497fa9860-3;"
-            "Parent=52e2687b-8483-266a-3cc3-3fb497fa9860"
+            == "myseq\tBioCantor\tfeature_interval\t2\t14\t.\t+\t.\tID=c45e8d7b-cbd6-43b2-bb08-429d9cb7fe80\n"
+            "myseq\tBioCantor\tsubregion\t2\t5\t.\t+\t.\tID=feature-c45e8d7b-cbd6-43b2-bb08-429d9cb7fe80-1;"
+            "Parent=c45e8d7b-cbd6-43b2-bb08-429d9cb7fe80\n"
+            "myseq\tBioCantor\tsubregion\t7\t9\t.\t+\t.\tID=feature-c45e8d7b-cbd6-43b2-bb08-429d9cb7fe80-2;"
+            "Parent=c45e8d7b-cbd6-43b2-bb08-429d9cb7fe80\n"
+            "myseq\tBioCantor\tsubregion\t12\t14\t.\t+\t.\tID=feature-c45e8d7b-cbd6-43b2-bb08-429d9cb7fe80-3;"
+            "Parent=c45e8d7b-cbd6-43b2-bb08-429d9cb7fe80"
         )
 
 

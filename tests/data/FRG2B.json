@@ -91,6 +91,7 @@
         }
     ],
     "name": null,
+    "id": null,
     "sequence_name": "NC_000010.11",
     "sequence_guid": null,
     "sequence_path": null,

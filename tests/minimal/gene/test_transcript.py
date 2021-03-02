@@ -5,9 +5,9 @@ from inscripta.biocantor.exc import (
     NullParentException,
     NoncodingTranscriptError,
     NullSequenceException,
+    ValidationException,
 )
-from inscripta.biocantor.gene.cds import CDSInterval, CDSFrame
-from inscripta.biocantor.gene.transcript import TranscriptInterval
+from inscripta.biocantor.gene.cds import CDSFrame
 from inscripta.biocantor.io.models import TranscriptIntervalModel
 from inscripta.biocantor.location.location_impl import SingleInterval, CompoundInterval, EmptyLocation
 from inscripta.biocantor.location.strand import Strand
@@ -238,22 +238,6 @@ class TestTranscript:
             assert str(tx.get_protein_sequence(truncate_at_in_frame_stop=True)) == expected_exception
 
     @pytest.mark.parametrize(
-        "location,cds,name,qualifiers,expected_exception",
-        [
-            (
-                SingleInterval(0, 10, Strand.PLUS, parent),
-                CDSInterval(SingleInterval(2, 8, Strand.PLUS), [CDSFrame.ZERO]),
-                None,
-                None,
-                NullParentException,
-            )
-        ],
-    )
-    def test_transcript_constructor_exceptions(self, location, cds, name, qualifiers, expected_exception):
-        with pytest.raises(expected_exception):
-            TranscriptInterval(location, cds, name, qualifiers)
-
-    @pytest.mark.parametrize(
         "schema,expected_exception",
         [
             (
@@ -425,7 +409,7 @@ class TestTranscript:
                         cds_ends=[0],
                     )
                 ),
-                InvalidCDSIntervalError,
+                ValidationException,
             ),
         ],
     )
@@ -880,22 +864,6 @@ class TestTranscript:
         tx3 = e3_spliced_notrans_minus.to_transcript_interval()
         assert tx3.is_coding
         assert tx3.cds_start
-
-    def test_overlapping(self):
-        schema = TranscriptIntervalModel.Schema().load(
-            dict(
-                exon_starts=[0, 3],
-                exon_ends=[5, 7],
-                strand=Strand.PLUS.name,
-                cds_starts=[1, 3],
-                cds_ends=[5, 6],
-                cds_frames=[CDSFrame.ZERO.name, CDSFrame.ZERO.name],
-            )
-        )
-        tx = schema.to_transcript_interval()
-        merged = tx.merge_overlapping()
-        assert merged.cds is None
-        assert merged.location == SingleInterval(0, 7, Strand.PLUS)
 
     def test_frameshifted(self):
         genome = "ATGGGGTGATGA"

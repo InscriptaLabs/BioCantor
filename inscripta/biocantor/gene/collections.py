@@ -33,7 +33,7 @@ from inscripta.biocantor.io.gff3.constants import GFF_SOURCE, NULL_COLUMN, BioCa
 from inscripta.biocantor.io.gff3.exc import GFF3MissingSequenceNameError
 from inscripta.biocantor.io.gff3.rows import GFFRow, GFFAttributes
 from inscripta.biocantor.location import Location
-from inscripta.biocantor.location.location_impl import SingleInterval, CompoundInterval, EmptyLocation
+from inscripta.biocantor.location.location_impl import SingleInterval, EmptyLocation
 from inscripta.biocantor.location.strand import Strand
 from inscripta.biocantor.parent.parent import Parent
 from inscripta.biocantor.sequence import Sequence
@@ -193,10 +193,10 @@ class GeneInterval(AbstractFeatureIntervalCollection):
 
         # start/end are assumed to be in genomic coordinates, and then _initialize_location
         # will transform them into chunk-relative coordinates if necessary
-        start = min(tx.start for tx in self.transcripts)
-        end = max(tx.end for tx in self.transcripts)
-        self._initialize_location(start, end, parent_or_seq_chunk_parent)
-        self.bin = bins(start, end, fmt="bed")
+        self.start = self.genomic_start = min(tx.start for tx in self.transcripts)
+        self.end = self.genomic_end = max(tx.end for tx in self.transcripts)
+        self._initialize_location(self.start, self.end, parent_or_seq_chunk_parent)
+        self.bin = bins(self.start, self.end, fmt="bed")
 
         if guid is None:
             self.guid = digest_object(
@@ -301,12 +301,12 @@ class GeneInterval(AbstractFeatureIntervalCollection):
     def get_primary_cds_sequence(self) -> Union[Sequence, None]:
         """Get the sequence of the primary transcript, if it exists."""
         if self.get_primary_transcript() is not None:
-            return self.primary_transcript.cds.extract_sequence()
+            return self.primary_transcript.get_cds_sequence()
 
     def get_primary_protein(self) -> Union[Sequence, None]:
         """Get the protein sequence of the primary transcript, if it exists."""
         if self.get_primary_cds() is not None:
-            return self.primary_transcript.cds.translate()
+            return self.primary_transcript.get_protein_sequence()
 
     def _produce_merged_feature(self, intervals: List[Location]) -> FeatureInterval:
         """Wrapper function used by both :func:`GeneInterval.get_merged_transcript`
@@ -315,9 +315,11 @@ class GeneInterval(AbstractFeatureIntervalCollection):
         merged = reduce(lambda x, y: x.union(y), intervals)
         interval_starts = [x.start for x in merged.blocks]
         interval_ends = [x.end for x in merged.blocks]
-        loc = CompoundInterval(interval_starts, interval_ends, self.location.strand, parent=self.location.parent)
+
         return FeatureInterval(
-            loc,
+            interval_starts=interval_starts,
+            interval_ends=interval_ends,
+            strand=self.location.strand,
             qualifiers=self._export_qualifiers_to_list(),
             sequence_guid=self.sequence_guid,
             sequence_name=self.sequence_name,
@@ -325,6 +327,7 @@ class GeneInterval(AbstractFeatureIntervalCollection):
             feature_name=self.gene_symbol,
             feature_id=self.gene_id,
             guid=self.guid,
+            parent_or_seq_chunk_parent=self.location.parent,
         )
 
     def get_merged_transcript(self) -> FeatureInterval:
@@ -476,10 +479,10 @@ class FeatureIntervalCollection(AbstractFeatureIntervalCollection):
 
         # start/end are assumed to be in genomic coordinates, and then _initialize_location
         # will transform them into chunk-relative coordinates if necessary
-        start = min(f.start for f in self.feature_intervals)
-        end = max(f.end for f in self.feature_intervals)
-        self._initialize_location(start, end, parent_or_seq_chunk_parent)
-        self.bin = bins(start, end, fmt="bed")
+        self.start = self.genomic_start = min(f.start for f in self.feature_intervals)
+        self.end = self.genomic_end = max(f.end for f in self.feature_intervals)
+        self._initialize_location(self.start, self.end, parent_or_seq_chunk_parent)
+        self.bin = bins(self.start, self.end, fmt="bed")
 
         self.primary_feature = AbstractFeatureIntervalCollection._find_primary_feature(self.feature_intervals)
 
@@ -729,6 +732,8 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
         else:
             assert start is not None and end is not None
             self._initialize_location(start, end, parent_or_seq_chunk_parent)
+            self.start = start
+            self.end = end
             self.bin = bins(self.start, self.end, fmt="bed")
 
         self.completely_within = completely_within
@@ -882,7 +887,7 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
             start: Genome relative start position. If not set, will be 0.
             end: Genome relative end position. If not set, will be unbounded.
             coding_only: Filter for coding genes only?
-            completely_within: Strict boundaries? If False, features that partially overlap
+            completely_within: Strict *query* boundaries? If False, features that partially overlap
                 will be included in the output. Bins optimization cannot be used.
 
         Returns:
@@ -891,23 +896,25 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
         """
 
         def filter_collection_for_child_intervals(
-            gene_or_feature_collection: Union[GeneInterval, FeatureIntervalCollection]
-        ) -> Dict[str, Any]:
+            g_or_fc: Union[GeneInterval, FeatureIntervalCollection]
+        ) -> Optional[Union[GeneInterval, FeatureIntervalCollection]]:
             """
             After a subquery, it may be the case that a isoform of a gene or a feature of a feature collection
             no longer overlap the window in question. In these cases, Parent liftover will fail with a
             ``LocationOverlapException``. This function catches this case and discards these from the dictionary.
 
             Args:
-                gene_or_feature_collection: The GeneInterval or FeatureIntervalCollection to be filtered.
+                g_or_fc: The GeneInterval or FeatureIntervalCollection to be filtered.
 
             Returns:
-                The filtered dictionary representation.
+                A interval collection with only the appropriate children, or None if the resulting interval
+                is empty.
             """
-            valid_children_guids = [
-                child.guid for child in gene_or_feature_collection if query_loc.has_overlap(child.location)
-            ]
-            return gene_or_feature_collection.query_by_guids(valid_children_guids).to_dict()
+            valid_children_guids = [child.guid for child in g_or_fc if query_loc.has_overlap(child.location)]
+            try:
+                return g_or_fc.query_by_guids(valid_children_guids)
+            except InvalidAnnotationError:
+                return None
 
         # bins are only valid if we have start, end and completely_within
         if completely_within and start and end:
@@ -924,9 +931,11 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
         elif start > end:
             raise InvalidQueryError("Start must be less than or equal to end")
         elif start < self.start:
-            raise InvalidQueryError("Start must be within bounds of current interval")
+            raise InvalidQueryError(
+                f"Start {start} must be within bounds of current interval [{self.start}-{self.end})"
+            )
         elif end > self.end:
-            raise InvalidQueryError("End must be within bounds of current interval")
+            raise InvalidQueryError(f"End {end} must be within bounds of current interval [{self.start}-{self.end})")
 
         query_loc = SingleInterval(start, end, Strand.PLUS, parent=self.location.parent)
         if completely_within:
@@ -949,21 +958,20 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
 
                 # make sure that every transcript/feature also overlap. Only necessary for partial overlap
                 if coordinate_fn == query_loc.has_overlap:
-                    filtered_gene_or_feature_dict = filter_collection_for_child_intervals(gene_or_feature_collection)
-                else:
-                    filtered_gene_or_feature_dict = gene_or_feature_collection.to_dict()
+                    gene_or_feature_collection = filter_collection_for_child_intervals(gene_or_feature_collection)
 
                 if isinstance(gene_or_feature_collection, FeatureIntervalCollection):
-                    features_collections_to_keep.append(filtered_gene_or_feature_dict)
-                else:
-                    genes_to_keep.append(gene_or_feature_collection.to_dict())
+                    features_collections_to_keep.append(gene_or_feature_collection)
+                # could be null if filter_collection_for_child_intervals() returned None
+                elif isinstance(gene_or_feature_collection, GeneInterval):
+                    genes_to_keep.append(gene_or_feature_collection)
 
         seq_chunk_parent = self._subset_parent(start, end)
 
         return AnnotationCollection.from_dict(
             dict(
-                feature_collections=features_collections_to_keep,
-                genes=genes_to_keep,
+                feature_collections=[x.to_dict() for x in features_collections_to_keep],
+                genes=[x.to_dict() for x in genes_to_keep],
                 name=self.name,
                 id=self.id,
                 sequence_name=self.sequence_name,
@@ -997,8 +1005,8 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
             # otherwise this is None, which means we do not have a match.
 
         if genes_to_keep or features_collections_to_keep:
-            start = min(x.start for x in itertools.chain(genes_to_keep, features_collections_to_keep))
-            end = max(x.end for x in itertools.chain(genes_to_keep, features_collections_to_keep))
+            start = min(self.start, min(x.start for x in itertools.chain(genes_to_keep, features_collections_to_keep)))
+            end = max(self.end, max(x.end for x in itertools.chain(genes_to_keep, features_collections_to_keep)))
         else:
             start = self.start
             end = self.end
@@ -1052,8 +1060,8 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
                     genes_to_keep.append(gene_or_feature)
 
         if genes_to_keep or features_collections_to_keep:
-            start = min(x.start for x in itertools.chain(genes_to_keep, features_collections_to_keep))
-            end = max(x.end for x in itertools.chain(genes_to_keep, features_collections_to_keep))
+            start = min(self.start, min(x.start for x in itertools.chain(genes_to_keep, features_collections_to_keep)))
+            end = max(self.end, max(x.end for x in itertools.chain(genes_to_keep, features_collections_to_keep)))
         else:
             start = self.start
             end = self.end

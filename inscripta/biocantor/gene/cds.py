@@ -121,6 +121,17 @@ class CDSInterval:
     def __len__(self) -> int:
         return len(self.location)
 
+    def lift_over_to_first_ancestor_of_type(self, sequence_type: Optional[str] = "chromosome") -> Location:
+        """
+        Lifts the location member to another coordinate system. Is a no-op if there is no parent assigned.
+
+        Returns:
+            The lifted Location.
+        """
+        if self.location.parent is None:
+            return self.location
+        return self.location.lift_over_to_first_ancestor_of_type(sequence_type)
+
     @property
     def has_canonical_start_codon(self) -> bool:
         """Does this CDS have a canonical valid start? Requires a sequence be associated."""
@@ -150,12 +161,22 @@ class CDSInterval:
 
     @property
     def start(self) -> int:
-        """Pass up the start of this CDS's Location"""
-        return self.location.start
+        """Returns genome relative start position."""
+        return self.lift_over_to_first_ancestor_of_type("chromosome").start
 
     @property
     def end(self) -> int:
-        """Pass up the end of this CDS's Location"""
+        """Returns genome relative end position."""
+        return self.lift_over_to_first_ancestor_of_type("chromosome").end
+
+    @property
+    def chunk_relative_start(self) -> int:
+        """Returns chunk relative start position."""
+        return self.location.start
+
+    @property
+    def chunk_relative_end(self) -> int:
+        """Returns chunk relative end position."""
         return self.location.end
 
     def frame_iter(self) -> Iterator[CDSFrame]:

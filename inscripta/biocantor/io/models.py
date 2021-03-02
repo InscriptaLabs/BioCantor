@@ -5,11 +5,8 @@ and deserializing the models.
 from typing import List, Optional, ClassVar, Type, Dict, Union
 from uuid import UUID
 
-from inscripta.biocantor.exc import (
-    InvalidCDSIntervalError,
-)
 from inscripta.biocantor.gene.biotype import Biotype
-from inscripta.biocantor.gene.cds import CDSFrame, CDSInterval
+from inscripta.biocantor.gene.cds import CDSFrame
 from inscripta.biocantor.gene.collections import GeneInterval, FeatureIntervalCollection, AnnotationCollection
 from inscripta.biocantor.gene.feature import FeatureInterval
 from inscripta.biocantor.gene.transcript import TranscriptInterval
@@ -58,16 +55,10 @@ class FeatureIntervalModel(BaseModel):
 
         A :class:`~biocantor.parent.Parent` can be provided to allow the sequence-retrieval functions to work.
         """
-
-        location = FeatureInterval.initialize_location(
+        return FeatureInterval(
             self.interval_starts,
             self.interval_ends,
             self.strand,
-            parent_or_seq_chunk_parent=parent_or_seq_chunk_parent,
-        )
-
-        return FeatureInterval(
-            location=location,
             qualifiers=self.qualifiers,
             sequence_guid=self.sequence_guid,
             sequence_name=self.sequence_name,
@@ -77,6 +68,7 @@ class FeatureIntervalModel(BaseModel):
             guid=self.feature_interval_guid,
             feature_guid=self.feature_guid,
             is_primary_feature=self.is_primary_feature,
+            parent_or_seq_chunk_parent=parent_or_seq_chunk_parent,
         )
 
     @staticmethod
@@ -117,43 +109,13 @@ class TranscriptIntervalModel(BaseModel):
         A :class:`~biocantor.parent.Parent can be provided to allow the sequence-retrieval functions to work.
         """
 
-        if self.cds_starts is not None and self.cds_ends is None:
-            raise InvalidCDSIntervalError("If CDS start is defined, CDS end must be defined")
-        elif self.cds_starts is None and self.cds_ends is not None:
-            raise InvalidCDSIntervalError("If CDS end is defined, CDS start must be defined")
-        elif self.cds_starts is not None and self.cds_ends is not None:  # must be coding
-            if len(self.cds_starts) != len(self.cds_ends):
-                raise InvalidCDSIntervalError("Number of CDS starts does not number of CDS ends")
-            elif self.cds_starts[0] < self.exon_starts[0]:
-                raise InvalidCDSIntervalError("CDS start must be greater than or equal to exon start")
-            elif self.cds_ends[-1] > self.exon_ends[-1]:
-                raise InvalidCDSIntervalError("CDS end must be less than or equal to than exon end")
-            elif self.cds_frames is None:
-                raise InvalidCDSIntervalError("If CDS interval is defined, CDS frames must be defined")
-            elif len(self.cds_frames) != len(self.cds_starts):
-                raise InvalidCDSIntervalError("Number of CDS frames must match number of CDS starts/ends")
-
-            cds_interval = TranscriptInterval.initialize_location(
-                self.cds_starts, self.cds_ends, self.strand, parent_or_seq_chunk_parent=parent_or_seq_chunk_parent
-            )
-            if not cds_interval:
-                raise InvalidCDSIntervalError("CDS must have a non-zero length")
-
-            # length validation happens in the CDS constructor
-            cds = CDSInterval(cds_interval, self.cds_frames)
-        else:
-            cds = None
-
-        location = TranscriptInterval.initialize_location(
-            self.exon_starts,
-            self.exon_ends,
-            self.strand,
-            parent_or_seq_chunk_parent=parent_or_seq_chunk_parent,
-        )
-
         return TranscriptInterval(
-            location=location,
-            cds=cds,
+            exon_starts=self.exon_starts,
+            exon_ends=self.exon_ends,
+            strand=self.strand,
+            cds_starts=self.cds_starts,
+            cds_ends=self.cds_ends,
+            cds_frames=self.cds_frames,
             guid=self.transcript_interval_guid,
             transcript_guid=self.transcript_guid,
             qualifiers=self.qualifiers,
@@ -164,6 +126,7 @@ class TranscriptIntervalModel(BaseModel):
             sequence_name=self.sequence_name,
             sequence_guid=self.sequence_guid,
             protein_id=self.protein_id,
+            parent_or_seq_chunk_parent=parent_or_seq_chunk_parent,
         )
 
     @staticmethod

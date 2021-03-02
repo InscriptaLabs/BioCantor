@@ -4,7 +4,7 @@ Object representation of Transcripts.
 Each object is capable of exporting itself to BED and GFF3.
 """
 from itertools import count
-from typing import Optional, Any, Dict, Iterable, Hashable, Set
+from typing import Optional, Any, Dict, Iterable, Hashable, Set, List
 from uuid import UUID
 
 from methodtools import lru_cache
@@ -13,6 +13,7 @@ from inscripta.biocantor.exc import (
     EmptyLocationException,
     LocationOverlapException,
     NoncodingTranscriptError,
+    InvalidCDSIntervalError,
 )
 from inscripta.biocantor.gene.biotype import Biotype
 from inscripta.biocantor.gene.cds import CDSInterval, CDSPhase, CDSFrame
@@ -47,8 +48,12 @@ class TranscriptInterval(AbstractFeatureInterval):
 
     def __init__(
         self,
-        location: Location,  # exons
-        cds: Optional[CDSInterval] = None,  # optional CDS with frame
+        exon_starts: List[int],
+        exon_ends: List[int],
+        strand: Strand,
+        cds_starts: Optional[List[int]] = None,
+        cds_ends: Optional[List[int]] = None,
+        cds_frames: Optional[List[CDSFrame]] = None,
         qualifiers: Optional[Dict[Hashable, QualifierValue]] = None,
         is_primary_tx: Optional[bool] = None,
         transcript_id: Optional[str] = None,
@@ -59,8 +64,64 @@ class TranscriptInterval(AbstractFeatureInterval):
         protein_id: Optional[str] = None,
         guid: Optional[UUID] = None,
         transcript_guid: Optional[UUID] = None,
+        parent_or_seq_chunk_parent: Optional[Parent] = None,
     ):
-        self.location = location  # genomic CompoundInterval
+        self.location = TranscriptInterval.initialize_location(
+            exon_starts,
+            exon_ends,
+            strand,
+            parent_or_seq_chunk_parent=parent_or_seq_chunk_parent,
+        )
+
+        if cds_starts is not None and cds_ends is None:
+            raise InvalidCDSIntervalError("If CDS start is defined, CDS end must be defined")
+        elif cds_starts is None and cds_ends is not None:
+            raise InvalidCDSIntervalError("If CDS end is defined, CDS start must be defined")
+        elif cds_starts is not None and cds_ends is not None:  # must be coding
+            if len(cds_starts) != len(cds_ends):
+                raise InvalidCDSIntervalError("Number of CDS starts does not number of CDS ends")
+            elif cds_starts[0] < exon_starts[0]:
+                raise InvalidCDSIntervalError("CDS start must be greater than or equal to exon start")
+            elif cds_ends[-1] > exon_ends[-1]:
+                raise InvalidCDSIntervalError("CDS end must be less than or equal to than exon end")
+            elif cds_frames is None:
+                raise InvalidCDSIntervalError("If CDS interval is defined, CDS frames must be defined")
+            elif len(cds_frames) != len(cds_starts):
+                raise InvalidCDSIntervalError("Number of CDS frames must match number of CDS starts/ends")
+
+            # as a result of a parent or seq chunk parent constructor, it may be the case that this CDS is entirely
+            # sliced out. Check this case, and then void out the CDS.
+            try:
+                cds_interval = TranscriptInterval.initialize_location(
+                    cds_starts, cds_ends, strand, parent_or_seq_chunk_parent=parent_or_seq_chunk_parent
+                )
+
+                if len(cds_interval) == 0:
+                    raise InvalidCDSIntervalError("Cannot have an empty CDS interval")
+
+                # we may end up having a reduced number of CDSFrames now due to this region being a subset of this gene
+                self.cds = CDSInterval(cds_interval, cds_frames[: len(cds_interval.blocks)])
+
+            except LocationOverlapException:
+                self.cds = None
+
+            self._cds_frames = cds_frames
+
+        else:
+            self.cds = self._cds_frames = self._cds_start = self._cds_end = None
+
+        if self.location.parent:
+            ObjectValidation.require_location_has_parent_with_sequence(self.location)
+            if self.cds:
+                ObjectValidation.require_locations_have_same_nonempty_parent(self.location, self.cds.location)
+
+        self._genomic_starts = exon_starts
+        self._genomic_ends = exon_ends
+        self.start = self.genomic_start = exon_starts[0]
+        self.end = self.genomic_end = exon_ends[-1]
+        self._genomic_cds_starts = cds_starts
+        self._genomic_cds_ends = cds_ends
+
         self._is_primary_feature = is_primary_tx
         self.transcript_id = transcript_id
         self.transcript_symbol = transcript_symbol
@@ -71,12 +132,14 @@ class TranscriptInterval(AbstractFeatureInterval):
         self.bin = bins(self.start, self.end, fmt="bed")
         # qualifiers come in as a List, convert to Set
         self._import_qualifiers_from_list(qualifiers)
-        self.cds = cds
 
         if guid is None:
             self.guid = digest_object(
-                self.location,
-                self.cds,
+                self._genomic_starts,
+                self._genomic_ends,
+                self._genomic_cds_starts,
+                self._genomic_cds_ends,
+                self._cds_frames,
                 self.qualifiers,
                 self.transcript_id,
                 self.transcript_symbol,
@@ -88,11 +151,6 @@ class TranscriptInterval(AbstractFeatureInterval):
         else:
             self.guid = guid
         self.transcript_guid = transcript_guid
-
-        if self.location.parent:
-            ObjectValidation.require_location_has_parent_with_sequence(self.location)
-            if self.cds:
-                ObjectValidation.require_locations_have_same_nonempty_parent(location, cds.location)
 
     def __str__(self):
         return f"TranscriptInterval(({self.location}), cds=[{self.cds}], symbol={self.transcript_symbol})"
@@ -106,7 +164,7 @@ class TranscriptInterval(AbstractFeatureInterval):
         return self.is_primary_feature
 
     def __len__(self):
-        return len(self.location)
+        return sum((end - start) for end, start in zip(self._genomic_ends, self._genomic_starts))
 
     @property
     def is_coding(self) -> bool:
@@ -121,20 +179,26 @@ class TranscriptInterval(AbstractFeatureInterval):
     @property
     def cds_size(self) -> int:
         if self.is_coding:
+            return sum((end - start) for end, start in zip(self._genomic_cds_ends, self._genomic_cds_starts))
+        return 0
+
+    @property
+    def chunk_relative_cds_size(self) -> int:
+        if self.is_coding:
             return len(self.cds)
         return 0
 
     @property
     def cds_start(self) -> int:
         if self.is_coding:
-            return self.lift_cds_over_to_first_ancestor_of_type("chromosome").start
+            return self._genomic_cds_starts[0]
         else:
             raise NoncodingTranscriptError("No CDS start for non-coding transcript")
 
     @property
     def cds_end(self) -> int:
         if self.is_coding:
-            return self.lift_cds_over_to_first_ancestor_of_type("chromosome").end
+            return self._genomic_cds_ends[-1]
         else:
             raise NoncodingTranscriptError("No CDS end for non-coding transcript")
 
@@ -230,11 +294,17 @@ class TranscriptInterval(AbstractFeatureInterval):
 
     def to_dict(self, chromosome_relative_coordinates: bool = True) -> Dict[str, Any]:
         """Convert to a dict usable by :class:`biocantor.io.models.TranscriptIntervalModel`."""
-        blocks = self.blocks if chromosome_relative_coordinates else self.relative_blocks
-        exon_starts, exon_ends = list(zip(*([x.start, x.end] for x in blocks)))
+        if chromosome_relative_coordinates:
+            exon_starts = self._genomic_starts
+            exon_ends = self._genomic_ends
+        else:
+            exon_starts, exon_ends = list(zip(*((x.start, x.end) for x in self.relative_blocks)))
         if self.cds:
-            cds_blocks = self.cds_blocks if chromosome_relative_coordinates else self.chunk_relative_cds_blocks
-            cds_starts, cds_ends = list(zip(*([x.start, x.end] for x in cds_blocks)))
+            if chromosome_relative_coordinates:
+                cds_starts = self._genomic_cds_starts
+                cds_ends = self._genomic_cds_ends
+            else:
+                cds_starts, cds_ends = list(zip(*([x.start, x.end] for x in self.chunk_relative_cds_blocks)))
             cds_frames = [f.name for f in self.cds.frames]
         else:
             cds_starts = None
@@ -262,31 +332,14 @@ class TranscriptInterval(AbstractFeatureInterval):
     @staticmethod
     def from_dict(vals: Dict[str, Any], parent_or_seq_chunk_parent: Optional[Parent] = None) -> "TranscriptInterval":
         """Build a :class:`TranscriptInterval` from a dictionary."""
-        location = TranscriptInterval.initialize_location(
-            vals["exon_starts"], vals["exon_ends"], Strand[vals["strand"]], parent_or_seq_chunk_parent
-        )
-
-        # could be a non-coding transcript
-        if vals["cds_starts"]:
-            # as a result of a parent or seq chunk parent constructor, it may be the case that this CDS is entirely
-            # sliced out. Check this case, and then void out the CDS.
-            try:
-                cds_interval = TranscriptInterval.initialize_location(
-                    vals["cds_starts"],
-                    vals["cds_ends"],
-                    Strand[vals["strand"]],
-                    parent_or_seq_chunk_parent=parent_or_seq_chunk_parent,
-                )
-                # we may end up having a reduced number of CDSFrames now due to this region being a subset of this gene
-                cds = CDSInterval(cds_interval, [CDSFrame[x] for x in vals["cds_frames"][: len(cds_interval.blocks)]])
-            except LocationOverlapException:
-                cds = None
-        else:
-            cds = None
 
         return TranscriptInterval(
-            location,
-            cds,
+            exon_starts=vals["exon_starts"],
+            exon_ends=vals["exon_ends"],
+            strand=Strand[vals["strand"]],
+            cds_starts=vals["cds_starts"] if vals["cds_starts"] else None,
+            cds_ends=vals["cds_ends"] if vals["cds_ends"] else None,
+            cds_frames=[CDSFrame[x] for x in vals["cds_frames"]] if vals["cds_frames"] else None,
             guid=vals["transcript_interval_guid"],
             transcript_guid=vals["transcript_guid"],
             qualifiers=vals["qualifiers"],
@@ -297,26 +350,8 @@ class TranscriptInterval(AbstractFeatureInterval):
             sequence_name=vals["sequence_name"],
             sequence_guid=vals["sequence_guid"],
             protein_id=vals["protein_id"],
+            parent_or_seq_chunk_parent=parent_or_seq_chunk_parent,
         )
-
-    def merge_overlapping(self) -> "TranscriptInterval":
-        """Some tools can't handle overlapping intervals. This function discards CDS information."""
-        if not self.location.is_overlapping:
-            return self
-        new_loc = self.location.merge_overlapping()
-        tx = TranscriptInterval(
-            new_loc,
-            cds=None,
-            qualifiers=self._export_qualifiers_to_list(),
-            is_primary_tx=self.is_primary_tx,
-            transcript_id=self.transcript_id,
-            transcript_symbol=self.transcript_symbol,
-            transcript_type=self.transcript_type,
-            sequence_name=self.sequence_name,
-            sequence_guid=self.sequence_guid,
-            guid=self.guid,
-        )
-        return tx
 
     def intersect(
         self,
@@ -340,10 +375,15 @@ class TranscriptInterval(AbstractFeatureInterval):
         if intersection.is_empty:
             raise EmptyLocationException("Can't intersect disjoint intervals")
 
+        starts = [x.start for x in intersection.blocks]
+        ends = [x.end for x in intersection.blocks]
         return TranscriptInterval(
-            location=intersection,
+            starts,
+            ends,
+            strand=intersection.strand,
             guid=new_guid,
             qualifiers=new_qualifiers,
+            parent_or_seq_chunk_parent=intersection.parent,
         )
 
     def sequence_pos_to_transcript(self, pos: int) -> int:
@@ -566,8 +606,12 @@ class TranscriptInterval(AbstractFeatureInterval):
 
         # start adding exon features
         # re-use qualifiers, updating ID each time
-        blocks = self.blocks if chromosome_relative_coordinates else self.relative_blocks
-        for i, block in enumerate(blocks, 1):
+        if chromosome_relative_coordinates:
+            blocks = zip(self._genomic_starts, self._genomic_ends)
+        else:
+            blocks = [[x.start, x.end] for x in self.relative_blocks]
+
+        for i, (start, end) in enumerate(blocks, 1):
             attributes = GFFAttributes(
                 id=f"exon-{tx_guid}-{i}", qualifiers=qualifiers, name=self.transcript_symbol, parent=tx_guid
             )
@@ -575,8 +619,8 @@ class TranscriptInterval(AbstractFeatureInterval):
                 self.sequence_name,
                 GFF_SOURCE,
                 BioCantorFeatureTypes.EXON,
-                block.start + 1,
-                block.end,
+                start + 1,
+                end,
                 NULL_COLUMN,
                 self.strand,
                 CDSPhase.NONE,
@@ -586,8 +630,13 @@ class TranscriptInterval(AbstractFeatureInterval):
 
         # add CDS features, if applicable
         if self.cds:
-            cds_blocks = self.cds_blocks if chromosome_relative_coordinates else self.chunk_relative_cds_blocks
+            if chromosome_relative_coordinates:
+                cds_blocks = zip(self._genomic_cds_starts, self._genomic_cds_ends)
+            else:
+                cds_blocks = [[x.start, x.end] for x in self.chunk_relative_cds_blocks]
+
             for i, block, frame in zip(count(1), cds_blocks, self.cds.frames):
+                start, end = block
                 attributes = GFFAttributes(
                     id=f"cds-{tx_guid}-{i}",
                     qualifiers=qualifiers,
@@ -598,8 +647,8 @@ class TranscriptInterval(AbstractFeatureInterval):
                     self.sequence_name,
                     GFF_SOURCE,
                     BioCantorFeatureTypes.CDS,
-                    block.start + 1,
-                    block.end,
+                    start + 1,
+                    end,
                     NULL_COLUMN,
                     self.strand,
                     frame.to_phase(),
@@ -634,10 +683,14 @@ class TranscriptInterval(AbstractFeatureInterval):
             NoSuchAncestorException: If ``chromosome_relative_coordinates`` is ``False`` but there is no
             ``sequence_chunk`` ancestor type.
         """
-        # since blocks are iterated over twice, must be turned into a list otherwise the iterator is exhausted
-        blocks = list(self.blocks) if chromosome_relative_coordinates else list(self.relative_blocks)
-        block_sizes = [b.end - b.start for b in blocks]
-        block_starts = [b.start - self.start for b in blocks]
+        if chromosome_relative_coordinates:
+            blocks = list(zip(self._genomic_starts, self._genomic_ends))
+            num_blocks = len(self._genomic_starts)
+        else:
+            blocks = [[x.start, x.end] for x in self.relative_blocks]
+            num_blocks = self.location.num_blocks
+        block_sizes = [end - start for start, end in blocks]
+        block_starts = [start - self.start for start, _ in blocks]
 
         if chromosome_relative_coordinates:
             start = self.start
@@ -666,7 +719,7 @@ class TranscriptInterval(AbstractFeatureInterval):
             cds_start,
             cds_end,
             rgb,
-            self.location.num_blocks,
+            num_blocks,
             block_sizes,
             block_starts,
         )
