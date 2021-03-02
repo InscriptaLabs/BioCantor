@@ -258,7 +258,10 @@ class CDSInterval:
 
     def scan_codon_locations(self) -> Iterator[Location]:
         """
-        Returns an iterator over codon locations.
+        Returns an iterator over codon locations in *chunk relative* coordinates.
+
+        TODO: Allow chromosome relative codon scanning. This is an issue because lifting to chromosome coordinates
+            removes sequence information.
 
         Any leading or trailing bases that are annotated as CDS but cannot form a full codon
         are excluded. Additionally, any internal codons that are incomplete are excluded.

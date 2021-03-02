@@ -283,7 +283,7 @@ class GeneInterval(AbstractFeatureIntervalCollection):
     def get_primary_cds(self) -> Union[CDSInterval, None]:
         """Get the CDS of the primary transcript, if it exists."""
         if self.get_primary_transcript() is not None:
-            return self.primary_transcript._cds
+            return self.primary_transcript.cds
 
     def get_primary_transcript_sequence(self) -> Union[Sequence, None]:
         """Get the sequence of the primary transcript, if it exists."""
@@ -346,7 +346,7 @@ class GeneInterval(AbstractFeatureIntervalCollection):
         intervals = []
         for tx in self.transcripts:
             if tx.is_coding:
-                for i in tx._cds._location.blocks:
+                for i in tx.cds._location.blocks:
                     intervals.append(i)
         if not intervals:
             raise NoncodingTranscriptError("No CDS transcripts found on this gene")

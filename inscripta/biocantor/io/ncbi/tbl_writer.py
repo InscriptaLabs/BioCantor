@@ -321,7 +321,7 @@ class CDSTblFeature(TblFeature):
             if val:
                 qualifiers["note"].append(f"original {key}: {val}")
 
-        codon_start = next(transcript._cds.frame_iter()).value + 1
+        codon_start = next(transcript.cds.frame_iter()).value + 1
         qualifiers["codon_start"] = [codon_start]
 
         # try to pull out the special qualifiers
@@ -341,10 +341,10 @@ class CDSTblFeature(TblFeature):
                     del d[key]
 
         # start codon can look directly at the translation, because we have a codon_start value
-        start_is_incomplete = not transcript._cds.has_start_codon_in_specific_translation_table(translation_table)
+        start_is_incomplete = not transcript.cds.has_start_codon_in_specific_translation_table(translation_table)
 
         # End completeness requires that there be a in-frame stop codon that is in the last mod3 position
-        end_is_incomplete = len(transcript._cds) % 3 != (codon_start - 1) or not transcript._cds.has_valid_stop
+        end_is_incomplete = len(transcript.cds) % 3 != (codon_start - 1) or not transcript.cds.has_valid_stop
 
         super().__init__(
             transcript.cds_location,
@@ -483,7 +483,7 @@ class TblGene:
                 tx._location = tx.location.optimize_and_combine_blocks()
             if gene.is_coding:
                 if isinstance(tx.cds_location, CompoundInterval):
-                    tx._cds = tx._cds.optimize_and_combine_blocks()
+                    tx.cds = tx.cds.optimize_and_combine_blocks()
 
         self.gene_tbl = GeneTblFeature(self.gene, locus_tag)
 

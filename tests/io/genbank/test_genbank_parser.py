@@ -120,9 +120,9 @@ class TestGenbank:
         assert parsed.genes[2].transcripts[0].is_coding
         assert not parsed.genes[3].transcripts[0].is_coding
         # has UTR
-        assert parsed.genes[1].transcripts[0]._location != parsed.genes[1].transcripts[0]._cds._location
+        assert parsed.genes[1].transcripts[0]._location != parsed.genes[1].transcripts[0].cds._location
         # does not have UTR
-        assert parsed.genes[2].transcripts[0]._location == parsed.genes[2].transcripts[0]._cds._location
+        assert parsed.genes[2].transcripts[0]._location == parsed.genes[2].transcripts[0].cds._location
 
         # validate positions; gene always has + strand location
         for gene, expected_gene_loc, expected_tx_loc in zip(
