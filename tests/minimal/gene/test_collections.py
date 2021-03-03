@@ -139,6 +139,11 @@ class TestGene:
         guids = list(obj.guid_map.keys())[:1]
         assert {x.guid for x in obj.query_by_guids(guids)} == set(guids)
 
+    def test_iterator(self):
+        obj = self.gene.to_gene_interval(parent_or_seq_chunk_parent=parent_genome)
+        assert list(obj.iter_children()) == list(obj)
+        assert len(list(obj)) == 2
+
 
 class TestFeatureIntervalCollection:
     feat1 = dict(
@@ -189,6 +194,11 @@ class TestFeatureIntervalCollection:
         # query one
         guids = list(obj.guid_map.keys())[:1]
         assert {x.guid for x in obj.query_by_guids(guids)} == set(guids)
+
+    def test_iterator(self):
+        obj = self.collection1.to_feature_collection()
+        assert list(obj.iter_children()) == list(obj)
+        assert len(list(obj)) == 2
 
 
 class TestAnnotationCollection:
@@ -502,3 +512,8 @@ class TestAnnotationCollection:
         for rec in obj2:
             orig_rec = next(obj.query_by_guids([rec.guid]).__iter__()).feature_intervals[0]
             assert orig_rec.get_spliced_sequence() != rec.feature_intervals[0].get_spliced_sequence()
+
+    def test_iterator(self):
+        obj = self.annot.to_annotation_collection(parent_genome)
+        assert list(obj.iter_children()) == list(obj)
+        assert len(list(obj)) == 3

@@ -216,7 +216,7 @@ class GeneTblFeature(TblFeature):
         else:
             is_pseudo = False
 
-        location = gene.location.reset_strand(strand)
+        location = gene.chromosome_location.reset_strand(strand)
 
         qualifiers = {"gene": [gene.gene_symbol], "locus_tag": [locus_tag], "note": []}
 
@@ -262,7 +262,7 @@ class MRNATblFeature(TblFeature):
         cds_feature: "CDSTblFeature",
     ):
         super().__init__(
-            transcript.location,
+            transcript.chromosome_location,
             start_is_incomplete=cds_feature.start_is_incomplete,
             end_is_complete=cds_feature.end_is_complete,
             is_pseudo=cds_feature.is_pseudo,
@@ -369,7 +369,7 @@ class NcRNATblFeature(TblFeature):
         qualifiers["ncRNA_class"] = [transcript.transcript_type.name]
 
         super().__init__(
-            transcript.location,
+            transcript.chromosome_location,
             start_is_incomplete=False,
             end_is_complete=False,
             is_pseudo=False,
@@ -395,7 +395,7 @@ class MiscRNATblFeature(TblFeature):
             qualifiers["product"] = qualifiers["gene"]
 
         super().__init__(
-            transcript.location,
+            transcript.chromosome_location,
             start_is_incomplete=False,
             end_is_complete=False,
             is_pseudo=False,
@@ -423,7 +423,7 @@ class TRNATblFeature(TblFeature):
             qualifiers["product"] = ["tRNA-Xxx"]
 
         super().__init__(
-            transcript.location,
+            transcript.chromosome_location,
             start_is_incomplete=False,
             end_is_complete=False,
             is_pseudo=False,
@@ -451,7 +451,7 @@ class RRNATblFeature(TblFeature):
             qualifiers["product"] = ["unknown ribosomal RNA"]
 
         super().__init__(
-            transcript.location,
+            transcript.chromosome_location,
             start_is_incomplete=False,
             end_is_complete=False,
             is_pseudo=False,
@@ -479,8 +479,8 @@ class TblGene:
         # potentially overlapping representation was able to properly represent the ORF. This is an inherent limitation
         # of the TBL format (as well as the GenBank format).
         for tx in gene.transcripts:
-            if isinstance(tx.location, CompoundInterval):
-                tx._location = tx.location.optimize_and_combine_blocks()
+            if isinstance(tx.chromosome_location, CompoundInterval):
+                tx._location = tx.chromosome_location.optimize_and_combine_blocks()
             if gene.is_coding:
                 if isinstance(tx.cds_location, CompoundInterval):
                     tx.cds = tx.cds.optimize_and_combine_blocks()

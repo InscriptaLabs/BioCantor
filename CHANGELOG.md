@@ -15,6 +15,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Changed
 - All Interval objects now must be built directly from coordinates, and do not accept Location objects.
 - All Interval objects now hide their Location member. This is to avoid confusion about what coordinate system the Location may be on.
+- All interval collections have `__iter__` functions that call `__iter_children()` functions.
+- All Interval objects have their core `._location` object hidden, and offer two accessors -- `.chromosome_location` and `.chunk_relative_location`. Note that `.chromosome_location` will not have sequence information attached to it if a sequence chunk was used. Generally, it is advised to not access `.location` objects directly.
+
 
 ## [0.3.1]
 ### Fixed

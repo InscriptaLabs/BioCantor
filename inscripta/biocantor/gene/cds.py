@@ -95,15 +95,15 @@ class CDSInterval:
             raise LocationException("Number of frame entries must match number of exons")
         # internally we work with Frame, but support Phase
         # this will make parsing GFF3 easier
-        for i, frame in enumerate(frames):
-            if isinstance(frame, CDSPhase):
-                frame = frame.to_frame()
-                frames[i] = frame
+        for i, frame_or_phase in enumerate(frames):
+            if isinstance(frame_or_phase, CDSPhase):
+                frame_or_phase = frame_or_phase.to_frame()
+                frames[i] = frame_or_phase
         self.frames = frames
 
     def __str__(self):
         frame_str = ", ".join([str(p) for p in self.frames])
-        return f"CDS(({self._location}), ({frame_str})"
+        return f"CDS(({self.chromosome_location}), ({frame_str})"
 
     def __repr__(self):
         return "<{}>".format(str(self))
@@ -113,7 +113,7 @@ class CDSInterval:
             return False
         elif self.frames != other.frames:
             return False
-        return self._location == other._location
+        return self.chunk_relative_location == other.chunk_relative_location
 
     def __hash__(self):
         return hash((self._location, self.frames[0]))
@@ -133,8 +133,13 @@ class CDSInterval:
         return self._location.lift_over_to_first_ancestor_of_type(sequence_type)
 
     @property
-    def location(self) -> Location:
-        """Returns the Location of this in *chromosome coordinates*"""
+    def chromosome_location(self) -> Location:
+        """Returns the Location of this in *chromosome coordinates*
+
+        NOTE: If this CDSInterval is built over a sequence chunk, using this accessor method
+        will return a location without sequence information. Please be careful using the location member
+        directly!
+        """
         return self.lift_over_to_first_ancestor_of_type("chromosome")
 
     @property
@@ -145,17 +150,17 @@ class CDSInterval:
     @property
     def blocks(self) -> List[Location]:
         """Returns the blocks of this location"""
-        return self.location.blocks
+        return self.chromosome_location.blocks
 
     @property
     def chunk_relative_blocks(self) -> List[Location]:
         """Returns the chunk relative blocks of this location"""
-        return self._location.blocks
+        return self.chunk_relative_location.blocks
 
     @property
     def strand(self) -> Strand:
         """Pass up the Strand of this CDS's Location"""
-        return self._location.strand
+        return self.chunk_relative_location.strand
 
     @property
     def start(self) -> int:
@@ -170,12 +175,12 @@ class CDSInterval:
     @property
     def chunk_relative_start(self) -> int:
         """Returns chunk relative start position."""
-        return self._location.start
+        return self.chunk_relative_location.start
 
     @property
     def chunk_relative_end(self) -> int:
         """Returns chunk relative end position."""
-        return self._location.end
+        return self.chunk_relative_location.end
 
     @property
     def has_canonical_start_codon(self) -> bool:
@@ -234,6 +239,9 @@ class CDSInterval:
     def num_codons(self) -> int:
         """
         Returns the number of codons.
+
+        NOTE: If this CDS is a subset of the original sequence, this number will represent the subset,
+        not the original size!
 
         Any leading or trailing bases that are annotated as CDS but cannot form a full codon
         are excluded. Additionally, any internal codons that are incomplete are excluded.

@@ -109,7 +109,7 @@ class AbstractFeatureIntervalCollection(AbstractInterval, ABC):
 
     def get_reference_sequence(self) -> Sequence:
         """Returns the *plus strand* sequence for this interval"""
-        return self._location.extract_sequence()
+        return self.chunk_relative_location.extract_sequence()
 
     @staticmethod
     def _find_primary_feature(
@@ -204,7 +204,7 @@ class GeneInterval(AbstractFeatureIntervalCollection):
 
         if guid is None:
             self.guid = digest_object(
-                self._location,
+                self.chunk_relative_location,
                 self.gene_id,
                 self.gene_symbol,
                 self.gene_type,
@@ -323,7 +323,7 @@ class GeneInterval(AbstractFeatureIntervalCollection):
         return FeatureInterval(
             interval_starts=interval_starts,
             interval_ends=interval_ends,
-            strand=self._location.strand,
+            strand=self.chunk_relative_location.strand,
             qualifiers=self._export_qualifiers_to_list(),
             sequence_guid=self.sequence_guid,
             sequence_name=self.sequence_name,
@@ -331,7 +331,7 @@ class GeneInterval(AbstractFeatureIntervalCollection):
             feature_name=self.gene_symbol,
             feature_id=self.gene_id,
             guid=self.guid,
-            parent_or_seq_chunk_parent=self._location.parent,
+            parent_or_seq_chunk_parent=self.chunk_relative_location.parent,
         )
 
     def get_merged_transcript(self) -> FeatureInterval:
@@ -391,7 +391,7 @@ class GeneInterval(AbstractFeatureIntervalCollection):
             sequence_name=self.sequence_name,
             sequence_guid=self.sequence_guid,
             guid=self.guid,
-            parent_or_seq_chunk_parent=self._location.parent,
+            parent_or_seq_chunk_parent=self.chunk_relative_location.parent,
         )
 
     def to_gff(self, chromosome_relative_coordinates: bool = True) -> Iterable[GFFRow]:
@@ -428,7 +428,7 @@ class GeneInterval(AbstractFeatureIntervalCollection):
             (self.start if chromosome_relative_coordinates else self.chunk_relative_start) + 1,
             self.end if chromosome_relative_coordinates else self.chunk_relative_end,
             NULL_COLUMN,
-            self._location.strand,
+            self.chunk_relative_location.strand,
             CDSPhase.NONE,
             attributes,
         )
@@ -492,7 +492,7 @@ class FeatureIntervalCollection(AbstractFeatureIntervalCollection):
 
         if guid is None:
             self.guid = digest_object(
-                self._location,
+                self.chunk_relative_location,
                 self.feature_collection_name,
                 self.feature_collection_id,
                 self.feature_collection_type,
@@ -620,7 +620,7 @@ class FeatureIntervalCollection(AbstractFeatureIntervalCollection):
             sequence_name=self.sequence_name,
             sequence_guid=self.sequence_guid,
             guid=self.guid,
-            parent_or_seq_chunk_parent=self._location.parent,
+            parent_or_seq_chunk_parent=self.chunk_relative_location.parent,
         )
 
     def to_gff(self, chromosome_relative_coordinates: bool = True) -> Iterable[GFFRow]:
@@ -661,7 +661,7 @@ class FeatureIntervalCollection(AbstractFeatureIntervalCollection):
             (self.start if chromosome_relative_coordinates else self.chunk_relative_start) + 1,
             self.end if chromosome_relative_coordinates else self.chunk_relative_end,
             NULL_COLUMN,
-            self._location.strand,
+            self.chunk_relative_location.strand,
             CDSPhase.NONE,
             attributes,
         )

@@ -173,7 +173,7 @@ class TranscriptInterval(AbstractFeatureInterval):
         """Returns the Location of the CDS in *chromosome coordinates*"""
         if not self.is_coding:
             raise NoncodingTranscriptError("No location on a non-coding transcript")
-        return self.cds.location
+        return self.cds.chromosome_location
 
     @property
     def cds_chunk_relative_location(self) -> Location:
@@ -374,7 +374,7 @@ class TranscriptInterval(AbstractFeatureInterval):
             new_qualifiers = self.qualifiers
 
         location_same_strand = location.reset_strand(self._location.strand)
-        intersection = self._location.intersection(location_same_strand)
+        intersection = self.chunk_relative_location.intersection(location_same_strand)
 
         if intersection.is_empty:
             raise EmptyLocationException("Can't intersect disjoint intervals")
@@ -502,10 +502,10 @@ class TranscriptInterval(AbstractFeatureInterval):
         if not self.is_coding:
             raise NoncodingTranscriptError("No 5' UTR on a non-coding transcript")
         # handle the edge case where the CDS is full length
-        if self.cds.chunk_relative_location == self._location:
+        if self.cds.chunk_relative_location == self.chunk_relative_location:
             return EmptyLocation()
         cds_start_on_transcript = self.cds_pos_to_transcript(0)
-        return self._location.relative_interval_to_parent_location(0, cds_start_on_transcript, Strand.PLUS)
+        return self.chunk_relative_location.relative_interval_to_parent_location(0, cds_start_on_transcript, Strand.PLUS)
 
     def get_3p_interval(self) -> Location:
         """Returns the 3' UTR as a location, if it exists.
@@ -515,10 +515,10 @@ class TranscriptInterval(AbstractFeatureInterval):
         if not self.is_coding:
             raise NoncodingTranscriptError("No 3' UTR on a non-coding transcript")
         # handle the edge case where the CDS is full length
-        if self.cds.chunk_relative_location == self._location:
+        if self.cds.chunk_relative_location == self.chunk_relative_location:
             return EmptyLocation()
-        cds_inclusive_end_on_transcript = self.cds_pos_to_transcript(len(self.cds._location) - 1)
-        return self._location.relative_interval_to_parent_location(
+        cds_inclusive_end_on_transcript = self.cds_pos_to_transcript(len(self.cds.chunk_relative_location) - 1)
+        return self.chunk_relative_location.relative_interval_to_parent_location(
             cds_inclusive_end_on_transcript + 1, len(self._location), Strand.PLUS
         )
 
@@ -692,7 +692,7 @@ class TranscriptInterval(AbstractFeatureInterval):
             num_blocks = len(self._genomic_starts)
         else:
             blocks = [[x.start, x.end] for x in self.relative_blocks]
-            num_blocks = self._location.num_blocks
+            num_blocks = self.chunk_relative_location.num_blocks
         block_sizes = [end - start for start, end in blocks]
         block_starts = [start - self.start for start, _ in blocks]
 

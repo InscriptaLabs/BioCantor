@@ -89,7 +89,7 @@ class AbstractInterval(ABC):
 
     @property
     def chunk_relative_size(self) -> int:
-        return len(self._location)
+        return len(self.chunk_relative_location)
 
     @property
     @abstractmethod
@@ -104,16 +104,21 @@ class AbstractInterval(ABC):
     @property
     def chunk_relative_start(self) -> int:
         """Returns chunk relative start position."""
-        return self._location.start
+        return self.chunk_relative_location.start
 
     @property
     def chunk_relative_end(self) -> int:
         """Returns chunk relative end position."""
-        return self._location.end
+        return self.chunk_relative_location.end
 
     @property
-    def location(self) -> Location:
-        """Returns the Location of this in *chromosome coordinates*"""
+    def chromosome_location(self) -> Location:
+        """Returns the Location of this in *chromosome coordinates*
+
+        NOTE: If this Interval is built over a sequence chunk, using this accessor method
+        will return a location without sequence information. Please be careful using the location member
+        directly!
+        """
         return self.lift_over_to_first_ancestor_of_type("chromosome")
 
     @property
@@ -124,17 +129,17 @@ class AbstractInterval(ABC):
     @property
     def blocks(self) -> List[Location]:
         """Returns the blocks of this location"""
-        return self.location.blocks
+        return self.chromosome_location.blocks
 
     @property
     def chunk_relative_blocks(self) -> List[Location]:
         """Returns the chunk relative blocks of this location"""
-        return self._location.blocks
+        return self.chunk_relative_location.blocks
 
     @property
     def strand(self) -> Strand:
         """Returns strand of location."""
-        return self._location.strand
+        return self.chunk_relative_location.strand
 
     @property
     def identifiers(self) -> Set[Union[str, UUID]]:
@@ -348,12 +353,12 @@ class AbstractFeatureInterval(AbstractInterval, ABC):
     @property
     def blocks(self) -> Iterable[SingleInterval]:
         """Wrapper for blocks function that reports blocks in chromosome coordinates"""
-        yield from self.location.blocks
+        yield from self.chromosome_location.blocks
 
     @property
     def relative_blocks(self) -> Iterable[SingleInterval]:
         """Wrapper for blocks function that reports blocks in chunk-relative coordinates"""
-        yield from self._location.blocks
+        yield from self.chunk_relative_location.blocks
 
     @abstractmethod
     def to_bed12(
@@ -412,57 +417,57 @@ class AbstractFeatureInterval(AbstractInterval, ABC):
 
     def sequence_pos_to_feature(self, pos: int) -> int:
         """Converts sequence position to relative position along this feature."""
-        return self.location.parent_to_relative_pos(pos)
+        return self.chromosome_location.parent_to_relative_pos(pos)
 
     def sequence_interval_to_feature(self, chr_start: int, chr_end: int, chr_strand: Strand) -> Location:
         """Converts a contiguous interval on the sequence to a relative location within this feature."""
-        loc = self.location
+        loc = self.chromosome_location
         i = SingleInterval(chr_start, chr_end, chr_strand, parent=loc.parent)
         return loc.parent_to_relative_location(i)
 
     def feature_pos_to_sequence(self, pos: int) -> int:
         """Converts a relative position along this feature to sequence coordinate."""
-        return self.location.relative_to_parent_pos(pos)
+        return self.chromosome_location.relative_to_parent_pos(pos)
 
     def feature_interval_to_sequence(self, rel_start: int, rel_end: int, rel_strand: Strand) -> Location:
         """Converts a contiguous interval relative to this feature to a spliced location on the sequence."""
-        return self.location.relative_interval_to_parent_location(rel_start, rel_end, rel_strand)
+        return self.chromosome_location.relative_interval_to_parent_location(rel_start, rel_end, rel_strand)
 
     def chunk_relative_pos_to_feature(self, pos: int) -> int:
         """Converts chunk-relative sequence position to relative position along this feature."""
-        return self._location.parent_to_relative_pos(pos)
+        return self.chunk_relative_location.parent_to_relative_pos(pos)
 
     def chunk_relative_interval_to_feature(self, chr_start: int, chr_end: int, chr_strand: Strand) -> Location:
         """Converts a contiguous chunk-relative interval on the sequence to a relative location within this feature."""
         return self._location.parent_to_relative_location(
-            SingleInterval(chr_start, chr_end, chr_strand, parent=self._location.parent)
+            SingleInterval(chr_start, chr_end, chr_strand, parent=self.chunk_relative_location.parent)
         )
 
     def feature_pos_to_chunk_relative(self, pos: int) -> int:
         """Converts a relative position along this feature to chunk-relative sequence coordinate."""
-        return self._location.relative_to_parent_pos(pos)
+        return self.chunk_relative_location.relative_to_parent_pos(pos)
 
     def feature_interval_to_chunk_relative(self, rel_start: int, rel_end: int, rel_strand: Strand) -> Location:
         """
         Converts a contiguous interval relative to this feature to a chunk-relative spliced location on the sequence.
         """
-        return self._location.relative_interval_to_parent_location(rel_start, rel_end, rel_strand)
+        return self.chunk_relative_location.relative_interval_to_parent_location(rel_start, rel_end, rel_strand)
 
     @lru_cache(maxsize=1)
     def get_spliced_sequence(self) -> Sequence:
         """Returns the feature's *spliced*, *stranded* sequence."""
-        return self._location.extract_sequence()
+        return self.chunk_relative_location.extract_sequence()
 
     @lru_cache(maxsize=1)
     def get_reference_sequence(self) -> Sequence:
         """Returns the feature's *unspliced*, *positive strand* genomic sequence."""
         ObjectValidation.require_location_has_parent_with_sequence(self._location)
-        return self._location.parent.sequence[self._location.start : self._location.end]
+        return self.chunk_relative_location.parent.sequence[self._location.start : self._location.end]
 
     @lru_cache(maxsize=1)
     def get_genomic_sequence(self) -> Sequence:
         """Returns the feature's *unspliced*, *stranded* (transcription orientation) genomic sequence."""
-        seq = self._location.parent.sequence[self._location.start : self._location.end]
+        seq = self.chunk_relative_location.parent.sequence[self._location.start : self._location.end]
         if self.strand == Strand.PLUS:
             return seq
         else:
@@ -538,7 +543,7 @@ class FeatureInterval(AbstractFeatureInterval):
         self.feature_guid = feature_guid
 
     def __str__(self):
-        return f"FeatureInterval(({self._location}), name={self.feature_name})"
+        return f"FeatureInterval(({self.chromosome_location}), name={self.feature_name})"
 
     def __repr__(self):
         return "<{}>".format(str(self))
@@ -609,8 +614,8 @@ class FeatureInterval(AbstractFeatureInterval):
         if not new_qualifiers:
             new_qualifiers = self.qualifiers
 
-        location_same_strand = location.reset_strand(self._location.strand)
-        intersection = self._location.intersection(location_same_strand)
+        location_same_strand = location.reset_strand(self.chromosome_location.strand)
+        intersection = self.chromosome_location.intersection(location_same_strand)
 
         if intersection.is_empty:
             raise EmptyLocationException("Can't intersect disjoint intervals")
@@ -755,7 +760,7 @@ class FeatureInterval(AbstractFeatureInterval):
             num_blocks = len(self._genomic_starts)
         else:
             blocks = [[x.start, x.end] for x in self.relative_blocks]
-            num_blocks = self._location.num_blocks
+            num_blocks = self.chunk_relative_location.num_blocks
         block_sizes = [end - start for start, end in blocks]
         block_starts = [start - self.start for start, _ in blocks]
 
