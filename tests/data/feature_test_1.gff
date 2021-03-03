@@ -1,6 +1,7 @@
 # this file is a portion of the NCBI annotation of human chr21
 # it contains 8 non-transcribed features, one lncRNA, and two pseudogenes.
-# the pseudogenes must be inferred, because they have no child features.
+# one of the pseudogenes has an exon, and the other pseudogene does not. Both cases should lead
+# to an inferred transcript.
 ##gff-version 3
 NC_000021.9	Curated	transcriptional_cis_regulatory_region	14677594	14677990	.	.	.	ID=id-GeneID:116309122;Dbxref=GeneID:116309122;Note=candidate enhancer chr21.70 targeted for multiplex CRISPR interference;experiment=EXISTENCE:mutant phenotype evidence [ECO:0000015][PMID:30612741];function=positively regulates SAMSN1 gene expression in K562 cells;gbkey=regulatory;regulatory_class=transcriptional_cis_regulatory_region
 NC_000021.9	Curated	biological_region	14677594	14677990	.	+	.	ID=id-GeneID:116309122-2;Dbxref=GeneID:116309122;gbkey=Region;standard_name=CRISPRi-validated cis-regulatory element chr21.70

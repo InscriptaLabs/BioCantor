@@ -111,6 +111,15 @@ class TestGff3Parser:
         with open(test_data_dir / json_file) as fh:
             assert AnnotationCollectionModel.Schema().load(json.load(fh)) == c
 
+    def test_transcript_inference(self, test_data_dir):
+        recs = list(parse_standard_gff3(test_data_dir / "feature_test_1.gff"))
+        c = recs[0].annotation.to_annotation_collection()
+        # 3 total genes
+        assert len(c.genes) == 3
+        # two different types of pseudogene transcripts were inferred, one without exons and one with exons
+        assert len([x for x in c.genes if x.gene_type == Biotype.pseudogene]) == 2
+        assert len([x for x in c.genes if x.gene_type == Biotype.lncRNA]) == 1
+
 
 class TestGff3FastaParser:
     """Test GFF3 + FASTA parsing"""
