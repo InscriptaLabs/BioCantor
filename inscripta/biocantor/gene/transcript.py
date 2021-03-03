@@ -505,7 +505,9 @@ class TranscriptInterval(AbstractFeatureInterval):
         if self.cds.chunk_relative_location == self.chunk_relative_location:
             return EmptyLocation()
         cds_start_on_transcript = self.cds_pos_to_transcript(0)
-        return self.chunk_relative_location.relative_interval_to_parent_location(0, cds_start_on_transcript, Strand.PLUS)
+        return self.chunk_relative_location.relative_interval_to_parent_location(
+            0, cds_start_on_transcript, Strand.PLUS
+        )
 
     def get_3p_interval(self) -> Location:
         """Returns the 3' UTR as a location, if it exists.
