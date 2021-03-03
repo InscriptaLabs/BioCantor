@@ -50,9 +50,13 @@ class AbstractFeatureIntervalCollection(AbstractInterval, ABC):
     These are always on the same sequence, but can be on different strands.
     """
 
-    @abstractmethod
     def __iter__(self):
         """Iterate over all children of this collection"""
+        yield from self.iter_children()
+
+    @abstractmethod
+    def iter_children(self) -> Iterable["AbstractInterval"]:
+        """Iterate over the children"""
 
     @abstractmethod
     def children_guids(self) -> Set[UUID]:
@@ -223,7 +227,7 @@ class GeneInterval(AbstractFeatureIntervalCollection):
             f"Intervals:{','.join(str(f) for f in self.transcripts)})"
         )
 
-    def __iter__(self):
+    def iter_children(self) -> Iterable[TranscriptInterval]:
         yield from self.transcripts
 
     @property
@@ -512,7 +516,7 @@ class FeatureIntervalCollection(AbstractFeatureIntervalCollection):
             f"Intervals:{','.join(str(f) for f in self.feature_intervals)})"
         )
 
-    def __iter__(self) -> Iterable[FeatureInterval]:
+    def iter_children(self) -> Iterable[FeatureInterval]:
         """Iterate over all intervals in this collection."""
         yield from self.feature_intervals
 
@@ -749,10 +753,6 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
 
     def __repr__(self):
         return f"{self.__class__.__name__}({','.join(str(f) for f in self.iter_children())})"
-
-    def __iter__(self) -> Iterable[Union[GeneInterval, FeatureIntervalCollection]]:
-        """Iterate over all intervals in this collection."""
-        yield from self.iter_children()
 
     def __len__(self):
         return len(self.feature_collections) + len(self.genes)
