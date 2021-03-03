@@ -179,9 +179,19 @@ def _parse_genes(chrom: str, db: FeatureDB) -> List[Dict]:
             )
             transcripts.append(tx)
 
-        if not transcripts:
-            logger.info(f"Failed to find any transcripts for gene {gene_symbol}; skipping")
-            continue
+        if len(transcripts) == 0:
+            # infer a transcript for a gene
+            logger.info(f"Inferring a transcript for gene {gene_symbol}")
+            tx = dict(
+                exon_starts=[gene.start],
+                exon_ends=[gene.end],
+                strand=Strand.from_symbol(gene.strand).name,
+                qualifiers=gene_qualifiers,
+                transcript_type=gene_biotype.name if gene_biotype else gene_biotype,
+                transcript_id=gene_id,
+                sequence_name=gene.seqid,
+            )
+            transcripts.append(tx)
 
         gene = dict(
             transcripts=transcripts,
