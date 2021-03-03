@@ -114,11 +114,15 @@ class TestGff3Parser:
     def test_transcript_inference(self, test_data_dir):
         recs = list(parse_standard_gff3(test_data_dir / "feature_test_1.gff"))
         c = recs[0].annotation.to_annotation_collection()
-        # 3 total genes
-        assert len(c.genes) == 3
+        # 4 total genes
+        assert len(c.genes) == 4
         # two different types of pseudogene transcripts were inferred, one without exons and one with exons
+        # one gene with an invalid biotype who was set to None
         assert len([x for x in c.genes if x.gene_type == Biotype.pseudogene]) == 2
         assert len([x for x in c.genes if x.gene_type == Biotype.lncRNA]) == 1
+        invalid_biotype = [x for x in c.genes if not x.gene_type]
+        assert len(invalid_biotype) == 1
+        assert list(invalid_biotype[0].qualifiers["provided_biotype"])[0] == "invalid"
 
 
 class TestGff3FastaParser:

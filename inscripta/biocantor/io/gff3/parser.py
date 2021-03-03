@@ -87,6 +87,7 @@ def _parse_genes(chrom: str, db: FeatureDB) -> List[Dict]:
             gene_biotype = Biotype[gene_biotype]
         elif gene_biotype:
             gene_qualifiers["provided_biotype"] = [gene_biotype]
+            gene_biotype = None
 
         transcripts = []
         for i, transcript in enumerate(db.children(gene, level=1)):
