@@ -6,6 +6,7 @@ out possible feature types.
 """
 import itertools
 import re
+import string
 from collections import defaultdict
 from enum import IntEnum
 from typing import Set, Dict, Tuple, Hashable, List
@@ -108,6 +109,14 @@ def extract_feature_name_id(feature_qualifiers: Dict[str, List[str]]) -> Tuple[s
             if not feature_id_key or this_feature_id_key < feature_id_key:
                 feature_id = vals[0]
                 feature_id_key = this_feature_id_key
+
+    # if no standard identifiers are present, try using /note
+    if not feature_name and not feature_id and "note" in feature_qualifiers:
+        try:
+            feature_name = feature_id = feature_qualifiers["note"][0].split()[0].strip(string.punctuation)
+        except IndexError:
+            pass
+
     return feature_name, feature_id
 
 

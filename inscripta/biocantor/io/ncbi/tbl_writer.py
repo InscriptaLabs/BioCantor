@@ -4,9 +4,11 @@ Write BioCantor data models to the NCBI .tbl format.
 The .tbl format is used for NCBI genome submission, and can be validated with the tool ``tbl2asn``.
 """
 import itertools
+import random
 import re
 import warnings
 from abc import ABC
+from string import ascii_uppercase
 from typing import Optional, TextIO, Iterable, Union, Dict, List, Set, Hashable
 
 from inscripta.biocantor.gene.biotype import Biotype
@@ -20,9 +22,8 @@ from inscripta.biocantor.io.genbank.constants import (
 )
 from inscripta.biocantor.io.ncbi.exc import TblExportException
 from inscripta.biocantor.location import Location
+from inscripta.biocantor.location.location_impl import CompoundInterval
 from inscripta.biocantor.location.strand import Strand
-import random
-from string import ascii_uppercase
 
 
 def random_uppercase_str(size=10) -> str:
@@ -215,7 +216,7 @@ class GeneTblFeature(TblFeature):
         else:
             is_pseudo = False
 
-        location = gene.location.reset_strand(strand)
+        location = gene.chromosome_location.reset_strand(strand)
 
         qualifiers = {"gene": [gene.gene_symbol], "locus_tag": [locus_tag], "note": []}
 
@@ -261,7 +262,7 @@ class MRNATblFeature(TblFeature):
         cds_feature: "CDSTblFeature",
     ):
         super().__init__(
-            transcript.location,
+            transcript.chromosome_location,
             start_is_incomplete=cds_feature.start_is_incomplete,
             end_is_complete=cds_feature.end_is_complete,
             is_pseudo=cds_feature.is_pseudo,
@@ -346,7 +347,7 @@ class CDSTblFeature(TblFeature):
         end_is_incomplete = len(transcript.cds) % 3 != (codon_start - 1) or not transcript.cds.has_valid_stop
 
         super().__init__(
-            transcript.cds.location,
+            transcript.cds_location,
             start_is_incomplete=start_is_incomplete,
             end_is_complete=end_is_incomplete,
             is_pseudo=gene_feature.is_pseudo,
@@ -368,7 +369,7 @@ class NcRNATblFeature(TblFeature):
         qualifiers["ncRNA_class"] = [transcript.transcript_type.name]
 
         super().__init__(
-            transcript.location,
+            transcript.chromosome_location,
             start_is_incomplete=False,
             end_is_complete=False,
             is_pseudo=False,
@@ -394,7 +395,7 @@ class MiscRNATblFeature(TblFeature):
             qualifiers["product"] = qualifiers["gene"]
 
         super().__init__(
-            transcript.location,
+            transcript.chromosome_location,
             start_is_incomplete=False,
             end_is_complete=False,
             is_pseudo=False,
@@ -422,7 +423,7 @@ class TRNATblFeature(TblFeature):
             qualifiers["product"] = ["tRNA-Xxx"]
 
         super().__init__(
-            transcript.location,
+            transcript.chromosome_location,
             start_is_incomplete=False,
             end_is_complete=False,
             is_pseudo=False,
@@ -450,7 +451,7 @@ class RRNATblFeature(TblFeature):
             qualifiers["product"] = ["unknown ribosomal RNA"]
 
         super().__init__(
-            transcript.location,
+            transcript.chromosome_location,
             start_is_incomplete=False,
             end_is_complete=False,
             is_pseudo=False,
@@ -478,9 +479,11 @@ class TblGene:
         # potentially overlapping representation was able to properly represent the ORF. This is an inherent limitation
         # of the TBL format (as well as the GenBank format).
         for tx in gene.transcripts:
-            tx.location = tx.location.optimize_and_combine_blocks()
+            if isinstance(tx.chromosome_location, CompoundInterval):
+                tx._location = tx.chromosome_location.optimize_and_combine_blocks()
             if gene.is_coding:
-                tx.cds = tx.cds.optimize_and_combine_blocks()
+                if isinstance(tx.cds_location, CompoundInterval):
+                    tx.cds = tx.cds.optimize_and_combine_blocks()
 
         self.gene_tbl = GeneTblFeature(self.gene, locus_tag)
 

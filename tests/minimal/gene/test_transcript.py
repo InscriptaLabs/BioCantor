@@ -1,182 +1,190 @@
 import pytest
-
 from inscripta.biocantor.exc import (
     InvalidCDSIntervalError,
-    LocationException,
     EmptyLocationException,
     NullParentException,
     NoncodingTranscriptError,
     NullSequenceException,
+    ValidationException,
 )
-from inscripta.biocantor.gene.cds import CDSInterval, CDSFrame
-from inscripta.biocantor.gene.transcript import TranscriptInterval
+from inscripta.biocantor.gene.cds import CDSFrame
+from inscripta.biocantor.io.models import TranscriptIntervalModel
 from inscripta.biocantor.location.location_impl import SingleInterval, CompoundInterval, EmptyLocation
 from inscripta.biocantor.location.strand import Strand
-from inscripta.biocantor.io.models import TranscriptIntervalModel
 from inscripta.biocantor.parent.parent import Parent
 from inscripta.biocantor.sequence.alphabet import Alphabet
 from inscripta.biocantor.sequence.sequence import Sequence
 
 # these features will be shared across all tests
 genome = "GTATTCTTGGACCTAATT"
-parent = Parent(sequence=Sequence(genome, Alphabet.NT_STRICT))
+parent = Parent(sequence=Sequence(genome, Alphabet.NT_STRICT), sequence_type="chromosome")
 # offset the genome to show parent
 genome2 = "AAGTATTCTTGGACCTAATT"
-parent_genome2 = Parent(sequence=Sequence(genome2, Alphabet.NT_STRICT))
+parent_genome2 = Parent(sequence=Sequence(genome2, Alphabet.NT_STRICT), sequence_type="chromosome")
+
+# slice the genome down to contain some of the transcripts
+parent_genome2_1_15 = Parent(
+    sequence=Sequence(
+        genome2[1:15],
+        Alphabet.NT_EXTENDED_GAPPED,
+        type="sequence_chunk",
+        parent=Parent(
+            location=SingleInterval(1, 15, Strand.PLUS, parent=Parent(id="genome_0_15", sequence_type="chromosome"))
+        ),
+    )
+)
+
+# Integer transcript definitions
+# a single exon transcript that is this entire genome
+se_unspliced = TranscriptIntervalModel.Schema().load(
+    dict(
+        exon_starts=[0],
+        exon_ends=[18],
+        strand=Strand.PLUS.name,
+        cds_starts=[0],
+        cds_ends=[18],
+        cds_frames=[CDSFrame.ZERO.name],
+    )
+)
+se_unspliced_repr = "TranscriptInterval((0-18:+), cds=[CDS((0-18:+), (CDSFrame.ZERO)], symbol=None)"
+# a single exon transcript that is out of frame
+se_unspliced_oof = TranscriptIntervalModel.Schema().load(
+    dict(
+        exon_starts=[0],
+        exon_ends=[18],
+        strand=Strand.PLUS.name,
+        cds_starts=[0],
+        cds_ends=[18],
+        cds_frames=[CDSFrame.ONE.name],
+    )
+)
+se_unspliced_oof_repr = "TranscriptInterval((0-18:+), cds=[CDS((0-18:+), (CDSFrame.ONE)], symbol=None)"
+# a single exon noncoding transcript
+se_noncoding = TranscriptIntervalModel.Schema().load(dict(exon_starts=[0], exon_ends=[18], strand=Strand.PLUS.name))
+se_noncoding_repr = "TranscriptInterval((0-18:+), cds=[None], symbol=None)"
+# a three exon transcript with a 2bp 5' UTR and a 2bp 3' UTR
+e3_spliced = TranscriptIntervalModel.Schema().load(
+    dict(
+        exon_starts=[2, 7, 12],
+        exon_ends=[6, 10, 15],
+        strand=Strand.PLUS.name,
+        cds_starts=[4, 7, 12],
+        cds_ends=[6, 10, 13],
+        cds_frames=[CDSFrame.ZERO.name, CDSFrame.TWO.name, CDSFrame.TWO.name],
+    )
+)
+e3_spliced_repr = (
+    "TranscriptInterval((2-6:+, 7-10:+, 12-15:+), "
+    "cds=[CDS((4-6:+, 7-10:+, 12-13:+), "
+    "(CDSFrame.ZERO, CDSFrame.TWO, CDSFrame.TWO)], symbol=None)"
+)
+# a three exon transcript with an entirely non-coding 1st and last exon
+e3_spliced_utr = TranscriptIntervalModel.Schema().load(
+    dict(
+        exon_starts=[2, 7, 12],
+        exon_ends=[6, 10, 15],
+        strand=Strand.PLUS.name,
+        cds_starts=[7],
+        cds_ends=[10],
+        cds_frames=[CDSFrame.ZERO.name],
+    )
+)
+e3_spliced_utr_repr = "TranscriptInterval((2-6:+, 7-10:+, 12-15:+), cds=[CDS((7-10:+), (CDSFrame.ZERO)], symbol=None)"
+# a three exon transcript with an entirely non-coding 1st and last exon; out of frame
+# this means it has no translation
+e3_spliced_notrans = TranscriptIntervalModel.Schema().load(
+    dict(
+        exon_starts=[2, 7, 12],
+        exon_ends=[6, 10, 15],
+        strand=Strand.PLUS.name,
+        cds_starts=[7],
+        cds_ends=[10],
+        cds_frames=[CDSFrame.ONE.name],
+    )
+)
+e3_spliced_notrans_repr = (
+    "TranscriptInterval((2-6:+, 7-10:+, 12-15:+), cds=[CDS((7-10:+), (CDSFrame.ONE)], symbol=None)"
+)
+
+# Negative strand transcript definitions
+# a single exon transcript that is this entire genome
+se_unspliced_minus = TranscriptIntervalModel.Schema().load(
+    dict(
+        exon_starts=[0],
+        exon_ends=[18],
+        strand=Strand.MINUS.name,
+        cds_starts=[0],
+        cds_ends=[18],
+        cds_frames=[CDSFrame.ZERO.name],
+    )
+)
+se_unspliced_repr_minus = "TranscriptInterval((0-18:-), cds=[CDS((0-18:-), (CDSFrame.ZERO)], symbol=None)"
+# a single exon transcript that is out of frame
+se_unspliced_oof_minus = TranscriptIntervalModel.Schema().load(
+    dict(
+        exon_starts=[0],
+        exon_ends=[18],
+        strand=Strand.MINUS.name,
+        cds_starts=[0],
+        cds_ends=[18],
+        cds_frames=[CDSFrame.ONE.name],
+    )
+)
+se_unspliced_oof_repr_minus = "TranscriptInterval((0-18:-), cds=[CDS((0-18:-), (CDSFrame.ONE)], symbol=None)"
+# a single exon noncoding transcript (explicitly defined)
+se_noncoding_minus = TranscriptIntervalModel.Schema().load(
+    dict(exon_starts=[0], exon_ends=[18], strand=Strand.MINUS.name)
+)
+se_noncoding_repr_minus = "TranscriptInterval((0-18:-), cds=[None], symbol=None)"
+# a three exon transcript with a 2bp 5' UTR and a 2bp 3' UTR
+e3_spliced_minus = TranscriptIntervalModel.Schema().load(
+    dict(
+        exon_starts=[2, 7, 12],
+        exon_ends=[6, 10, 15],
+        strand=Strand.MINUS.name,
+        cds_starts=[4, 7, 12],
+        cds_ends=[6, 10, 13],
+        cds_frames=[CDSFrame.ONE.name, CDSFrame.ONE.name, CDSFrame.ZERO.name],
+    )
+)
+e3_spliced_repr_minus = (
+    "TranscriptInterval((2-6:-, 7-10:-, 12-15:-), "
+    "cds=[CDS((4-6:-, 7-10:-, 12-13:-), "
+    "(CDSFrame.ONE, CDSFrame.ONE, CDSFrame.ZERO)], symbol=None)"
+)
+# a three exon transcript with an entirely non-coding 1st and last exon
+e3_spliced_utr_minus = TranscriptIntervalModel.Schema().load(
+    dict(
+        exon_starts=[2, 7, 12],
+        exon_ends=[6, 10, 15],
+        strand=Strand.MINUS.name,
+        cds_starts=[7],
+        cds_ends=[10],
+        cds_frames=[CDSFrame.ZERO.name],
+    )
+)
+e3_spliced_utr_repr_minus = (
+    "TranscriptInterval((2-6:-, 7-10:-, 12-15:-), cds=[CDS((7-10:-), (CDSFrame.ZERO)], symbol=None)"
+)
+# a three exon transcript with an entirely non-coding 1st and last exon; out of frame
+# this means it has no translation
+e3_spliced_notrans_minus = TranscriptIntervalModel.Schema().load(
+    dict(
+        exon_starts=[2, 7, 12],
+        exon_ends=[6, 10, 15],
+        strand=Strand.MINUS.name,
+        cds_starts=[7],
+        cds_ends=[10],
+        cds_frames=[CDSFrame.ONE.name],
+    )
+)
+e3_spliced_notrans_repr_minus = (
+    "TranscriptInterval((2-6:-, 7-10:-, 12-15:-), cds=[CDS((7-10:-), (CDSFrame.ONE)], symbol=None)"
+)
 
 
 class TestTranscript:
     """Test constructing transcripts of various types"""
-
-    # Integer transcript definitions
-    # a single exon transcript that is this entire genome
-    se_unspliced = TranscriptIntervalModel.Schema().load(
-        dict(
-            exon_starts=[0],
-            exon_ends=[18],
-            strand=Strand.PLUS.name,
-            cds_starts=[0],
-            cds_ends=[18],
-            cds_frames=[CDSFrame.ZERO.name],
-        )
-    )
-    se_unspliced_repr = "TranscriptInterval((0-18:+), cds=[CDS((0-18:+), (CDSFrame.ZERO)], symbol=None)"
-    # a single exon transcript that is out of frame
-    se_unspliced_oof = TranscriptIntervalModel.Schema().load(
-        dict(
-            exon_starts=[0],
-            exon_ends=[18],
-            strand=Strand.PLUS.name,
-            cds_starts=[0],
-            cds_ends=[18],
-            cds_frames=[CDSFrame.ONE.name],
-        )
-    )
-    se_unspliced_oof_repr = "TranscriptInterval((0-18:+), cds=[CDS((0-18:+), (CDSFrame.ONE)], symbol=None)"
-    # a single exon noncoding transcript
-    se_noncoding = TranscriptIntervalModel.Schema().load(dict(exon_starts=[0], exon_ends=[18], strand=Strand.PLUS.name))
-    se_noncoding_repr = "TranscriptInterval((0-18:+), cds=[None], symbol=None)"
-    # a three exon transcript with a 2bp 5' UTR and a 2bp 3' UTR
-    e3_spliced = TranscriptIntervalModel.Schema().load(
-        dict(
-            exon_starts=[2, 7, 12],
-            exon_ends=[6, 10, 15],
-            strand=Strand.PLUS.name,
-            cds_starts=[4, 7, 12],
-            cds_ends=[6, 10, 13],
-            cds_frames=[CDSFrame.ZERO.name, CDSFrame.TWO.name, CDSFrame.TWO.name],
-        )
-    )
-    e3_spliced_repr = (
-        "TranscriptInterval((2-6:+, 7-10:+, 12-15:+), "
-        "cds=[CDS((4-6:+, 7-10:+, 12-13:+), "
-        "(CDSFrame.ZERO, CDSFrame.TWO, CDSFrame.TWO)], symbol=None)"
-    )
-    # a three exon transcript with an entirely non-coding 1st and last exon
-    e3_spliced_utr = TranscriptIntervalModel.Schema().load(
-        dict(
-            exon_starts=[2, 7, 12],
-            exon_ends=[6, 10, 15],
-            strand=Strand.PLUS.name,
-            cds_starts=[7],
-            cds_ends=[10],
-            cds_frames=[CDSFrame.ZERO.name],
-        )
-    )
-    e3_spliced_utr_repr = (
-        "TranscriptInterval((2-6:+, 7-10:+, 12-15:+), cds=[CDS((7-10:+), (CDSFrame.ZERO)], symbol=None)"
-    )
-    # a three exon transcript with an entirely non-coding 1st and last exon; out of frame
-    # this means it has no translation
-    e3_spliced_notrans = TranscriptIntervalModel.Schema().load(
-        dict(
-            exon_starts=[2, 7, 12],
-            exon_ends=[6, 10, 15],
-            strand=Strand.PLUS.name,
-            cds_starts=[7],
-            cds_ends=[10],
-            cds_frames=[CDSFrame.ONE.name],
-        )
-    )
-    e3_spliced_notrans_repr = (
-        "TranscriptInterval((2-6:+, 7-10:+, 12-15:+), cds=[CDS((7-10:+), (CDSFrame.ONE)], symbol=None)"
-    )
-
-    # Negative strand transcript definitions
-    # a single exon transcript that is this entire genome
-    se_unspliced_minus = TranscriptIntervalModel.Schema().load(
-        dict(
-            exon_starts=[0],
-            exon_ends=[18],
-            strand=Strand.MINUS.name,
-            cds_starts=[0],
-            cds_ends=[18],
-            cds_frames=[CDSFrame.ZERO.name],
-        )
-    )
-    se_unspliced_repr_minus = "TranscriptInterval((0-18:-), cds=[CDS((0-18:-), (CDSFrame.ZERO)], symbol=None)"
-    # a single exon transcript that is out of frame
-    se_unspliced_oof_minus = TranscriptIntervalModel.Schema().load(
-        dict(
-            exon_starts=[0],
-            exon_ends=[18],
-            strand=Strand.MINUS.name,
-            cds_starts=[0],
-            cds_ends=[18],
-            cds_frames=[CDSFrame.ONE.name],
-        )
-    )
-    se_unspliced_oof_repr_minus = "TranscriptInterval((0-18:-), cds=[CDS((0-18:-), (CDSFrame.ONE)], symbol=None)"
-    # a single exon noncoding transcript (explicitly defined)
-    se_noncoding_minus = TranscriptIntervalModel.Schema().load(
-        dict(exon_starts=[0], exon_ends=[18], strand=Strand.MINUS.name)
-    )
-    se_noncoding_repr_minus = "TranscriptInterval((0-18:-), cds=[None], symbol=None)"
-    # a three exon transcript with a 2bp 5' UTR and a 2bp 3' UTR
-    e3_spliced_minus = TranscriptIntervalModel.Schema().load(
-        dict(
-            exon_starts=[2, 7, 12],
-            exon_ends=[6, 10, 15],
-            strand=Strand.MINUS.name,
-            cds_starts=[4, 7, 12],
-            cds_ends=[6, 10, 13],
-            cds_frames=[CDSFrame.ONE.name, CDSFrame.ONE.name, CDSFrame.ZERO.name],
-        )
-    )
-    e3_spliced_repr_minus = (
-        "TranscriptInterval((2-6:-, 7-10:-, 12-15:-), "
-        "cds=[CDS((4-6:-, 7-10:-, 12-13:-), "
-        "(CDSFrame.ONE, CDSFrame.ONE, CDSFrame.ZERO)], symbol=None)"
-    )
-    # a three exon transcript with an entirely non-coding 1st and last exon
-    e3_spliced_utr_minus = TranscriptIntervalModel.Schema().load(
-        dict(
-            exon_starts=[2, 7, 12],
-            exon_ends=[6, 10, 15],
-            strand=Strand.MINUS.name,
-            cds_starts=[7],
-            cds_ends=[10],
-            cds_frames=[CDSFrame.ZERO.name],
-        )
-    )
-    e3_spliced_utr_repr_minus = (
-        "TranscriptInterval((2-6:-, 7-10:-, 12-15:-), cds=[CDS((7-10:-), (CDSFrame.ZERO)], symbol=None)"
-    )
-    # a three exon transcript with an entirely non-coding 1st and last exon; out of frame
-    # this means it has no translation
-    e3_spliced_notrans_minus = TranscriptIntervalModel.Schema().load(
-        dict(
-            exon_starts=[2, 7, 12],
-            exon_ends=[6, 10, 15],
-            strand=Strand.MINUS.name,
-            cds_starts=[7],
-            cds_ends=[10],
-            cds_frames=[CDSFrame.ONE.name],
-        )
-    )
-    e3_spliced_notrans_repr_minus = (
-        "TranscriptInterval((2-6:-, 7-10:-, 12-15:-), cds=[CDS((7-10:-), (CDSFrame.ONE)], symbol=None)"
-    )
 
     @pytest.mark.parametrize(
         "schema,expected",
@@ -197,7 +205,7 @@ class TestTranscript:
     )
     def test_transcript_constructor(self, schema, expected):
         assert str(schema.to_transcript_interval()) == expected
-        assert str(schema.to_transcript_interval(parent=parent)) == expected
+        assert str(schema.to_transcript_interval(parent_or_seq_chunk_parent=parent)) == expected
 
     @pytest.mark.parametrize(
         "schema,expected",
@@ -215,12 +223,12 @@ class TestTranscript:
         ],
     )
     def test_translations(self, schema, expected):
-        tx = schema.to_transcript_interval(parent=parent)
+        tx = schema.to_transcript_interval(parent_or_seq_chunk_parent=parent)
         assert str(tx.get_protein_sequence()) == expected
 
     @pytest.mark.parametrize("schema,expected", [(se_unspliced_minus, "N*")])
     def test_truncations(self, schema, expected):
-        tx = schema.to_transcript_interval(parent=parent)
+        tx = schema.to_transcript_interval(parent_or_seq_chunk_parent=parent)
         assert str(tx.get_protein_sequence(truncate_at_in_frame_stop=True)) == expected
 
     @pytest.mark.parametrize("schema,expected_exception", [(se_unspliced_minus, NullParentException)])
@@ -228,22 +236,6 @@ class TestTranscript:
         tx = schema.to_transcript_interval()
         with pytest.raises(expected_exception):
             assert str(tx.get_protein_sequence(truncate_at_in_frame_stop=True)) == expected_exception
-
-    @pytest.mark.parametrize(
-        "location,cds,name,qualifiers,expected_exception",
-        [
-            (
-                SingleInterval(0, 10, Strand.PLUS, parent),
-                CDSInterval(SingleInterval(2, 8, Strand.PLUS), [CDSFrame.ZERO]),
-                None,
-                None,
-                NullParentException,
-            )
-        ],
-    )
-    def test_transcript_constructor_exceptions(self, location, cds, name, qualifiers, expected_exception):
-        with pytest.raises(expected_exception):
-            TranscriptInterval(location, cds, name, qualifiers)
 
     @pytest.mark.parametrize(
         "schema,expected_exception",
@@ -417,18 +409,18 @@ class TestTranscript:
                         cds_ends=[0],
                     )
                 ),
-                LocationException,
+                ValidationException,
             ),
         ],
     )
     def test_transcript_from_transcript_exceptions(self, schema, expected_exception):
         with pytest.raises(expected_exception):
             _ = schema.to_transcript_interval()
-            _ = schema.to_transcript_interval(parent=parent)
+            _ = schema.to_transcript_interval(parent_or_seq_chunk_parent=parent)
 
     def test_no_such_ancestor(self):
         with pytest.raises(NullSequenceException):
-            _ = self.se_unspliced.to_transcript_interval(parent=Parent())
+            _ = se_unspliced.to_transcript_interval(parent_or_seq_chunk_parent=Parent(sequence_type="chromosome"))
 
     @pytest.mark.parametrize(
         "schema,value,expected",
@@ -470,7 +462,7 @@ class TestTranscript:
     def test_transcript_pos_to_sequence(self, schema, value, expected):
         tx = schema.to_transcript_interval()
         assert tx.transcript_pos_to_sequence(value) == expected
-        tx = schema.to_transcript_interval(parent=parent)
+        tx = schema.to_transcript_interval(parent_or_seq_chunk_parent=parent)
         assert tx.transcript_pos_to_sequence(value) == expected
 
     @pytest.mark.parametrize(
@@ -496,7 +488,7 @@ class TestTranscript:
         ],
     )
     def test_transcript_interval_to_sequence_parent(self, schema, value, expected):
-        tx = schema.to_transcript_interval(parent=parent)
+        tx = schema.to_transcript_interval(parent_or_seq_chunk_parent=parent)
         assert tx.transcript_interval_to_sequence(*value) == expected
 
     @pytest.mark.parametrize(
@@ -513,7 +505,7 @@ class TestTranscript:
     def test_cds_pos_to_sequence(self, schema, value, expected):
         tx = schema.to_transcript_interval()
         assert tx.cds_pos_to_sequence(value) == expected
-        tx = schema.to_transcript_interval(parent=parent)
+        tx = schema.to_transcript_interval(parent_or_seq_chunk_parent=parent)
         assert tx.cds_pos_to_sequence(value) == expected
 
     @pytest.mark.parametrize(
@@ -534,7 +526,7 @@ class TestTranscript:
     def test_cds_interval_to_sequence(self, schema, value, expected):
         tx = schema.to_transcript_interval()
         assert tx.cds_interval_to_sequence(*value).reset_parent(None) == expected
-        tx = schema.to_transcript_interval(parent=parent)
+        tx = schema.to_transcript_interval(parent_or_seq_chunk_parent=parent)
         assert tx.cds_interval_to_sequence(*value).reset_parent(None) == expected
 
     @pytest.mark.parametrize(
@@ -551,7 +543,7 @@ class TestTranscript:
     def test_sequence_pos_to_cds(self, schema, value, expected):
         tx = schema.to_transcript_interval()
         assert tx.sequence_pos_to_cds(value) == expected
-        tx = schema.to_transcript_interval(parent=parent)
+        tx = schema.to_transcript_interval(parent_or_seq_chunk_parent=parent)
         assert tx.sequence_pos_to_cds(value) == expected
 
     @pytest.mark.parametrize(
@@ -568,7 +560,7 @@ class TestTranscript:
     def test_sequence_interval_to_cds(self, schema, value, expected):
         tx = schema.to_transcript_interval()
         assert tx.sequence_interval_to_cds(*value).reset_parent(None) == expected
-        tx = schema.to_transcript_interval(parent=parent)
+        tx = schema.to_transcript_interval(parent_or_seq_chunk_parent=parent)
         assert tx.sequence_interval_to_cds(*value).reset_parent(None) == expected
 
     @pytest.mark.parametrize(
@@ -600,11 +592,11 @@ class TestTranscript:
     def test_transcript_pos_to_cds(self, schema, value, expected):
         tx = schema.to_transcript_interval()
         assert tx.transcript_pos_to_cds(value) == expected
-        tx = schema.to_transcript_interval(parent=parent)
+        tx = schema.to_transcript_interval(parent_or_seq_chunk_parent=parent)
         assert tx.transcript_pos_to_cds(value) == expected
 
     def test_position_exceptions(self):
-        tx = self.se_noncoding.to_transcript_interval()
+        tx = se_noncoding.to_transcript_interval()
         with pytest.raises(NoncodingTranscriptError):
             _ = tx.cds_pos_to_sequence(0)
 
@@ -624,7 +616,7 @@ class TestTranscript:
             _ = tx.transcript_pos_to_cds(0)
 
         with pytest.raises(NoncodingTranscriptError):
-            _ = tx.get_coding_interval()
+            _ = tx.cds_location
 
         with pytest.raises(NoncodingTranscriptError):
             _ = tx.get_5p_interval()
@@ -691,9 +683,11 @@ class TestTranscript:
         ],
     )
     def test_intersection(self, schema, value, expected):
-        tx = schema.to_transcript_interval(parent=parent)
+        tx = schema.to_transcript_interval(parent_or_seq_chunk_parent=parent)
         val = tx.intersect(value)
-        expected = TranscriptIntervalModel.Schema().load(expected).to_transcript_interval(parent=parent)
+        expected = (
+            TranscriptIntervalModel.Schema().load(expected).to_transcript_interval(parent_or_seq_chunk_parent=parent)
+        )
         assert str(expected) == str(val)
 
     def test_intersection_exception(self):
@@ -746,22 +740,22 @@ class TestTranscript:
         ],
     )
     def test_reset_parent(self, schema, expected):
-        tx = schema.to_transcript_interval(parent=parent)
-        tx.update_parent(parent_genome2)
+        tx = schema.to_transcript_interval(parent_or_seq_chunk_parent=parent)
+        tx.reset_parent(parent_genome2)
         assert str(tx.get_protein_sequence()) == str(expected)
 
     def test_object_conversion(self):
         for model in [
-            self.e3_spliced,
-            self.e3_spliced_utr_minus,
-            self.e3_spliced_minus,
-            self.e3_spliced_notrans,
+            e3_spliced,
+            e3_spliced_utr_minus,
+            e3_spliced_minus,
+            e3_spliced_notrans,
         ]:
             obj = model.to_transcript_interval()
             new_model = TranscriptIntervalModel.from_transcript_interval(obj)
             new_model.transcript_interval_guid = None
             assert model == new_model
-            obj = model.to_transcript_interval(parent=parent)
+            obj = model.to_transcript_interval(parent_or_seq_chunk_parent=parent)
             new_model = TranscriptIntervalModel.from_transcript_interval(obj)
             new_model.transcript_interval_guid = None
             assert model == new_model
@@ -776,7 +770,7 @@ class TestTranscript:
         ],
     )
     def test_transcript_sequence(self, schema, expected):
-        tx = schema.to_transcript_interval(parent=parent)
+        tx = schema.to_transcript_interval(parent_or_seq_chunk_parent=parent)
         assert str(tx.get_transcript_sequence()) == str(tx.get_spliced_sequence()) == expected
 
     @pytest.mark.parametrize(
@@ -789,7 +783,7 @@ class TestTranscript:
         ],
     )
     def test_genomic_sequence(self, schema, expected_genomic, expected_stranded_genomic):
-        tx = schema.to_transcript_interval(parent=parent)
+        tx = schema.to_transcript_interval(parent_or_seq_chunk_parent=parent)
         assert str(tx.get_reference_sequence()) == expected_genomic
         assert str(tx.get_genomic_sequence()) == expected_stranded_genomic
 
@@ -805,7 +799,7 @@ class TestTranscript:
         ],
     )
     def test_cds_sequence(self, schema, expected_cds):
-        tx = schema.to_transcript_interval(parent=parent)
+        tx = schema.to_transcript_interval(parent_or_seq_chunk_parent=parent)
         assert str(tx.get_cds_sequence()) == expected_cds
 
     @pytest.mark.parametrize(
@@ -850,42 +844,30 @@ class TestTranscript:
         assert (tx1 == tx2) == is_eq
 
     def test_cds_start_end(self):
-        tx = self.e3_spliced.to_transcript_interval()
+        tx = e3_spliced.to_transcript_interval()
         assert tx.is_coding
-        assert tx.cds_start == 4
-        assert tx.cds_end == 13
-        tx2 = self.se_noncoding.to_transcript_interval()
+        assert tx.cds_start == tx.chunk_relative_cds_start == 4
+        assert tx.cds_end == tx.chunk_relative_cds_end == 13
+        tx2 = se_noncoding.to_transcript_interval()
         assert not tx2.is_coding
 
         with pytest.raises(NoncodingTranscriptError):
             _ = tx2.cds_start
         with pytest.raises(NoncodingTranscriptError):
             _ = tx2.cds_end
+        with pytest.raises(NoncodingTranscriptError):
+            _ = tx2.chunk_relative_cds_start
+        with pytest.raises(NoncodingTranscriptError):
+            _ = tx2.chunk_relative_cds_end
 
         # empty translation but still coding
-        tx3 = self.e3_spliced_notrans_minus.to_transcript_interval()
+        tx3 = e3_spliced_notrans_minus.to_transcript_interval()
         assert tx3.is_coding
         assert tx3.cds_start
 
-    def test_overlapping(self):
-        schema = TranscriptIntervalModel.Schema().load(
-            dict(
-                exon_starts=[0, 3],
-                exon_ends=[5, 7],
-                strand=Strand.PLUS.name,
-                cds_starts=[1, 3],
-                cds_ends=[5, 6],
-                cds_frames=[CDSFrame.ZERO.name, CDSFrame.ZERO.name],
-            )
-        )
-        tx = schema.to_transcript_interval()
-        merged = tx.merge_overlapping()
-        assert merged.cds is None
-        assert merged.location == SingleInterval(0, 7, Strand.PLUS)
-
     def test_frameshifted(self):
         genome = "ATGGGGTGATGA"
-        parent_genome = Parent(sequence=Sequence(genome, Alphabet.NT_STRICT))
+        parent_genome = Parent(sequence=Sequence(genome, Alphabet.NT_STRICT), sequence_type="chromosome")
         tx = dict(
             exon_starts=[0],
             exon_ends=[12],
@@ -895,7 +877,7 @@ class TestTranscript:
             cds_frames=[CDSFrame.ZERO.name],
         )
         schema = TranscriptIntervalModel.Schema().load(tx)
-        obj = schema.to_transcript_interval(parent=parent_genome)
+        obj = schema.to_transcript_interval(parent_or_seq_chunk_parent=parent_genome)
         assert obj.has_in_frame_stop
         tx2 = dict(
             exon_starts=[0],
@@ -906,8 +888,13 @@ class TestTranscript:
             cds_frames=[CDSFrame.ZERO.name],
         )
         schema2 = TranscriptIntervalModel.Schema().load(tx2)
-        obj2 = schema2.to_transcript_interval(parent=parent_genome)
+        obj2 = schema2.to_transcript_interval(parent_or_seq_chunk_parent=parent_genome)
         assert not obj2.has_in_frame_stop
+
+    def test_noncoding_frameshift(self):
+        tx = se_noncoding.to_transcript_interval()
+        with pytest.raises(NoncodingTranscriptError):
+            _ = tx.has_in_frame_stop
 
 
 class TestQualifiers:
@@ -938,3 +925,188 @@ class TestQualifiers:
         # not the same as the input because the input was unsorted and not a string
         assert tx._export_qualifiers_to_list() != self.qualifiers
         assert tx._export_qualifiers_to_list() == {"key1": ["2", "a", "b"]}
+
+
+class TestTranscriptIntervalSequenceSubset:
+    """Test the ability to slice the genomic sequence of a feature interval and still get useful results."""
+
+    @pytest.mark.parametrize(
+        "schema,parent,expected",
+        [
+            (e3_spliced, parent_genome2_1_15, "GTATCTTACC"),
+            (e3_spliced_minus, parent_genome2_1_15, "GGTAAGATAC"),
+            (e3_spliced_notrans, parent_genome2_1_15, "GTATCTTACC"),
+            (e3_spliced_notrans_minus, parent_genome2_1_15, "GGTAAGATAC"),
+        ],
+    )
+    def test_transcript_sequence(self, schema, parent, expected):
+        tx = schema.to_transcript_interval(parent_or_seq_chunk_parent=parent)
+        assert str(tx.get_transcript_sequence()) == str(tx.get_spliced_sequence()) == expected
+
+    @pytest.mark.parametrize(
+        "schema,parent,expected_genomic,expected_stranded_genomic",
+        [
+            (e3_spliced, parent_genome2_1_15, "GTATTCTTGGACC", "GTATTCTTGGACC"),
+            (e3_spliced_minus, parent_genome2_1_15, "GTATTCTTGGACC", "GGTCCAAGAATAC"),
+            (e3_spliced_notrans, parent_genome2_1_15, "GTATTCTTGGACC", "GTATTCTTGGACC"),
+            (e3_spliced_notrans_minus, parent_genome2_1_15, "GTATTCTTGGACC", "GGTCCAAGAATAC"),
+        ],
+    )
+    def test_genomic_sequence(self, schema, parent, expected_genomic, expected_stranded_genomic):
+        tx = schema.to_transcript_interval(parent_or_seq_chunk_parent=parent)
+        assert str(tx.get_reference_sequence()) == expected_genomic
+        assert str(tx.get_genomic_sequence()) == expected_stranded_genomic
+
+    @pytest.mark.parametrize(
+        "schema,expected",
+        [
+            (e3_spliced, "IL"),
+            (e3_spliced_utr, "L"),
+            (e3_spliced_notrans, ""),
+            (e3_spliced_minus, "*D"),
+            (e3_spliced_utr_minus, "K"),
+            (e3_spliced_notrans_minus, ""),
+        ],
+    )
+    def test_translations(self, schema, expected):
+        tx = schema.to_transcript_interval(parent_or_seq_chunk_parent=parent_genome2_1_15)
+        assert str(tx.get_protein_sequence()) == expected
+
+    def test_start_end(self):
+        tx = e3_spliced.to_transcript_interval(parent_or_seq_chunk_parent=parent_genome2_1_15)
+        assert tx.chunk_relative_start + 1 == tx.start
+        assert tx.chunk_relative_end + 1 == tx.end
+        assert tx.chunk_relative_cds_start + 1 == tx.cds_start
+        assert tx.chunk_relative_cds_end + 1 == tx.cds_end
+
+    @pytest.mark.parametrize("pos,expected", [(2, 0), (14, 9), (7, 4), (8, 5)])
+    def test_sequence_pos_to_transcript(self, pos, expected):
+        tx = e3_spliced_utr.to_transcript_interval(parent_or_seq_chunk_parent=parent_genome2_1_15)
+        assert tx.sequence_pos_to_transcript(pos) == expected
+
+    @pytest.mark.parametrize("pos,expected", [(1, 0), (13, 9), (6, 4), (7, 5)])
+    def test_chunk_relative_pos_to_transcript(self, pos, expected):
+        tx = e3_spliced_utr.to_transcript_interval(parent_or_seq_chunk_parent=parent_genome2_1_15)
+        assert tx.chunk_relative_pos_to_transcript(pos) == expected
+
+    @pytest.mark.parametrize(
+        "start,end,strand,expected",
+        [
+            (0, 10, Strand.PLUS, SingleInterval(0, 7, Strand.PLUS)),
+            (0, 3, Strand.PLUS, SingleInterval(0, 1, Strand.PLUS)),
+            (0, 13, Strand.PLUS, SingleInterval(0, 8, Strand.PLUS)),
+        ],
+    )
+    def test_sequence_interval_to_transcript(self, start, end, strand, expected):
+        tx = e3_spliced_utr.to_transcript_interval(parent_or_seq_chunk_parent=parent_genome2_1_15)
+        assert tx.sequence_interval_to_transcript(start, end, strand) == expected
+
+    @pytest.mark.parametrize(
+        "start,end,strand,expected",
+        [
+            (0, 10, Strand.PLUS, SingleInterval(0, 7, Strand.PLUS)),
+            (0, 3, Strand.PLUS, SingleInterval(0, 2, Strand.PLUS)),
+            (0, 13, Strand.PLUS, SingleInterval(0, 9, Strand.PLUS)),
+        ],
+    )
+    def test_chunk_relative_interval_to_transcript(self, start, end, strand, expected):
+        tx = e3_spliced_utr.to_transcript_interval(parent_or_seq_chunk_parent=parent_genome2_1_15)
+        assert tx.chunk_relative_interval_to_transcript(start, end, strand) == expected
+
+    @pytest.mark.parametrize("pos,expected", [(0, 2), (9, 14), (4, 7), (5, 8)])
+    def test_transcript_pos_to_sequence(self, pos, expected):
+        tx = e3_spliced_utr.to_transcript_interval(parent_or_seq_chunk_parent=parent_genome2_1_15)
+        assert tx.transcript_pos_to_sequence(pos) == expected
+
+    @pytest.mark.parametrize("pos,expected", [(0, 1), (9, 13), (4, 6), (5, 7)])
+    def test_transcript_pos_to_chunk_relative(self, pos, expected):
+        tx = e3_spliced_utr.to_transcript_interval(parent_or_seq_chunk_parent=parent_genome2_1_15)
+        assert tx.transcript_pos_to_chunk_relative(pos) == expected
+
+    @pytest.mark.parametrize(
+        "start,end,strand,expected",
+        [
+            (0, 7, Strand.PLUS, CompoundInterval([2, 7], [6, 10], Strand.PLUS)),
+            (0, 1, Strand.PLUS, SingleInterval(2, 3, Strand.PLUS)),
+            (0, 8, Strand.PLUS, CompoundInterval([2, 7, 12], [6, 10, 13], Strand.PLUS)),
+        ],
+    )
+    def test_transcript_interval_to_sequence(self, start, end, strand, expected):
+        tx = e3_spliced_utr.to_transcript_interval(parent_or_seq_chunk_parent=parent_genome2_1_15)
+        assert tx.transcript_interval_to_sequence(start, end, strand).reset_parent(new_parent=None) == expected
+
+    @pytest.mark.parametrize(
+        "start,end,strand,expected",
+        [
+            (0, 7, Strand.PLUS, CompoundInterval([1, 6], [5, 9], Strand.PLUS)),
+            (0, 1, Strand.PLUS, SingleInterval(1, 2, Strand.PLUS)),
+            (0, 8, Strand.PLUS, CompoundInterval([1, 6, 11], [5, 9, 12], Strand.PLUS)),
+        ],
+    )
+    def test_transcript_interval_to_chunk_relative(self, start, end, strand, expected):
+        tx = e3_spliced_utr.to_transcript_interval(parent_or_seq_chunk_parent=parent_genome2_1_15)
+        assert tx.transcript_interval_to_chunk_relative(start, end, strand).reset_parent(new_parent=None) == expected
+
+    @pytest.mark.parametrize("pos,expected", [(0, 7), (1, 8)])
+    def test_cds_pos_to_sequence(self, pos, expected):
+        tx = e3_spliced_utr.to_transcript_interval(parent_or_seq_chunk_parent=parent_genome2_1_15)
+        assert tx.cds_pos_to_sequence(pos) == expected
+
+    @pytest.mark.parametrize("pos,expected", [(0, 6), (1, 7)])
+    def test_cds_pos_to_chunk_relative(self, pos, expected):
+        tx = e3_spliced_utr.to_transcript_interval(parent_or_seq_chunk_parent=parent_genome2_1_15)
+        assert tx.cds_pos_to_chunk_relative(pos) == expected
+
+    @pytest.mark.parametrize(
+        "start,end,strand,expected",
+        [
+            (0, 1, Strand.PLUS, SingleInterval(7, 8, Strand.PLUS)),
+            (0, 3, Strand.PLUS, SingleInterval(7, 10, Strand.PLUS)),
+        ],
+    )
+    def test_cds_interval_to_sequence(self, start, end, strand, expected):
+        tx = e3_spliced_utr.to_transcript_interval(parent_or_seq_chunk_parent=parent_genome2_1_15)
+        assert tx.cds_interval_to_sequence(start, end, strand).reset_parent(new_parent=None) == expected
+
+    @pytest.mark.parametrize(
+        "start,end,strand,expected",
+        [
+            (0, 1, Strand.PLUS, SingleInterval(6, 7, Strand.PLUS)),
+            (0, 3, Strand.PLUS, SingleInterval(6, 9, Strand.PLUS)),
+        ],
+    )
+    def test_cds_interval_to_chunk_relative(self, start, end, strand, expected):
+        tx = e3_spliced_utr.to_transcript_interval(parent_or_seq_chunk_parent=parent_genome2_1_15)
+        assert tx.cds_interval_to_chunk_relative(start, end, strand).reset_parent(new_parent=None) == expected
+
+    @pytest.mark.parametrize("pos,expected", [(7, 0), (9, 2)])
+    def test_sequence_pos_to_cds(self, pos, expected):
+        tx = e3_spliced_utr.to_transcript_interval(parent_or_seq_chunk_parent=parent_genome2_1_15)
+        assert tx.sequence_pos_to_cds(pos) == expected
+
+    @pytest.mark.parametrize("pos,expected", [(6, 0), (8, 2)])
+    def chunk_relative_pos_to_cds(self, pos, expected):
+        tx = e3_spliced_utr.to_transcript_interval(parent_or_seq_chunk_parent=parent_genome2_1_15)
+        assert tx.chunk_relative_pos_to_cds(pos) == expected
+
+    @pytest.mark.parametrize(
+        "start,end,strand,expected",
+        [
+            (7, 10, Strand.PLUS, SingleInterval(0, 3, Strand.PLUS)),
+            (7, 8, Strand.PLUS, SingleInterval(0, 1, Strand.PLUS)),
+        ],
+    )
+    def test_sequence_interval_to_cds(self, start, end, strand, expected):
+        tx = e3_spliced_utr.to_transcript_interval(parent_or_seq_chunk_parent=parent_genome2_1_15)
+        assert tx.sequence_interval_to_cds(start, end, strand).reset_parent(new_parent=None) == expected
+
+    @pytest.mark.parametrize(
+        "start,end,strand,expected",
+        [
+            (6, 9, Strand.PLUS, SingleInterval(0, 3, Strand.PLUS)),
+            (6, 7, Strand.PLUS, SingleInterval(0, 1, Strand.PLUS)),
+        ],
+    )
+    def test_chunk_relative_interval_to_cds(self, start, end, strand, expected):
+        tx = e3_spliced_utr.to_transcript_interval(parent_or_seq_chunk_parent=parent_genome2_1_15)
+        assert tx.chunk_relative_interval_to_cds(start, end, strand).reset_parent(new_parent=None) == expected

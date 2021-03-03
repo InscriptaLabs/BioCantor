@@ -26,11 +26,11 @@ def test_sequences(test_data_dir, tmp_path, gbk, flavor):
     assert len(collections[0].genes) == len(new_collection[0].genes)
 
     for gene_a, gene_b in zip(collections[0], new_collection[0]):
-        assert gene_a.location == gene_b.location
+        assert gene_a._location == gene_b._location
         tx_a = gene_a.transcripts[0]
         tx_b = gene_b.transcripts[0]
-        assert tx_a.location == tx_b.location
+        assert tx_a._location == tx_b._location
         if tx_a.is_coding:
-            assert tx_a.cds.location == tx_b.cds.location
+            assert tx_a.cds._location == tx_b.cds._location
             assert tx_a.get_protein_sequence() == tx_b.get_protein_sequence()
         assert tx_a.get_transcript_sequence() == tx_b.get_transcript_sequence()

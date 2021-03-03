@@ -6,6 +6,7 @@ from inscripta.biocantor.location.location_impl import CompoundInterval, SingleI
 from inscripta.biocantor.location.strand import Strand
 from inscripta.biocantor.sequence.alphabet import Alphabet
 from inscripta.biocantor.sequence import Sequence
+from inscripta.biocantor.exc import LocationException
 
 
 class TestCDSPhase:
@@ -52,7 +53,7 @@ class TestCDSInterval:
             # 2bp CDS
             (
                 CDSInterval(
-                    SingleInterval(0, 2, Strand.PLUS, parent=Sequence("ATACGATCA", alphabet)),
+                    SingleInterval(0, 2, Strand.PLUS, parent=Sequence("ATACGATCA", alphabet, type="chromosome")),
                     [CDSFrame.ZERO],
                 ),
                 0,
@@ -60,7 +61,7 @@ class TestCDSInterval:
             # Contiguous CDS, plus strand, frame=0
             (
                 CDSInterval(
-                    SingleInterval(0, 9, Strand.PLUS, parent=Sequence("ATACGATCA", alphabet)),
+                    SingleInterval(0, 9, Strand.PLUS, parent=Sequence("ATACGATCA", alphabet, type="chromosome")),
                     [CDSFrame.ZERO],
                 ),
                 3,
@@ -72,7 +73,7 @@ class TestCDSInterval:
                         [2, 8],
                         [5, 17],
                         Strand.PLUS,
-                        parent=Sequence("AAACAAAAGGGACCCAAAAAA", alphabet),
+                        parent=Sequence("AAACAAAAGGGACCCAAAAAA", alphabet, type="chromosome"),
                     ),
                     [CDSFrame.ONE, CDSFrame.TWO],
                 ),
@@ -85,7 +86,7 @@ class TestCDSInterval:
                         [2, 8],
                         [9, 17],
                         Strand.PLUS,
-                        parent=Sequence("AAAGGAAAGTCCCTGAAAAAA", alphabet),
+                        parent=Sequence("AAAGGAAAGTCCCTGAAAAAA", alphabet, type="chromosome"),
                     ),
                     [CDSFrame.ZERO, CDSFrame.ONE],
                 ),
@@ -102,7 +103,7 @@ class TestCDSInterval:
             # Contiguous CDS, plus strand, frame=0
             (
                 CDSInterval(
-                    SingleInterval(0, 9, Strand.PLUS, parent=Sequence("ATACGATCA", alphabet)),
+                    SingleInterval(0, 9, Strand.PLUS, parent=Sequence("ATACGATCA", alphabet, type="chromosome")),
                     [CDSFrame.ZERO],
                 ),
                 [Codon.ATA, Codon.CGA, Codon.TCA],
@@ -114,7 +115,7 @@ class TestCDSInterval:
                         [2, 8],
                         [5, 17],
                         Strand.PLUS,
-                        parent=Sequence("AAACAAAAGGGACCCAAAAAA", alphabet),
+                        parent=Sequence("AAACAAAAGGGACCCAAAAAA", alphabet, type="chromosome"),
                     ),
                     [CDSFrame.ONE, CDSFrame.TWO],
                 ),
@@ -127,7 +128,7 @@ class TestCDSInterval:
                         [2, 8],
                         [5, 16],
                         Strand.PLUS,
-                        parent=Sequence("AAACAAAAGGACCCAAAAAA", alphabet),
+                        parent=Sequence("AAACAAAAGGACCCAAAAAA", alphabet, type="chromosome"),
                     ),
                     [CDSFrame.ONE, CDSFrame.ZERO],
                 ),
@@ -141,7 +142,7 @@ class TestCDSInterval:
                         [2, 8, 12],
                         [5, 11, 18],
                         Strand.PLUS,
-                        parent=Sequence("AAACAAAAGGGTACCCAAAAAA", alphabet),
+                        parent=Sequence("AAACAAAAGGGTACCCAAAAAA", alphabet, type="chromosome"),
                     ),
                     [CDSFrame.ONE, CDSFrame.TWO, CDSFrame.TWO],  # QGP
                 ),
@@ -154,7 +155,7 @@ class TestCDSInterval:
                         [2, 8],
                         [5, 17],
                         Strand.MINUS,
-                        parent=Sequence("AAAGGAAAGTCCCTGAAAAAA", alphabet),
+                        parent=Sequence("AAAGGAAAGTCCCTGAAAAAA", alphabet, type="chromosome"),
                     ),
                     [CDSFrame.ONE, CDSFrame.TWO],
                 ),
@@ -167,7 +168,7 @@ class TestCDSInterval:
                         [2, 8],
                         [5, 17],
                         Strand.MINUS,
-                        parent=Sequence("AAAGGAAAGTCCCTGAAAAAA", alphabet),
+                        parent=Sequence("AAAGGAAAGTCCCTGAAAAAA", alphabet, type="chromosome"),
                     ),
                     [CDSFrame.TWO, CDSFrame.TWO],
                 ),
@@ -180,7 +181,7 @@ class TestCDSInterval:
                         [2, 8],
                         [9, 17],
                         Strand.PLUS,
-                        parent=Sequence("AAAGGAAAGTCCCTGAAAAAA", alphabet),
+                        parent=Sequence("AAAGGAAAGTCCCTGAAAAAA", alphabet, type="chromosome"),
                     ),
                     [CDSFrame.ZERO, CDSFrame.ONE],
                 ),  # G gets repeated here
@@ -199,7 +200,7 @@ class TestCDSInterval:
             # Contiguous CDS, plus strand, frame=0
             (
                 CDSInterval(
-                    SingleInterval(0, 9, Strand.PLUS, parent=Sequence("atacgatca", alphabet)),
+                    SingleInterval(0, 9, Strand.PLUS, parent=Sequence("atacgatca", alphabet, type="chromosome")),
                     [CDSFrame.ZERO],
                 ),
                 [Codon.ATA, Codon.CGA, Codon.TCA],
@@ -211,7 +212,7 @@ class TestCDSInterval:
                         [2, 8],
                         [5, 17],
                         Strand.PLUS,
-                        parent=Sequence("aaacaaaagggacccaaaaaa", alphabet),
+                        parent=Sequence("aaacaaaagggacccaaaaaa", alphabet, type="chromosome"),
                     ),
                     [CDSFrame.ONE, CDSFrame.TWO],
                 ),
@@ -228,7 +229,9 @@ class TestCDSInterval:
         "cds",
         [
             CDSInterval(
-                SingleInterval(0, 9, Strand.PLUS, parent=Sequence("ANACGATCA", Alphabet.NT_EXTENDED_GAPPED)),
+                SingleInterval(
+                    0, 9, Strand.PLUS, parent=Sequence("ANACGATCA", Alphabet.NT_EXTENDED_GAPPED, type="chromosome")
+                ),
                 [CDSFrame.ZERO],
             ),
             CDSInterval(
@@ -236,7 +239,7 @@ class TestCDSInterval:
                     [2, 8],
                     [5, 17],
                     Strand.PLUS,
-                    parent=Sequence("AANNNNAAGGGTACCCAAAAAA", Alphabet.NT_EXTENDED_GAPPED),
+                    parent=Sequence("AANNNNAAGGGTACCCAAAAAA", Alphabet.NT_EXTENDED_GAPPED, type="chromosome"),
                 ),
                 [CDSFrame.ONE, CDSFrame.TWO],
             ),
@@ -252,7 +255,7 @@ class TestCDSInterval:
             # 2bp CDS
             (
                 CDSInterval(
-                    SingleInterval(0, 2, Strand.PLUS, parent=Sequence("ATACGATCA", alphabet)),
+                    SingleInterval(0, 2, Strand.PLUS, parent=Sequence("ATACGATCA", alphabet, type="chromosome")),
                     [CDSFrame.ZERO],
                 ),
                 [],
@@ -260,13 +263,13 @@ class TestCDSInterval:
             # Contiguous CDS, plus strand, frame=0
             (
                 CDSInterval(
-                    SingleInterval(0, 9, Strand.PLUS, parent=Sequence("ATACGATCA", alphabet)),
+                    SingleInterval(0, 9, Strand.PLUS, parent=Sequence("ATACGATCA", alphabet, type="chromosome")),
                     [CDSFrame.ZERO],
                 ),
                 [
-                    SingleInterval(0, 3, Strand.PLUS, parent=Sequence("ATACGATCA", alphabet)),  # ATA
-                    SingleInterval(3, 6, Strand.PLUS, parent=Sequence("ATACGATCA", alphabet)),  # CGA
-                    SingleInterval(6, 9, Strand.PLUS, parent=Sequence("ATACGATCA", alphabet)),  # TCA
+                    SingleInterval(0, 3, Strand.PLUS, parent=Sequence("ATACGATCA", alphabet, type="chromosome")),  # ATA
+                    SingleInterval(3, 6, Strand.PLUS, parent=Sequence("ATACGATCA", alphabet, type="chromosome")),  # CGA
+                    SingleInterval(6, 9, Strand.PLUS, parent=Sequence("ATACGATCA", alphabet, type="chromosome")),  # TCA
                 ],
             ),
             # Discontiguous CDS, plus strand, frame=1, codons don't reach end of CDS
@@ -276,16 +279,23 @@ class TestCDSInterval:
                         [2, 8],
                         [5, 17],
                         Strand.PLUS,
-                        parent=Sequence("AAACAAAAGGGACCCAAAAAA", alphabet),
+                        parent=Sequence("AAACAAAAGGGACCCAAAAAA", alphabet, type="chromosome"),
                     ),
                     [CDSFrame.ONE, CDSFrame.TWO],
                 ),
                 [
                     CompoundInterval(
-                        [3, 8], [5, 9], Strand.PLUS, parent=Sequence("AAACAAAAGGGACCCAAAAAA", alphabet)
+                        [3, 8],
+                        [5, 9],
+                        Strand.PLUS,
+                        parent=Sequence("AAACAAAAGGGACCCAAAAAA", alphabet, type="chromosome"),
                     ),  # CAG
-                    SingleInterval(9, 12, Strand.PLUS, parent=Sequence("AAACAAAAGGGACCCAAAAAA", alphabet)),  # GGA
-                    SingleInterval(12, 15, Strand.PLUS, parent=Sequence("AAACAAAAGGGACCCAAAAAA", alphabet)),  # CCC
+                    SingleInterval(
+                        9, 12, Strand.PLUS, parent=Sequence("AAACAAAAGGGACCCAAAAAA", alphabet, type="chromosome")
+                    ),  # GGA
+                    SingleInterval(
+                        12, 15, Strand.PLUS, parent=Sequence("AAACAAAAGGGACCCAAAAAA", alphabet, type="chromosome")
+                    ),  # CCC
                 ],
             ),
             # Discontiguous CDS, plus strand, frame=1, 1bp deletion at start of exon 2
@@ -295,13 +305,17 @@ class TestCDSInterval:
                         [2, 8],
                         [5, 16],
                         Strand.PLUS,
-                        parent=Sequence("AAACAAAAGGACCCAAAAAA", alphabet),
+                        parent=Sequence("AAACAAAAGGACCCAAAAAA", alphabet, type="chromosome"),
                     ),
                     [CDSFrame.ONE, CDSFrame.ZERO],
                 ),
                 [
-                    SingleInterval(8, 11, Strand.PLUS, parent=Sequence("AAACAAAAGGACCCAAAAAA", alphabet)),  # GGA
-                    SingleInterval(11, 14, Strand.PLUS, parent=Sequence("AAACAAAAGGACCCAAAAAA", alphabet)),  # CCC
+                    SingleInterval(
+                        8, 11, Strand.PLUS, parent=Sequence("AAACAAAAGGACCCAAAAAA", alphabet, type="chromosome")
+                    ),  # GGA
+                    SingleInterval(
+                        11, 14, Strand.PLUS, parent=Sequence("AAACAAAAGGACCCAAAAAA", alphabet, type="chromosome")
+                    ),  # CCC
                 ],
             ),
             # Discontiguous CDS, plus strand, frame=0,
@@ -312,15 +326,23 @@ class TestCDSInterval:
                         [2, 8, 12],
                         [5, 11, 18],
                         Strand.PLUS,
-                        parent=Sequence("AAACAAAAGGGTACCCAAAAAA", alphabet),
+                        parent=Sequence("AAACAAAAGGGTACCCAAAAAA", alphabet, type="chromosome"),
                     ),
                     [CDSFrame.ZERO, CDSFrame.ZERO, CDSFrame.ZERO],
                 ),
                 [
-                    SingleInterval(2, 5, Strand.PLUS, parent=Sequence("AAACAAAAGGGTACCCAAAAAA", alphabet)),
-                    SingleInterval(8, 11, Strand.PLUS, parent=Sequence("AAACAAAAGGGTACCCAAAAAA", alphabet)),
-                    SingleInterval(12, 15, Strand.PLUS, parent=Sequence("AAACAAAAGGGTACCCAAAAAA", alphabet)),
-                    SingleInterval(15, 18, Strand.PLUS, parent=Sequence("AAACAAAAGGGTACCCAAAAAA", alphabet)),
+                    SingleInterval(
+                        2, 5, Strand.PLUS, parent=Sequence("AAACAAAAGGGTACCCAAAAAA", alphabet, type="chromosome")
+                    ),
+                    SingleInterval(
+                        8, 11, Strand.PLUS, parent=Sequence("AAACAAAAGGGTACCCAAAAAA", alphabet, type="chromosome")
+                    ),
+                    SingleInterval(
+                        12, 15, Strand.PLUS, parent=Sequence("AAACAAAAGGGTACCCAAAAAA", alphabet, type="chromosome")
+                    ),
+                    SingleInterval(
+                        15, 18, Strand.PLUS, parent=Sequence("AAACAAAAGGGTACCCAAAAAA", alphabet, type="chromosome")
+                    ),
                 ],
             ),
             # Discontiguous CDS, plus strand, frame=1,
@@ -331,18 +353,26 @@ class TestCDSInterval:
                         [2, 8, 12],
                         [5, 11, 18],
                         Strand.PLUS,
-                        parent=Sequence("AAACAAAAGGGTACCCAAAAAA", alphabet),
+                        parent=Sequence("AAACAAAAGGGTACCCAAAAAA", alphabet, type="chromosome"),
                     ),
                     [CDSFrame.ONE, CDSFrame.TWO, CDSFrame.TWO],
                 ),
                 [
                     CompoundInterval(
-                        [3, 8], [5, 9], Strand.PLUS, parent=Sequence("AAACAAAAGGGTACCCAAAAAA", alphabet)
+                        [3, 8],
+                        [5, 9],
+                        Strand.PLUS,
+                        parent=Sequence("AAACAAAAGGGTACCCAAAAAA", alphabet, type="chromosome"),
                     ),  # CAG
                     CompoundInterval(
-                        [9, 12], [11, 13], Strand.PLUS, parent=Sequence("AAACAAAAGGGTACCCAAAAAA", alphabet)
+                        [9, 12],
+                        [11, 13],
+                        Strand.PLUS,
+                        parent=Sequence("AAACAAAAGGGTACCCAAAAAA", alphabet, type="chromosome"),
                     ),  # GGA
-                    SingleInterval(13, 16, Strand.PLUS, parent=Sequence("AAACAAAAGGGTACCCAAAAAA", alphabet)),  # CCC
+                    SingleInterval(
+                        13, 16, Strand.PLUS, parent=Sequence("AAACAAAAGGGTACCCAAAAAA", alphabet, type="chromosome")
+                    ),  # CCC
                 ],
             ),
             # Discontiguous CDS, plus strand, frame=2,
@@ -353,16 +383,26 @@ class TestCDSInterval:
                         [2, 8, 12],
                         [5, 11, 18],
                         Strand.PLUS,
-                        parent=Sequence("AAACAAAAGGGTACCCAAAAAA", alphabet),
+                        parent=Sequence("AAACAAAAGGGTACCCAAAAAA", alphabet, type="chromosome"),
                     ),
                     [CDSFrame.TWO, CDSFrame.ONE, CDSFrame.ONE],
                 ),
                 [
-                    CompoundInterval([4, 8], [5, 10], Strand.PLUS, parent=Sequence("AAACAAAAGGGTACCCAAAAAA", alphabet)),
                     CompoundInterval(
-                        [10, 12], [11, 14], Strand.PLUS, parent=Sequence("AAACAAAAGGGTACCCAAAAAA", alphabet)
+                        [4, 8],
+                        [5, 10],
+                        Strand.PLUS,
+                        parent=Sequence("AAACAAAAGGGTACCCAAAAAA", alphabet, type="chromosome"),
                     ),
-                    SingleInterval(14, 17, Strand.PLUS, parent=Sequence("AAACAAAAGGGTACCCAAAAAA", alphabet)),
+                    CompoundInterval(
+                        [10, 12],
+                        [11, 14],
+                        Strand.PLUS,
+                        parent=Sequence("AAACAAAAGGGTACCCAAAAAA", alphabet, type="chromosome"),
+                    ),
+                    SingleInterval(
+                        14, 17, Strand.PLUS, parent=Sequence("AAACAAAAGGGTACCCAAAAAA", alphabet, type="chromosome")
+                    ),
                 ],
             ),
             # Discontiguous CDS, minus strand, frame=2
@@ -372,15 +412,22 @@ class TestCDSInterval:
                         [2, 8],
                         [5, 17],
                         Strand.MINUS,
-                        parent=Sequence("AAAGGAAAGTCCCTGAAAAAA", alphabet),
+                        parent=Sequence("AAAGGAAAGTCCCTGAAAAAA", alphabet, type="chromosome"),
                     ),
                     [CDSFrame.ONE, CDSFrame.TWO],
                 ),
                 [
-                    SingleInterval(12, 15, Strand.MINUS, parent=Sequence("AAAGGAAAGTCCCTGAAAAAA", alphabet)),  # CAG
-                    SingleInterval(9, 12, Strand.MINUS, parent=Sequence("AAAGGAAAGTCCCTGAAAAAA", alphabet)),  # GGA
+                    SingleInterval(
+                        12, 15, Strand.MINUS, parent=Sequence("AAAGGAAAGTCCCTGAAAAAA", alphabet, type="chromosome")
+                    ),  # CAG
+                    SingleInterval(
+                        9, 12, Strand.MINUS, parent=Sequence("AAAGGAAAGTCCCTGAAAAAA", alphabet, type="chromosome")
+                    ),  # GGA
                     CompoundInterval(
-                        [3, 8], [5, 9], Strand.MINUS, parent=Sequence("AAAGGAAAGTCCCTGAAAAAA", alphabet)
+                        [3, 8],
+                        [5, 9],
+                        Strand.MINUS,
+                        parent=Sequence("AAAGGAAAGTCCCTGAAAAAA", alphabet, type="chromosome"),
                     ),  # CCC
                 ],
             ),
@@ -391,13 +438,17 @@ class TestCDSInterval:
                         [2, 8],
                         [5, 17],
                         Strand.MINUS,
-                        parent=Sequence("AAAGGAAAGTCCCTGAAAAAA", alphabet),
+                        parent=Sequence("AAAGGAAAGTCCCTGAAAAAA", alphabet, type="chromosome"),
                     ),
                     [CDSFrame.TWO, CDSFrame.TWO],
                 ),
                 [
-                    SingleInterval(12, 15, Strand.MINUS, parent=Sequence("AAAGGAAAGTCCCTGAAAAAA", alphabet)),  # CAG
-                    SingleInterval(9, 12, Strand.MINUS, parent=Sequence("AAAGGAAAGTCCCTGAAAAAA", alphabet)),  # GGA
+                    SingleInterval(
+                        12, 15, Strand.MINUS, parent=Sequence("AAAGGAAAGTCCCTGAAAAAA", alphabet, type="chromosome")
+                    ),  # CAG
+                    SingleInterval(
+                        9, 12, Strand.MINUS, parent=Sequence("AAAGGAAAGTCCCTGAAAAAA", alphabet, type="chromosome")
+                    ),  # GGA
                 ],
             ),
             # Discontiguous CDS, plus strand, with -1 bp programmed frameshift (overlapping interval)
@@ -407,18 +458,29 @@ class TestCDSInterval:
                         [2, 8],
                         [9, 17],
                         Strand.PLUS,
-                        parent=Sequence("AAAGGAAAGTCCCTGAAAAAA", alphabet),
+                        parent=Sequence("AAAGGAAAGTCCCTGAAAAAA", alphabet, type="chromosome"),
                     ),
                     [CDSFrame.ZERO, CDSFrame.ONE],
                 ),
                 [
-                    SingleInterval(2, 5, Strand.PLUS, parent=Sequence("AAAGGAAAGTCCCTGAAAAAA", alphabet)),  # AGG
-                    SingleInterval(5, 8, Strand.PLUS, parent=Sequence("AAAGGAAAGTCCCTGAAAAAA", alphabet)),  # AAA
+                    SingleInterval(
+                        2, 5, Strand.PLUS, parent=Sequence("AAAGGAAAGTCCCTGAAAAAA", alphabet, type="chromosome")
+                    ),  # AGG
+                    SingleInterval(
+                        5, 8, Strand.PLUS, parent=Sequence("AAAGGAAAGTCCCTGAAAAAA", alphabet, type="chromosome")
+                    ),  # AAA
                     CompoundInterval(
-                        [8, 8], [9, 10], Strand.PLUS, parent=Sequence("AAAGGAAAGTCCCTGAAAAAA", alphabet)
+                        [8, 8],
+                        [9, 10],
+                        Strand.PLUS,
+                        parent=Sequence("AAAGGAAAGTCCCTGAAAAAA", alphabet, type="chromosome"),
                     ),  # GGT, G gets repeated
-                    SingleInterval(10, 13, Strand.PLUS, parent=Sequence("AAAGGAAAGTCCCTGAAAAAA", alphabet)),  # CCC
-                    SingleInterval(13, 16, Strand.PLUS, parent=Sequence("AAAGGAAAGTCCCTGAAAAAA", alphabet)),  # TGA
+                    SingleInterval(
+                        10, 13, Strand.PLUS, parent=Sequence("AAAGGAAAGTCCCTGAAAAAA", alphabet, type="chromosome")
+                    ),  # CCC
+                    SingleInterval(
+                        13, 16, Strand.PLUS, parent=Sequence("AAAGGAAAGTCCCTGAAAAAA", alphabet, type="chromosome")
+                    ),  # TGA
                 ],
             ),
             # Discontiguous CDS, plus strand, with +1 programmed frameshift that skips over a 1nt exon
@@ -428,24 +490,32 @@ class TestCDSInterval:
                         [2, 6, 8],
                         [5, 7, 16],
                         Strand.PLUS,
-                        parent=Sequence("AAACAAAAGGACCCAAAAAA", alphabet),
+                        parent=Sequence("AAACAAAAGGACCCAAAAAA", alphabet, type="chromosome"),
                     ),
                     [CDSFrame.ZERO, CDSFrame.ZERO, CDSFrame.ZERO],
                 ),
                 [
-                    SingleInterval(2, 5, Strand.PLUS, parent=Sequence("AAACAAAAGGACCCAAAAAA", alphabet)),  # GGA
-                    SingleInterval(8, 11, Strand.PLUS, parent=Sequence("AAACAAAAGGACCCAAAAAA", alphabet)),  # GGA
-                    SingleInterval(11, 14, Strand.PLUS, parent=Sequence("AAACAAAAGGACCCAAAAAA", alphabet)),  # CCC
+                    SingleInterval(
+                        2, 5, Strand.PLUS, parent=Sequence("AAACAAAAGGACCCAAAAAA", alphabet, type="chromosome")
+                    ),  # GGA
+                    SingleInterval(
+                        8, 11, Strand.PLUS, parent=Sequence("AAACAAAAGGACCCAAAAAA", alphabet, type="chromosome")
+                    ),  # GGA
+                    SingleInterval(
+                        11, 14, Strand.PLUS, parent=Sequence("AAACAAAAGGACCCAAAAAA", alphabet, type="chromosome")
+                    ),  # CCC
                 ],
             ),
             # 1bp exon on the negative strand gets removed due to being a partial codon
             (
                 CDSInterval(
-                    CompoundInterval([0, 7], [5, 8], Strand.MINUS, parent=Sequence("ATACGATCA", alphabet)),
+                    CompoundInterval(
+                        [0, 7], [5, 8], Strand.MINUS, parent=Sequence("ATACGATCA", alphabet, type="chromosome")
+                    ),
                     [CDSFrame.ZERO, CDSFrame.TWO],
                 ),
                 [
-                    SingleInterval(2, 5, Strand.MINUS, parent=Sequence("ATACGATCA", alphabet)),
+                    SingleInterval(2, 5, Strand.MINUS, parent=Sequence("ATACGATCA", alphabet, type="chromosome")),
                 ],  # CGT
             ),
         ],
@@ -465,7 +535,7 @@ class TestCDSInterval:
                         0,
                         9,
                         Strand.PLUS,
-                        parent=Sequence("ATACGATCA", alphabet),
+                        parent=Sequence("ATACGATCA", alphabet, type="chromosome"),
                     ),
                     [CDSFrame.ZERO],
                 ),
@@ -478,7 +548,7 @@ class TestCDSInterval:
                         [2, 8],
                         [5, 17],
                         Strand.PLUS,
-                        parent=Sequence("AAACAAAAGGGACCCAAAAAA", alphabet),
+                        parent=Sequence("AAACAAAAGGGACCCAAAAAA", alphabet, type="chromosome"),
                     ),
                     [CDSFrame.ONE, CDSFrame.TWO],
                 ),
@@ -491,7 +561,7 @@ class TestCDSInterval:
                         [2, 8],
                         [5, 17],
                         Strand.MINUS,
-                        parent=Sequence("AAAGGAAAGTCCCTGAAAAAA", alphabet),
+                        parent=Sequence("AAAGGAAAGTCCCTGAAAAAA", alphabet, type="chromosome"),
                     ),
                     [CDSFrame.TWO, CDSFrame.TWO],
                 ),
@@ -506,30 +576,30 @@ class TestCDSInterval:
 
     def test_accessors(self):
         cds = CDSInterval(SingleInterval(0, 10, Strand.PLUS), [CDSFrame.ZERO])
-        assert cds.start == cds.location.start
-        assert cds.end == cds.location.end
-        assert cds.strand == cds.location.strand
+        assert cds.start == cds._location.start
+        assert cds.end == cds._location.end
+        assert cds.strand == cds._location.strand
 
     @pytest.mark.parametrize(
         "cds,expected",
         [
             (
                 CDSInterval(
-                    SingleInterval(0, 9, Strand.PLUS, parent=Sequence("ATACGATGA", alphabet)),
+                    SingleInterval(0, 9, Strand.PLUS, parent=Sequence("ATACGATGA", alphabet, type="chromosome")),
                     [CDSFrame.ZERO],
                 ),
                 True,
             ),
             (
                 CDSInterval(
-                    SingleInterval(0, 9, Strand.PLUS, parent=Sequence("ATACGATCA", alphabet)),
+                    SingleInterval(0, 9, Strand.PLUS, parent=Sequence("ATACGATCA", alphabet, type="chromosome")),
                     [CDSFrame.ZERO],
                 ),
                 False,
             ),
             (
                 CDSInterval(
-                    SingleInterval(0, 9, Strand.PLUS, parent=Sequence("atacgatca", alphabet)),
+                    SingleInterval(0, 9, Strand.PLUS, parent=Sequence("atacgatca", alphabet, type="chromosome")),
                     [CDSFrame.ZERO],
                 ),
                 False,
@@ -546,16 +616,23 @@ class TestCDSInterval:
         [
             (
                 CDSInterval(
-                    SingleInterval(0, 9, Strand.PLUS, parent=Sequence("ATGTGAAAACCC", alphabet)), [CDSFrame.ZERO]
+                    SingleInterval(0, 9, Strand.PLUS, parent=Sequence("ATGTGAAAACCC", alphabet, type="chromosome")),
+                    [CDSFrame.ZERO],
                 ),
                 True,
             ),
             (
-                CDSInterval(SingleInterval(0, 9, Strand.PLUS, parent=Sequence("ATACGATCA", alphabet)), [CDSFrame.ZERO]),
+                CDSInterval(
+                    SingleInterval(0, 9, Strand.PLUS, parent=Sequence("ATACGATCA", alphabet, type="chromosome")),
+                    [CDSFrame.ZERO],
+                ),
                 False,
             ),
             (
-                CDSInterval(SingleInterval(0, 9, Strand.PLUS, parent=Sequence("atacgatca", alphabet)), [CDSFrame.ZERO]),
+                CDSInterval(
+                    SingleInterval(0, 9, Strand.PLUS, parent=Sequence("atacgatca", alphabet, type="chromosome")),
+                    [CDSFrame.ZERO],
+                ),
                 False,
             ),
         ],
@@ -568,23 +645,29 @@ class TestCDSInterval:
         [
             (
                 CDSInterval(
-                    SingleInterval(0, 9, Strand.PLUS, parent=Sequence("ATGTGAAAACCC", alphabet)), [CDSFrame.ZERO]
+                    SingleInterval(0, 9, Strand.PLUS, parent=Sequence("ATGTGAAAACCC", alphabet, type="chromosome")),
+                    [CDSFrame.ZERO],
                 ),
                 True,
             ),
             (
-                CDSInterval(SingleInterval(0, 9, Strand.PLUS, parent=Sequence("ATACGATCA", alphabet)), [CDSFrame.ZERO]),
+                CDSInterval(
+                    SingleInterval(0, 9, Strand.PLUS, parent=Sequence("ATACGATCA", alphabet, type="chromosome")),
+                    [CDSFrame.ZERO],
+                ),
                 False,
             ),
             (
                 CDSInterval(
-                    SingleInterval(0, 9, Strand.MINUS, parent=Sequence("ATGTGCCATCC", alphabet)), [CDSFrame.ZERO]
+                    SingleInterval(0, 9, Strand.MINUS, parent=Sequence("ATGTGCCATCC", alphabet, type="chromosome")),
+                    [CDSFrame.ZERO],
                 ),
                 True,
             ),
             (
                 CDSInterval(
-                    SingleInterval(0, 9, Strand.MINUS, parent=Sequence("ATACGATCA", alphabet)), [CDSFrame.ZERO]
+                    SingleInterval(0, 9, Strand.MINUS, parent=Sequence("ATACGATCA", alphabet, type="chromosome")),
+                    [CDSFrame.ZERO],
                 ),
                 False,
             ),
@@ -598,23 +681,29 @@ class TestCDSInterval:
         [
             (
                 CDSInterval(
-                    SingleInterval(0, 9, Strand.PLUS, parent=Sequence("TTGTGAAAACCC", alphabet)), [CDSFrame.ZERO]
+                    SingleInterval(0, 9, Strand.PLUS, parent=Sequence("TTGTGAAAACCC", alphabet, type="chromosome")),
+                    [CDSFrame.ZERO],
                 ),
                 True,
             ),
             (
-                CDSInterval(SingleInterval(0, 9, Strand.PLUS, parent=Sequence("ATACGATCA", alphabet)), [CDSFrame.ZERO]),
+                CDSInterval(
+                    SingleInterval(0, 9, Strand.PLUS, parent=Sequence("ATACGATCA", alphabet, type="chromosome")),
+                    [CDSFrame.ZERO],
+                ),
                 False,
             ),
             (
                 CDSInterval(
-                    SingleInterval(0, 9, Strand.MINUS, parent=Sequence("ATGTGCCAG", alphabet)), [CDSFrame.ZERO]
+                    SingleInterval(0, 9, Strand.MINUS, parent=Sequence("ATGTGCCAG", alphabet, type="chromosome")),
+                    [CDSFrame.ZERO],
                 ),
                 True,
             ),
             (
                 CDSInterval(
-                    SingleInterval(0, 9, Strand.MINUS, parent=Sequence("ATACGAGAT", alphabet)), [CDSFrame.ZERO]
+                    SingleInterval(0, 9, Strand.MINUS, parent=Sequence("ATACGAGAT", alphabet, type="chromosome")),
+                    [CDSFrame.ZERO],
                 ),
                 False,
             ),
@@ -628,14 +717,19 @@ class TestCDSInterval:
         [
             # 1bp exon on the negative strand gets removed due to being a partial codon
             (
-                CompoundInterval([0, 7], [5, 8], Strand.MINUS, parent=Sequence("ATACGATCA", alphabet)),
+                CompoundInterval(
+                    [0, 7], [5, 8], Strand.MINUS, parent=Sequence("ATACGATCA", alphabet, type="chromosome")
+                ),
                 CDSFrame.TWO,
                 [CDSFrame.TWO, CDSFrame.TWO],
             ),
             # 3 exons on plus strand with starting frame of 2
             (
                 CompoundInterval(
-                    [2, 8, 12], [5, 11, 18], Strand.PLUS, parent=Sequence("AAACAAAAGGGTACCCAAAAAA", alphabet)
+                    [2, 8, 12],
+                    [5, 11, 18],
+                    Strand.PLUS,
+                    parent=Sequence("AAACAAAAGGGTACCCAAAAAA", alphabet, type="chromosome"),
                 ),
                 CDSFrame.TWO,
                 [CDSFrame.TWO, CDSFrame.ONE, CDSFrame.ONE],
@@ -643,7 +737,10 @@ class TestCDSInterval:
             # 3 exons on plus strand with starting frame of 0
             (
                 CompoundInterval(
-                    [2, 8, 12], [5, 11, 18], Strand.PLUS, parent=Sequence("AAACAAAAGGGTACCCAAAAAA", alphabet)
+                    [2, 8, 12],
+                    [5, 11, 18],
+                    Strand.PLUS,
+                    parent=Sequence("AAACAAAAGGGTACCCAAAAAA", alphabet, type="chromosome"),
                 ),
                 CDSFrame.ZERO,
                 [CDSFrame.ZERO, CDSFrame.ZERO, CDSFrame.ZERO],
@@ -651,7 +748,10 @@ class TestCDSInterval:
             # 3 exons on plus strand with starting frame of 0
             (
                 CompoundInterval(
-                    [0, 8, 12], [5, 11, 18], Strand.PLUS, parent=Sequence("AAACAAAAGGGTACCCAAAAAA", alphabet)
+                    [0, 8, 12],
+                    [5, 11, 18],
+                    Strand.PLUS,
+                    parent=Sequence("AAACAAAAGGGTACCCAAAAAA", alphabet, type="chromosome"),
                 ),
                 CDSFrame.ZERO,
                 [CDSFrame.ZERO, CDSFrame.TWO, CDSFrame.TWO],
@@ -659,7 +759,10 @@ class TestCDSInterval:
             # 3 exons on plus strand with starting frame of 2
             (
                 CompoundInterval(
-                    [0, 8, 12], [5, 11, 18], Strand.PLUS, parent=Sequence("AAACAAAAGGGTACCCAAAAAA", alphabet)
+                    [0, 8, 12],
+                    [5, 11, 18],
+                    Strand.PLUS,
+                    parent=Sequence("AAACAAAAGGGTACCCAAAAAA", alphabet, type="chromosome"),
                 ),
                 CDSFrame.TWO,
                 [CDSFrame.TWO, CDSFrame.ZERO, CDSFrame.ZERO],
@@ -667,7 +770,10 @@ class TestCDSInterval:
             # 3 exons on minus strand with starting frame of 0
             (
                 CompoundInterval(
-                    [2, 8, 12], [5, 11, 18], Strand.MINUS, parent=Sequence("AAACAAAAGGGTACCCAAAAAA", alphabet)
+                    [2, 8, 12],
+                    [5, 11, 18],
+                    Strand.MINUS,
+                    parent=Sequence("AAACAAAAGGGTACCCAAAAAA", alphabet, type="chromosome"),
                 ),
                 CDSFrame.ZERO,
                 [CDSFrame.ZERO, CDSFrame.ZERO, CDSFrame.ZERO],
@@ -675,7 +781,10 @@ class TestCDSInterval:
             # 3 exons on minus strand with starting frame of 1
             (
                 CompoundInterval(
-                    [2, 8, 12], [5, 11, 18], Strand.MINUS, parent=Sequence("AAACAAAAGGGTACCCAAAAAA", alphabet)
+                    [2, 8, 12],
+                    [5, 11, 18],
+                    Strand.MINUS,
+                    parent=Sequence("AAACAAAAGGGTACCCAAAAAA", alphabet, type="chromosome"),
                 ),
                 CDSFrame.ONE,
                 [CDSFrame.TWO, CDSFrame.TWO, CDSFrame.ONE],
@@ -683,49 +792,70 @@ class TestCDSInterval:
             # 3 exons on minus strand with starting frame of 2
             (
                 CompoundInterval(
-                    [2, 8, 12], [5, 11, 18], Strand.MINUS, parent=Sequence("AAACAAAAGGGTACCCAAAAAA", alphabet)
+                    [2, 8, 12],
+                    [5, 11, 18],
+                    Strand.MINUS,
+                    parent=Sequence("AAACAAAAGGGTACCCAAAAAA", alphabet, type="chromosome"),
                 ),
                 CDSFrame.TWO,
                 [CDSFrame.ONE, CDSFrame.ONE, CDSFrame.TWO],
             ),
             (
                 CompoundInterval(
-                    [0, 7, 12], [5, 11, 18], Strand.PLUS, parent=Sequence("AAACAAAAGGGTACCCAAAAAA", alphabet)
+                    [0, 7, 12],
+                    [5, 11, 18],
+                    Strand.PLUS,
+                    parent=Sequence("AAACAAAAGGGTACCCAAAAAA", alphabet, type="chromosome"),
                 ),
                 CDSFrame.ZERO,
                 [CDSFrame.ZERO, CDSFrame.TWO, CDSFrame.ZERO],
             ),
             (
                 CompoundInterval(
-                    [0, 7, 12], [5, 11, 18], Strand.PLUS, parent=Sequence("AAACAAAAGGGTACCCAAAAAA", alphabet)
+                    [0, 7, 12],
+                    [5, 11, 18],
+                    Strand.PLUS,
+                    parent=Sequence("AAACAAAAGGGTACCCAAAAAA", alphabet, type="chromosome"),
                 ),
                 CDSFrame.ONE,
                 [CDSFrame.ONE, CDSFrame.ONE, CDSFrame.TWO],
             ),
             (
                 CompoundInterval(
-                    [0, 7, 12], [5, 11, 18], Strand.PLUS, parent=Sequence("AAACAAAAGGGTACCCAAAAAA", alphabet)
+                    [0, 7, 12],
+                    [5, 11, 18],
+                    Strand.PLUS,
+                    parent=Sequence("AAACAAAAGGGTACCCAAAAAA", alphabet, type="chromosome"),
                 ),
                 CDSFrame.TWO,
                 [CDSFrame.TWO, CDSFrame.ZERO, CDSFrame.ONE],
             ),
             (
                 CompoundInterval(
-                    [0, 7, 12], [5, 11, 18], Strand.MINUS, parent=Sequence("AAACAAAAGGGTACCCAAAAAA", alphabet)
+                    [0, 7, 12],
+                    [5, 11, 18],
+                    Strand.MINUS,
+                    parent=Sequence("AAACAAAAGGGTACCCAAAAAA", alphabet, type="chromosome"),
                 ),
                 CDSFrame.ZERO,
                 [CDSFrame.ONE, CDSFrame.ZERO, CDSFrame.ZERO],
             ),
             (
                 CompoundInterval(
-                    [0, 7, 12], [5, 11, 18], Strand.MINUS, parent=Sequence("AAACAAAAGGGTACCCAAAAAA", alphabet)
+                    [0, 7, 12],
+                    [5, 11, 18],
+                    Strand.MINUS,
+                    parent=Sequence("AAACAAAAGGGTACCCAAAAAA", alphabet, type="chromosome"),
                 ),
                 CDSFrame.ONE,
                 [CDSFrame.ZERO, CDSFrame.TWO, CDSFrame.ONE],
             ),
             (
                 CompoundInterval(
-                    [0, 7, 12], [5, 11, 18], Strand.MINUS, parent=Sequence("AAACAAAAGGGTACCCAAAAAA", alphabet)
+                    [0, 7, 12],
+                    [5, 11, 18],
+                    Strand.MINUS,
+                    parent=Sequence("AAACAAAAGGGTACCCAAAAAA", alphabet, type="chromosome"),
                 ),
                 CDSFrame.TWO,
                 [CDSFrame.TWO, CDSFrame.ONE, CDSFrame.TWO],
@@ -743,7 +873,9 @@ class TestCDSInterval:
             # this shifts the frame all the
             (
                 CDSInterval(
-                    CompoundInterval([0, 7], [5, 8], Strand.MINUS, parent=Sequence("ATACGATCA", alphabet)),
+                    CompoundInterval(
+                        [0, 7], [5, 8], Strand.MINUS, parent=Sequence("ATACGATCA", alphabet, type="chromosome")
+                    ),
                     [CDSFrame.ZERO, CDSFrame.TWO],
                 ),
                 [Codon.TAT],
@@ -756,7 +888,7 @@ class TestCDSInterval:
                         [2, 6, 8],
                         [5, 7, 16],
                         Strand.PLUS,
-                        parent=Sequence("AAACAAAAGGACCCAAAAAA", alphabet),
+                        parent=Sequence("AAACAAAAGGACCCAAAAAA", alphabet, type="chromosome"),
                     ),
                     [CDSFrame.ZERO, CDSFrame.ZERO, CDSFrame.ZERO],
                 ),
@@ -771,7 +903,7 @@ class TestCDSInterval:
                         [2, 8, 12],
                         [5, 11, 18],
                         Strand.PLUS,
-                        parent=Sequence("AAACAAAAGGGTACCCAAAAAA", alphabet),
+                        parent=Sequence("AAACAAAAGGGTACCCAAAAAA", alphabet, type="chromosome"),
                     ),
                     [CDSFrame.TWO, CDSFrame.ONE, CDSFrame.ONE],
                 ),
@@ -792,7 +924,7 @@ class TestCDSInterval:
                         [2, 8],
                         [9, 17],
                         Strand.PLUS,
-                        parent=Sequence("AAAGGAAAGTCCCTGAAAAAA", alphabet),
+                        parent=Sequence("AAAGGAAAGTCCCTGAAAAAA", alphabet, type="chromosome"),
                     ),
                     [CDSFrame.ZERO, CDSFrame.ONE],
                 ),
@@ -805,7 +937,7 @@ class TestCDSInterval:
                         [2, 8, 12],
                         [5, 13, 18],
                         Strand.PLUS,
-                        parent=Sequence("AAAGGAAAGTCCCTGAAAAAA", alphabet),
+                        parent=Sequence("AAAGGAAAGTCCCTGAAAAAA", alphabet, type="chromosome"),
                     ),
                     [CDSFrame.ZERO, CDSFrame.ONE, CDSFrame.ZERO],
                 ),
@@ -818,7 +950,7 @@ class TestCDSInterval:
                         [2, 8, 12],
                         [5, 13, 18],
                         Strand.PLUS,
-                        parent=Sequence("AAAGGAAAGTCCCTGAAAAAA", alphabet),
+                        parent=Sequence("AAAGGAAAGTCCCTGAAAAAA", alphabet, type="chromosome"),
                     ),
                     [CDSFrame.ONE, CDSFrame.ONE, CDSFrame.ZERO],
                 ),
@@ -828,3 +960,27 @@ class TestCDSInterval:
     )
     def test_optimize_and_combine_blocks(self, cds, expected):
         assert list(cds.optimize_and_combine_blocks().scan_codons()) == expected
+
+    def test_frame_exception(self):
+        with pytest.raises(LocationException):
+            _ = CDSInterval(
+                CompoundInterval(
+                    [2, 8, 12],
+                    [5, 13, 18],
+                    Strand.PLUS,
+                    parent=Sequence("AAAGGAAAGTCCCTGAAAAAA", Alphabet.NT_EXTENDED_GAPPED, type="chromosome"),
+                ),
+                [CDSFrame.ONE, CDSFrame.ONE],
+            )
+
+    def test_frame_to_phase(self):
+        cds = CDSInterval(
+            CompoundInterval(
+                [2, 8, 12],
+                [5, 13, 18],
+                Strand.PLUS,
+                parent=Sequence("AAAGGAAAGTCCCTGAAAAAA", Alphabet.NT_EXTENDED_GAPPED, type="chromosome"),
+            ),
+            [CDSFrame.ONE.to_phase(), CDSFrame.ONE.to_phase(), CDSFrame.ZERO.to_phase()],
+        )
+        assert list(cds.scan_codons()) == [Codon.TCC, Codon.CTG, Codon.AAA]

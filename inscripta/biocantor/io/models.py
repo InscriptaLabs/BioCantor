@@ -5,13 +5,11 @@ and deserializing the models.
 from typing import List, Optional, ClassVar, Type, Dict, Union
 from uuid import UUID
 
-from inscripta.biocantor.exc import InvalidCDSIntervalError, LocationException, ValidationException
 from inscripta.biocantor.gene.biotype import Biotype
-from inscripta.biocantor.gene.cds import CDSFrame, CDSInterval
+from inscripta.biocantor.gene.cds import CDSFrame
 from inscripta.biocantor.gene.collections import GeneInterval, FeatureIntervalCollection, AnnotationCollection
 from inscripta.biocantor.gene.feature import FeatureInterval
 from inscripta.biocantor.gene.transcript import TranscriptInterval
-from inscripta.biocantor.location.location_impl import CompoundInterval
 from inscripta.biocantor.location.strand import Strand
 from inscripta.biocantor.parent import Parent
 from marshmallow import Schema  # noqa: F401
@@ -51,25 +49,16 @@ class FeatureIntervalModel(BaseModel):
 
     def to_feature_interval(
         self,
-        parent: Optional[Parent] = None,  # should have a sequence associated
+        parent_or_seq_chunk_parent: Optional[Parent] = None,
     ) -> "FeatureInterval":
         """Construct a :class:`~biocantor.gene.feature.FeatureInterval` from a :class:`FeatureIntervalModel`.
 
         A :class:`~biocantor.parent.Parent` can be provided to allow the sequence-retrieval functions to work.
         """
-
-        if len(self.interval_starts) != len(self.interval_ends):
-            raise ValidationException("Number of interval starts does not match number of interval ends")
-
-        location = CompoundInterval(
+        return FeatureInterval(
             self.interval_starts,
             self.interval_ends,
             self.strand,
-            parent=parent,
-        )
-
-        return FeatureInterval(
-            location=location,
             qualifiers=self.qualifiers,
             sequence_guid=self.sequence_guid,
             sequence_name=self.sequence_name,
@@ -79,6 +68,7 @@ class FeatureIntervalModel(BaseModel):
             guid=self.feature_interval_guid,
             feature_guid=self.feature_guid,
             is_primary_feature=self.is_primary_feature,
+            parent_or_seq_chunk_parent=parent_or_seq_chunk_parent,
         )
 
     @staticmethod
@@ -112,46 +102,20 @@ class TranscriptIntervalModel(BaseModel):
 
     def to_transcript_interval(
         self,
-        parent: Optional[Parent] = None,  # should have a sequence associated
+        parent_or_seq_chunk_parent: Optional[Parent] = None,
     ) -> "TranscriptInterval":
         """Construct a :class:`~biocantor.gene.transcript.TranscriptInterval` from a :class:`TranscriptIntervalModel`.
 
         A :class:`~biocantor.parent.Parent can be provided to allow the sequence-retrieval functions to work.
         """
 
-        if len(self.exon_starts) != len(self.exon_ends):
-            raise LocationException("Number of exon starts does not match number of exon ends")
-
-        location = CompoundInterval(self.exon_starts, self.exon_ends, self.strand, parent=parent)
-
-        if self.cds_starts is not None and self.cds_ends is None:
-            raise InvalidCDSIntervalError("If CDS start is defined, CDS end must be defined")
-        elif self.cds_starts is None and self.cds_ends is not None:
-            raise InvalidCDSIntervalError("If CDS end is defined, CDS start must be defined")
-        elif self.cds_starts is not None and self.cds_ends is not None:  # must be coding
-            if len(self.cds_starts) != len(self.cds_ends):
-                raise InvalidCDSIntervalError("Number of CDS starts does not number of CDS ends")
-            elif self.cds_starts[0] < self.exon_starts[0]:
-                raise InvalidCDSIntervalError("CDS start must be greater than or equal to exon start")
-            elif self.cds_ends[-1] > self.exon_ends[-1]:
-                raise InvalidCDSIntervalError("CDS end must be less than or equal to than exon end")
-            elif self.cds_frames is None:
-                raise InvalidCDSIntervalError("If CDS interval is defined, CDS frames must be defined")
-            elif len(self.cds_frames) != len(self.cds_starts):
-                raise InvalidCDSIntervalError("Number of CDS frames must match number of CDS starts/ends")
-
-            cds_interval = CompoundInterval(self.cds_starts, self.cds_ends, self.strand, parent=parent)
-            if not cds_interval:
-                raise InvalidCDSIntervalError("CDS must have a non-zero length")
-
-            # length validation happens in the CDS constructor
-            cds = CDSInterval(cds_interval, self.cds_frames)
-        else:
-            cds = None
-
         return TranscriptInterval(
-            location=location,
-            cds=cds,
+            exon_starts=self.exon_starts,
+            exon_ends=self.exon_ends,
+            strand=self.strand,
+            cds_starts=self.cds_starts,
+            cds_ends=self.cds_ends,
+            cds_frames=self.cds_frames,
             guid=self.transcript_interval_guid,
             transcript_guid=self.transcript_guid,
             qualifiers=self.qualifiers,
@@ -162,6 +126,7 @@ class TranscriptIntervalModel(BaseModel):
             sequence_name=self.sequence_name,
             sequence_guid=self.sequence_guid,
             protein_id=self.protein_id,
+            parent_or_seq_chunk_parent=parent_or_seq_chunk_parent,
         )
 
     @staticmethod
@@ -191,13 +156,13 @@ class GeneIntervalModel(BaseModel):
     sequence_guid: Optional[UUID] = None
     gene_guid: Optional[UUID] = None
 
-    def to_gene_interval(self, parent: Optional[Parent] = None) -> GeneInterval:
+    def to_gene_interval(self, parent_or_seq_chunk_parent: Optional[Parent] = None) -> GeneInterval:
         """Produce a :class:`~biocantor.gene.collections.GeneInterval` from a :class:`GeneIntervalModel`.
 
         This is the primary method of constructing a :class:`biocantor.gene.collections.GeneInterval`.
         """
 
-        transcripts = [tx.to_transcript_interval(parent) for tx in self.transcripts]
+        transcripts = [tx.to_transcript_interval(parent_or_seq_chunk_parent) for tx in self.transcripts]
 
         return GeneInterval(
             transcripts=transcripts,
@@ -209,7 +174,7 @@ class GeneIntervalModel(BaseModel):
             qualifiers=self.qualifiers,
             sequence_name=self.sequence_name,
             sequence_guid=self.sequence_guid,
-            parent=parent,
+            parent_or_seq_chunk_parent=parent_or_seq_chunk_parent,
         )
 
     @staticmethod
@@ -237,10 +202,10 @@ class FeatureIntervalCollectionModel(BaseModel):
     feature_collection_guid: Optional[UUID] = None
     qualifiers: Optional[Dict[str, List[Union[str, int, bool, float]]]] = None
 
-    def to_feature_collection(self, parent: Optional[Parent] = None) -> FeatureIntervalCollection:
+    def to_feature_collection(self, parent_or_seq_chunk_parent: Optional[Parent] = None) -> FeatureIntervalCollection:
         """Produce a feature collection from a :class:`FeatureIntervalCollectionModel`."""
 
-        feature_intervals = [feat.to_feature_interval(parent) for feat in self.feature_intervals]
+        feature_intervals = [feat.to_feature_interval(parent_or_seq_chunk_parent) for feat in self.feature_intervals]
 
         return FeatureIntervalCollection(
             feature_intervals=feature_intervals,
@@ -252,7 +217,7 @@ class FeatureIntervalCollectionModel(BaseModel):
             sequence_guid=self.sequence_guid,
             qualifiers=self.qualifiers,
             guid=self.feature_collection_guid,
-            parent=parent,
+            parent_or_seq_chunk_parent=parent_or_seq_chunk_parent,
         )
 
     @staticmethod
@@ -290,15 +255,17 @@ class AnnotationCollectionModel(BaseModel):
     end: Optional[int] = None
     completely_within: Optional[bool] = None
 
-    def to_annotation_collection(self, parent: Optional[Parent] = None) -> "AnnotationCollection":
-        """Produce an :class:`~biocantor.gene.collections.AnnotationCollection` directly from lists of data."""
+    def to_annotation_collection(self, parent_or_seq_chunk_parent: Optional[Parent] = None) -> "AnnotationCollection":
+        """Produce an :class:`~biocantor.gene.collections.AnnotationCollection` from this model."""
         if self.genes:
-            genes = [gene.to_gene_interval(parent) for gene in self.genes]
+            genes = [gene.to_gene_interval(parent_or_seq_chunk_parent) for gene in self.genes]
         else:
             genes = None
 
         if self.feature_collections:
-            feature_collections = [feat.to_feature_collection(parent) for feat in self.feature_collections]
+            feature_collections = [
+                feat.to_feature_collection(parent_or_seq_chunk_parent) for feat in self.feature_collections
+            ]
         else:
             feature_collections = None
 
@@ -310,10 +277,11 @@ class AnnotationCollectionModel(BaseModel):
             qualifiers=self.qualifiers,
             sequence_name=self.sequence_name,
             sequence_guid=self.sequence_guid,
+            sequence_path=self.sequence_path,
             start=self.start,
             end=self.end,
             completely_within=self.completely_within,
-            parent=parent,
+            parent_or_seq_chunk_parent=parent_or_seq_chunk_parent,
         )
 
     @staticmethod

@@ -334,6 +334,7 @@
         }
     ],
     "name": null,
+    "id": null,
     "sequence_name": "chr7",
     "sequence_guid": null,
     "sequence_path": null,

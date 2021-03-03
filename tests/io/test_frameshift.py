@@ -36,7 +36,7 @@ class TestParseFrameshifts:
             gbk_rec = list(ParsedAnnotationRecord.parsed_annotation_records_to_model(parse_genbank(fh)))[0]
 
         cds = gbk_rec.genes[0].get_primary_transcript().cds
-        cds.location = cds.location.merge_overlapping()
+        cds._location = cds._location.merge_overlapping()
         assert str(cds.translate()) == (
             "MKKRNFSAEFKRESAQLVVDQKYTVADAAKAMDVGLSTMTRWVKQLRDERQGKTPKASPITPEQIEIRKLRKKLQRIEMENEILKKNRPEKPDGRRAVLR"
             "SQVLELHGISHGSAGARSIATMATRRGYQMGRWLAGRLMKELGLVSCQQPTHRYKRGGHEHVAIPNYLERQFAVTEPNQVWCGDVTYIWTGKRWAYLAVV"

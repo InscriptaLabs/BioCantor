@@ -3,14 +3,16 @@ Core parser functionality. Contains the dataclass :class:`ParsedAnnotationRecord
 by any of the parser with optional sequence information.
 """
 from dataclasses import dataclass
-from typing import Optional, Iterable, TextIO
+from typing import Optional, Iterable, TextIO, Union
+from uuid import UUID
 
 from Bio import SeqIO
 from Bio.SeqRecord import SeqRecord
-
 from inscripta.biocantor.gene.collections import AnnotationCollection
 from inscripta.biocantor.io.fasta.exc import FastaExportError
 from inscripta.biocantor.io.models import AnnotationCollectionModel
+from inscripta.biocantor.location.location_impl import SingleInterval
+from inscripta.biocantor.location.strand import Strand
 from inscripta.biocantor.parent import Parent
 from inscripta.biocantor.sequence.alphabet import Alphabet
 from inscripta.biocantor.sequence.sequence import Sequence
@@ -81,6 +83,8 @@ def seq_to_parent(
     """Convert a string into a Parent object. This is the intermediate that transfers a BioPython sequence object to
     a BioCantor sequence object.
 
+    NOTE: This sequnece is assumed to be the entire chromosome.
+
     Args:
         seq: String of sequence.
         alphabet: Alphabet this sequence is in.
@@ -91,3 +95,44 @@ def seq_to_parent(
          A :class:`Parent` object.
     """
     return Parent(sequence=Sequence(seq, alphabet, type=seq_type, id=seq_id))
+
+
+def seq_chunk_to_parent(
+    seq: str,
+    sequence_name: Union[UUID, str],
+    start: int,
+    end: int,
+    alphabet: Optional[Alphabet] = Alphabet.NT_EXTENDED_GAPPED,
+) -> Parent:
+    """Construct a sequence chunk parent from a sequence. This is used when an annotation collection is being
+    instantiated with a subset of a genome sequence.
+
+    NOTE: This sequence is assumed to be a subset of a chromosome. There is no way to validate that within this
+    function.
+
+    Args:
+        seq: Sequence subset to use.
+        sequence_name: The name of the sequence.
+        start: The genomic start position of this sequence.
+        end: The genomic end position of this sequence.
+        alphabet: The alphabet the sequence is in.
+
+    Returns:
+        An instantiated Parent object ready to be passed to a constructor.
+    """
+    return Parent(
+        id=f"{sequence_name}:{start}-{end}",
+        sequence=Sequence(
+            seq,
+            alphabet,
+            type="sequence_chunk",
+            parent=Parent(
+                location=SingleInterval(
+                    start,
+                    end,
+                    Strand.PLUS,
+                    parent=Parent(id=sequence_name, sequence_type="chromosome"),
+                )
+            ),
+        ),
+    )
