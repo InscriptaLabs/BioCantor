@@ -6,6 +6,7 @@ from typing import Iterable, Optional, TextIO
 from inscripta.biocantor.gene.collections import AnnotationCollection
 from inscripta.biocantor.io.gff3.constants import GFF3Headers
 from inscripta.biocantor.io.gff3.exc import GFF3ExportException
+from inscripta.biocantor.parent import SequenceType
 
 
 def collection_to_gff3(
@@ -36,7 +37,7 @@ def collection_to_gff3(
         # must be validated before export.
         collections = list(collections)
         for c in collections:
-            if c.has_ancestor_of_type("sequence_chunk"):
+            if c.has_ancestor_of_type(SequenceType.SEQUENCE_CHUNK):
                 raise GFF3ExportException(
                     "Cannot export a chunk-relative collection in chromosome coordinates with sequences."
                 )

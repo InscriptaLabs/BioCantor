@@ -9,7 +9,7 @@ from inscripta.biocantor.exc import (
     MismatchedParentException,
 )
 from inscripta.biocantor.location.strand import Strand
-from inscripta.biocantor.parent import Parent, make_parent
+from inscripta.biocantor.parent import Parent, make_parent, SequenceType
 from inscripta.biocantor.sequence.alphabet import (
     Alphabet,
     ALPHABET_TO_NUCLEOTIDE_COMPLEMENT,
@@ -30,7 +30,7 @@ class Sequence:
         data: str,
         alphabet: Alphabet,
         id: Optional[str] = None,
-        type: Optional[str] = None,
+        type: Optional[Union[SequenceType, str]] = None,
         parent: Optional[ParentInputType] = None,
         validate_alphabet: bool = True,
     ):

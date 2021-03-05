@@ -6,7 +6,7 @@ from Bio.SeqFeature import FeatureLocation, CompoundLocation
 from inscripta.biocantor.exc import NoSuchAncestorException, NullParentException
 from inscripta.biocantor.location.distance import DistanceType
 from inscripta.biocantor.location.strand import Strand
-from inscripta.biocantor.parent import Parent
+from inscripta.biocantor.parent import Parent, SequenceType
 from inscripta.biocantor.sequence import Sequence
 from inscripta.biocantor.util.object_validation import ObjectValidation
 
@@ -262,7 +262,7 @@ class Location(ABC):
         """Returns a BioPython interval type; since they do not have a shared base class, we need a union"""
         pass
 
-    def first_ancestor_of_type(self, sequence_type: str) -> Parent:
+    def first_ancestor_of_type(self, sequence_type: Union[str, SequenceType]) -> Parent:
         """Returns the Parent object representing the closest ancestor (parent, parent of parent, etc.)
         of this location which has the given sequence type. Raises NoSuchAncestorException if no ancestor with
         the given type exists."""
@@ -270,14 +270,14 @@ class Location(ABC):
             raise NoSuchAncestorException("Location has no parent")
         return self.parent.first_ancestor_of_type(sequence_type, include_self=True)
 
-    def has_ancestor_of_type(self, sequence_type: str) -> bool:
+    def has_ancestor_of_type(self, sequence_type: Union[str, SequenceType]) -> bool:
         """Returns True if some ancestor (parent, parent of parent, etc.) of of this location has the given sequence
         type, or False otherwise."""
         if not self.parent:
             return False
         return self.parent.has_ancestor_of_type(sequence_type, include_self=True)
 
-    def lift_over_to_first_ancestor_of_type(self, sequence_type: str) -> "Location":
+    def lift_over_to_first_ancestor_of_type(self, sequence_type: Union[str, SequenceType]) -> "Location":
         """Returns a new Location representing the liftover of this Location to its closest ancestor sequence (parent,
         parent of parent, etc.) which has the given sequence type. If the immediate parent has the given type,
         returns this Location. Raises NoSuchAncestorException if no ancestor with the given type exists."""

@@ -1,13 +1,14 @@
 from enum import Enum
-from methodtools import lru_cache
 from typing import Iterator, List, Union, Optional
 
 from inscripta.biocantor.exc import LocationException
 from inscripta.biocantor.gene.codon import Codon, TranslationTable
 from inscripta.biocantor.location.location import Location, Strand
 from inscripta.biocantor.location.location_impl import SingleInterval, CompoundInterval
+from inscripta.biocantor.parent import SequenceType
 from inscripta.biocantor.sequence import Sequence
 from inscripta.biocantor.sequence.alphabet import Alphabet
+from methodtools import lru_cache
 
 
 class CDSPhase(Enum):
@@ -121,7 +122,9 @@ class CDSInterval:
     def __len__(self) -> int:
         return len(self._location)
 
-    def lift_over_to_first_ancestor_of_type(self, sequence_type: Optional[str] = "chromosome") -> Location:
+    def lift_over_to_first_ancestor_of_type(
+        self, sequence_type: Optional[Union[str, SequenceType]] = SequenceType.CHROMOSOME
+    ) -> Location:
         """
         Lifts the location member to another coordinate system. Is a no-op if there is no parent assigned.
 
@@ -140,7 +143,7 @@ class CDSInterval:
         will return a location without sequence information. Please be careful using the location member
         directly!
         """
-        return self.lift_over_to_first_ancestor_of_type("chromosome")
+        return self.lift_over_to_first_ancestor_of_type(SequenceType.CHROMOSOME)
 
     @property
     def chunk_relative_location(self) -> Location:
@@ -165,12 +168,12 @@ class CDSInterval:
     @property
     def start(self) -> int:
         """Returns genome relative start position."""
-        return self.lift_over_to_first_ancestor_of_type("chromosome").start
+        return self.lift_over_to_first_ancestor_of_type(SequenceType.CHROMOSOME).start
 
     @property
     def end(self) -> int:
         """Returns genome relative end position."""
-        return self.lift_over_to_first_ancestor_of_type("chromosome").end
+        return self.lift_over_to_first_ancestor_of_type(SequenceType.CHROMOSOME).end
 
     @property
     def chunk_relative_start(self) -> int:

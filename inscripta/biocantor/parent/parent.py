@@ -1,5 +1,6 @@
 from functools import reduce
-from typing import TypeVar, Optional
+from typing import TypeVar, Optional, Union
+from enum import IntEnum
 
 import inscripta.biocantor
 from inscripta.biocantor.exc import (
@@ -16,6 +17,11 @@ Parent = TypeVar("Parent")
 ParentInputType = TypeVar("ParentInputType")
 
 
+class SequenceType(IntEnum):
+    CHROMOSOME = 1
+    SEQUENCE_CHUNK = 2
+
+
 class Parent:
     """
     Holds information about a parent of some object. Typically the child object should hold
@@ -26,7 +32,7 @@ class Parent:
         self,
         *,
         id: Optional[str] = None,
-        sequence_type: Optional[str] = None,
+        sequence_type: Optional[Union[SequenceType, str]] = None,
         strand: Optional[Strand] = None,
         location: Optional = None,
         sequence: Optional = None,
@@ -157,7 +163,7 @@ class Parent:
             parent=self.parent,
         )
 
-    def first_ancestor_of_type(self, sequence_type, include_self: bool = True) -> Parent:
+    def first_ancestor_of_type(self, sequence_type: Union[str, SequenceType], include_self: bool = True) -> Parent:
         """Returns the Parent object representing the closest ancestor (parent, parent of parent, etc.)
         of this Parent which has the given sequence type. If include_self is True and this Parent
         has the given type, returns this object. Raises NoSuchAncestorException if no ancestor with the given
@@ -176,7 +182,7 @@ class Parent:
             return self.parent.first_ancestor_of_type(sequence_type)
         raise NoSuchAncestorException
 
-    def has_ancestor_of_type(self, sequence_type, include_self: bool = True) -> bool:
+    def has_ancestor_of_type(self, sequence_type: Union[str, SequenceType], include_self: bool = True) -> bool:
         """Returns True if some ancestor (parent, parent of parent, etc.) of this Parent has the given sequence type,
         or False otherwise. If include_self is True and this Parent has the given type, returns True.
 

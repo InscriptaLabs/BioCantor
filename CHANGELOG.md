@@ -5,7 +5,18 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Added
+- Improved docstrings on interval objects.
+
+
+### Changed
+- New `SequenceType` enum stores whether interval sequences are `chromosome` or `chunk_relative`.
+- All objects that accept `SequenceType` information accepts either the `SequenceType` enum OR raw strings.
+- `AnnotationCollection` will look at the provided `parent_or_seq_chunk_parent` to see if the bounds of the object can be inferred from the parent object. This is only performed if no `start`/`end` are explicitly provided. If neither are provided, the bounds of the collection are the bounds of its children.
+
 ### Fixed
+- Some functions on Interval objects were not operating in chromosome coordinates
+- `AnnotationCollection.query_by_position()` was not returning valid results if the parent was a sequence chunk.
 - GFF3 parser was not inferring transcripts for a gene feature with no children.
 - Fixed a bug with missing gene biotypes in GFF3 parsing.
 

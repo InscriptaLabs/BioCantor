@@ -1,5 +1,5 @@
 from functools import total_ordering, reduce
-from typing import Optional, List, Iterator
+from typing import Optional, List, Iterator, Union
 
 from Bio.SeqFeature import FeatureLocation, CompoundLocation
 
@@ -15,7 +15,7 @@ from inscripta.biocantor.exc import (
 from inscripta.biocantor.location.distance import DistanceType
 from inscripta.biocantor.location.location import Location
 from inscripta.biocantor.location.strand import Strand
-from inscripta.biocantor.parent import Parent, make_parent
+from inscripta.biocantor.parent import Parent, make_parent, SequenceType
 from inscripta.biocantor.sequence import Sequence
 from inscripta.biocantor.util.object_validation import ObjectValidation
 
@@ -999,7 +999,7 @@ class _EmptyLocation(Location):
     def to_biopython(self):
         raise EmptyLocationException
 
-    def first_ancestor_of_type(self, sequence_type: str) -> Parent:
+    def first_ancestor_of_type(self, sequence_type: Union[str, SequenceType]) -> Parent:
         raise EmptyLocationException
 
     _instance = None
