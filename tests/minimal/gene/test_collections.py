@@ -723,7 +723,7 @@ class TestAnnotationCollection:
             for subitem in item:
                 subitem.sequence_name = "chr1"
         with open(test_data_dir / "collection_gff3_export_chunk_relative.gff") as fh:
-            assert fh.read() == "\n".join(str(x) for x in obj.to_gff(chromosome_relative_coordinates=True))
+            assert fh.read() == "\n".join(str(x) for x in obj.to_gff(chromosome_relative_coordinates=False))
 
     def test_gff3_export_exception(self, test_data_dir):
         """Cannot export to GFF3 in relative coordinates without having sequence."""
