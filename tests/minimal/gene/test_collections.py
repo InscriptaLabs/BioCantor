@@ -20,49 +20,59 @@ from inscripta.biocantor.parent.parent import Parent
 from inscripta.biocantor.sequence.alphabet import Alphabet
 from inscripta.biocantor.sequence.sequence import Sequence
 
-genome = "AAGTATTCTTGGACCTAATTAAAAAAAAAAAAAAAAAAA"
+genome = "TTTTTTTTTTAAGTATTCTTGGACCTAATTAAAAAAAAAAAAAAAAAAACCCCC"
 parent_genome = Parent(sequence=Sequence(genome, Alphabet.NT_STRICT), sequence_type="chromosome")
+parent_genome_10_49 = Parent(
+    sequence=Sequence(
+        genome[10:49],
+        Alphabet.NT_EXTENDED_GAPPED,
+        type="sequence_chunk",
+        parent=Parent(
+            location=SingleInterval(10, 49, Strand.PLUS, parent=Parent(id="genome_10_49", sequence_type="chromosome"))
+        ),
+    )
+)
 
 
 class TestGene:
     """Test basic gene construction from Transcripts"""
 
     tx1 = dict(
-        exon_starts=[2],
-        exon_ends=[18],
+        exon_starts=[12],
+        exon_ends=[28],
         strand=Strand.PLUS.name,
-        cds_starts=[5],
-        cds_ends=[9],
+        cds_starts=[15],
+        cds_ends=[19],
         cds_frames=[CDSFrame.ZERO.name],
     )
     tx2 = dict(
-        exon_starts=[2, 7, 12],
-        exon_ends=[6, 10, 15],
+        exon_starts=[12, 17, 22],
+        exon_ends=[16, 20, 25],
         strand=Strand.PLUS.name,
-        cds_starts=[4, 7, 12],
-        cds_ends=[6, 10, 13],
+        cds_starts=[14, 17, 22],
+        cds_ends=[16, 20, 23],
         cds_frames=[CDSFrame.ZERO.name, CDSFrame.TWO.name, CDSFrame.TWO.name],
     )
     tx1_primary = dict(
-        exon_starts=[2],
-        exon_ends=[18],
+        exon_starts=[12],
+        exon_ends=[28],
         strand=Strand.PLUS.name,
-        cds_starts=[5],
-        cds_ends=[9],
+        cds_starts=[15],
+        cds_ends=[19],
         cds_frames=[CDSFrame.ZERO.name],
         is_primary_tx=True,
     )
     tx2_primary = dict(
-        exon_starts=[2, 7, 12],
-        exon_ends=[6, 10, 15],
+        exon_starts=[12, 17, 22],
+        exon_ends=[16, 20, 25],
         strand=Strand.PLUS.name,
-        cds_starts=[4, 7, 12],
-        cds_ends=[6, 10, 13],
+        cds_starts=[14, 17, 22],
+        cds_ends=[16, 20, 23],
         cds_frames=[CDSFrame.ZERO.name, CDSFrame.TWO.name, CDSFrame.TWO.name],
         is_primary_tx=True,
     )
-    tx_noncoding = dict(exon_starts=[2, 7, 12], exon_ends=[6, 10, 30], strand=Strand.PLUS.name)
-    tx_noncoding_short = dict(exon_starts=[2], exon_ends=[6], strand=Strand.PLUS.name)
+    tx_noncoding = dict(exon_starts=[12, 17, 22], exon_ends=[16, 20, 40], strand=Strand.PLUS.name)
+    tx_noncoding_short = dict(exon_starts=[12], exon_ends=[16], strand=Strand.PLUS.name)
 
     gene = GeneIntervalModel.Schema().load(
         dict(transcripts=[tx1, tx2], qualifiers={}, gene_type=Biotype.protein_coding.name, gene_id="gene1")
@@ -76,8 +86,8 @@ class TestGene:
 
     def test_merged_interval(self):
         obj = self.gene.to_gene_interval()
-        assert str(obj.get_merged_transcript()) == "FeatureInterval((2-18:+), name=None)"
-        assert str(obj.get_merged_cds()) == "FeatureInterval((4-10:+, 12-13:+), name=None)"
+        assert str(obj.get_merged_transcript()) == "FeatureInterval((12-28:+), name=None)"
+        assert str(obj.get_merged_cds()) == "FeatureInterval((14-20:+, 22-23:+), name=None)"
 
     def test_failed_merge_interval(self):
         obj = self.gene_noncoding.to_gene_interval()
@@ -147,17 +157,21 @@ class TestGene:
 
 class TestFeatureIntervalCollection:
     feat1 = dict(
-        interval_starts=[2], interval_ends=[5], strand=Strand.PLUS.name, feature_types=["a", "b"], feature_name="feat1"
+        interval_starts=[12],
+        interval_ends=[15],
+        strand=Strand.PLUS.name,
+        feature_types=["a", "b"],
+        feature_name="feat1",
     )
     feat2 = dict(
-        interval_starts=[2, 7, 12],
-        interval_ends=[6, 10, 15],
+        interval_starts=[12, 17, 22],
+        interval_ends=[16, 20, 25],
         strand=Strand.PLUS.name,
         feature_types=["b"],
         feature_name="feat2",
     )
     feat3 = dict(
-        interval_starts=[25], interval_ends=[30], strand=Strand.MINUS.name, feature_types=["a"], feature_name="feat3"
+        interval_starts=[35], interval_ends=[40], strand=Strand.MINUS.name, feature_types=["a"], feature_name="feat3"
     )
     collection1 = FeatureIntervalCollectionModel.Schema().load(
         dict(feature_intervals=[feat1, feat2], feature_collection_name="featgrp1")
@@ -202,7 +216,7 @@ class TestFeatureIntervalCollection:
 
 
 class TestAnnotationCollection:
-    annot = AnnotationCollectionModel.Schema().load(
+    annot_full_range = AnnotationCollectionModel.Schema().load(
         dict(
             feature_collections=[
                 dict(
@@ -213,7 +227,22 @@ class TestAnnotationCollection:
             ],
             genes=[dict(transcripts=[TestGene.tx1, TestGene.tx2], gene_id="gene1")],
             start=0,
-            end=30,
+            end=54,
+        )
+    )
+
+    annot = AnnotationCollectionModel.Schema().load(
+        dict(
+            feature_collections=[
+                dict(
+                    feature_intervals=[TestFeatureIntervalCollection.feat1, TestFeatureIntervalCollection.feat2],
+                    feature_collection_id="featgrp1",
+                ),
+                dict(feature_intervals=[TestFeatureIntervalCollection.feat3], feature_collection_id="featgrp2"),
+            ],
+            genes=[dict(transcripts=[TestGene.tx1, TestGene.tx2], gene_id="gene1")],
+            start=2,
+            end=40,
         )
     )
 
@@ -273,7 +302,7 @@ class TestAnnotationCollection:
 
     def test_annot_no_range(self):
         obj = self.annot_no_range.to_annotation_collection()
-        assert obj._location == SingleInterval(2, 30, Strand.PLUS)
+        assert obj._location == SingleInterval(12, 40, Strand.PLUS)
 
     def test_annot_no_features(self):
         obj = self.annot_no_features.to_annotation_collection()
@@ -286,6 +315,34 @@ class TestAnnotationCollection:
     def test_empty_annot(self):
         obj = self.empty_annot.to_annotation_collection()
         assert obj.is_empty
+
+    def test_equivalent_sequences(self):
+        """Regardless of which start/end position was used, sequences are invariant"""
+        obj = self.annot.to_annotation_collection(parent_genome)
+        obj2 = self.annot_full_range.to_annotation_collection(parent_genome)
+        obj3 = self.annot_no_range.to_annotation_collection(parent_genome)
+        for gene in obj:
+            gene2 = next(obj2.query_by_feature_identifiers(gene.identifiers).iter_children())
+            gene3 = next(obj3.query_by_feature_identifiers(gene.identifiers).iter_children())
+            for tx1 in gene:
+                tx2 = gene2.guid_map[tx1.guid]
+                assert tx1.get_spliced_sequence() == tx2.get_spliced_sequence()
+                tx3 = gene3.guid_map[tx1.guid]
+                assert tx1.get_spliced_sequence() == tx3.get_spliced_sequence()
+
+    def test_equivalent_sequences_subset(self):
+        """Regardless of which start/end position was used, sequences are invariant"""
+        obj = self.annot.to_annotation_collection(parent_genome_10_49)
+        obj2 = self.annot_full_range.to_annotation_collection(parent_genome_10_49)
+        obj3 = self.annot_no_range.to_annotation_collection(parent_genome_10_49)
+        for gene in obj:
+            gene2 = next(obj2.query_by_feature_identifiers(gene.identifiers).iter_children())
+            gene3 = next(obj3.query_by_feature_identifiers(gene.identifiers).iter_children())
+            for tx1 in gene:
+                tx2 = gene2.guid_map[tx1.guid]
+                assert tx1.get_spliced_sequence() == tx2.get_spliced_sequence()
+                tx3 = gene3.guid_map[tx1.guid]
+                assert tx1.get_spliced_sequence() == tx3.get_spliced_sequence()
 
     @pytest.mark.parametrize(
         "start,end,coding_only,completely_within,expected",
@@ -307,7 +364,7 @@ class TestAnnotationCollection:
             ),
             (
                 None,
-                30,
+                40,
                 False,
                 True,
                 {"featgrp1", "featgrp2", "gene1"},
@@ -315,34 +372,35 @@ class TestAnnotationCollection:
             (0, 0, False, True, {}),
             (
                 0,
-                20,
+                30,
                 False,
                 True,
                 {"featgrp1", "gene1"},
             ),
             (
                 None,
-                20,
+                30,
                 False,
                 True,
                 {"featgrp1", "gene1"},
             ),
-            (25, None, False, True, {"featgrp2"}),
-            (26, None, False, True, {}),
-            (26, None, False, False, {"featgrp2"}),
+            (35, None, False, True, {"featgrp2"}),
+            (36, None, False, True, {}),
+            (36, None, False, False, {"featgrp2"}),
             (
-                0,
-                3,
+                10,
+                13,
                 False,
                 False,
                 {"featgrp1", "gene1"},
             ),
             (0, None, True, False, {"gene1"}),
-            (5, 20, False, False, {"featgrp1", "gene1"}),
+            (15, 30, False, False, {"featgrp1", "gene1"}),
+            (10, 35, False, False, {"featgrp1", "gene1"}),
         ],
     )
     def test_position_queries(self, start, end, coding_only, completely_within, expected):
-        obj = self.annot.to_annotation_collection(parent_genome)
+        obj = self.annot_full_range.to_annotation_collection(parent_genome)
         r = obj.query_by_position(start, end, coding_only, completely_within)
         if r.is_empty:
             assert len(expected) == 0
@@ -359,53 +417,165 @@ class TestAnnotationCollection:
                         orig_tx_or_feature.get_spliced_sequence()
                     )
 
-    def test_nested_position_queries(self):
-        obj = self.annot.to_annotation_collection(parent_genome)
-        r = obj.query_by_position(0, 25, completely_within=False)
+    @pytest.mark.parametrize(
+        "start,end,coding_only,completely_within,expected",
+        [
+            (
+                None,
+                None,
+                False,
+                True,
+                #
+                {"featgrp1", "featgrp2", "gene1"},
+            ),
+            (
+                None,
+                40,
+                False,
+                True,
+                {"featgrp1", "featgrp2", "gene1"},
+            ),
+            (
+                10,
+                30,
+                False,
+                True,
+                {"featgrp1", "gene1"},
+            ),
+            (
+                None,
+                30,
+                False,
+                True,
+                {"featgrp1", "gene1"},
+            ),
+            (35, None, False, True, {"featgrp2"}),
+            (
+                12,
+                13,
+                False,
+                False,
+                {"featgrp1", "gene1"},
+            ),
+            (10, None, True, False, {"gene1"}),
+            (15, 30, False, False, {"featgrp1", "gene1"}),
+            (10, 35, False, False, {"featgrp1", "gene1"}),
+        ],
+    )
+    def test_position_queries_chunk_parent(self, start, end, coding_only, completely_within, expected):
+        obj = self.annot_no_range.to_annotation_collection(parent_genome_10_49)
+        r = obj.query_by_position(start, end, coding_only, completely_within)
+        if r.is_empty:
+            assert len(expected) == 0
+        else:
+            assert set.union(*[x.identifiers for x in r]) == expected
+        for gene_or_feature in r:
+            orig_gene_or_feature = obj.guid_map[gene_or_feature.guid]
+            for new_tx_or_feature in gene_or_feature:
+                orig_tx_or_feature = orig_gene_or_feature.guid_map[new_tx_or_feature.guid]
+                if len(new_tx_or_feature) == new_tx_or_feature.chunk_relative_size:
+                    assert new_tx_or_feature.get_spliced_sequence() == orig_tx_or_feature.get_spliced_sequence()
+                else:
+                    assert str(new_tx_or_feature.get_spliced_sequence()) in str(
+                        orig_tx_or_feature.get_spliced_sequence()
+                    )
+
+    @pytest.mark.parametrize(
+        "annot,parent",
+        [
+            (annot, parent)
+            for annot in [annot, annot_full_range]
+            for parent in [parent_genome_10_49, parent_genome]
+        ],
+    )
+    def test_nested_position_queries(self, annot, parent):
+        obj = annot.to_annotation_collection(parent)
+        r = obj.query_by_position(10, 35, completely_within=False)
         assert len(r) == 2
         assert r._location.parent
         for gene in r:
             orig_gene = next(obj.query_by_feature_identifiers(gene.identifiers).iter_children())
-            for tx1, tx2 in zip(gene, orig_gene):
+            for tx1 in gene:
+                tx2 = orig_gene.guid_map[tx1.guid]
                 assert tx1.get_spliced_sequence() == tx2.get_spliced_sequence()
-        r2 = r.query_by_position(0, 10, completely_within=False)
+        r2 = r.query_by_position(10, 20, completely_within=False)
         assert len(r2) == 2
         assert r2._location.parent
         # this slice cut some of transcripts into chunks, so now the sequences are a subset
         for gene in r2:
             orig_gene = next(obj.query_by_feature_identifiers(gene.identifiers).iter_children())
-            for tx1, tx2 in zip(gene, orig_gene):
+            for tx1 in gene:
+                tx2 = orig_gene.guid_map[tx1.guid]
                 assert str(tx1.get_spliced_sequence()) in str(tx2.get_spliced_sequence())
-        r3 = r.query_by_position(0, 8, completely_within=False)
+        r3 = r.query_by_position(10, 18, completely_within=False)
         assert r3._location.parent
         assert len(r3) == 2
         for gene in r3:
             orig_gene = next(obj.query_by_feature_identifiers(gene.identifiers).iter_children())
-            for tx1, tx2 in zip(gene, orig_gene):
+            for tx1 in gene:
+                tx2 = orig_gene.guid_map[tx1.guid]
                 assert str(tx1.get_spliced_sequence()) in str(tx2.get_spliced_sequence())
 
     def test_nested_position_query_out_of_bounds(self):
         obj = self.annot.to_annotation_collection(parent_genome)
-        r = obj.query_by_position(0, 25, completely_within=False)
+        r = obj.query_by_position(10, 35, completely_within=False)
         with pytest.raises(InvalidQueryError):
-            _ = r.query_by_position(0, 30)
+            _ = r.query_by_position(10, 40)
 
     @pytest.mark.parametrize(
         "start,end,coding_only,completely_within,expected",
         [
-            (None, None, False, True, SingleInterval(0, 30, Strand.PLUS)),
-            (0, None, False, True, SingleInterval(0, 30, Strand.PLUS)),
+            (None, None, False, True, SingleInterval(0, 54, Strand.PLUS)),
+            (0, None, False, True, SingleInterval(0, 54, Strand.PLUS)),
             (None, 30, False, True, SingleInterval(0, 30, Strand.PLUS)),
             (0, 0, False, True, SingleInterval(0, 0, Strand.PLUS)),
             (0, 20, False, True, SingleInterval(0, 20, Strand.PLUS)),
             (None, 20, False, True, SingleInterval(0, 20, Strand.PLUS)),
-            (25, None, False, True, SingleInterval(25, 30, Strand.PLUS)),
-            (26, None, False, True, SingleInterval(26, 30, Strand.PLUS)),
+            (25, None, False, True, SingleInterval(25, 54, Strand.PLUS)),
+            (26, None, False, True, SingleInterval(26, 54, Strand.PLUS)),
             (0, 1, False, False, SingleInterval(0, 1, Strand.PLUS)),
+        ],
+    )
+    def test_position_queries_location_no_bounds(self, start, end, completely_within, coding_only, expected):
+        obj = self.annot_full_range.to_annotation_collection()
+        r = obj.query_by_position(start, end, coding_only, completely_within)
+        assert r._location == expected
+
+    @pytest.mark.parametrize(
+        "start,end,coding_only,completely_within,expected",
+        [
+            (None, None, False, True, SingleInterval(2, 40, Strand.PLUS)),
+            (2, None, False, True, SingleInterval(2, 40, Strand.PLUS)),
+            (None, 30, False, True, SingleInterval(2, 30, Strand.PLUS)),
+            (2, 2, False, True, SingleInterval(2, 2, Strand.PLUS)),
+            (2, 20, False, True, SingleInterval(2, 20, Strand.PLUS)),
+            (None, 20, False, True, SingleInterval(2, 20, Strand.PLUS)),
+            (25, None, False, True, SingleInterval(25, 40, Strand.PLUS)),
+            (26, None, False, True, SingleInterval(26, 40, Strand.PLUS)),
+            (2, 3, False, False, SingleInterval(2, 3, Strand.PLUS)),
         ],
     )
     def test_position_queries_location(self, start, end, completely_within, coding_only, expected):
         obj = self.annot.to_annotation_collection()
+        r = obj.query_by_position(start, end, coding_only, completely_within)
+        assert r._location == expected
+
+    @pytest.mark.parametrize(
+        "start,end,coding_only,completely_within,expected",
+        [
+            (None, None, False, True, SingleInterval(12, 40, Strand.PLUS)),
+            (12, None, False, True, SingleInterval(12, 40, Strand.PLUS)),
+            (None, 30, False, True, SingleInterval(12, 30, Strand.PLUS)),
+            (12, 12, False, True, SingleInterval(12, 12, Strand.PLUS)),
+            (12, 20, False, True, SingleInterval(12, 20, Strand.PLUS)),
+            (None, 20, False, True, SingleInterval(12, 20, Strand.PLUS)),
+            (25, None, False, True, SingleInterval(25, 40, Strand.PLUS)),
+            (26, None, False, True, SingleInterval(26, 40, Strand.PLUS)),
+            (12, 13, False, False, SingleInterval(12, 13, Strand.PLUS)),
+        ],
+    )
+    def test_position_queries_location_inferred(self, start, end, completely_within, coding_only, expected):
+        obj = self.annot_no_range.to_annotation_collection()
         r = obj.query_by_position(start, end, coding_only, completely_within)
         assert r._location == expected
 
@@ -416,7 +586,7 @@ class TestAnnotationCollection:
         with pytest.raises(InvalidQueryError):
             _ = obj.query_by_position(15, 10)
         with pytest.raises(InvalidQueryError):
-            _ = obj.query_by_position(0, 40)
+            _ = obj.query_by_position(0, 55)
 
     @pytest.mark.parametrize(
         "ids",
@@ -454,7 +624,11 @@ class TestAnnotationCollection:
     def test_extract_sequence(self):
         obj = self.annot.to_annotation_collection(parent_or_seq_chunk_parent=parent_genome)
         seq = obj.get_reference_sequence()
-        assert str(seq) == genome[:30]
+        assert str(seq) == genome[2:40]
+        # with inferred range, now sequence is cut down based on bounds of transcripts
+        obj = self.annot_no_range.to_annotation_collection(parent_or_seq_chunk_parent=parent_genome)
+        seq = obj.get_reference_sequence()
+        assert str(seq) == genome[12:40]
 
     def test_query_by_ids(self):
         obj = self.annot.to_annotation_collection()
@@ -506,7 +680,7 @@ class TestAnnotationCollection:
 
     def test_reset_parent(self):
         obj = self.annot.to_annotation_collection(parent_genome)
-        obj2 = obj.query_by_position(10, 30)
+        obj2 = obj.query_by_position(20, 40)
         obj2.reset_parent(parent_genome)
         # the coordinates are now broken, so the sequences are wrong
         for rec in obj2:
