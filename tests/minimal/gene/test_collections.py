@@ -714,6 +714,17 @@ class TestAnnotationCollection:
         with open(test_data_dir / "collection_gff3_export_chromosome_coordinates.gff") as fh:
             assert fh.read() == "\n".join(str(x) for x in obj.to_gff())
 
+    def test_gff3_export_chunk_relative(self, test_data_dir):
+        obj = self.annot.to_annotation_collection(parent_genome_10_49)
+        # populate sequence names; normally this is done via the model constructors
+        obj.sequence_name = "chr1"
+        for item in obj:
+            item.sequence_name = "chr1"
+            for subitem in item:
+                subitem.sequence_name = "chr1"
+        with open(test_data_dir / "collection_gff3_export_chunk_relative.gff") as fh:
+            assert fh.read() == "\n".join(str(x) for x in obj.to_gff(chromosome_relative_coordinates=True))
+
     def test_gff3_export_exception(self, test_data_dir):
         """Cannot export to GFF3 in relative coordinates without having sequence."""
         obj = self.annot.to_annotation_collection()
