@@ -17,6 +17,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Fixed
 - Some functions on Interval objects were not operating in chromosome coordinates
 - `AnnotationCollection.query_by_position()` was not returning valid results if the parent was a sequence chunk.
+- GFF3 parser was not inferring transcripts for a gene feature with no children.
+- Fixed a bug with missing gene biotypes in GFF3 parsing.
 
 
 ## [0.4.0]

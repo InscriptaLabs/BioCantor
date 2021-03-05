@@ -459,6 +459,77 @@
             "transcripts": [
                 {
                     "exon_starts": [
+                        14816838
+                    ],
+                    "exon_ends": [
+                        14918668
+                    ],
+                    "strand": "MINUS",
+                    "cds_starts": null,
+                    "cds_ends": null,
+                    "cds_frames": null,
+                    "qualifiers": {
+                        "Dbxref": [
+                            "GeneID:107987295",
+                            "HGNC:HGNC:53135"
+                        ],
+                        "description": [
+                            "long intergenic non-protein coding RNA 2246"
+                        ],
+                        "gbkey": [
+                            "Gene"
+                        ],
+                        "gene": [
+                            "LINC02246"
+                        ],
+                        "gene_biotype": [
+                            "invalid"
+                        ],
+                        "provided_biotype": [
+                            "invalid"
+                        ]
+                    },
+                    "is_primary_tx": null,
+                    "transcript_id": null,
+                    "protein_id": null,
+                    "transcript_symbol": null,
+                    "transcript_type": null,
+                    "sequence_name": "NC_000021.9",
+                    "sequence_guid": null,
+                    "transcript_interval_guid": null,
+                    "transcript_guid": null
+                }
+            ],
+            "gene_id": null,
+            "gene_symbol": null,
+            "gene_type": null,
+            "locus_tag": null,
+            "qualifiers": {
+                "Dbxref": [
+                    "GeneID:107987295",
+                    "HGNC:HGNC:53135"
+                ],
+                "description": [
+                    "long intergenic non-protein coding RNA 2246"
+                ],
+                "gbkey": [
+                    "Gene"
+                ],
+                "gene": [
+                    "LINC02246"
+                ],
+                "provided_biotype": [
+                    "invalid"
+                ]
+            },
+            "sequence_name": "NC_000021.9",
+            "sequence_guid": null,
+            "gene_guid": null
+        },
+        {
+            "transcripts": [
+                {
+                    "exon_starts": [
                         14757557
                     ],
                     "exon_ends": [
@@ -521,7 +592,53 @@
             "gene_guid": null
         },
         {
-            "transcripts": [],
+            "transcripts": [
+                {
+                    "exon_starts": [
+                        14774303
+                    ],
+                    "exon_ends": [
+                        14775480
+                    ],
+                    "strand": "PLUS",
+                    "cds_starts": null,
+                    "cds_ends": null,
+                    "cds_frames": null,
+                    "qualifiers": {
+                        "Dbxref": [
+                            "GeneID:387491",
+                            "HGNC:HGNC:23768"
+                        ],
+                        "description": [
+                            "glyceraldehyde-3-phosphate dehydrogenase pseudogene 16"
+                        ],
+                        "gbkey": [
+                            "Gene"
+                        ],
+                        "gene": [
+                            "GAPDHP16"
+                        ],
+                        "gene_biotype": [
+                            "pseudogene"
+                        ],
+                        "gene_synonym": [
+                            "GAPDP16"
+                        ],
+                        "pseudo": [
+                            "true"
+                        ]
+                    },
+                    "is_primary_tx": null,
+                    "transcript_id": null,
+                    "protein_id": null,
+                    "transcript_symbol": null,
+                    "transcript_type": "pseudogene",
+                    "sequence_name": "NC_000021.9",
+                    "sequence_guid": null,
+                    "transcript_interval_guid": null,
+                    "transcript_guid": null
+                }
+            ],
             "gene_id": null,
             "gene_symbol": null,
             "gene_type": "pseudogene",
