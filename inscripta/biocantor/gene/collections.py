@@ -694,6 +694,10 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
     then the sequences will also be automatically included when the :class:`~biocantor.io.parser.ParsedAnnotationRecord`
     is returned.
 
+    *Object Bounds*: If `start` is provided, `end` must be provided, and vice versa. If neither are provided, and a
+    `parent_or_seq_chunk_parent` is provided, then the bounds of this collection will be inferred from that object,
+    if possible. If not possible, the bounds of the collection will be the bounds of the child objects associated.
+
     It is possible to instantiate a :class:`AnnotationCollection` with a ``sequence_chunk`` as well. A
     ``sequence_chunk`` is a slice of a chromosomal sequence that allows operations without loading an entire chromosome
     into memory. The easiest way to produce the parental relationship required for this object to operate on
