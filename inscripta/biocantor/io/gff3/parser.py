@@ -85,8 +85,8 @@ def _parse_genes(chrom: str, db: FeatureDB) -> List[Dict]:
 
         if Biotype.has_name(gene_biotype):
             gene_biotype = Biotype[gene_biotype]
-        else:
-            gene_qualifiers["provided_biotype"] = gene.attributes["gene_biotype"][0]
+        elif gene_biotype:
+            gene_qualifiers["provided_biotype"] = [gene_biotype]
             gene_biotype = None
 
         transcripts = []
@@ -177,6 +177,20 @@ def _parse_genes(chrom: str, db: FeatureDB) -> List[Dict]:
                 transcript_symbol=transcript_symbol,
                 sequence_name=chrom,
                 protein_id=protein_id,
+            )
+            transcripts.append(tx)
+
+        if len(transcripts) == 0:
+            # infer a transcript for a gene
+            logger.info(f"Inferring a transcript for gene {gene_symbol}")
+            tx = dict(
+                exon_starts=[gene.start],
+                exon_ends=[gene.end],
+                strand=Strand.from_symbol(gene.strand).name,
+                qualifiers=gene_qualifiers,
+                transcript_type=gene_biotype.name if gene_biotype else gene_biotype,
+                transcript_id=gene_id,
+                sequence_name=gene.seqid,
             )
             transcripts.append(tx)
 
