@@ -932,27 +932,6 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
             constituent member.
         """
 
-        def filter_collection_for_child_intervals(
-            g_or_fc: Union[GeneInterval, FeatureIntervalCollection]
-        ) -> Optional[Union[GeneInterval, FeatureIntervalCollection]]:
-            """
-            After a subquery, it may be the case that a isoform of a gene or a feature of a feature collection
-            no longer overlap the window in question. In these cases, Parent liftover will fail with a
-            ``LocationOverlapException``. This function catches this case and discards these from the dictionary.
-
-            Args:
-                g_or_fc: The GeneInterval or FeatureIntervalCollection to be filtered.
-
-            Returns:
-                A interval collection with only the appropriate children, or None if the resulting interval
-                is empty.
-            """
-            valid_children_guids = [child.guid for child in g_or_fc if query_loc.has_overlap(child.chromosome_location)]
-            try:
-                return g_or_fc.query_by_guids(valid_children_guids)
-            except InvalidAnnotationError:
-                return None
-
         # bins are only valid if we have start, end and completely_within
         if completely_within and start and end:
             my_bins = bins(start, end, fmt="bed", one=False)
@@ -993,15 +972,19 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
 
             elif coordinate_fn(gene_or_feature_collection.chromosome_location):
 
-                # make sure that every transcript/feature also overlap. Only necessary for partial overlap
-                if coordinate_fn == query_loc.has_overlap:
-                    gene_or_feature_collection = filter_collection_for_child_intervals(gene_or_feature_collection)
-
                 if isinstance(gene_or_feature_collection, FeatureIntervalCollection):
                     features_collections_to_keep.append(gene_or_feature_collection)
                 # could be null if filter_collection_for_child_intervals() returned None
                 elif isinstance(gene_or_feature_collection, GeneInterval):
                     genes_to_keep.append(gene_or_feature_collection)
+
+        # expand the range of the new parent to include the children; only necessary if we are allowing partial overlap
+        if completely_within is False:
+            for g_or_fc in itertools.chain(features_collections_to_keep, genes_to_keep):
+                if g_or_fc.start < start:
+                    start = g_or_fc.start
+                if g_or_fc.end > end:
+                    end = g_or_fc.end
 
         seq_chunk_parent = self._subset_parent(start, end)
 

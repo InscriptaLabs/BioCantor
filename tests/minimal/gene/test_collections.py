@@ -629,7 +629,8 @@ class TestAnnotationCollection:
             (None, 20, False, True, SingleInterval(12, 20, Strand.PLUS)),
             (25, None, False, True, SingleInterval(25, 40, Strand.PLUS)),
             (26, None, False, True, SingleInterval(26, 40, Strand.PLUS)),
-            (12, 13, False, False, SingleInterval(12, 13, Strand.PLUS)),
+            # query from 12-13 with completely_within=False will expand the range to retain the transcripts
+            (12, 13, False, False, SingleInterval(12, 28, Strand.PLUS)),
         ],
     )
     def test_position_queries_location_inferred(self, start, end, completely_within, coding_only, expected):
