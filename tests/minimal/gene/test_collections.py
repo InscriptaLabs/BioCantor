@@ -1,3 +1,5 @@
+from copy import deepcopy
+
 import pytest
 from inscripta.biocantor.exc import (
     InvalidAnnotationError,
@@ -394,13 +396,15 @@ class TestAnnotationCollection:
         assert obj.start == 10 and obj.end == 49
 
     def test_annotation_bounds_exceptions(self):
-        self.annot_no_range.start = 0
+        # hack a copy to avoid inconsistent state
+        annot_no_range = deepcopy(self.annot_no_range)
+        annot_no_range.start = 0
         with pytest.raises(InvalidAnnotationError):
-            _ = self.annot_no_range.to_annotation_collection()
-        self.annot_no_range.start = None
-        self.annot_no_range.end = 10
+            _ = annot_no_range.to_annotation_collection()
+        annot_no_range.start = None
+        annot_no_range.end = 10
         with pytest.raises(InvalidAnnotationError):
-            _ = self.annot_no_range.to_annotation_collection()
+            _ = annot_no_range.to_annotation_collection()
 
     @pytest.mark.parametrize(
         "start,end,coding_only,completely_within,expected",
