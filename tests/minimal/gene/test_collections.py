@@ -22,6 +22,11 @@ from inscripta.biocantor.sequence.sequence import Sequence
 
 genome = "TTTTTTTTTTAAGTATTCTTGGACCTAATTAAAAAAAAAAAAAAAAAAACCCCC"
 parent_genome = Parent(sequence=Sequence(genome, Alphabet.NT_STRICT), sequence_type="chromosome")
+parent_genome_with_location = Parent(
+    sequence=Sequence(genome, Alphabet.NT_STRICT),
+    sequence_type="chromosome",
+    location=SingleInterval(0, len(genome), Strand.PLUS),
+)
 parent_genome_10_49 = Parent(
     sequence=Sequence(
         genome[10:49],
@@ -344,6 +349,28 @@ class TestAnnotationCollection:
                 tx3 = gene3.guid_map[tx1.guid]
                 assert tx1.get_spliced_sequence() == tx3.get_spliced_sequence()
 
+    def test_annotation_collection_bounds(self):
+        """Bounds will be inferred from children, depending on if a parent is provided"""
+        obj = self.annot_no_range.to_annotation_collection()
+        assert obj.start == 12 and obj.end == 40
+        # if we provide a parent with no location information, then we do not shift boundaries
+        obj = self.annot_no_range.to_annotation_collection(parent_genome)
+        assert obj.start == 12 and obj.end == 40
+        # but if we provide a parent with a location, then we retain those boundaries
+        obj = self.annot_no_range.to_annotation_collection(parent_genome_with_location)
+        assert obj.start == 0 and obj.end == 54
+        obj = self.annot_no_range.to_annotation_collection(parent_genome_10_49)
+        assert obj.start == 10 and obj.end == 49
+
+    def test_annotation_bounds_exceptions(self):
+        self.annot_no_range.start = 0
+        with pytest.raises(InvalidAnnotationError):
+            _ = self.annot_no_range.to_annotation_collection()
+        self.annot_no_range.start = None
+        self.annot_no_range.end = 10
+        with pytest.raises(InvalidAnnotationError):
+            _ = self.annot_no_range.to_annotation_collection()
+
     @pytest.mark.parametrize(
         "start,end,coding_only,completely_within,expected",
         [
@@ -482,11 +509,7 @@ class TestAnnotationCollection:
 
     @pytest.mark.parametrize(
         "annot,parent",
-        [
-            (annot, parent)
-            for annot in [annot, annot_full_range]
-            for parent in [parent_genome_10_49, parent_genome]
-        ],
+        [(annot, parent) for annot in [annot, annot_full_range] for parent in [parent_genome_10_49, parent_genome]],
     )
     def test_nested_position_queries(self, annot, parent):
         obj = annot.to_annotation_collection(parent)
@@ -629,6 +652,10 @@ class TestAnnotationCollection:
         obj = self.annot_no_range.to_annotation_collection(parent_or_seq_chunk_parent=parent_genome)
         seq = obj.get_reference_sequence()
         assert str(seq) == genome[12:40]
+        # however, if we use a parent whose location is provided, then we retain more information
+        obj = self.annot_no_range.to_annotation_collection(parent_or_seq_chunk_parent=parent_genome_with_location)
+        seq = obj.get_reference_sequence()
+        assert str(seq) == genome
 
     def test_query_by_ids(self):
         obj = self.annot.to_annotation_collection()

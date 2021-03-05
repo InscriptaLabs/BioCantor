@@ -94,7 +94,9 @@ def seq_to_parent(
     Returns:
          A :class:`Parent` object.
     """
-    return Parent(sequence=Sequence(seq, alphabet, type=seq_type, id=seq_id))
+    return Parent(
+        sequence=Sequence(seq, alphabet, type=seq_type, id=seq_id), location=SingleInterval(0, len(seq), Strand.PLUS)
+    )
 
 
 def seq_chunk_to_parent(
