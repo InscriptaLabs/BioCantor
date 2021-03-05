@@ -1,6 +1,6 @@
 from functools import reduce
 from typing import TypeVar, Optional, Union
-from enum import IntEnum
+from enum import Enum
 
 import inscripta.biocantor
 from inscripta.biocantor.exc import (
@@ -17,9 +17,9 @@ Parent = TypeVar("Parent")
 ParentInputType = TypeVar("ParentInputType")
 
 
-class SequenceType(IntEnum):
-    CHROMOSOME = 1
-    SEQUENCE_CHUNK = 2
+class SequenceType(str, Enum):
+    CHROMOSOME = "chromosome"
+    SEQUENCE_CHUNK = "sequence_chunk"
 
 
 class Parent:
