@@ -16,24 +16,26 @@ from inscripta.biocantor.io.models import (
 )
 from inscripta.biocantor.location.location_impl import SingleInterval
 from inscripta.biocantor.location.strand import Strand
-from inscripta.biocantor.parent.parent import Parent
+from inscripta.biocantor.parent.parent import Parent, SequenceType
 from inscripta.biocantor.sequence.alphabet import Alphabet
 from inscripta.biocantor.sequence.sequence import Sequence
 
 genome = "TTTTTTTTTTAAGTATTCTTGGACCTAATTAAAAAAAAAAAAAAAAAAACCCCC"
-parent_genome = Parent(sequence=Sequence(genome, Alphabet.NT_STRICT), sequence_type="chromosome")
+parent_genome = Parent(sequence=Sequence(genome, Alphabet.NT_STRICT), sequence_type=SequenceType.CHROMOSOME)
 parent_genome_with_location = Parent(
     sequence=Sequence(genome, Alphabet.NT_STRICT),
-    sequence_type="chromosome",
+    sequence_type=SequenceType.CHROMOSOME,
     location=SingleInterval(0, len(genome), Strand.PLUS),
 )
 parent_genome_10_49 = Parent(
     sequence=Sequence(
         genome[10:49],
         Alphabet.NT_EXTENDED_GAPPED,
-        type="sequence_chunk",
+        type=SequenceType.SEQUENCE_CHUNK,
         parent=Parent(
-            location=SingleInterval(10, 49, Strand.PLUS, parent=Parent(id="genome_10_49", sequence_type="chromosome"))
+            location=SingleInterval(
+                10, 49, Strand.PLUS, parent=Parent(id="genome_10_49", sequence_type=SequenceType.CHROMOSOME)
+            )
         ),
     )
 )
@@ -348,6 +350,35 @@ class TestAnnotationCollection:
                 assert tx1.get_spliced_sequence() == tx2.get_spliced_sequence()
                 tx3 = gene3.guid_map[tx1.guid]
                 assert tx1.get_spliced_sequence() == tx3.get_spliced_sequence()
+
+    def test_equivalent_sequences_all(self):
+        """Regardless of which start/end position was used, sequences are invariant"""
+        obj = self.annot.to_annotation_collection(parent_genome_10_49)
+        obj2 = self.annot_full_range.to_annotation_collection(parent_genome_10_49)
+        obj3 = self.annot_no_range.to_annotation_collection(parent_genome_10_49)
+        obj4 = self.annot.to_annotation_collection(parent_genome)
+        obj5 = self.annot_full_range.to_annotation_collection(parent_genome)
+        obj6 = self.annot_no_range.to_annotation_collection(parent_genome)
+        obj7 = self.annot.to_annotation_collection(parent_genome_with_location)
+        obj8 = self.annot_full_range.to_annotation_collection(parent_genome_with_location)
+        obj9 = self.annot_no_range.to_annotation_collection(parent_genome_with_location)
+
+        objects = [obj, obj2, obj3, obj4, obj5, obj6, obj7, obj8, obj9]
+
+        assert len({len(x) for x in objects}) == 1
+        for gene in obj:
+            for other_obj in objects[1:]:
+                ogene = next(other_obj.query_by_feature_identifiers(gene.identifiers).iter_children())
+                for tx1 in gene:
+                    tx2 = ogene.guid_map[tx1.guid]
+                    # could be a subset now
+                    if len(tx1) < len(tx2):
+                        assert str(tx1.get_spliced_sequence()) in str(tx2.get_spliced_sequence())
+                    elif len(tx1) == len(tx2):
+                        assert str(tx1.get_spliced_sequence()) == str(tx2.get_spliced_sequence())
+                    else:
+                        # cannot be longer, since obj is the subset here
+                        assert False
 
     def test_annotation_collection_bounds(self):
         """Bounds will be inferred from children, depending on if a parent is provided"""

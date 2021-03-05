@@ -5,18 +5,18 @@ from inscripta.biocantor.io.models import FeatureIntervalModel
 from inscripta.biocantor.gene.feature import NullSequenceException
 from inscripta.biocantor.location.location_impl import SingleInterval, CompoundInterval
 from inscripta.biocantor.location.strand import Strand
-from inscripta.biocantor.parent.parent import Parent
+from inscripta.biocantor.parent.parent import Parent, SequenceType
 from inscripta.biocantor.sequence.alphabet import Alphabet
 from inscripta.biocantor.sequence.sequence import Sequence
 
 # these features will be shared across all tests
 genome = "GTATTCTTGGACCTAATT"
-parent = Parent(sequence=Sequence(genome, Alphabet.NT_STRICT), sequence_type="chromosome")
+parent = Parent(sequence=Sequence(genome, Alphabet.NT_STRICT), sequence_type=SequenceType.CHROMOSOME)
 # offset the genome to show parent
 genome2 = "AAGTATTCTTGGACCTAATT"
-parent_genome2 = Parent(sequence=Sequence(genome2, Alphabet.NT_STRICT), sequence_type="chromosome")
+parent_genome2 = Parent(sequence=Sequence(genome2, Alphabet.NT_STRICT), sequence_type=SequenceType.CHROMOSOME)
 parent_genome2_minus = Parent(
-    sequence=Sequence(genome2, Alphabet.NT_STRICT), strand=Strand.MINUS, sequence_type="chromosome"
+    sequence=Sequence(genome2, Alphabet.NT_STRICT), strand=Strand.MINUS, sequence_type=SequenceType.CHROMOSOME
 )
 
 # slice the genome down to contain some of the transcripts
@@ -24,9 +24,11 @@ parent_genome2_1_15 = Parent(
     sequence=Sequence(
         genome2[1:15],
         Alphabet.NT_EXTENDED_GAPPED,
-        type="sequence_chunk",
+        type=SequenceType.SEQUENCE_CHUNK,
         parent=Parent(
-            location=SingleInterval(1, 15, Strand.PLUS, parent=Parent(id="genome_1_15", sequence_type="chromosome"))
+            location=SingleInterval(
+                1, 15, Strand.PLUS, parent=Parent(id="genome_1_15", sequence_type=SequenceType.CHROMOSOME)
+            )
         ),
     )
 )
@@ -36,9 +38,11 @@ parent_genome2_2_8 = Parent(
     sequence=Sequence(
         genome2[2:8],
         Alphabet.NT_EXTENDED_GAPPED,
-        type="sequence_chunk",
+        type=SequenceType.SEQUENCE_CHUNK,
         parent=Parent(
-            location=SingleInterval(2, 8, Strand.PLUS, parent=Parent(id="genome_2_8", sequence_type="chromosome"))
+            location=SingleInterval(
+                2, 8, Strand.PLUS, parent=Parent(id="genome_2_8", sequence_type=SequenceType.CHROMOSOME)
+            )
         ),
     )
 )
@@ -227,7 +231,9 @@ class TestFeatureInterval:
 
     def test_no_such_ancestor(self):
         with pytest.raises(NullSequenceException):
-            _ = se_unspliced.to_feature_interval(parent_or_seq_chunk_parent=Parent(sequence_type="chromosome"))
+            _ = se_unspliced.to_feature_interval(
+                parent_or_seq_chunk_parent=Parent(sequence_type=SequenceType.CHROMOSOME)
+            )
 
     @pytest.mark.parametrize(
         "schema,parent,expected_spliced",
@@ -493,8 +499,8 @@ class TestFeatureIntervalSequenceSubset:
         "schema,parent,expected_exception",
         [
             [e3_spliced, Parent(), ValidationException],
-            [e3_spliced_minus, Parent(sequence_type="chromosome"), NullSequenceException],
-            [se_unspliced, Parent(sequence_type="sequence_chunk"), NullSequenceException],
+            [e3_spliced_minus, Parent(sequence_type=SequenceType.CHROMOSOME), NullSequenceException],
+            [se_unspliced, Parent(sequence_type=SequenceType.SEQUENCE_CHUNK), NullSequenceException],
         ],
     )
     def test_constructor_exceptions(self, schema, parent, expected_exception):

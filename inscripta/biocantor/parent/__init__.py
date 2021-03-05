@@ -6,7 +6,7 @@ relationship with its child object through a variety of optional constructor par
 
 from functools import singledispatch
 
-from inscripta.biocantor.parent.parent import Parent
+from inscripta.biocantor.parent.parent import Parent, SequenceType
 
 
 @singledispatch

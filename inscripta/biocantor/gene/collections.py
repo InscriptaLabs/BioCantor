@@ -35,7 +35,7 @@ from inscripta.biocantor.io.gff3.rows import GFFRow, GFFAttributes
 from inscripta.biocantor.location import Location
 from inscripta.biocantor.location.location_impl import SingleInterval, EmptyLocation
 from inscripta.biocantor.location.strand import Strand
-from inscripta.biocantor.parent.parent import Parent
+from inscripta.biocantor.parent.parent import Parent, SequenceType
 from inscripta.biocantor.sequence import Sequence
 from inscripta.biocantor.util.bins import bins
 from inscripta.biocantor.util.hashing import digest_object
@@ -102,7 +102,7 @@ class AbstractFeatureIntervalCollection(AbstractInterval, ABC):
         """
         self._location = SingleInterval(start, end, Strand.PLUS)
         if parent_or_seq_chunk_parent:
-            if parent_or_seq_chunk_parent.has_ancestor_of_type("sequence_chunk"):
+            if parent_or_seq_chunk_parent.has_ancestor_of_type(SequenceType.SEQUENCE_CHUNK):
                 super()._liftover_this_location_to_seq_chunk_parent(parent_or_seq_chunk_parent)
             else:
                 self.reset_parent(parent_or_seq_chunk_parent)
@@ -411,7 +411,7 @@ class GeneInterval(AbstractFeatureIntervalCollection):
         if not self.sequence_name:
             raise GFF3MissingSequenceNameError("Must have sequence names to export to GFF3.")
 
-        if not chromosome_relative_coordinates and not self.has_ancestor_of_type("sequence_chunk"):
+        if not chromosome_relative_coordinates and not self.has_ancestor_of_type(SequenceType.SEQUENCE_CHUNK):
             raise NoSuchAncestorException(
                 "Cannot export GFF in relative coordinates without a sequence_chunk ancestor."
             )
@@ -641,7 +641,7 @@ class FeatureIntervalCollection(AbstractFeatureIntervalCollection):
         if not self.sequence_name:
             raise GFF3MissingSequenceNameError("Must have sequence names to export to GFF3.")
 
-        if not chromosome_relative_coordinates and not self.has_ancestor_of_type("sequence_chunk"):
+        if not chromosome_relative_coordinates and not self.has_ancestor_of_type(SequenceType.SEQUENCE_CHUNK):
             raise NoSuchAncestorException(
                 "Cannot export GFF in relative coordinates without a sequence_chunk ancestor."
             )
@@ -682,7 +682,24 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
     If no start/end points are provided, the interval for this collection is the min/max of the data it contains. The
     interval for an AnnotationCollection is always on the plus strand.
 
-    An AnnotationCollection can be empty.
+    An AnnotationCollection can be empty (both ``feature_collections`` and ``genes`` can be ``None``).
+
+    The object provided to ``parent_or_seq_chunk_parent`` must have a ``chromosome`` sequence-type in its ancestry,
+    and there must be associated sequence. This object should look like the object produced by the function
+    :meth:`biocantor.io.parser.seq_to_parent()`, and represent a full chromosome sequence. This will be automatically
+    instantiated if you use the constructor method in :class:`biocantor.io.parser.ParsedAnnotationRecord`,
+    which will import the sequence from a BioPython ``SeqRecord`` object.
+
+    If you are using file parsers, then if the associated file types have sequence information (GenBank or GFF3+FASTA),
+    then the sequences will also be automatically included when the :class:`~biocantor.io.parser.ParsedAnnotationRecord`
+    is returned.
+
+    It is possible to instantiate a :class:`AnnotationCollection` with a ``sequence_chunk`` as well. A
+    ``sequence_chunk`` is a slice of a chromosomal sequence that allows operations without loading an entire chromosome
+    into memory. The easiest way to produce the parental relationship required for this object to operate on
+    ``sequence_chunk`` is to instantiate via the constructor :meth:`biocantor.io.parser.seq_chunk_to_parent()`,
+    to which you provide the slice of sequence, the chromosomal start/end positions of that slice, and a sequence name,
+    and the returned Parent object will be suitable for passing to this class.
     """
 
     _identifiers = ["name"]
@@ -728,8 +745,8 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
         elif start is None:
             # build the start/end coordinates of this collection. Start by looking at the provided parent
             # to use the coordinates provided there.
-            if parent_or_seq_chunk_parent and parent_or_seq_chunk_parent.has_ancestor_of_type("chromosome"):
-                chrom_parent = parent_or_seq_chunk_parent.first_ancestor_of_type("chromosome")
+            if parent_or_seq_chunk_parent and parent_or_seq_chunk_parent.has_ancestor_of_type(SequenceType.CHROMOSOME):
+                chrom_parent = parent_or_seq_chunk_parent.first_ancestor_of_type(SequenceType.CHROMOSOME)
                 if chrom_parent.location:
                     start = chrom_parent.location.start
                     end = chrom_parent.location.end
@@ -857,15 +874,19 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
         if start == self.start and end == self.end:
             return self.chunk_relative_location.parent
 
-        chunk_relative_start = self.lift_over_to_first_ancestor_of_type("chromosome").parent_to_relative_pos(start)
+        chunk_relative_start = self.lift_over_to_first_ancestor_of_type(SequenceType.CHROMOSOME).parent_to_relative_pos(
+            start
+        )
 
         # handle the edge case where the end is the end of the current chunk
         if end == self.end:
             chunk_relative_end = (
-                self.lift_over_to_first_ancestor_of_type("chromosome").parent_to_relative_pos(end - 1) + 1
+                self.lift_over_to_first_ancestor_of_type(SequenceType.CHROMOSOME).parent_to_relative_pos(end - 1) + 1
             )
         else:
-            chunk_relative_end = self.lift_over_to_first_ancestor_of_type("chromosome").parent_to_relative_pos(end)
+            chunk_relative_end = self.lift_over_to_first_ancestor_of_type(
+                SequenceType.CHROMOSOME
+            ).parent_to_relative_pos(end)
 
         seq_subset = self.chunk_relative_location.extract_sequence()[chunk_relative_start:chunk_relative_end]
 
@@ -874,13 +895,13 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
             sequence=Sequence(
                 str(seq_subset),
                 self.chunk_relative_location.parent.sequence.alphabet,
-                type="sequence_chunk",
+                type=SequenceType.SEQUENCE_CHUNK,
                 parent=Parent(
                     location=SingleInterval(
                         start,
                         end,
                         Strand.PLUS,
-                        parent=Parent(id=self.sequence_name, sequence_type="chromosome"),
+                        parent=Parent(id=self.sequence_name, sequence_type=SequenceType.CHROMOSOME),
                     )
                 ),
             ),

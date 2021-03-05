@@ -11,25 +11,27 @@ from inscripta.biocantor.gene.cds import CDSFrame
 from inscripta.biocantor.io.models import TranscriptIntervalModel
 from inscripta.biocantor.location.location_impl import SingleInterval, CompoundInterval, EmptyLocation
 from inscripta.biocantor.location.strand import Strand
-from inscripta.biocantor.parent.parent import Parent
+from inscripta.biocantor.parent.parent import Parent, SequenceType
 from inscripta.biocantor.sequence.alphabet import Alphabet
 from inscripta.biocantor.sequence.sequence import Sequence
 
 # these features will be shared across all tests
 genome = "GTATTCTTGGACCTAATT"
-parent = Parent(sequence=Sequence(genome, Alphabet.NT_STRICT), sequence_type="chromosome")
+parent = Parent(sequence=Sequence(genome, Alphabet.NT_STRICT), sequence_type=SequenceType.CHROMOSOME)
 # offset the genome to show parent
 genome2 = "AAGTATTCTTGGACCTAATT"
-parent_genome2 = Parent(sequence=Sequence(genome2, Alphabet.NT_STRICT), sequence_type="chromosome")
+parent_genome2 = Parent(sequence=Sequence(genome2, Alphabet.NT_STRICT), sequence_type=SequenceType.CHROMOSOME)
 
 # slice the genome down to contain some of the transcripts
 parent_genome2_1_15 = Parent(
     sequence=Sequence(
         genome2[1:15],
         Alphabet.NT_EXTENDED_GAPPED,
-        type="sequence_chunk",
+        type=SequenceType.SEQUENCE_CHUNK,
         parent=Parent(
-            location=SingleInterval(1, 15, Strand.PLUS, parent=Parent(id="genome_1_15", sequence_type="chromosome"))
+            location=SingleInterval(
+                1, 15, Strand.PLUS, parent=Parent(id="genome_1_15", sequence_type=SequenceType.CHROMOSOME)
+            )
         ),
     )
 )
@@ -420,7 +422,9 @@ class TestTranscript:
 
     def test_no_such_ancestor(self):
         with pytest.raises(NullSequenceException):
-            _ = se_unspliced.to_transcript_interval(parent_or_seq_chunk_parent=Parent(sequence_type="chromosome"))
+            _ = se_unspliced.to_transcript_interval(
+                parent_or_seq_chunk_parent=Parent(sequence_type=SequenceType.CHROMOSOME)
+            )
 
     @pytest.mark.parametrize(
         "schema,value,expected",
@@ -867,7 +871,7 @@ class TestTranscript:
 
     def test_frameshifted(self):
         genome = "ATGGGGTGATGA"
-        parent_genome = Parent(sequence=Sequence(genome, Alphabet.NT_STRICT), sequence_type="chromosome")
+        parent_genome = Parent(sequence=Sequence(genome, Alphabet.NT_STRICT), sequence_type=SequenceType.CHROMOSOME)
         tx = dict(
             exon_starts=[0],
             exon_ends=[12],

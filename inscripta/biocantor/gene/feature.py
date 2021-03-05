@@ -21,7 +21,7 @@ from inscripta.biocantor.io.gff3.rows import GFFAttributes, GFFRow
 from inscripta.biocantor.location.location import Location
 from inscripta.biocantor.location.location_impl import SingleInterval, CompoundInterval
 from inscripta.biocantor.location.strand import Strand
-from inscripta.biocantor.parent.parent import Parent
+from inscripta.biocantor.parent.parent import Parent, SequenceType
 from inscripta.biocantor.sequence.sequence import Sequence
 from inscripta.biocantor.util.bins import bins
 from inscripta.biocantor.util.hashing import digest_object
@@ -34,7 +34,14 @@ QualifierValue = TypeVar("QualifierValue", str, int, bool, float)
 
 class AbstractInterval(ABC):
     """This is a wrapper over :class:`~biocantor.location.Location` that adds metadata coordinate transformation
-    QOL functions."""
+    QOL functions.
+
+    All operations on coordinates are assumed to operate in chromosome–relative coordiantes unless otherwise specified.
+    All constructors use chromosome relative coordinates as well. If you want to operate on coordinate systems that
+    are a subset of a chromosome, you must instantiate a Parent object that provides the coordinate relationship.
+
+    A function to help you build these relationships can be found at :meth:`biocantor.io.parser.seq_chunk_to_parent()`.
+    """
 
     _location: Location
     _identifiers: List[Union[str, UUID]]
@@ -61,7 +68,12 @@ class AbstractInterval(ABC):
     @abstractmethod
     def to_dict(self, chromosome_relative_coordinates: bool = True) -> Dict[str, Any]:
         """Dictionary to build Model representation. Defaults to always exporting in original chromosome
-        relative coordinates, but this can be disabled to export in sequence-chunk relative coordinates."""
+        relative coordinates, but this can be disabled to export in sequence-chunk relative coordinates.
+
+        If you have exported to sequence-chunk relative coordinates, and then try to re-instantiate, the subsequent
+        object will now consider these new coordinates to be the original chromosome coordinates, and the relationship
+        back to the true coordinates will be lost.
+        """
 
     @staticmethod
     @abstractmethod
@@ -119,7 +131,7 @@ class AbstractInterval(ABC):
         will return a location without sequence information. Please be careful using the location member
         directly!
         """
-        return self.lift_over_to_first_ancestor_of_type("chromosome")
+        return self.lift_over_to_first_ancestor_of_type(SequenceType.CHROMOSOME)
 
     @property
     def chunk_relative_location(self) -> Location:
@@ -191,10 +203,10 @@ class AbstractInterval(ABC):
                 sequence=Sequence(
                     genome2[1:15],
                     Alphabet.NT_EXTENDED_GAPPED,
-                    type="sequence_chunk",
+                    type=SequenceType.SEQUENCE_CHUNK,
                     parent=Parent(
                         location=SingleInterval(1, 15, Strand.PLUS,
-                                               parent=Parent(id="genome_1_15", sequence_type="chromosome"))
+                                               parent=Parent(id="genome_1_15", sequence_type=SequenceType.CHROMOSOME))
                     ),
                 )
             )
@@ -204,7 +216,7 @@ class AbstractInterval(ABC):
 
         .. code:: python
 
-            parent = Parent(id="chr1", sequence=Sequence(genome, Alphabet.NT_STRICT, type="chromosome"))
+            parent = Parent(id="chr1", sequence=Sequence(genome, Alphabet.NT_STRICT, type=SequenceType.CHROMOSOME))
 
         This convenience function detects which kind of parent is given, and sets up the appropriate location.
 
@@ -224,9 +236,9 @@ class AbstractInterval(ABC):
         if parent_or_seq_chunk_parent is None:
             return location
 
-        elif parent_or_seq_chunk_parent.has_ancestor_of_type("sequence_chunk"):
+        elif parent_or_seq_chunk_parent.has_ancestor_of_type(SequenceType.SEQUENCE_CHUNK):
 
-            chunk_parent = parent_or_seq_chunk_parent.first_ancestor_of_type("sequence_chunk")
+            chunk_parent = parent_or_seq_chunk_parent.first_ancestor_of_type(SequenceType.SEQUENCE_CHUNK)
             if not chunk_parent.sequence:
                 raise NullSequenceException("Must have a sequence if a parent is provided.")
 
@@ -237,8 +249,8 @@ class AbstractInterval(ABC):
             return interval_rel_to_chunk
 
         # since this is a whole genome, we don't need to lift anything up
-        elif parent_or_seq_chunk_parent.has_ancestor_of_type("chromosome"):
-            if not parent_or_seq_chunk_parent.first_ancestor_of_type("chromosome").sequence:
+        elif parent_or_seq_chunk_parent.has_ancestor_of_type(SequenceType.CHROMOSOME):
+            if not parent_or_seq_chunk_parent.first_ancestor_of_type(SequenceType.CHROMOSOME).sequence:
                 raise NullSequenceException("Must have a sequence if a parent is provided.")
 
             return location.reset_parent(parent_or_seq_chunk_parent)
@@ -268,8 +280,8 @@ class AbstractInterval(ABC):
         construction of a interval class.
         """
         # if we are already a subset, we need to first lift back to genomic coordinates before lifting to this chunk
-        if self._location.has_ancestor_of_type("sequence_chunk"):
-            location = self._location.lift_over_to_first_ancestor_of_type("chromosome").reset_parent(
+        if self._location.has_ancestor_of_type(SequenceType.SEQUENCE_CHUNK):
+            location = self._location.lift_over_to_first_ancestor_of_type(SequenceType.CHROMOSOME).reset_parent(
                 seq_chunk_parent.parent
             )
         else:
@@ -290,19 +302,21 @@ class AbstractInterval(ABC):
         """
         self._location = self._location.reset_parent(parent)
 
-    def has_ancestor_of_type(self, ancestor_type: str) -> bool:
+    def has_ancestor_of_type(self, ancestor_type: Union[str, SequenceType]) -> bool:
         """
         Convenience function that wraps location.has_ancestor_of_type().
         """
         return self._location.has_ancestor_of_type(ancestor_type)
 
-    def first_ancestor_of_type(self, ancestor_type: str) -> Parent:
+    def first_ancestor_of_type(self, ancestor_type: Union[str, SequenceType]) -> Parent:
         """
         Convenience function that returns the first ancestor of this type.
         """
         return self._location.first_ancestor_of_type(ancestor_type)
 
-    def lift_over_to_first_ancestor_of_type(self, sequence_type: Optional[str] = "chromosome") -> Location:
+    def lift_over_to_first_ancestor_of_type(
+        self, sequence_type: Optional[Union[str, SequenceType]] = SequenceType.CHROMOSOME
+    ) -> Location:
         """
         Lifts the location member to another coordinate system. Is a no-op if there is no parent assigned.
 
@@ -678,7 +692,7 @@ class FeatureInterval(AbstractFeatureInterval):
         if not self.sequence_name:
             raise GFF3MissingSequenceNameError("Must have sequence names to export to GFF3.")
 
-        if not chromosome_relative_coordinates and not self.has_ancestor_of_type("sequence_chunk"):
+        if not chromosome_relative_coordinates and not self.has_ancestor_of_type(SequenceType.SEQUENCE_CHUNK):
             raise NoSuchAncestorException(
                 "Cannot export GFF in relative coordinates without a sequence_chunk ancestor."
             )

@@ -13,7 +13,7 @@ from inscripta.biocantor.io.fasta.exc import FastaExportError
 from inscripta.biocantor.io.models import AnnotationCollectionModel
 from inscripta.biocantor.location.location_impl import SingleInterval
 from inscripta.biocantor.location.strand import Strand
-from inscripta.biocantor.parent import Parent
+from inscripta.biocantor.parent import Parent, SequenceType
 from inscripta.biocantor.sequence.alphabet import Alphabet
 from inscripta.biocantor.sequence.sequence import Sequence
 
@@ -78,7 +78,7 @@ def seq_to_parent(
     seq: str,
     alphabet: Optional[Alphabet] = Alphabet.NT_EXTENDED_GAPPED,
     seq_id: Optional[str] = None,
-    seq_type: Optional[str] = "chromosome",
+    seq_type: Optional[str] = SequenceType.CHROMOSOME,
 ) -> Parent:
     """Convert a string into a Parent object. This is the intermediate that transfers a BioPython sequence object to
     a BioCantor sequence object.
@@ -127,13 +127,13 @@ def seq_chunk_to_parent(
         sequence=Sequence(
             seq,
             alphabet,
-            type="sequence_chunk",
+            type=SequenceType.SEQUENCE_CHUNK,
             parent=Parent(
                 location=SingleInterval(
                     start,
                     end,
                     Strand.PLUS,
-                    parent=Parent(id=sequence_name, sequence_type="chromosome"),
+                    parent=Parent(id=sequence_name, sequence_type=SequenceType.CHROMOSOME),
                 )
             ),
         ),
