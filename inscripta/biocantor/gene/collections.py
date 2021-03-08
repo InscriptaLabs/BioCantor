@@ -917,6 +917,7 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
         end: Optional[int] = None,
         coding_only: Optional[bool] = False,
         completely_within: Optional[bool] = True,
+
     ) -> "AnnotationCollection":
         """Filter this annotation collection object based on positions, sequence, and boolean flags.
 
@@ -924,7 +925,7 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
             start: Genome relative start position. If not set, will be 0.
             end: Genome relative end position. If not set, will be unbounded.
             coding_only: Filter for coding genes only?
-            completely_within: Strict *query* boundaries? If False, features that partially overlap
+            completely_within: Strict *query* boundaries? If ``False``, features that partially overlap
                 will be included in the output. Bins optimization cannot be used.
 
         Returns:
@@ -952,6 +953,8 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
             )
         elif end > self.end:
             raise InvalidQueryError(f"End {end} must be within bounds of current interval [{self.start}-{self.end})")
+        elif start == end:
+            raise InvalidQueryError("Cannot query a 0bp interval (start must not be the same as end).")
 
         query_loc = SingleInterval(start, end, Strand.PLUS, parent=self.chromosome_location.parent)
         if completely_within:

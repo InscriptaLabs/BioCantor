@@ -2712,9 +2712,18 @@ class TestSingleInterval:
         ],
     )
     def test_intersection_single_interval(self, interval, other, match_strand, expected):
-        assert interval.intersection(other, match_strand) == expected
+        # full span has no effect when they are both single intervals
+        assert (
+            interval.intersection(other, match_strand)
+            == interval.intersection(other, match_strand, full_span=True)
+            == expected
+        )
         if match_strand:
-            assert other.intersection(interval, match_strand) == expected
+            assert (
+                other.intersection(interval, match_strand)
+                == interval.intersection(other, match_strand, full_span=True)
+                == expected
+            )
 
     @pytest.mark.parametrize(
         "compound_interval,single_interval,match_strand,expected",
@@ -3178,7 +3187,9 @@ class TestSingleInterval:
         ],
     )
     def test_contains_single_interval(self, interval, other, match_strand, expected):
-        assert interval.contains(other, match_strand) is expected
+        assert (
+            interval.contains(other, match_strand) == interval.contains(other, match_strand, full_span=True) == expected
+        )
 
     @pytest.mark.parametrize(
         "interval,other,match_strand,expected",
@@ -3228,6 +3239,42 @@ class TestSingleInterval:
     )
     def test_contains_compound_interval(self, interval, other, match_strand, expected):
         assert interval.contains(other, match_strand) is expected
+
+    @pytest.mark.parametrize(
+        "interval,other,match_strand,expected",
+        [
+            # Overlapping
+            (
+                SingleInterval(0, 30, Strand.PLUS),
+                CompoundInterval([5, 20], [15, 25], Strand.PLUS),
+                False,
+                True,
+            ),
+            # No overlap
+            (
+                SingleInterval(30, 40, Strand.PLUS),
+                CompoundInterval([5, 20], [15, 25], Strand.PLUS),
+                False,
+                False,
+            ),
+            # Contains one block of other
+            (
+                SingleInterval(0, 20, Strand.PLUS),
+                CompoundInterval([5, 20], [15, 25], Strand.PLUS),
+                False,
+                False,
+            ),
+            # Contained in other
+            (
+                SingleInterval(5, 10, Strand.PLUS),
+                CompoundInterval([5, 20], [15, 25], Strand.PLUS),
+                False,
+                False,
+            ),
+        ],
+    )
+    def test_contains_compound_interval_full_span(self, interval, other, match_strand, expected):
+        assert interval.contains(other, match_strand, full_span=True) is expected
 
     @pytest.mark.parametrize(
         "location,expected_output",

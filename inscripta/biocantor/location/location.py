@@ -81,6 +81,11 @@ class Location(ABC):
     def is_overlapping(self) -> bool:
         """Returns True if this interval contains overlaps; always False for SingleInterval"""
 
+    @property
+    @abstractmethod
+    def _full_span_interval(self) -> "Location":
+        """Returns the full span of this interval; is trivial for a SingleInterval and EmptyLocation"""
+
     @abstractmethod
     def scan_blocks(self) -> Iterator["Location"]:
         """Returns an iterator over blocks in order relative to strand of this Location"""
@@ -202,7 +207,7 @@ class Location(ABC):
             yield self.relative_interval_to_parent_location(curr_start, curr_start + window_size, Strand.PLUS)
 
     @abstractmethod
-    def has_overlap(self, other: "Location", match_strand: bool = False) -> bool:
+    def has_overlap(self, other: "Location", match_strand: bool = False, full_span: bool = False) -> bool:
         """Returns True iff this Location shares at least one position with the given Location.
         For subclasses representing discontiguous locations, regions between blocks are not considered.
 
@@ -313,7 +318,7 @@ class Location(ABC):
         return lifted_to_grandparent.lift_over_to_sequence(sequence)
 
     @abstractmethod
-    def intersection(self, other: "Location", match_strand: bool = True) -> "Location":
+    def intersection(self, other: "Location", match_strand: bool = True, full_span: bool = False) -> "Location":
         """Returns a new Location representing the intersection of this Location with the other Location.
         Returned Location, if nonempty, has the same Strand as this Location. This operation is commutative
         if match_strand is True.
@@ -372,11 +377,16 @@ class Location(ABC):
             Non-negative integer: amount to extend downstream relative to Strand
         """
 
-    def contains(self, other: "Location", match_strand: bool = False):
+    def contains(self, other: "Location", match_strand: bool = False, full_span: bool = False):
         """Returns True iff this location contains the other"""
-        if not self.has_overlap(other, match_strand):
+        if not self.has_overlap(other, match_strand, full_span):
             return False
         other_to_compare = other.reset_parent(None)
-        return len(self.reset_parent(None).intersection(other_to_compare, match_strand=match_strand)) == len(
-            other_to_compare
-        )
+        if full_span is False:
+            return len(
+                self.reset_parent(None).intersection(other_to_compare, match_strand=match_strand, full_span=full_span)
+            ) == len(other_to_compare)
+        else:
+            return len(
+                self.reset_parent(None).intersection(other_to_compare, match_strand=match_strand, full_span=full_span)
+            ) == len(other_to_compare._full_span_interval)

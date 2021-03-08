@@ -94,6 +94,10 @@ class SingleInterval(Location):
         """SingleInterval is by definition always non-overlapping"""
         return False
 
+    @property
+    def _full_span_interval(self) -> Location:
+        return self
+
     def __eq__(self, other):
         if type(other) is not SingleInterval:
             return False
@@ -204,7 +208,7 @@ class SingleInterval(Location):
             parent=new_parent,
         )
 
-    def has_overlap(self, other: Location, match_strand: bool = False) -> bool:
+    def has_overlap(self, other: Location, match_strand: bool = False, full_span: bool = False) -> bool:
         # Todo: Should this always be 'False'?  If our intervals are on different chromosomes, they can't overlap
         #   (chr1:100-200 doesn't overlap chr2:150-250) but just because they have different parents doesn't mean
         #   they can't overlap...
@@ -220,7 +224,7 @@ class SingleInterval(Location):
         if type(other) is SingleInterval:
             return self._has_overlap_single_interval(other)
         else:
-            return other.has_overlap(self, match_strand)
+            return other.has_overlap(self, match_strand, full_span)
 
     def _has_overlap_single_interval(self, other: Location) -> bool:
         ObjectValidation.require_object_has_type(other, SingleInterval)
@@ -274,12 +278,12 @@ class SingleInterval(Location):
             return max(distances)
         raise NotImplementedError(f"Distance type not implemented: {distance_type.value}")
 
-    def intersection(self, other: Location, match_strand: bool = True) -> Location:
-        if not self.has_overlap(other, match_strand=match_strand):
+    def intersection(self, other: Location, match_strand: bool = True, full_span: bool = False) -> Location:
+        if not self.has_overlap(other, match_strand=match_strand, full_span=full_span):
             return EmptyLocation()
         if type(other) is SingleInterval:
             return self._intersection_single_interval(other)
-        intersect_other_strand = other.intersection(self, match_strand=match_strand)
+        intersect_other_strand = other.intersection(self, match_strand=match_strand, full_span=full_span)
         return intersect_other_strand.reset_strand(self.strand)
 
     def _intersection_single_interval(self, other: Location) -> Location:
@@ -495,6 +499,10 @@ class CompoundInterval(Location):
     def blocks(self) -> List[Location]:
         return self._single_intervals
 
+    @property
+    def _full_span_interval(self) -> SingleInterval:
+        return SingleInterval(self.start, self.end, self.strand, self.parent)
+
     def scan_blocks(self) -> Iterator[SingleInterval]:
         self.strand.assert_directional()
         if self.strand == Strand.PLUS:
@@ -612,8 +620,11 @@ class CompoundInterval(Location):
         )
         return intersect_same_strand.reset_strand(relative_strand.relative_to(self.strand))
 
-    def has_overlap(self, other: Location, match_strand: bool = False) -> bool:
-        return any([interval.has_overlap(other, match_strand) for interval in self._single_intervals])
+    def has_overlap(self, other: Location, match_strand: bool = False, full_span: bool = False) -> bool:
+        if full_span:
+            return self._full_span_interval.has_overlap(other, match_strand, full_span)
+        else:
+            return any((interval.has_overlap(other, match_strand, full_span) for interval in self._single_intervals))
 
     def optimize_blocks(self) -> Location:
         """
@@ -734,34 +745,45 @@ class CompoundInterval(Location):
         else:
             raise NotImplementedError(f"Unknown distance type {distance_type.value}")
 
-    def intersection(self, other: Location, match_strand: bool = True) -> Location:
-        if not self.has_overlap(other, match_strand=match_strand):
+    def intersection(self, other: Location, match_strand: bool = True, full_span: bool = False) -> Location:
+        if not self.has_overlap(other, match_strand=match_strand, full_span=full_span):
             return EmptyLocation()
         if type(other) is SingleInterval:
-            return self._intersection_single_interval(other, match_strand=match_strand)
+            return self._intersection_single_interval(other, match_strand=match_strand, full_span=full_span)
         if type(other) is CompoundInterval:
-            return self._intersection_compound_interval(other, match_strand=match_strand)
+            return self._intersection_compound_interval(other, match_strand=match_strand, full_span=full_span)
         raise UnsupportedOperationException(f"Not implemented for type {type(other)}")
 
-    def _intersection_single_interval(self, other: Location, match_strand: bool) -> Location:
+    def _intersection_single_interval(self, other: Location, match_strand: bool, full_span: bool = False) -> Location:
         ObjectValidation.require_object_has_type(other, SingleInterval)
         interval_intersections = []
-        for single_interval in self._single_intervals:
-            if single_interval.has_overlap(other, match_strand=match_strand):
-                interval_intersections.append(single_interval.intersection(other, match_strand=match_strand))
-        return CompoundInterval._from_single_intervals_no_validation(interval_intersections).optimize_blocks()
+        if full_span is False:
+            for single_interval in self._single_intervals:
+                if single_interval.has_overlap(other, match_strand=match_strand):
+                    interval_intersections.append(single_interval.intersection(other, match_strand=match_strand))
+            return CompoundInterval._from_single_intervals_no_validation(interval_intersections).optimize_blocks()
+        else:
+            return self._full_span_interval.intersection(other, match_strand)
 
-    def _intersection_compound_interval(self, other: Location, match_strand: bool) -> Location:
+    def _intersection_compound_interval(self, other: Location, match_strand: bool, full_span: bool = False) -> Location:
         ObjectValidation.require_object_has_type(other, CompoundInterval)
-        interval_intersections = []
-        for self_single_interval in self._single_intervals:
-            if self_single_interval.has_overlap(other, match_strand=match_strand):
-                for other_single_interval in other.blocks:
-                    if self_single_interval.has_overlap(other_single_interval, match_strand=match_strand):
-                        interval_intersections.append(
-                            self_single_interval.intersection(other_single_interval, match_strand=match_strand)
-                        )
-        return CompoundInterval._from_single_intervals_no_validation(interval_intersections).optimize_blocks()
+        if full_span:
+            fs = SingleInterval(self.start, self.end, self.strand, parent=self.parent)
+            return fs.intersection(other, match_strand, full_span=full_span)
+        else:
+            interval_intersections = []
+            for self_single_interval in self._single_intervals:
+                if self_single_interval.has_overlap(other, match_strand=match_strand, full_span=full_span):
+                    for other_single_interval in other.blocks:
+                        if self_single_interval.has_overlap(
+                            other_single_interval, match_strand=match_strand, full_span=full_span
+                        ):
+                            interval_intersections.append(
+                                self_single_interval.intersection(
+                                    other_single_interval, match_strand=match_strand, full_span=full_span
+                                )
+                            )
+            return CompoundInterval._from_single_intervals_no_validation(interval_intersections).optimize_blocks()
 
     def union(self, other: Location) -> Location:
         if self.strand != other.strand:
@@ -925,6 +947,10 @@ class _EmptyLocation(Location):
         """EmptyLocation is by definition always non-overlapping"""
         return False
 
+    @property
+    def _full_span_interval(self) -> Location:
+        return self
+
     def optimize_blocks(self) -> Location:
         return self
 
@@ -951,7 +977,7 @@ class _EmptyLocation(Location):
     ) -> Location:
         raise EmptyLocationException
 
-    def has_overlap(self, other: Location, match_strand: bool = False) -> bool:
+    def has_overlap(self, other: Location, match_strand: bool = False, full_span: bool = False) -> bool:
         return False
 
     def reverse(self) -> Location:
@@ -978,7 +1004,7 @@ class _EmptyLocation(Location):
     def distance_to(self, other: Location, distance_type: DistanceType = DistanceType.INNER) -> int:
         raise EmptyLocationException
 
-    def intersection(self, other: Location, match_strand: bool = True) -> Location:
+    def intersection(self, other: Location, match_strand: bool = True, full_span: bool = False) -> Location:
         return self
 
     def union(self, other: Location) -> Location:
