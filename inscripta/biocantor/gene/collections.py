@@ -917,21 +917,59 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
         end: Optional[int] = None,
         coding_only: Optional[bool] = False,
         completely_within: Optional[bool] = True,
-
+        expand_range: Optional[bool] = False,
     ) -> "AnnotationCollection":
         """Filter this annotation collection object based on positions, sequence, and boolean flags.
+
+        In all cases, the comparisons are made without considering strand.
+
+        When ``completely_within`` is ``False``, two things must be considered:
+
+        1. intron-exon structure: Intronic queries are still valid. In other words, a query from ``[10,20]``
+            would still return a transcript whose intervals were ``[0,9], [21, 30]``.
+        2. range expansion: If ``expand_range`` is ``True``, then the resulting :class:`AnnotationCollection`
+            may have start/end values that are not the same as the values provided to this function. This will
+            happen if one or more isoforms in the result set extend past the query interval. If ``expand_range``
+            is ``False``, then the resulting collection will contain features whose intervals are potentially
+            a subset of the original feature. Note that this only applies to the `location` members, the original
+            genomic coordinates are still retained and can be exported.
 
         Args:
             start: Genome relative start position. If not set, will be 0.
             end: Genome relative end position. If not set, will be unbounded.
             coding_only: Filter for coding genes only?
             completely_within: Strict *query* boundaries? If ``False``, features that partially overlap
-                will be included in the output. Bins optimization cannot be used.
+                will be included in the output. Bins optimization cannot be used, so these queries are slower.
+            expand_range: If ``completely_within`` is ``True``, this flag is ignored. Otherwise, this flag contorls
+                whether the arguments ``start`` and ``end`` define strict bounds of the resulting collection,
+                or if the resulting collection is allowed to expand to fully contain the overlapping features.
 
         Returns:
            :class:`AnnotationCollection` that may be empty, and otherwise will contain new copies of every
             constituent member.
         """
+
+        def filter_collection_for_child_intervals(
+            g_or_fc: Union[GeneInterval, FeatureIntervalCollection]
+        ) -> Optional[Union[GeneInterval, FeatureIntervalCollection]]:
+            """
+            After a subquery, it may be the case that a isoform of a gene or a feature of a feature collection
+            no longer overlap the window in question. In these cases, Parent liftover will fail with a
+            ``LocationOverlapException``. This function catches this case and discards these from the dictionary.
+
+            Args:
+                g_or_fc: The GeneInterval or FeatureIntervalCollection to be filtered.
+
+            Returns:
+                A interval collection with only the appropriate children, or None if the resulting interval
+                is empty.
+            """
+            valid_children_guids = [
+                child.guid
+                for child in g_or_fc
+                if query_loc.has_overlap(child.chromosome_location, match_strand=False, full_span=True)
+            ]
+            return None if not valid_children_guids else g_or_fc.query_by_guids(valid_children_guids)
 
         # bins are only valid if we have start, end and completely_within
         if completely_within and start and end:
@@ -973,7 +1011,12 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
             elif my_bins and gene_or_feature_collection.bin not in my_bins:
                 continue
 
-            elif coordinate_fn(gene_or_feature_collection.chromosome_location):
+            elif coordinate_fn(gene_or_feature_collection.chromosome_location, match_strand=False, full_span=True):
+
+                # Filter features in the collection for overlapping the range
+                # only necessary if completely_within is False and expand_range is False
+                if coordinate_fn == query_loc.has_overlap and expand_range is False:
+                    gene_or_feature_collection = filter_collection_for_child_intervals(gene_or_feature_collection)
 
                 if isinstance(gene_or_feature_collection, FeatureIntervalCollection):
                     features_collections_to_keep.append(gene_or_feature_collection)
@@ -981,8 +1024,7 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
                 elif isinstance(gene_or_feature_collection, GeneInterval):
                     genes_to_keep.append(gene_or_feature_collection)
 
-        # expand the range of the new parent to include the children; only necessary if we are allowing partial overlap
-        if completely_within is False:
+        if completely_within is False and expand_range is True:
             for g_or_fc in itertools.chain(features_collections_to_keep, genes_to_keep):
                 if g_or_fc.start < start:
                     start = g_or_fc.start

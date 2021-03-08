@@ -431,7 +431,6 @@ class TestAnnotationCollection:
                 True,
                 {"featgrp1", "featgrp2", "gene1"},
             ),
-            (0, 0, False, True, {}),
             (
                 0,
                 30,
@@ -586,7 +585,6 @@ class TestAnnotationCollection:
             (None, None, False, True, SingleInterval(0, 54, Strand.PLUS)),
             (0, None, False, True, SingleInterval(0, 54, Strand.PLUS)),
             (None, 30, False, True, SingleInterval(0, 30, Strand.PLUS)),
-            (0, 0, False, True, SingleInterval(0, 0, Strand.PLUS)),
             (0, 20, False, True, SingleInterval(0, 20, Strand.PLUS)),
             (None, 20, False, True, SingleInterval(0, 20, Strand.PLUS)),
             (25, None, False, True, SingleInterval(25, 54, Strand.PLUS)),
@@ -600,42 +598,45 @@ class TestAnnotationCollection:
         assert r._location == expected
 
     @pytest.mark.parametrize(
-        "start,end,coding_only,completely_within,expected",
+        "start,end,coding_only,completely_within,expand_range,expected",
         [
-            (None, None, False, True, SingleInterval(2, 40, Strand.PLUS)),
-            (2, None, False, True, SingleInterval(2, 40, Strand.PLUS)),
-            (None, 30, False, True, SingleInterval(2, 30, Strand.PLUS)),
-            (2, 2, False, True, SingleInterval(2, 2, Strand.PLUS)),
-            (2, 20, False, True, SingleInterval(2, 20, Strand.PLUS)),
-            (None, 20, False, True, SingleInterval(2, 20, Strand.PLUS)),
-            (25, None, False, True, SingleInterval(25, 40, Strand.PLUS)),
-            (26, None, False, True, SingleInterval(26, 40, Strand.PLUS)),
-            (2, 3, False, False, SingleInterval(2, 3, Strand.PLUS)),
+            (None, None, False, True, False, SingleInterval(2, 40, Strand.PLUS)),
+            (2, None, False, True, False, SingleInterval(2, 40, Strand.PLUS)),
+            (None, 30, False, True, False, SingleInterval(2, 30, Strand.PLUS)),
+            (2, 20, False, True, False, SingleInterval(2, 20, Strand.PLUS)),
+            (None, 20, False, True, False, SingleInterval(2, 20, Strand.PLUS)),
+            (25, None, False, True, False, SingleInterval(25, 40, Strand.PLUS)),
+            (26, None, False, True, False, SingleInterval(26, 40, Strand.PLUS)),
+            (2, 3, False, False, False, SingleInterval(2, 3, Strand.PLUS)),
+            # expanded range
+            (2, 15, False, False, True, SingleInterval(2, 28, Strand.PLUS)),
+            # no expanded range because query did not contain anything to expand
+            (2, 10, False, False, True, SingleInterval(2, 10, Strand.PLUS)),
         ],
     )
-    def test_position_queries_location(self, start, end, completely_within, coding_only, expected):
+    def test_position_queries_location(self, start, end, completely_within, coding_only, expand_range, expected):
         obj = self.annot.to_annotation_collection()
-        r = obj.query_by_position(start, end, coding_only, completely_within)
+        r = obj.query_by_position(start, end, coding_only, completely_within, expand_range)
         assert r._location == expected
 
     @pytest.mark.parametrize(
-        "start,end,coding_only,completely_within,expected",
+        "start,end,coding_only,completely_within,expand_range,expected",
         [
-            (None, None, False, True, SingleInterval(12, 40, Strand.PLUS)),
-            (12, None, False, True, SingleInterval(12, 40, Strand.PLUS)),
-            (None, 30, False, True, SingleInterval(12, 30, Strand.PLUS)),
-            (12, 12, False, True, SingleInterval(12, 12, Strand.PLUS)),
-            (12, 20, False, True, SingleInterval(12, 20, Strand.PLUS)),
-            (None, 20, False, True, SingleInterval(12, 20, Strand.PLUS)),
-            (25, None, False, True, SingleInterval(25, 40, Strand.PLUS)),
-            (26, None, False, True, SingleInterval(26, 40, Strand.PLUS)),
+            (None, None, False, True, False, SingleInterval(12, 40, Strand.PLUS)),
+            (12, None, False, True, False, SingleInterval(12, 40, Strand.PLUS)),
+            (None, 30, False, True, False, SingleInterval(12, 30, Strand.PLUS)),
+            (12, 20, False, True, False, SingleInterval(12, 20, Strand.PLUS)),
+            (None, 20, False, True, False, SingleInterval(12, 20, Strand.PLUS)),
+            (25, None, False, True, False, SingleInterval(25, 40, Strand.PLUS)),
+            (26, None, False, True, False, SingleInterval(26, 40, Strand.PLUS)),
+            (12, 13, False, False, False, SingleInterval(12, 13, Strand.PLUS)),
             # query from 12-13 with completely_within=False will expand the range to retain the transcripts
-            (12, 13, False, False, SingleInterval(12, 28, Strand.PLUS)),
+            (12, 13, False, False, True, SingleInterval(12, 28, Strand.PLUS)),
         ],
     )
-    def test_position_queries_location_inferred(self, start, end, completely_within, coding_only, expected):
+    def test_position_queries_location_inferred(self, start, end, completely_within, coding_only, expand_range, expected):
         obj = self.annot_no_range.to_annotation_collection()
-        r = obj.query_by_position(start, end, coding_only, completely_within)
+        r = obj.query_by_position(start, end, coding_only, completely_within, expand_range)
         assert r._location == expected
 
     def test_query_position_exceptions(self):
@@ -646,6 +647,8 @@ class TestAnnotationCollection:
             _ = obj.query_by_position(15, 10)
         with pytest.raises(InvalidQueryError):
             _ = obj.query_by_position(0, 55)
+        with pytest.raises(InvalidQueryError):
+            _ = obj.query_by_position(10, 10)
 
     @pytest.mark.parametrize(
         "ids",
