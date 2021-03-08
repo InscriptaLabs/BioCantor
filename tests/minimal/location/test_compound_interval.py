@@ -3109,6 +3109,22 @@ class TestCompoundInterval:
                 CompoundInterval([0, 7], [5, 9], Strand.PLUS),
                 False,
             ),
+            # entirely intronic overlap is still true
+            (
+                CompoundInterval([0, 40], [2, 45], Strand.PLUS),
+                CompoundInterval([10], [35], Strand.PLUS),
+                True,
+            ),
+            (
+                CompoundInterval([0, 40], [2, 45], Strand.PLUS),
+                CompoundInterval([10, 20], [25, 30], Strand.PLUS),
+                True,
+            ),
+            (
+                CompoundInterval([0, 40], [2, 45], Strand.PLUS),
+                CompoundInterval([10, 20], [25, 40], Strand.PLUS),
+                True,
+            ),
         ],
     )
     def test_full_span_overlaps_compound_interval(self, ci1, ci2, has_overlap):
@@ -3146,45 +3162,6 @@ class TestCompoundInterval:
     )
     def test_full_span_contains_compound_interval(self, ci1, ci2, contains):
         assert ci1.contains(ci2, full_span=True) == contains
-
-    @pytest.mark.parametrize(
-        "ci1,ci2,has_overlap",
-        [
-            (
-                CompoundInterval([0, 25], [5, 30], Strand.PLUS),
-                CompoundInterval([0, 25], [5, 30], Strand.PLUS),
-                True,
-            ),
-            (
-                CompoundInterval([3, 25], [5, 32], Strand.PLUS),
-                CompoundInterval([0, 25], [5, 30], Strand.PLUS),
-                True,
-            ),
-            (
-                CompoundInterval([30], [35], Strand.PLUS),
-                CompoundInterval([0, 25], [5, 30], Strand.PLUS),
-                False,
-            ),
-            # entirely intronic overlap is still true
-            (
-                CompoundInterval([0, 40], [2, 45], Strand.PLUS),
-                CompoundInterval([10], [35], Strand.PLUS),
-                True,
-            ),
-            (
-                CompoundInterval([0, 40], [2, 45], Strand.PLUS),
-                CompoundInterval([10, 20], [25, 30], Strand.PLUS),
-                True,
-            ),
-            (
-                CompoundInterval([0, 40], [2, 45], Strand.PLUS),
-                CompoundInterval([10, 20], [25, 40], Strand.PLUS),
-                True,
-            ),
-        ],
-    )
-    def test_full_span_overlaps_compound_interval(self, ci1, ci2, has_overlap):
-        assert ci1.has_overlap(ci2, full_span=True) == ci2.has_overlap(ci1, full_span=True) == has_overlap
 
     @pytest.mark.parametrize(
         "ci1,ci2,has_overlap",
