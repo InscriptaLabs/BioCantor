@@ -634,7 +634,9 @@ class TestAnnotationCollection:
             (12, 13, False, False, True, SingleInterval(12, 28, Strand.PLUS)),
         ],
     )
-    def test_position_queries_location_inferred(self, start, end, completely_within, coding_only, expand_range, expected):
+    def test_position_queries_location_inferred(
+        self, start, end, completely_within, coding_only, expand_range, expected
+    ):
         obj = self.annot_no_range.to_annotation_collection()
         r = obj.query_by_position(start, end, coding_only, completely_within, expand_range)
         assert r._location == expected
