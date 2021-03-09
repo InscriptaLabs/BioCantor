@@ -22,6 +22,12 @@ building blocks of genetic material are uncountably infinite.
 
 BioCantor can be added to a Python environment as follows.
 
+From PyPi:
+
+```
+pip install BioCantor
+```
+
 Latest release from GitHub:
 
 ```
