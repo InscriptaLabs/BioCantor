@@ -20,9 +20,8 @@ class TranslationTable(IntEnum):
 
     In table 11, it is possible for any of the following codons to be considered initiator codons:
 
-    ```
-    ATG, TTG, CTG, ATT, ATC, ATA, GTG
-    ```
+    .. code-block::
+        ATG, TTG, CTG, ATT, ATC, ATA, GTG
 
     These alternative initiator codons do see usage regularly, with approximately 3% of E. coli using TTG.
 

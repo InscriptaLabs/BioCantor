@@ -53,6 +53,7 @@ class TestGene:
         cds_starts=[15],
         cds_ends=[19],
         cds_frames=[CDSFrame.ZERO.name],
+        transcript_symbol="tx1",
     )
     tx2 = dict(
         exon_starts=[12, 17, 22],
@@ -61,6 +62,7 @@ class TestGene:
         cds_starts=[14, 17, 22],
         cds_ends=[16, 20, 23],
         cds_frames=[CDSFrame.ZERO.name, CDSFrame.TWO.name, CDSFrame.TWO.name],
+        transcript_symbol="tx2",
     )
     tx1_primary = dict(
         exon_starts=[12],
@@ -598,48 +600,95 @@ class TestAnnotationCollection:
         assert r._location == expected
 
     @pytest.mark.parametrize(
-        "start,end,coding_only,completely_within,expand_range,expected",
+        "start,end,coding_only,completely_within,expected",
         [
-            (None, None, False, True, False, SingleInterval(2, 40, Strand.PLUS)),
-            (2, None, False, True, False, SingleInterval(2, 40, Strand.PLUS)),
-            (None, 30, False, True, False, SingleInterval(2, 30, Strand.PLUS)),
-            (2, 20, False, True, False, SingleInterval(2, 20, Strand.PLUS)),
-            (None, 20, False, True, False, SingleInterval(2, 20, Strand.PLUS)),
-            (25, None, False, True, False, SingleInterval(25, 40, Strand.PLUS)),
-            (26, None, False, True, False, SingleInterval(26, 40, Strand.PLUS)),
-            (2, 3, False, False, False, SingleInterval(2, 3, Strand.PLUS)),
-            # expanded range
-            (2, 15, False, False, True, SingleInterval(2, 28, Strand.PLUS)),
-            # no expanded range because query did not contain anything to expand
-            (2, 10, False, False, True, SingleInterval(2, 10, Strand.PLUS)),
+            (None, None, False, True, SingleInterval(2, 40, Strand.PLUS)),
+            (2, None, False, True, SingleInterval(2, 40, Strand.PLUS)),
+            (None, 30, False, True, SingleInterval(2, 30, Strand.PLUS)),
+            (2, 20, False, True, SingleInterval(2, 20, Strand.PLUS)),
+            (None, 20, False, True, SingleInterval(2, 20, Strand.PLUS)),
+            (25, None, False, True, SingleInterval(25, 40, Strand.PLUS)),
+            (26, None, False, True, SingleInterval(26, 40, Strand.PLUS)),
+            (2, 3, False, False, SingleInterval(2, 3, Strand.PLUS)),
         ],
     )
-    def test_position_queries_location(self, start, end, completely_within, coding_only, expand_range, expected):
+    def test_position_queries_location(self, start, end, completely_within, coding_only, expected):
         obj = self.annot.to_annotation_collection()
-        r = obj.query_by_position(start, end, coding_only, completely_within, expand_range)
+        r = obj.query_by_position(start, end, coding_only, completely_within)
         assert r._location == expected
 
     @pytest.mark.parametrize(
-        "start,end,coding_only,completely_within,expand_range,expected",
+        "start,end,coding_only,completely_within,expected",
         [
-            (None, None, False, True, False, SingleInterval(12, 40, Strand.PLUS)),
-            (12, None, False, True, False, SingleInterval(12, 40, Strand.PLUS)),
-            (None, 30, False, True, False, SingleInterval(12, 30, Strand.PLUS)),
-            (12, 20, False, True, False, SingleInterval(12, 20, Strand.PLUS)),
-            (None, 20, False, True, False, SingleInterval(12, 20, Strand.PLUS)),
-            (25, None, False, True, False, SingleInterval(25, 40, Strand.PLUS)),
-            (26, None, False, True, False, SingleInterval(26, 40, Strand.PLUS)),
-            (12, 13, False, False, False, SingleInterval(12, 13, Strand.PLUS)),
-            # query from 12-13 with completely_within=False will expand the range to retain the transcripts
-            (12, 13, False, False, True, SingleInterval(12, 28, Strand.PLUS)),
+            (None, None, False, True, SingleInterval(12, 40, Strand.PLUS)),
+            (12, None, False, True, SingleInterval(12, 40, Strand.PLUS)),
+            (None, 30, False, True, SingleInterval(12, 30, Strand.PLUS)),
+            (12, 20, False, True, SingleInterval(12, 20, Strand.PLUS)),
+            (None, 20, False, True, SingleInterval(12, 20, Strand.PLUS)),
+            (25, None, False, True, SingleInterval(25, 40, Strand.PLUS)),
+            (26, None, False, True, SingleInterval(26, 40, Strand.PLUS)),
+            (12, 13, False, False, SingleInterval(12, 13, Strand.PLUS)),
         ],
     )
-    def test_position_queries_location_inferred(
-        self, start, end, completely_within, coding_only, expand_range, expected
+    def test_position_queries_location_inferred(self, start, end, completely_within, coding_only, expected):
+        obj = self.annot_no_range.to_annotation_collection()
+        r = obj.query_by_position(start, end, coding_only, completely_within)
+        assert r._location == expected
+
+    @pytest.mark.parametrize(
+        "start,end,coding_only,completely_within,min_start,max_end",
+        [
+            (12, 13, False, False, 12, 28),
+            (12, 15, False, False, 12, 28),
+        ],
+    )
+    def test_position_queries_expanded_range(
+        self,
+        start,
+        end,
+        completely_within,
+        coding_only,
+        min_start,
+        max_end,
+    ):
+        """The span of the AnnotationCollection object is the original query, but the full range
+        of the child objects are larger"""
+        obj = self.annot_no_range.to_annotation_collection()
+        r = obj.query_by_position(start, end, coding_only, completely_within)
+        assert min(x.start for x in r) == min_start
+        assert max(x.end for x in r) == max_end
+
+    @pytest.mark.parametrize(
+        "start,end,coding_only,completely_within,expected_identifiers",
+        [
+            # query removes everything due to completely_within=True
+            (21, 22, False, True, set()),
+            # feat1 and feat3 lost due to no overlap with query
+            (21, 22, False, False, {"feat2", "tx1", "tx2"}),
+            # tx1 hits 28, feat3 starts at 35, so nothing here
+            (28, 35, False, False, set()),
+            # moving to 36 now retains feat3
+            (28, 36, False, False, {"feat3"}),
+            # moving to 27 now retains tx1
+            (27, 36, False, False, {"tx1", "feat3"}),
+            # moving to 24 now retains all but feat1
+            (24, 36, False, False, {"tx1", "tx2", "feat2", "feat3"}),
+        ],
+    )
+    def test_position_queries_lose_isoforms(
+        self,
+        start,
+        end,
+        completely_within,
+        coding_only,
+        expected_identifiers,
     ):
         obj = self.annot_no_range.to_annotation_collection()
-        r = obj.query_by_position(start, end, coding_only, completely_within, expand_range)
-        assert r._location == expected
+        r = obj.query_by_position(start, end, coding_only, completely_within)
+        if len(r) == 0:
+            assert expected_identifiers == set()
+        else:
+            assert set.union(*(y.identifiers for x in r for y in x)) == expected_identifiers
 
     def test_query_position_exceptions(self):
         obj = self.annot.to_annotation_collection()

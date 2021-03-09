@@ -674,8 +674,8 @@ class FeatureIntervalCollection(AbstractFeatureIntervalCollection):
 
 
 class AnnotationCollection(AbstractFeatureIntervalCollection):
-    """An AnnotationCollection is a container to contain :class:`GeneInterval`s and
-    :class:`FeatureIntervalCollection`s.
+    """An AnnotationCollection is a container to contain :class:`GeneInterval` and
+    :class:`FeatureIntervalCollection`.
 
     Encapsulates all possible annotations for a given interval on a specific source.
 
@@ -917,22 +917,47 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
         end: Optional[int] = None,
         coding_only: Optional[bool] = False,
         completely_within: Optional[bool] = True,
-        expand_range: Optional[bool] = False,
     ) -> "AnnotationCollection":
         """Filter this annotation collection object based on positions, sequence, and boolean flags.
 
-        In all cases, the comparisons are made without considering strand.
+        In all cases, the comparisons are made without considering strand.  Intronic queries are still valid.
+        In other words, a query from ``[10,20]`` would still return a transcript whose intervals were
+        ``[0,9], [21, 30]``.
 
-        When ``completely_within`` is ``False``, two things must be considered:
+        The resulting :class:`AnnotationCollection` returned will have a `._location` member whose bounds
+        exactly match the query. However, the child genes/feature collections will potentially extend beyond this range,
+        in order to encapsulate their full length. The resulting gene/feature collections will potentially have a
+        reduced set of transcripts/features, if those transcripts/features are outside the query range.
 
-        1. intron-exon structure: Intronic queries are still valid. In other words, a query from ``[10,20]``
-            would still return a transcript whose intervals were ``[0,9], [21, 30]``.
-        2. range expansion: If ``expand_range`` is ``True``, then the resulting :class:`AnnotationCollection`
-            may have start/end values that are not the same as the values provided to this function. This will
-            happen if one or more isoforms in the result set extend past the query interval. If ``expand_range``
-            is ``False``, then the resulting collection will contain features whose intervals are potentially
-            a subset of the original feature. Note that this only applies to the `location` members, the original
-            genomic coordinates are still retained and can be exported.
+        Here is an example (equals are exons, dashes are introns):
+
+        .. code-block::
+
+                          10      15      20      25      30      35      40
+            Gene1: Tx1:     12============20
+                   Tx2:     12======16-17=20--22==25
+            Fc1:    F1:     12====15
+                    F2:     12======16-17=20--22==25
+                    F3:                                           35======40
+
+
+        Results:
+
+        +------------+------------+--------------------+------------------+
+        | start      | end        | completely_within  | result           |
+        +============+============+====================+==================+
+        | 21         | 22         | True               | EmptyCollection  |
+        +------------+------------+--------------------+------------------+
+        | 21         | 22         | False              | Tx1,Tx2,F2       |
+        +------------+------------+--------------------+------------------+
+        | 28         | 35         | False              | EmptyCollection  |
+        +------------+------------+--------------------+------------------+
+        | 28         | 36         | False              | F3               |
+        +------------+------------+--------------------+------------------+
+        | 27         | 36         | False              | Tx1,F3           |
+        +------------+------------+--------------------+------------------+
+        | 24         | 36         | False              | Tx1,Tx2,F2,F3    |
+        +------------+------------+--------------------+------------------+
 
         Args:
             start: Genome relative start position. If not set, will be 0.
@@ -940,36 +965,11 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
             coding_only: Filter for coding genes only?
             completely_within: Strict *query* boundaries? If ``False``, features that partially overlap
                 will be included in the output. Bins optimization cannot be used, so these queries are slower.
-            expand_range: If ``completely_within`` is ``True``, this flag is ignored. Otherwise, this flag contorls
-                whether the arguments ``start`` and ``end`` define strict bounds of the resulting collection,
-                or if the resulting collection is allowed to expand to fully contain the overlapping features.
 
         Returns:
            :class:`AnnotationCollection` that may be empty, and otherwise will contain new copies of every
             constituent member.
         """
-
-        def filter_collection_for_child_intervals(
-            g_or_fc: Union[GeneInterval, FeatureIntervalCollection]
-        ) -> Optional[Union[GeneInterval, FeatureIntervalCollection]]:
-            """
-            After a subquery, it may be the case that a isoform of a gene or a feature of a feature collection
-            no longer overlap the window in question. In these cases, Parent liftover will fail with a
-            ``LocationOverlapException``. This function catches this case and discards these from the dictionary.
-
-            Args:
-                g_or_fc: The GeneInterval or FeatureIntervalCollection to be filtered.
-
-            Returns:
-                A interval collection with only the appropriate children, or None if the resulting interval
-                is empty.
-            """
-            valid_children_guids = [
-                child.guid
-                for child in g_or_fc
-                if query_loc.has_overlap(child.chromosome_location, match_strand=False, full_span=True)
-            ]
-            return None if not valid_children_guids else g_or_fc.query_by_guids(valid_children_guids)
 
         # bins are only valid if we have start, end and completely_within
         if completely_within and start and end:
@@ -994,6 +994,7 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
         elif start == end:
             raise InvalidQueryError("Cannot query a 0bp interval (start must not be the same as end).")
 
+        # coordinate_fn will be applied when filtering specific transcripts/features
         query_loc = SingleInterval(start, end, Strand.PLUS, parent=self.chromosome_location.parent)
         if completely_within:
             coordinate_fn = query_loc.contains
@@ -1008,23 +1009,37 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
                 continue
 
             # my_bins only exists if completely_within, start and end
-            elif my_bins and gene_or_feature_collection.bin not in my_bins:
+            # if no children match these bins, skip
+            elif my_bins and not any(child.bin in my_bins for child in gene_or_feature_collection):
                 continue
 
-            elif coordinate_fn(gene_or_feature_collection.chromosome_location, match_strand=False, full_span=True):
+            # regardless of completely_within flag, first just look for overlaps
+            elif query_loc.has_overlap(
+                gene_or_feature_collection.chromosome_location, match_strand=False, full_span=True
+            ):
 
-                # Filter features in the collection for overlapping the range
-                # only necessary if completely_within is False and expand_range is False
-                if coordinate_fn == query_loc.has_overlap and expand_range is False:
-                    gene_or_feature_collection = filter_collection_for_child_intervals(gene_or_feature_collection)
+                # Filter features/transcripts in the gene/feature collection for overlapping the range
+                valid_children_guids = [
+                    child.guid
+                    for child in gene_or_feature_collection
+                    if coordinate_fn(child.chromosome_location, match_strand=False, full_span=True)
+                ]
+                # if we lost all isoforms, skip this gene entirely now
+                if not valid_children_guids:
+                    continue
+                gene_or_feature_collection = gene_or_feature_collection.query_by_guids(valid_children_guids)
 
                 if isinstance(gene_or_feature_collection, FeatureIntervalCollection):
                     features_collections_to_keep.append(gene_or_feature_collection)
-                # could be null if filter_collection_for_child_intervals() returned None
-                elif isinstance(gene_or_feature_collection, GeneInterval):
+                else:
                     genes_to_keep.append(gene_or_feature_collection)
 
-        if completely_within is False and expand_range is True:
+        # keep track of the original query start/end intervals to pass up to the constructor
+        query_start = start
+        query_end = end
+        # if completely within is False, expand the range of seq_chunk_parent to retain the full span
+        # of all child intervals. This prevents features getting cut in half.
+        if completely_within is False:
             for g_or_fc in itertools.chain(features_collections_to_keep, genes_to_keep):
                 if g_or_fc.start < start:
                     start = g_or_fc.start
@@ -1043,8 +1058,8 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
                 sequence_guid=self.sequence_guid,
                 sequence_path=self.sequence_path,
                 qualifiers=self._export_qualifiers_to_list(),
-                start=start,
-                end=end,
+                start=query_start,
+                end=query_end,
                 completely_within=completely_within,
             ),
             parent_or_seq_chunk_parent=seq_chunk_parent,

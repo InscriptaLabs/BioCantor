@@ -347,54 +347,56 @@ class CDSInterval:
 
         1. Plus strand:
 
-        ```
-        CompoundInterval([0, 7, 12], [5, 11, 18], Strand.PLUS)
-        ```
+        .. code-block::
 
-        ```
-        Index:      0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21
-        Sequence:   A A A C A A A A G G G  T  A  C  C  C  A  A  A  A  A  A
-        Exons:      A A A C A     A G G G     A  C  C  C  A  A
-        Zero Frame: 0 1 2 0 1     2 0 1 2     0  1  2  0  1  2
-        One Frame:  - 0 1 2 0     1 2 0 1     2  0  1  2  0  1
-        Two Frame:  - - 0 1 2     0 1 2 0     1  2  0  1  2  0
-        ```
+            CompoundInterval([0, 7, 12], [5, 11, 18], Strand.PLUS)
+
+
+        .. code-block::
+
+            Index:      0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21
+            Sequence:   A A A C A A A A G G G  T  A  C  C  C  A  A  A  A  A  A
+            Exons:      A A A C A     A G G G     A  C  C  C  A  A
+            Zero Frame: 0 1 2 0 1     2 0 1 2     0  1  2  0  1  2
+            One Frame:  - 0 1 2 0     1 2 0 1     2  0  1  2  0  1
+            Two Frame:  - - 0 1 2     0 1 2 0     1  2  0  1  2  0
+
 
         In the non-zero case, the ``[0, 1, 2]`` cycle is offset by 1 or 2 bases.
 
         So, for this test case we expect the frames to be:
 
-        ```
-        Zero Frame: [0, 2, 0]
-        One Frame:  [1, 1, 2]
-        Two Frame:  [2, 0, 1]
-        ```
+    .. code-block::
+
+            Zero Frame: [0, 2, 0]
+            One Frame:  [1, 1, 2]
+            Two Frame:  [2, 0, 1]
+
 
         2. Minus strand:
 
-        ```
-        CompoundInterval([0, 7, 12], [5, 11, 18], Strand.MINUS)
-        ```
+        .. code-block::
 
-        ```
-        Index:      0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21
-        Sequence:   A A A C A A A A G G G  T  A  C  C  C  A  A  A  A  A  A
-        Exons:      A A A C A     A G G G     A  C  C  C  A  A
-        Zero Frame: 2 1 0 2 1     0 2 1 0     2  1  0  2  1  0
-        One Frame:  1 0 2 1 0     2 1 0 2     1  0  2  1  0  -
-        Two Frame:  0 2 1 0 2     1 0 2 1     0  2  1  0  -  -
-        ```
+            CompoundInterval([0, 7, 12], [5, 11, 18], Strand.MINUS)
+
+
+        .. code-block::
+            Index:      0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21
+            Sequence:   A A A C A A A A G G G  T  A  C  C  C  A  A  A  A  A  A
+            Exons:      A A A C A     A G G G     A  C  C  C  A  A
+            Zero Frame: 2 1 0 2 1     0 2 1 0     2  1  0  2  1  0
+            One Frame:  1 0 2 1 0     2 1 0 2     1  0  2  1  0  -
+            Two Frame:  0 2 1 0 2     1 0 2 1     0  2  1  0  -  -
+
 
         Now, for negative strand CDS intervals, the frame list is still in plus strand orientation.
 
         So, for this test case we expect the frames to be:
 
-        ```
-        Zero Frame: [1, 0, 0]
-        One Frame:  [0, 2, 1]
-        Two Frame:  [2, 1, 2]
-        ```
-
+        .. code-block::
+            Zero Frame: [1, 0, 0]
+            One Frame:  [0, 2, 1]
+            Two Frame:  [2, 1, 2]
 
         Args:
             location: A interval of the CDS.
