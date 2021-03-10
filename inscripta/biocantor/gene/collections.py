@@ -26,8 +26,10 @@ from inscripta.biocantor.exc import (
     NoSuchAncestorException,
 )
 from inscripta.biocantor.gene.biotype import Biotype
-from inscripta.biocantor.gene.cds import CDSInterval, CDSPhase
-from inscripta.biocantor.gene.feature import FeatureInterval, AbstractInterval, QualifierValue
+from inscripta.biocantor.gene.cds import CDSInterval
+from inscripta.biocantor.gene.cds_frame import CDSPhase
+from inscripta.biocantor.gene.feature import FeatureInterval
+from inscripta.biocantor.gene.interval import AbstractInterval, QualifierValue
 from inscripta.biocantor.gene.transcript import TranscriptInterval
 from inscripta.biocantor.io.gff3.constants import GFF_SOURCE, NULL_COLUMN, BioCantorQualifiers, BioCantorFeatureTypes
 from inscripta.biocantor.io.gff3.exc import GFF3MissingSequenceNameError

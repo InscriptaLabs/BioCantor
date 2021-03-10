@@ -3,7 +3,6 @@ Object representation of Transcripts.
 
 Each object is capable of exporting itself to BED and GFF3.
 """
-from itertools import count
 from typing import Optional, Any, Dict, Iterable, Hashable, Set, List
 from uuid import UUID
 
@@ -16,8 +15,9 @@ from inscripta.biocantor.exc import (
     InvalidCDSIntervalError,
 )
 from inscripta.biocantor.gene.biotype import Biotype
-from inscripta.biocantor.gene.cds import CDSInterval, CDSPhase, CDSFrame
-from inscripta.biocantor.gene.feature import AbstractFeatureInterval, QualifierValue
+from inscripta.biocantor.gene.cds import CDSInterval
+from inscripta.biocantor.gene.cds_frame import CDSPhase, CDSFrame
+from inscripta.biocantor.gene.interval import AbstractFeatureInterval, QualifierValue
 from inscripta.biocantor.io.bed import BED12, RGB
 from inscripta.biocantor.io.gff3.constants import GFF_SOURCE, NULL_COLUMN, BioCantorQualifiers, BioCantorFeatureTypes
 from inscripta.biocantor.io.gff3.exc import GFF3MissingSequenceNameError
@@ -62,6 +62,7 @@ class TranscriptInterval(AbstractFeatureInterval):
         sequence_guid: Optional[UUID] = None,
         sequence_name: Optional[str] = None,
         protein_id: Optional[str] = None,
+        protein_product: Optional[str] = None,
         guid: Optional[UUID] = None,
         transcript_guid: Optional[UUID] = None,
         parent_or_seq_chunk_parent: Optional[Parent] = None,
@@ -92,16 +93,17 @@ class TranscriptInterval(AbstractFeatureInterval):
             # as a result of a parent or seq chunk parent constructor, it may be the case that this CDS is entirely
             # sliced out. Check this case, and then void out the CDS.
             try:
-                cds_interval = TranscriptInterval.initialize_location(
-                    cds_starts, cds_ends, strand, parent_or_seq_chunk_parent=parent_or_seq_chunk_parent
+                self.cds = CDSInterval(
+                    cds_starts,
+                    cds_ends,
+                    strand,
+                    cds_frames,
+                    sequence_guid,
+                    sequence_name,
+                    protein_id,
+                    protein_product,
+                    parent_or_seq_chunk_parent=parent_or_seq_chunk_parent,
                 )
-
-                if len(cds_interval) == 0:
-                    raise InvalidCDSIntervalError("Cannot have an empty CDS interval")
-
-                # we may end up having a reduced number of CDSFrames now due to this region being a subset of this gene
-                self.cds = CDSInterval(cds_interval, cds_frames[: len(cds_interval.blocks)])
-
             except LocationOverlapException:
                 self.cds = None
 
@@ -129,6 +131,7 @@ class TranscriptInterval(AbstractFeatureInterval):
         self.transcript_symbol = transcript_symbol
         self.transcript_type = transcript_type
         self.protein_id = protein_id
+        self.protein_product = protein_product
         self.sequence_guid = sequence_guid
         self.sequence_name = sequence_name
         self.bin = bins(self.start, self.end, fmt="bed")
@@ -329,6 +332,7 @@ class TranscriptInterval(AbstractFeatureInterval):
             sequence_name=self.sequence_name,
             sequence_guid=self.sequence_guid,
             protein_id=self.protein_id,
+            protein_product=self.protein_product,
             transcript_guid=self.transcript_guid,
             transcript_interval_guid=self.guid,
         )
@@ -354,7 +358,45 @@ class TranscriptInterval(AbstractFeatureInterval):
             sequence_name=vals["sequence_name"],
             sequence_guid=vals["sequence_guid"],
             protein_id=vals["protein_id"],
+            protein_product=vals["protein_product"],
             parent_or_seq_chunk_parent=parent_or_seq_chunk_parent,
+        )
+
+    @staticmethod
+    def from_location(
+        location: Location,
+        cds: Optional[CDSInterval] = None,
+        qualifiers: Optional[Dict[Hashable, QualifierValue]] = None,
+        is_primary_tx: Optional[bool] = None,
+        transcript_id: Optional[str] = None,
+        transcript_symbol: Optional[str] = None,
+        transcript_type: Optional[Biotype] = None,
+        sequence_guid: Optional[UUID] = None,
+        sequence_name: Optional[str] = None,
+        protein_id: Optional[str] = None,
+        protein_product: Optional[str] = None,
+        guid: Optional[UUID] = None,
+        transcript_guid: Optional[UUID] = None,
+    ) -> "TranscriptInterval":
+        return TranscriptInterval(
+            exon_starts=[x.start for x in location.blocks],
+            exon_ends=[x.end for x in location.blocks],
+            strand=location.strand,
+            cds_starts=cds._genomic_starts if cds else None,
+            cds_ends=cds._genomic_ends if cds else None,
+            cds_frames=cds.frames if cds else None,
+            guid=guid,
+            transcript_guid=transcript_guid,
+            qualifiers=qualifiers,
+            is_primary_tx=is_primary_tx,
+            transcript_id=transcript_id,
+            transcript_symbol=transcript_symbol,
+            transcript_type=Biotype[transcript_type] if transcript_type else None,
+            sequence_name=sequence_name,
+            sequence_guid=sequence_guid,
+            protein_id=protein_id,
+            protein_product=protein_product,
+            parent_or_seq_chunk_parent=location.parent,
         )
 
     def intersect(
@@ -634,33 +676,12 @@ class TranscriptInterval(AbstractFeatureInterval):
             )
             yield row
 
-        # add CDS features, if applicable
         if self.cds:
-            if chromosome_relative_coordinates:
-                cds_blocks = zip(self._genomic_cds_starts, self._genomic_cds_ends)
-            else:
-                cds_blocks = [[x.start, x.end] for x in self.chunk_relative_cds_blocks]
-
-            for i, block, frame in zip(count(1), cds_blocks, self.cds.frames):
-                start, end = block
-                attributes = GFFAttributes(
-                    id=f"cds-{tx_guid}-{i}",
-                    qualifiers=qualifiers,
-                    name=self.transcript_symbol,
-                    parent=tx_guid,
-                )
-                row = GFFRow(
-                    self.sequence_name,
-                    GFF_SOURCE,
-                    BioCantorFeatureTypes.CDS,
-                    start + 1,
-                    end,
-                    NULL_COLUMN,
-                    self.strand,
-                    frame.to_phase(),
-                    attributes,
-                )
-                yield row
+            yield from self.cds.to_gff(
+                chromosome_relative_coordinates=chromosome_relative_coordinates,
+                parent_qualifiers=qualifiers,
+                parent=tx_guid,
+            )
 
     def to_bed12(
         self,

@@ -70,6 +70,7 @@ class BioCantorQualifiers(Enum):
     TRANSCRIPT_NAME = "transcript_name"
     TRANSCRIPT_TYPE = "transcript_biotype"
     PROTEIN_ID = "protein_id"
+    PRODUCT = "product"
     GENE_ID = "gene_id"
     GENE_SYMBOL = "gene_name"
     GENE_NAME = "gene_name"

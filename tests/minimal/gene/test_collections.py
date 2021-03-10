@@ -9,7 +9,7 @@ from inscripta.biocantor.exc import (
     ValidationException,
 )
 from inscripta.biocantor.gene.biotype import Biotype
-from inscripta.biocantor.gene.cds import CDSFrame
+from inscripta.biocantor.gene.cds_frame import CDSFrame
 from inscripta.biocantor.io.models import (
     GeneIntervalModel,
     AnnotationCollectionModel,

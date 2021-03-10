@@ -12,10 +12,12 @@
 			gene	GDH3
 			locus_tag	test_10
 			note	original locus_tag: GI526_G0000002
+			note	original protein_id: KAF1903245.1
 37462	39103	mRNA		
 			gene	GDH3
 			locus_tag	test_10
 			note	original locus_tag: GI526_G0000002
+			note	original protein_id: KAF1903245.1
 			product	GDH3 isoform 1
 			protein_id	gnl|inscripta|BICYNIDBMRRK
 			transcript_id	gnl|inscripta|KBFEKRKWHFAN
@@ -23,6 +25,7 @@
 			gene	GDH3
 			locus_tag	test_10
 			note	original locus_tag: GI526_G0000002
+			note	original protein_id: KAF1903245.1
 			product	GDH3 isoform 1
 			protein_id	gnl|inscripta|BICYNIDBMRRK
 			transcript_id	gnl|inscripta|KBFEKRKWHFAN

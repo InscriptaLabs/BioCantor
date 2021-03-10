@@ -7,7 +7,7 @@ from inscripta.biocantor.exc import (
     NullSequenceException,
     ValidationException,
 )
-from inscripta.biocantor.gene.cds import CDSFrame
+from inscripta.biocantor.gene.cds_frame import CDSFrame
 from inscripta.biocantor.io.models import TranscriptIntervalModel
 from inscripta.biocantor.location.location_impl import SingleInterval, CompoundInterval, EmptyLocation
 from inscripta.biocantor.location.strand import Strand

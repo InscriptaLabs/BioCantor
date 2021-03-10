@@ -3,7 +3,7 @@ Tests for writing and reading feature intervals.
 """
 import pytest
 from inscripta.biocantor.gene.biotype import Biotype
-from inscripta.biocantor.gene.cds import CDSFrame
+from inscripta.biocantor.gene.cds_frame import CDSFrame
 from inscripta.biocantor.io.gff3.exc import GFF3LocusTagError, GFF3ChildParentMismatchError
 from inscripta.biocantor.io.gff3.parser import parse_standard_gff3
 from inscripta.biocantor.io.gff3.writer import collection_to_gff3
@@ -50,6 +50,7 @@ class TestFeatures:
         cds_ends=[9],
         cds_frames=[CDSFrame.ZERO.name],
         sequence_name="chr1",
+        transcript_symbol="tx1",
     )
     tx2 = dict(
         exon_starts=[2, 7, 12],
@@ -59,6 +60,7 @@ class TestFeatures:
         cds_ends=[6, 10, 13],
         cds_frames=[CDSFrame.ZERO.name, CDSFrame.TWO.name, CDSFrame.TWO.name],
         sequence_name="chr1",
+        transcript_symbol="tx2",
     )
     gene = dict(
         transcripts=[tx1, tx2],

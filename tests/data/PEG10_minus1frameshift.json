@@ -34,14 +34,12 @@
                         ],
                         "gene": [
                             "PEG10"
-                        ],
-                        "product": [
-                            "paternally expressed 10, transcript variant 1"
                         ]
                     },
                     "is_primary_tx": false,
                     "transcript_id": "NM_001040152.2",
                     "protein_id": "NP_001035242.1",
+                    "protein_product": "retrotransposon-derived protein PEG10 isoform 2",
                     "transcript_symbol": null,
                     "transcript_type": "protein_coding",
                     "sequence_name": "chr7",
@@ -86,14 +84,12 @@
                         ],
                         "gene": [
                             "PEG10"
-                        ],
-                        "product": [
-                            "paternally expressed 10, transcript variant 2"
                         ]
                     },
                     "is_primary_tx": false,
                     "transcript_id": "NM_001172437.2",
                     "protein_id": "NP_001165908.1",
+                    "protein_product": "retrotransposon-derived protein PEG10 isoform 3",
                     "transcript_symbol": null,
                     "transcript_type": "protein_coding",
                     "sequence_name": "chr7",
@@ -135,14 +131,12 @@
                         ],
                         "gene": [
                             "PEG10"
-                        ],
-                        "product": [
-                            "paternally expressed 10, transcript variant 2"
                         ]
                     },
                     "is_primary_tx": false,
                     "transcript_id": "NM_001172438.3",
                     "protein_id": "NP_001165909.1",
+                    "protein_product": "retrotransposon-derived protein PEG10 isoform 4",
                     "transcript_symbol": null,
                     "transcript_type": "protein_coding",
                     "sequence_name": "chr7",
@@ -185,9 +179,6 @@
                         "gene": [
                             "PEG10"
                         ],
-                        "product": [
-                            "paternally expressed 10, transcript variant 1"
-                        ],
                         "tag": [
                             "RefSeq Select"
                         ]
@@ -195,6 +186,7 @@
                     "is_primary_tx": false,
                     "transcript_id": "NM_001184961.1",
                     "protein_id": "NP_001171890.1",
+                    "protein_product": "retrotransposon-derived protein PEG10 isoform 5",
                     "transcript_symbol": null,
                     "transcript_type": "protein_coding",
                     "sequence_name": "chr7",
@@ -233,14 +225,12 @@
                         ],
                         "gene": [
                             "PEG10"
-                        ],
-                        "product": [
-                            "paternally expressed 10, transcript variant 1"
                         ]
                     },
                     "is_primary_tx": false,
                     "transcript_id": "NM_001184962.2",
                     "protein_id": "NP_001171891.1",
+                    "protein_product": "retrotransposon-derived protein PEG10 isoform 6",
                     "transcript_symbol": null,
                     "transcript_type": "protein_coding",
                     "sequence_name": "chr7",
@@ -282,14 +272,12 @@
                         ],
                         "gene": [
                             "PEG10"
-                        ],
-                        "product": [
-                            "paternally expressed 10, transcript variant 1"
                         ]
                     },
                     "is_primary_tx": false,
                     "transcript_id": "NM_015068.3",
                     "protein_id": "NP_055883.2",
+                    "protein_product": "retrotransposon-derived protein PEG10 isoform 1",
                     "transcript_symbol": null,
                     "transcript_type": "protein_coding",
                     "sequence_name": "chr7",

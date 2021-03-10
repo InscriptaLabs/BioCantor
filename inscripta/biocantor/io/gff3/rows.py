@@ -17,7 +17,7 @@ from inscripta.biocantor.io.gff3.constants import (
     BioCantorFeatureTypes,
 )
 from inscripta.biocantor.location import Strand
-from inscripta.biocantor.gene.cds import CDSPhase
+from inscripta.biocantor.gene.cds_frame import CDSPhase
 from inscripta.biocantor.io.gff3.exc import GFF3ExportException, ReservedKeyWarning
 
 

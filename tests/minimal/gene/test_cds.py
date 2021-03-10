@@ -1,6 +1,7 @@
 import pytest
-from inscripta.biocantor.exc import LocationException
-from inscripta.biocantor.gene.cds import CDSPhase, CDSFrame, CDSInterval, TranslationTable
+from inscripta.biocantor.exc import InvalidCDSIntervalError
+from inscripta.biocantor.gene.cds import CDSInterval, TranslationTable
+from inscripta.biocantor.gene.cds_frame import CDSPhase, CDSFrame
 from inscripta.biocantor.gene.codon import Codon
 from inscripta.biocantor.location.location_impl import CompoundInterval, SingleInterval
 from inscripta.biocantor.location.strand import Strand
@@ -52,7 +53,7 @@ class TestCDSInterval:
         [
             # 2bp CDS
             (
-                CDSInterval(
+                CDSInterval.from_location(
                     SingleInterval(
                         0, 2, Strand.PLUS, parent=Sequence("ATACGATCA", alphabet, type=SequenceType.CHROMOSOME)
                     ),
@@ -62,7 +63,7 @@ class TestCDSInterval:
             ),
             # Contiguous CDS, plus strand, frame=0
             (
-                CDSInterval(
+                CDSInterval.from_location(
                     SingleInterval(
                         0, 9, Strand.PLUS, parent=Sequence("ATACGATCA", alphabet, type=SequenceType.CHROMOSOME)
                     ),
@@ -72,7 +73,7 @@ class TestCDSInterval:
             ),
             # Discontiguous CDS, plus strand, frame=1, codons don't reach end of CDS
             (
-                CDSInterval(
+                CDSInterval.from_location(
                     CompoundInterval(
                         [2, 8],
                         [5, 17],
@@ -85,7 +86,7 @@ class TestCDSInterval:
             ),
             # Discontiguous CDS, plus strand, with -1 bp programmed frameshift (overlapping interval)
             (
-                CDSInterval(
+                CDSInterval.from_location(
                     CompoundInterval(
                         [2, 8],
                         [9, 17],
@@ -106,7 +107,7 @@ class TestCDSInterval:
         [
             # Contiguous CDS, plus strand, frame=0
             (
-                CDSInterval(
+                CDSInterval.from_location(
                     SingleInterval(
                         0, 9, Strand.PLUS, parent=Sequence("ATACGATCA", alphabet, type=SequenceType.CHROMOSOME)
                     ),
@@ -116,7 +117,7 @@ class TestCDSInterval:
             ),
             # Discontiguous CDS, plus strand, frame=1, codons don't reach end of CDS
             (
-                CDSInterval(
+                CDSInterval.from_location(
                     CompoundInterval(
                         [2, 8],
                         [5, 17],
@@ -129,7 +130,7 @@ class TestCDSInterval:
             ),
             # Discontiguous CDS, plus strand, frame=1, 1bp deletion at start of exon 2
             (
-                CDSInterval(
+                CDSInterval.from_location(
                     CompoundInterval(
                         [2, 8],
                         [5, 16],
@@ -143,7 +144,7 @@ class TestCDSInterval:
             # Discontiguous CDS, plus strand, frame=1,
             # 1bp insertion inside exon 2 relative to some canonical genome and we want to maintain original frame
             (
-                CDSInterval(
+                CDSInterval.from_location(
                     CompoundInterval(
                         [2, 8, 12],
                         [5, 11, 18],
@@ -156,7 +157,7 @@ class TestCDSInterval:
             ),
             # Discontiguous CDS, minus strand, frame=2
             (
-                CDSInterval(
+                CDSInterval.from_location(
                     CompoundInterval(
                         [2, 8],
                         [5, 17],
@@ -169,7 +170,7 @@ class TestCDSInterval:
             ),
             # Discontiguous CDS, minus strand, frame=2, with frameshift that leads to truncation
             (
-                CDSInterval(
+                CDSInterval.from_location(
                     CompoundInterval(
                         [2, 8],
                         [5, 17],
@@ -182,7 +183,7 @@ class TestCDSInterval:
             ),
             # Discontiguous CDS, plus strand, with -1 bp programmed frameshift (overlapping interval)
             (
-                CDSInterval(
+                CDSInterval.from_location(
                     CompoundInterval(
                         [2, 8],
                         [9, 17],
@@ -205,7 +206,7 @@ class TestCDSInterval:
         [
             # Contiguous CDS, plus strand, frame=0
             (
-                CDSInterval(
+                CDSInterval.from_location(
                     SingleInterval(
                         0, 9, Strand.PLUS, parent=Sequence("atacgatca", alphabet, type=SequenceType.CHROMOSOME)
                     ),
@@ -215,7 +216,7 @@ class TestCDSInterval:
             ),
             # Discontiguous CDS, plus strand, frame=1, codons don't reach end of CDS
             (
-                CDSInterval(
+                CDSInterval.from_location(
                     CompoundInterval(
                         [2, 8],
                         [5, 17],
@@ -236,7 +237,7 @@ class TestCDSInterval:
     @pytest.mark.parametrize(
         "cds",
         [
-            CDSInterval(
+            CDSInterval.from_location(
                 SingleInterval(
                     0,
                     9,
@@ -245,7 +246,7 @@ class TestCDSInterval:
                 ),
                 [CDSFrame.ZERO],
             ),
-            CDSInterval(
+            CDSInterval.from_location(
                 CompoundInterval(
                     [2, 8],
                     [5, 17],
@@ -267,7 +268,7 @@ class TestCDSInterval:
         [
             # 2bp CDS
             (
-                CDSInterval(
+                CDSInterval.from_location(
                     SingleInterval(
                         0, 2, Strand.PLUS, parent=Sequence("ATACGATCA", alphabet, type=SequenceType.CHROMOSOME)
                     ),
@@ -277,7 +278,7 @@ class TestCDSInterval:
             ),
             # Contiguous CDS, plus strand, frame=0
             (
-                CDSInterval(
+                CDSInterval.from_location(
                     SingleInterval(
                         0, 9, Strand.PLUS, parent=Sequence("ATACGATCA", alphabet, type=SequenceType.CHROMOSOME)
                     ),
@@ -297,7 +298,7 @@ class TestCDSInterval:
             ),
             # Discontiguous CDS, plus strand, frame=1, codons don't reach end of CDS
             (
-                CDSInterval(
+                CDSInterval.from_location(
                     CompoundInterval(
                         [2, 8],
                         [5, 17],
@@ -329,7 +330,7 @@ class TestCDSInterval:
             ),
             # Discontiguous CDS, plus strand, frame=1, 1bp deletion at start of exon 2
             (
-                CDSInterval(
+                CDSInterval.from_location(
                     CompoundInterval(
                         [2, 8],
                         [5, 16],
@@ -356,7 +357,7 @@ class TestCDSInterval:
             # Discontiguous CDS, plus strand, frame=0,
             # 1bp insertion inside exon 2 relative to some canonical genome and we want to maintain original frame
             (
-                CDSInterval(
+                CDSInterval.from_location(
                     CompoundInterval(
                         [2, 8, 12],
                         [5, 11, 18],
@@ -395,7 +396,7 @@ class TestCDSInterval:
             # Discontiguous CDS, plus strand, frame=1,
             # 1bp insertion inside exon 2 relative to some canonical genome and we want to maintain original frame
             (
-                CDSInterval(
+                CDSInterval.from_location(
                     CompoundInterval(
                         [2, 8, 12],
                         [5, 11, 18],
@@ -428,7 +429,7 @@ class TestCDSInterval:
             # Discontiguous CDS, plus strand, frame=2,
             # 1bp insertion inside exon 2 relative to some canonical genome and we want to maintain original frame
             (
-                CDSInterval(
+                CDSInterval.from_location(
                     CompoundInterval(
                         [2, 8, 12],
                         [5, 11, 18],
@@ -460,7 +461,7 @@ class TestCDSInterval:
             ),
             # Discontiguous CDS, minus strand, frame=2
             (
-                CDSInterval(
+                CDSInterval.from_location(
                     CompoundInterval(
                         [2, 8],
                         [5, 17],
@@ -492,7 +493,7 @@ class TestCDSInterval:
             ),
             # Discontiguous CDS, minus strand, frame=2, with frameshift that leads to truncation
             (
-                CDSInterval(
+                CDSInterval.from_location(
                     CompoundInterval(
                         [2, 8],
                         [5, 17],
@@ -518,7 +519,7 @@ class TestCDSInterval:
             ),
             # Discontiguous CDS, plus strand, with -1 bp programmed frameshift (overlapping interval)
             (
-                CDSInterval(
+                CDSInterval.from_location(
                     CompoundInterval(
                         [2, 8],
                         [9, 17],
@@ -562,7 +563,7 @@ class TestCDSInterval:
             ),
             # Discontiguous CDS, plus strand, with +1 programmed frameshift that skips over a 1nt exon
             (
-                CDSInterval(
+                CDSInterval.from_location(
                     CompoundInterval(
                         [2, 6, 8],
                         [5, 7, 16],
@@ -594,7 +595,7 @@ class TestCDSInterval:
             ),
             # 1bp exon on the negative strand gets removed due to being a partial codon
             (
-                CDSInterval(
+                CDSInterval.from_location(
                     CompoundInterval(
                         [0, 7],
                         [5, 8],
@@ -621,7 +622,7 @@ class TestCDSInterval:
         [
             # Contiguous CDS, plus strand, frame=0
             (
-                CDSInterval(
+                CDSInterval.from_location(
                     SingleInterval(
                         0,
                         9,
@@ -634,7 +635,7 @@ class TestCDSInterval:
             ),
             # Discontiguous CDS, plus strand, frame=1, codons don't reach end of CDS
             (
-                CDSInterval(
+                CDSInterval.from_location(
                     CompoundInterval(
                         [2, 8],
                         [5, 17],
@@ -647,7 +648,7 @@ class TestCDSInterval:
             ),
             # Discontiguous CDS, minus strand, frame=2, codons don't reach end of CDS
             (
-                CDSInterval(
+                CDSInterval.from_location(
                     CompoundInterval(
                         [2, 8],
                         [5, 17],
@@ -666,7 +667,7 @@ class TestCDSInterval:
         assert str(cds.translate()) == expected
 
     def test_accessors(self):
-        cds = CDSInterval(SingleInterval(0, 10, Strand.PLUS), [CDSFrame.ZERO])
+        cds = CDSInterval.from_location(SingleInterval(0, 10, Strand.PLUS), [CDSFrame.ZERO])
         assert cds.start == cds._location.start
         assert cds.end == cds._location.end
         assert cds.strand == cds._location.strand
@@ -675,7 +676,7 @@ class TestCDSInterval:
         "cds,expected",
         [
             (
-                CDSInterval(
+                CDSInterval.from_location(
                     SingleInterval(
                         0, 9, Strand.PLUS, parent=Sequence("ATACGATGA", alphabet, type=SequenceType.CHROMOSOME)
                     ),
@@ -684,7 +685,7 @@ class TestCDSInterval:
                 True,
             ),
             (
-                CDSInterval(
+                CDSInterval.from_location(
                     SingleInterval(
                         0, 9, Strand.PLUS, parent=Sequence("ATACGATCA", alphabet, type=SequenceType.CHROMOSOME)
                     ),
@@ -693,7 +694,7 @@ class TestCDSInterval:
                 False,
             ),
             (
-                CDSInterval(
+                CDSInterval.from_location(
                     SingleInterval(
                         0, 9, Strand.PLUS, parent=Sequence("atacgatca", alphabet, type=SequenceType.CHROMOSOME)
                     ),
@@ -712,7 +713,7 @@ class TestCDSInterval:
         "cds,expected",
         [
             (
-                CDSInterval(
+                CDSInterval.from_location(
                     SingleInterval(
                         0, 9, Strand.PLUS, parent=Sequence("ATGTGAAAACCC", alphabet, type=SequenceType.CHROMOSOME)
                     ),
@@ -721,7 +722,7 @@ class TestCDSInterval:
                 True,
             ),
             (
-                CDSInterval(
+                CDSInterval.from_location(
                     SingleInterval(
                         0, 9, Strand.PLUS, parent=Sequence("ATACGATCA", alphabet, type=SequenceType.CHROMOSOME)
                     ),
@@ -730,7 +731,7 @@ class TestCDSInterval:
                 False,
             ),
             (
-                CDSInterval(
+                CDSInterval.from_location(
                     SingleInterval(
                         0, 9, Strand.PLUS, parent=Sequence("atacgatca", alphabet, type=SequenceType.CHROMOSOME)
                     ),
@@ -747,7 +748,7 @@ class TestCDSInterval:
         "cds,expected",
         [
             (
-                CDSInterval(
+                CDSInterval.from_location(
                     SingleInterval(
                         0, 9, Strand.PLUS, parent=Sequence("ATGTGAAAACCC", alphabet, type=SequenceType.CHROMOSOME)
                     ),
@@ -756,7 +757,7 @@ class TestCDSInterval:
                 True,
             ),
             (
-                CDSInterval(
+                CDSInterval.from_location(
                     SingleInterval(
                         0, 9, Strand.PLUS, parent=Sequence("ATACGATCA", alphabet, type=SequenceType.CHROMOSOME)
                     ),
@@ -765,7 +766,7 @@ class TestCDSInterval:
                 False,
             ),
             (
-                CDSInterval(
+                CDSInterval.from_location(
                     SingleInterval(
                         0, 9, Strand.MINUS, parent=Sequence("ATGTGCCATCC", alphabet, type=SequenceType.CHROMOSOME)
                     ),
@@ -774,7 +775,7 @@ class TestCDSInterval:
                 True,
             ),
             (
-                CDSInterval(
+                CDSInterval.from_location(
                     SingleInterval(
                         0, 9, Strand.MINUS, parent=Sequence("ATACGATCA", alphabet, type=SequenceType.CHROMOSOME)
                     ),
@@ -791,7 +792,7 @@ class TestCDSInterval:
         "cds,expected",
         [
             (
-                CDSInterval(
+                CDSInterval.from_location(
                     SingleInterval(
                         0, 9, Strand.PLUS, parent=Sequence("TTGTGAAAACCC", alphabet, type=SequenceType.CHROMOSOME)
                     ),
@@ -800,7 +801,7 @@ class TestCDSInterval:
                 True,
             ),
             (
-                CDSInterval(
+                CDSInterval.from_location(
                     SingleInterval(
                         0, 9, Strand.PLUS, parent=Sequence("ATACGATCA", alphabet, type=SequenceType.CHROMOSOME)
                     ),
@@ -809,7 +810,7 @@ class TestCDSInterval:
                 False,
             ),
             (
-                CDSInterval(
+                CDSInterval.from_location(
                     SingleInterval(
                         0, 9, Strand.MINUS, parent=Sequence("ATGTGCCAG", alphabet, type=SequenceType.CHROMOSOME)
                     ),
@@ -818,7 +819,7 @@ class TestCDSInterval:
                 True,
             ),
             (
-                CDSInterval(
+                CDSInterval.from_location(
                     SingleInterval(
                         0, 9, Strand.MINUS, parent=Sequence("ATACGAGAT", alphabet, type=SequenceType.CHROMOSOME)
                     ),
@@ -991,7 +992,7 @@ class TestCDSInterval:
             # 1bp exon on the negative strand gets removed due to being a partial codon
             # this shifts the frame all the
             (
-                CDSInterval(
+                CDSInterval.from_location(
                     CompoundInterval(
                         [0, 7],
                         [5, 8],
@@ -1005,7 +1006,7 @@ class TestCDSInterval:
             # Discontiguous CDS, plus strand, with +1 programmed frameshift that skips over a 1nt exon
             # last frame gets shifted as a result
             (
-                CDSInterval(
+                CDSInterval.from_location(
                     CompoundInterval(
                         [2, 6, 8],
                         [5, 7, 16],
@@ -1020,7 +1021,7 @@ class TestCDSInterval:
             # 1bp insertion inside exon 2 relative to some canonical genome and we want(ed) to maintain original frame
             # frame is not changed
             (
-                CDSInterval(
+                CDSInterval.from_location(
                     CompoundInterval(
                         [2, 8, 12],
                         [5, 11, 18],
@@ -1041,7 +1042,7 @@ class TestCDSInterval:
         [
             # this overlapping interval gets merged into [0, 17], with frame 1, so we end up with 5 codons
             (
-                CDSInterval(
+                CDSInterval.from_location(
                     CompoundInterval(
                         [2, 8],
                         [9, 17],
@@ -1054,7 +1055,7 @@ class TestCDSInterval:
             ),
             # this overlapping interval gets merged into [2,5], [8,18] with 0bp offset
             (
-                CDSInterval(
+                CDSInterval.from_location(
                     CompoundInterval(
                         [2, 8, 12],
                         [5, 13, 18],
@@ -1067,7 +1068,7 @@ class TestCDSInterval:
             ),
             # this overlapping interval gets merged into [2,5], [8,18] with 1bp offset
             (
-                CDSInterval(
+                CDSInterval.from_location(
                     CompoundInterval(
                         [2, 8, 12],
                         [5, 13, 18],
@@ -1084,8 +1085,8 @@ class TestCDSInterval:
         assert list(cds.optimize_and_combine_blocks().scan_codons()) == expected
 
     def test_frame_exception(self):
-        with pytest.raises(LocationException):
-            _ = CDSInterval(
+        with pytest.raises(InvalidCDSIntervalError):
+            _ = CDSInterval.from_location(
                 CompoundInterval(
                     [2, 8, 12],
                     [5, 13, 18],
@@ -1096,7 +1097,7 @@ class TestCDSInterval:
             )
 
     def test_frame_to_phase(self):
-        cds = CDSInterval(
+        cds = CDSInterval.from_location(
             CompoundInterval(
                 [2, 8, 12],
                 [5, 13, 18],
