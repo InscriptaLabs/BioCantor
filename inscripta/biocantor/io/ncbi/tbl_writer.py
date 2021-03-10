@@ -45,29 +45,29 @@ class TblFeature(ABC):
     tbl is a funky format with five tab delimited columns, separated with FASTA-like headers. It is probably best
     to show an example:
 
-    ```
-    >Feature gb|CM021127.1|
-    <14406  14026   gene
-                            gene    TDA8
-                            locus_tag       GI527_G0000001
-                            gene_synonym    YAL064C-A
-                            gene_synonym    YAL065C-A
-                            db_xref GeneID:851234
-    <14406  14393   mRNA
-    14390   14382
-    14380   14026
-                            product Tda8p
-                            note    R64_transcript_id: NM_001180041.1
-                            exception       low-quality sequence region
-                            protein_id      gnl|WGS:JAAEAL|T0000001_1_prot
-                            transcript_id   gnl|WGS:JAAEAL|T0000001
-                            gene    TDA8
-                            locus_tag       GI527_G0000001
-                            gene_synonym    NM_001180041.1
-                            gene_synonym    YAL065C-A
-                            gene_synonym    YAL064C-A
-                            db_xref GeneID:851234
-    ```
+    .. code-block::
+        >Feature gb|CM021127.1|
+        <14406  14026   gene
+                                gene    TDA8
+                                locus_tag       GI527_G0000001
+                                gene_synonym    YAL064C-A
+                                gene_synonym    YAL065C-A
+                                db_xref GeneID:851234
+        <14406  14393   mRNA
+        14390   14382
+        14380   14026
+                                product Tda8p
+                                note    R64_transcript_id: NM_001180041.1
+                                exception       low-quality sequence region
+                                protein_id      gnl|WGS:JAAEAL|T0000001_1_prot
+                                transcript_id   gnl|WGS:JAAEAL|T0000001
+                                gene    TDA8
+                                locus_tag       GI527_G0000001
+                                gene_synonym    NM_001180041.1
+                                gene_synonym    YAL065C-A
+                                gene_synonym    YAL064C-A
+                                db_xref GeneID:851234
+
 
     The rows that define intervals have the first 3 tab delimited columns populated, and the last 2 are empty.
     On the other hand, rows that define qualifiers have the first 3 tab delimited columns empty, and the last 2

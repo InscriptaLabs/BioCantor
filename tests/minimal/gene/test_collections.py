@@ -9,7 +9,7 @@ from inscripta.biocantor.exc import (
     ValidationException,
 )
 from inscripta.biocantor.gene.biotype import Biotype
-from inscripta.biocantor.gene.cds import CDSFrame
+from inscripta.biocantor.gene.cds_frame import CDSFrame
 from inscripta.biocantor.io.models import (
     GeneIntervalModel,
     AnnotationCollectionModel,
@@ -53,6 +53,7 @@ class TestGene:
         cds_starts=[15],
         cds_ends=[19],
         cds_frames=[CDSFrame.ZERO.name],
+        transcript_symbol="tx1",
     )
     tx2 = dict(
         exon_starts=[12, 17, 22],
@@ -61,6 +62,7 @@ class TestGene:
         cds_starts=[14, 17, 22],
         cds_ends=[16, 20, 23],
         cds_frames=[CDSFrame.ZERO.name, CDSFrame.TWO.name, CDSFrame.TWO.name],
+        transcript_symbol="tx2",
     )
     tx1_primary = dict(
         exon_starts=[12],
@@ -431,7 +433,6 @@ class TestAnnotationCollection:
                 True,
                 {"featgrp1", "featgrp2", "gene1"},
             ),
-            (0, 0, False, True, {}),
             (
                 0,
                 30,
@@ -586,7 +587,6 @@ class TestAnnotationCollection:
             (None, None, False, True, SingleInterval(0, 54, Strand.PLUS)),
             (0, None, False, True, SingleInterval(0, 54, Strand.PLUS)),
             (None, 30, False, True, SingleInterval(0, 30, Strand.PLUS)),
-            (0, 0, False, True, SingleInterval(0, 0, Strand.PLUS)),
             (0, 20, False, True, SingleInterval(0, 20, Strand.PLUS)),
             (None, 20, False, True, SingleInterval(0, 20, Strand.PLUS)),
             (25, None, False, True, SingleInterval(25, 54, Strand.PLUS)),
@@ -605,7 +605,6 @@ class TestAnnotationCollection:
             (None, None, False, True, SingleInterval(2, 40, Strand.PLUS)),
             (2, None, False, True, SingleInterval(2, 40, Strand.PLUS)),
             (None, 30, False, True, SingleInterval(2, 30, Strand.PLUS)),
-            (2, 2, False, True, SingleInterval(2, 2, Strand.PLUS)),
             (2, 20, False, True, SingleInterval(2, 20, Strand.PLUS)),
             (None, 20, False, True, SingleInterval(2, 20, Strand.PLUS)),
             (25, None, False, True, SingleInterval(25, 40, Strand.PLUS)),
@@ -624,7 +623,6 @@ class TestAnnotationCollection:
             (None, None, False, True, SingleInterval(12, 40, Strand.PLUS)),
             (12, None, False, True, SingleInterval(12, 40, Strand.PLUS)),
             (None, 30, False, True, SingleInterval(12, 30, Strand.PLUS)),
-            (12, 12, False, True, SingleInterval(12, 12, Strand.PLUS)),
             (12, 20, False, True, SingleInterval(12, 20, Strand.PLUS)),
             (None, 20, False, True, SingleInterval(12, 20, Strand.PLUS)),
             (25, None, False, True, SingleInterval(25, 40, Strand.PLUS)),
@@ -637,6 +635,61 @@ class TestAnnotationCollection:
         r = obj.query_by_position(start, end, coding_only, completely_within)
         assert r._location == expected
 
+    @pytest.mark.parametrize(
+        "start,end,coding_only,completely_within,min_start,max_end",
+        [
+            (12, 13, False, False, 12, 28),
+            (12, 15, False, False, 12, 28),
+        ],
+    )
+    def test_position_queries_expanded_range(
+        self,
+        start,
+        end,
+        completely_within,
+        coding_only,
+        min_start,
+        max_end,
+    ):
+        """The span of the AnnotationCollection object is the original query, but the full range
+        of the child objects are larger"""
+        obj = self.annot_no_range.to_annotation_collection()
+        r = obj.query_by_position(start, end, coding_only, completely_within)
+        assert min(x.start for x in r) == min_start
+        assert max(x.end for x in r) == max_end
+
+    @pytest.mark.parametrize(
+        "start,end,coding_only,completely_within,expected_identifiers",
+        [
+            # query removes everything due to completely_within=True
+            (21, 22, False, True, set()),
+            # feat1 and feat3 lost due to no overlap with query
+            (21, 22, False, False, {"feat2", "tx1", "tx2"}),
+            # tx1 hits 28, feat3 starts at 35, so nothing here
+            (28, 35, False, False, set()),
+            # moving to 36 now retains feat3
+            (28, 36, False, False, {"feat3"}),
+            # moving to 27 now retains tx1
+            (27, 36, False, False, {"tx1", "feat3"}),
+            # moving to 24 now retains all but feat1
+            (24, 36, False, False, {"tx1", "tx2", "feat2", "feat3"}),
+        ],
+    )
+    def test_position_queries_lose_isoforms(
+        self,
+        start,
+        end,
+        completely_within,
+        coding_only,
+        expected_identifiers,
+    ):
+        obj = self.annot_no_range.to_annotation_collection()
+        r = obj.query_by_position(start, end, coding_only, completely_within)
+        if len(r) == 0:
+            assert expected_identifiers == set()
+        else:
+            assert set.union(*(y.identifiers for x in r for y in x)) == expected_identifiers
+
     def test_query_position_exceptions(self):
         obj = self.annot.to_annotation_collection()
         with pytest.raises(InvalidQueryError):
@@ -645,6 +698,8 @@ class TestAnnotationCollection:
             _ = obj.query_by_position(15, 10)
         with pytest.raises(InvalidQueryError):
             _ = obj.query_by_position(0, 55)
+        with pytest.raises(InvalidQueryError):
+            _ = obj.query_by_position(10, 10)
 
     @pytest.mark.parametrize(
         "ids",

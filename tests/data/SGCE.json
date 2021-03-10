@@ -82,14 +82,12 @@
                         ],
                         "gene": [
                             "SGCE"
-                        ],
-                        "product": [
-                            "sarcoglycan epsilon, transcript variant 3"
                         ]
                     },
                     "is_primary_tx": false,
                     "transcript_id": "NM_001099400.2",
                     "protein_id": "NP_001092870.1",
+                    "product": "epsilon-sarcoglycan isoform 3",
                     "transcript_symbol": null,
                     "transcript_type": "protein_coding",
                     "sequence_name": "NC_000007.14",
@@ -181,14 +179,12 @@
                         ],
                         "gene": [
                             "SGCE"
-                        ],
-                        "product": [
-                            "sarcoglycan epsilon, transcript variant 1"
                         ]
                     },
                     "is_primary_tx": false,
                     "transcript_id": "NM_001099401.2",
                     "protein_id": "NP_001092871.1",
+                    "product": "epsilon-sarcoglycan isoform 1",
                     "transcript_symbol": null,
                     "transcript_type": "protein_coding",
                     "sequence_name": "NC_000007.14",
@@ -270,14 +266,12 @@
                         ],
                         "gene": [
                             "SGCE"
-                        ],
-                        "product": [
-                            "sarcoglycan epsilon, transcript variant 4"
                         ]
                     },
                     "is_primary_tx": false,
                     "transcript_id": "NM_001301139.2",
                     "protein_id": "NP_001288068.1",
+                    "product": "epsilon-sarcoglycan isoform 4",
                     "transcript_symbol": null,
                     "transcript_type": "protein_coding",
                     "sequence_name": "NC_000007.14",
@@ -369,14 +363,12 @@
                         ],
                         "gene": [
                             "SGCE"
-                        ],
-                        "product": [
-                            "sarcoglycan epsilon, transcript variant 5"
                         ]
                     },
                     "is_primary_tx": false,
                     "transcript_id": "NM_001346713.2",
                     "protein_id": "NP_001333642.1",
+                    "product": "epsilon-sarcoglycan isoform 5",
                     "transcript_symbol": null,
                     "transcript_type": "protein_coding",
                     "sequence_name": "NC_000007.14",
@@ -463,14 +455,12 @@
                         ],
                         "gene": [
                             "SGCE"
-                        ],
-                        "product": [
-                            "sarcoglycan epsilon, transcript variant 6"
                         ]
                     },
                     "is_primary_tx": false,
                     "transcript_id": "NM_001346715.2",
                     "protein_id": "NP_001333644.1",
+                    "product": "epsilon-sarcoglycan isoform 6",
                     "transcript_symbol": null,
                     "transcript_type": "protein_coding",
                     "sequence_name": "NC_000007.14",
@@ -552,14 +542,12 @@
                         ],
                         "gene": [
                             "SGCE"
-                        ],
-                        "product": [
-                            "sarcoglycan epsilon, transcript variant 7"
                         ]
                     },
                     "is_primary_tx": false,
                     "transcript_id": "NM_001346717.2",
                     "protein_id": "NP_001333646.1",
+                    "product": "epsilon-sarcoglycan isoform 7",
                     "transcript_symbol": null,
                     "transcript_type": "protein_coding",
                     "sequence_name": "NC_000007.14",
@@ -650,14 +638,12 @@
                         ],
                         "gene": [
                             "SGCE"
-                        ],
-                        "product": [
-                            "sarcoglycan epsilon, transcript variant 8"
                         ]
                     },
                     "is_primary_tx": false,
                     "transcript_id": "NM_001346719.2",
                     "protein_id": "NP_001333648.1",
+                    "product": "epsilon-sarcoglycan isoform 8",
                     "transcript_symbol": null,
                     "transcript_type": "protein_coding",
                     "sequence_name": "NC_000007.14",
@@ -740,14 +726,12 @@
                         ],
                         "gene": [
                             "SGCE"
-                        ],
-                        "product": [
-                            "sarcoglycan epsilon, transcript variant 9"
                         ]
                     },
                     "is_primary_tx": false,
                     "transcript_id": "NM_001346720.2",
                     "protein_id": "NP_001333649.1",
+                    "product": "epsilon-sarcoglycan isoform 9",
                     "transcript_symbol": null,
                     "transcript_type": "protein_coding",
                     "sequence_name": "NC_000007.14",
@@ -833,14 +817,12 @@
                         ],
                         "gene": [
                             "SGCE"
-                        ],
-                        "product": [
-                            "sarcoglycan epsilon, transcript variant 10"
                         ]
                     },
                     "is_primary_tx": false,
                     "transcript_id": "NM_001362807.2",
                     "protein_id": "NP_001349736.1",
+                    "product": "epsilon-sarcoglycan isoform 10",
                     "transcript_symbol": null,
                     "transcript_type": "protein_coding",
                     "sequence_name": "NC_000007.14",
@@ -918,14 +900,12 @@
                         ],
                         "gene": [
                             "SGCE"
-                        ],
-                        "product": [
-                            "sarcoglycan epsilon, transcript variant 11"
                         ]
                     },
                     "is_primary_tx": false,
                     "transcript_id": "NM_001362808.2",
                     "protein_id": "NP_001349737.1",
+                    "product": "epsilon-sarcoglycan isoform 11",
                     "transcript_symbol": null,
                     "transcript_type": "protein_coding",
                     "sequence_name": "NC_000007.14",
@@ -1002,14 +982,12 @@
                         ],
                         "gene": [
                             "SGCE"
-                        ],
-                        "product": [
-                            "sarcoglycan epsilon, transcript variant 12"
                         ]
                     },
                     "is_primary_tx": false,
                     "transcript_id": "NM_001362809.2",
                     "protein_id": "NP_001349738.1",
+                    "product": "epsilon-sarcoglycan isoform 12",
                     "transcript_symbol": null,
                     "transcript_type": "protein_coding",
                     "sequence_name": "NC_000007.14",
@@ -1098,9 +1076,6 @@
                         "gene": [
                             "SGCE"
                         ],
-                        "product": [
-                            "sarcoglycan epsilon, transcript variant 2"
-                        ],
                         "tag": [
                             "MANE Select"
                         ]
@@ -1108,6 +1083,7 @@
                     "is_primary_tx": false,
                     "transcript_id": "NM_003919.3",
                     "protein_id": "NP_003910.1",
+                    "product": "epsilon-sarcoglycan isoform 2",
                     "transcript_symbol": null,
                     "transcript_type": "protein_coding",
                     "sequence_name": "NC_000007.14",
@@ -1202,14 +1178,12 @@
                         ],
                         "model_evidence": [
                             "Supporting evidence includes similarity to: 1 mRNA, 21 ESTs, 6 Proteins, 126 long SRA reads, and 95% coverage of the annotated genomic feature by RNAseq alignments, including 9 samples with support for all annotated introns"
-                        ],
-                        "product": [
-                            "sarcoglycan epsilon, transcript variant X1"
                         ]
                     },
                     "is_primary_tx": false,
                     "transcript_id": "XM_011516663.2",
                     "protein_id": "XP_011514965.1",
+                    "product": "epsilon-sarcoglycan isoform X1",
                     "transcript_symbol": null,
                     "transcript_type": "protein_coding",
                     "sequence_name": "NC_000007.14",
@@ -1299,14 +1273,12 @@
                         ],
                         "model_evidence": [
                             "Supporting evidence includes similarity to: 16 ESTs, 3 Proteins, 167 long SRA reads, and 95% coverage of the annotated genomic feature by RNAseq alignments, including 9 samples with support for all annotated introns"
-                        ],
-                        "product": [
-                            "sarcoglycan epsilon, transcript variant X2"
                         ]
                     },
                     "is_primary_tx": false,
                     "transcript_id": "XM_011516664.2",
                     "protein_id": "XP_011514966.1",
+                    "product": "epsilon-sarcoglycan isoform X2",
                     "transcript_symbol": null,
                     "transcript_type": "protein_coding",
                     "sequence_name": "NC_000007.14",
@@ -1396,14 +1368,12 @@
                         ],
                         "model_evidence": [
                             "Supporting evidence includes similarity to: 78 ESTs, 7 Proteins, 242 long SRA reads, and 95% coverage of the annotated genomic feature by RNAseq alignments, including 14 samples with support for all annotated introns"
-                        ],
-                        "product": [
-                            "sarcoglycan epsilon, transcript variant X3"
                         ]
                     },
                     "is_primary_tx": false,
                     "transcript_id": "XM_011516665.3",
                     "protein_id": "XP_011514967.1",
+                    "product": "epsilon-sarcoglycan isoform X3",
                     "transcript_symbol": null,
                     "transcript_type": "protein_coding",
                     "sequence_name": "NC_000007.14",
@@ -1488,14 +1458,12 @@
                         ],
                         "model_evidence": [
                             "Supporting evidence includes similarity to: 73 ESTs, 6 Proteins, 344 long SRA reads, and 95% coverage of the annotated genomic feature by RNAseq alignments, including 14 samples with support for all annotated introns"
-                        ],
-                        "product": [
-                            "sarcoglycan epsilon, transcript variant X4"
                         ]
                     },
                     "is_primary_tx": false,
                     "transcript_id": "XM_011516666.3",
                     "protein_id": "XP_011514968.1",
+                    "product": "epsilon-sarcoglycan isoform X4",
                     "transcript_symbol": null,
                     "transcript_type": "protein_coding",
                     "sequence_name": "NC_000007.14",
@@ -1589,14 +1557,12 @@
                         ],
                         "model_evidence": [
                             "Supporting evidence includes similarity to: 19 ESTs, 4 Proteins, 112 long SRA reads, and 95% coverage of the annotated genomic feature by RNAseq alignments, including 3 samples with support for all annotated introns"
-                        ],
-                        "product": [
-                            "sarcoglycan epsilon, transcript variant X5"
                         ]
                     },
                     "is_primary_tx": false,
                     "transcript_id": "XM_011516667.2",
                     "protein_id": "XP_011514969.1",
+                    "product": "epsilon-sarcoglycan isoform X5",
                     "transcript_symbol": null,
                     "transcript_type": "protein_coding",
                     "sequence_name": "NC_000007.14",
@@ -1682,14 +1648,12 @@
                         ],
                         "model_evidence": [
                             "Supporting evidence includes similarity to: 19 ESTs, 111 long SRA reads, and 95% coverage of the annotated genomic feature by RNAseq alignments, including 4 samples with support for all annotated introns"
-                        ],
-                        "product": [
-                            "sarcoglycan epsilon, transcript variant X11"
                         ]
                     },
                     "is_primary_tx": false,
                     "transcript_id": "XM_011516669.3",
                     "protein_id": "XP_011514971.1",
+                    "product": "epsilon-sarcoglycan isoform X10",
                     "transcript_symbol": null,
                     "transcript_type": "protein_coding",
                     "sequence_name": "NC_000007.14",
@@ -1781,14 +1745,12 @@
                         ],
                         "model_evidence": [
                             "Supporting evidence includes similarity to: 18 ESTs, 4 Proteins, 112 long SRA reads, and 95% coverage of the annotated genomic feature by RNAseq alignments, including 2 samples with support for all annotated introns"
-                        ],
-                        "product": [
-                            "sarcoglycan epsilon, transcript variant X6"
                         ]
                     },
                     "is_primary_tx": false,
                     "transcript_id": "XM_017012763.1",
                     "protein_id": "XP_016868252.1",
+                    "product": "epsilon-sarcoglycan isoform X5",
                     "transcript_symbol": null,
                     "transcript_type": "protein_coding",
                     "sequence_name": "NC_000007.14",
@@ -1869,14 +1831,12 @@
                         ],
                         "model_evidence": [
                             "Supporting evidence includes similarity to: 14 ESTs, 149 long SRA reads, and 95% coverage of the annotated genomic feature by RNAseq alignments, including 4 samples with support for all annotated introns"
-                        ],
-                        "product": [
-                            "sarcoglycan epsilon, transcript variant X12"
                         ]
                     },
                     "is_primary_tx": false,
                     "transcript_id": "XM_017012767.1",
                     "protein_id": "XP_016868256.1",
+                    "product": "epsilon-sarcoglycan isoform X11",
                     "transcript_symbol": null,
                     "transcript_type": "protein_coding",
                     "sequence_name": "NC_000007.14",
@@ -1961,14 +1921,12 @@
                         ],
                         "model_evidence": [
                             "Supporting evidence includes similarity to: 19 ESTs, 56 long SRA reads, and 95% coverage of the annotated genomic feature by RNAseq alignments, including 8 samples with support for all annotated introns"
-                        ],
-                        "product": [
-                            "sarcoglycan epsilon, transcript variant X7"
                         ]
                     },
                     "is_primary_tx": false,
                     "transcript_id": "XM_024446985.1",
                     "protein_id": "XP_024302753.1",
+                    "product": "epsilon-sarcoglycan isoform X6",
                     "transcript_symbol": null,
                     "transcript_type": "protein_coding",
                     "sequence_name": "NC_000007.14",
@@ -2048,14 +2006,12 @@
                         ],
                         "model_evidence": [
                             "Supporting evidence includes similarity to: 14 ESTs, 84 long SRA reads, and 95% coverage of the annotated genomic feature by RNAseq alignments, including 8 samples with support for all annotated introns"
-                        ],
-                        "product": [
-                            "sarcoglycan epsilon, transcript variant X8"
                         ]
                     },
                     "is_primary_tx": false,
                     "transcript_id": "XM_024446986.1",
                     "protein_id": "XP_024302754.1",
+                    "product": "epsilon-sarcoglycan isoform X7",
                     "transcript_symbol": null,
                     "transcript_type": "protein_coding",
                     "sequence_name": "NC_000007.14",

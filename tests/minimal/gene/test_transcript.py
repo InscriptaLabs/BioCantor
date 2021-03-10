@@ -1,13 +1,14 @@
 import pytest
+
 from inscripta.biocantor.exc import (
     InvalidCDSIntervalError,
     EmptyLocationException,
     NullParentException,
     NoncodingTranscriptError,
-    NullSequenceException,
     ValidationException,
 )
-from inscripta.biocantor.gene.cds import CDSFrame
+from inscripta.biocantor.gene.cds_frame import CDSFrame
+from inscripta.biocantor.gene.transcript import TranscriptInterval
 from inscripta.biocantor.io.models import TranscriptIntervalModel
 from inscripta.biocantor.location.location_impl import SingleInterval, CompoundInterval, EmptyLocation
 from inscripta.biocantor.location.strand import Strand
@@ -419,12 +420,6 @@ class TestTranscript:
         with pytest.raises(expected_exception):
             _ = schema.to_transcript_interval()
             _ = schema.to_transcript_interval(parent_or_seq_chunk_parent=parent)
-
-    def test_no_such_ancestor(self):
-        with pytest.raises(NullSequenceException):
-            _ = se_unspliced.to_transcript_interval(
-                parent_or_seq_chunk_parent=Parent(sequence_type=SequenceType.CHROMOSOME)
-            )
 
     @pytest.mark.parametrize(
         "schema,value,expected",
@@ -899,6 +894,93 @@ class TestTranscript:
         tx = se_noncoding.to_transcript_interval()
         with pytest.raises(NoncodingTranscriptError):
             _ = tx.has_in_frame_stop
+
+
+class TestTranscriptWithoutModel:
+    @pytest.mark.parametrize(
+        "tx",
+        [
+            dict(
+                exon_starts=[2, 8, 12],
+                exon_ends=[5, 13, 18],
+                strand=Strand.PLUS,
+            ),
+            dict(
+                exon_starts=[2, 8, 12],
+                exon_ends=[5, 13, 18],
+                strand=Strand.PLUS,
+                parent_or_seq_chunk_parent=Sequence(
+                    "AAAGGAAAGTCCCTGAAAAAA", Alphabet.NT_EXTENDED_GAPPED, type=SequenceType.CHROMOSOME
+                ),
+            ),
+        ],
+    )
+    def test_constructor(self, tx):
+        tx = TranscriptInterval(**tx)
+        tx2 = TranscriptInterval.from_location(tx._location)
+        assert tx == tx2
+
+    @pytest.mark.parametrize(
+        "location,expected",
+        [
+            (
+                SingleInterval(
+                    5,
+                    20,
+                    Strand.PLUS,
+                    parent=Parent(
+                        id="NC_000913.3:222213-222241",
+                        sequence=Sequence(
+                            "AANAAATGGCGAGCACCTAACCCCCNCC",
+                            Alphabet.NT_EXTENDED,
+                            type=SequenceType.SEQUENCE_CHUNK,
+                            parent=Parent(
+                                id="NC_000913.3",
+                                location=SingleInterval(
+                                    222213,
+                                    222241,
+                                    Strand.PLUS,
+                                    parent=Parent(
+                                        id="NC_000913.3",
+                                        sequence_type=SequenceType.CHROMOSOME,
+                                        location=SingleInterval(222213, 222241, Strand.PLUS),
+                                    ),
+                                ),
+                                sequence_type=SequenceType.CHROMOSOME,
+                            ),
+                        ),
+                    ),
+                ),
+                SingleInterval(222218, 222233, Strand.PLUS),
+            )
+        ],
+    )
+    def test_chunk_relative_constructor(self, location, expected):
+        cds = TranscriptInterval.from_chunk_relative_location(location)
+        assert cds.chromosome_location.reset_parent(None) == expected
+
+    @pytest.mark.parametrize(
+        "tx",
+        [
+            dict(
+                exon_starts=[2, 8, 12],
+                exon_ends=[5, 13, 18],
+                strand=Strand.PLUS,
+            ),
+            dict(
+                exon_starts=[2, 8, 12],
+                exon_ends=[5, 13, 18],
+                strand=Strand.PLUS,
+                parent_or_seq_chunk_parent=Sequence(
+                    "AAAGGAAAGTCCCTGAAAAAA", Alphabet.NT_EXTENDED_GAPPED, type=SequenceType.CHROMOSOME
+                ),
+            ),
+        ],
+    )
+    def test_dict(self, tx):
+        tx = TranscriptInterval(**tx)
+        tx2 = TranscriptInterval.from_dict(tx.to_dict())
+        assert tx == tx2
 
 
 class TestQualifiers:

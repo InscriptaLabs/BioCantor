@@ -1,106 +1,89 @@
-from enum import Enum
-from typing import Iterator, List, Union, Optional
+from itertools import count
+from typing import Iterator, List, Union, Optional, Dict, Hashable, Any, Iterable, Set
+from uuid import UUID
 
-from inscripta.biocantor.exc import LocationException
-from inscripta.biocantor.gene.codon import Codon, TranslationTable
-from inscripta.biocantor.location.location import Location, Strand
-from inscripta.biocantor.location.location_impl import SingleInterval, CompoundInterval
-from inscripta.biocantor.parent import SequenceType
-from inscripta.biocantor.sequence import Sequence
-from inscripta.biocantor.sequence.alphabet import Alphabet
 from methodtools import lru_cache
 
+from inscripta.biocantor.exc import InvalidCDSIntervalError
+from inscripta.biocantor.gene.cds_frame import CDSPhase, CDSFrame
+from inscripta.biocantor.gene.codon import Codon, TranslationTable
+from inscripta.biocantor.gene.interval import AbstractFeatureInterval, QualifierValue
+from inscripta.biocantor.io.bed import RGB, BED12
+from inscripta.biocantor.io.gff3.constants import GFF_SOURCE, NULL_COLUMN, BioCantorFeatureTypes, BioCantorQualifiers
+from inscripta.biocantor.io.gff3.rows import GFFAttributes, GFFRow
+from inscripta.biocantor.location.location import Location, Strand
+from inscripta.biocantor.location.location_impl import SingleInterval, CompoundInterval
+from inscripta.biocantor.parent.parent import Parent
+from inscripta.biocantor.sequence import Sequence
+from inscripta.biocantor.sequence.alphabet import Alphabet
+from inscripta.biocantor.util.hashing import digest_object
 
-class CDSPhase(Enum):
+
+class CDSInterval(AbstractFeatureInterval):
     """
-    It is important not to confuse Phase with Frame. From the GFF3 specification:
-
-    The phase is one of the integers 0, 1, or 2, indicating the number of bases forward from the start of the
-    current CDS feature the next codon begins. A phase of "0" indicates that a codon begins on the first nucleotide
-    of the CDS feature (i.e. 0 bases forward), a phase of "1" indicates that the codon begins at the second nucleotide
-    of this CDS feature and a phase of "2" indicates that the codon begins at the third nucleotide of this region.
-
-    """
-
-    NONE = -1
-    ZERO = 0
-    ONE = 1
-    TWO = 2
-
-    @staticmethod
-    def from_int(value: int) -> "CDSPhase":
-        return CDSPhase(value)  # Raises ValueError for invalid int
-
-    def to_frame(self) -> "CDSFrame":
-        """
-        https://github.com/ucscGenomeBrowser/kent/blob/022eb4f62a0af16526ca1bebcd9e68bd456265dc/src/inc/gff3.h#L281-L293
-        """
-        mapping = {0: 0, 2: 1, 1: 2, -1: -1}
-        return CDSFrame(mapping[self.value])
-
-    def to_gff(self) -> str:
-        """In GFF format, Phase is represented with a period for NONE"""
-        if self == CDSPhase.NONE:
-            return "."
-        return str(self.value)
-
-
-class CDSFrame(Enum):
-    """
-    From the GFF3 specification:
-
-    Frame is generally calculated as a value for a given base relative to the start of the complete
-    open reading frame (ORF) or the codon (e.g. modulo 3) while CDS phase describes the start of the next codon
-    relative to a given CDS feature.
-
-    Frame is easier to work with computationally because for any given position it can be calculated by the distance
-    from transcription start % 3. Care must be taken for strand -- if the CDS is on the minus strand, then this
-    calculation instead becomes distance from transcription stop % 3.
+    This class represents a CDS interval, or an interval with coding potential. This is generally only used
+    as a member of a :class:`~biocantor.gene.transcript.TranscriptInterval`. This class adds metadata and frame
+    information to a Location object, and adds an understanding of codons, codon iteration, and translation.
     """
 
-    NONE = -1
-    ZERO = 0
-    ONE = 1
-    TWO = 2
+    _identifiers = ["protein_id", "product"]
 
-    @staticmethod
-    def from_int(value: int) -> "CDSFrame":
-        return CDSFrame(value)
+    def __init__(
+        self,
+        cds_starts: List[int],
+        cds_ends: List[int],
+        strand: Strand,
+        frames_or_phases: List[Union[CDSFrame, CDSPhase]],
+        sequence_guid: Optional[UUID] = None,
+        sequence_name: Optional[str] = None,
+        protein_id: Optional[str] = None,
+        product: Optional[str] = None,
+        qualifiers: Optional[Dict[Hashable, QualifierValue]] = None,
+        guid: Optional[UUID] = None,
+        parent_or_seq_chunk_parent: Optional[Parent] = None,
+    ):
 
-    def shift(self, shift: int) -> "CDSFrame":
-        if self is CDSFrame.NONE:
-            return self
-        if shift > 0:
-            return CDSFrame.from_int((self.value + shift) % 3)
+        self._location = self.initialize_location(cds_starts, cds_ends, strand, parent_or_seq_chunk_parent)
+        self._genomic_starts = cds_starts
+        self._genomic_ends = cds_ends
+        self.start = cds_starts[0]
+        self.end = cds_ends[-1]
+        self.sequence_guid = sequence_guid
+        self.sequence_name = sequence_name
+        self.product = product
+        self.protein_id = protein_id
+        self._import_qualifiers_from_list(qualifiers)
+
+        if len(frames_or_phases) != self.num_blocks:
+            raise InvalidCDSIntervalError("Number of frame or phase entries must match number of exons")
+
+        if len(self._location) == 0:
+            raise InvalidCDSIntervalError("Cannot have an empty CDS interval")
+
+        # only allow either all CDSFrame or all CDSPhase
+        is_frame = isinstance(frames_or_phases[0], CDSFrame)
+        for frame_or_phase in frames_or_phases[1:]:
+            if is_frame and isinstance(frame_or_phase, CDSPhase):
+                raise InvalidCDSIntervalError("Cannot mix frame and phase")
+            elif not is_frame and isinstance(frame_or_phase, CDSFrame):
+                raise InvalidCDSIntervalError("Cannot mix frame and phase")
+
+        if is_frame:
+            self.frames = frames_or_phases
         else:
-            return CDSFrame.from_int((self.value - (shift - ((-shift) % 3))) % 3)
+            self.frames = [x.to_frame() for x in frames_or_phases]
 
-    def to_phase(self) -> "CDSPhase":
-        """Converts frame to phase"""
-        mapping = {0: 0, 1: 2, 2: 1, -1: -1}
-        return CDSPhase(mapping[self.value])
-
-
-class CDSInterval:
-    """
-    An wrapper for a Location that gives it a concept of Frames.
-    Frame must be recorded individually on *every interval*.
-
-    This is necessary to be able to encode programmed frame shifts and indel variation that
-    would break frame, but that are likely just errors in assembly or annotation.
-    """
-
-    def __init__(self, location: Location, frames: List[Union[CDSFrame, CDSPhase]]):
-        self._location = location
-        if len(frames) != location.num_blocks:
-            raise LocationException("Number of frame entries must match number of exons")
-        # internally we work with Frame, but support Phase
-        # this will make parsing GFF3 easier
-        for i, frame_or_phase in enumerate(frames):
-            if isinstance(frame_or_phase, CDSPhase):
-                frame_or_phase = frame_or_phase.to_frame()
-                frames[i] = frame_or_phase
-        self.frames = frames
+        if guid is None:
+            self.guid = digest_object(
+                self._genomic_starts,
+                self._genomic_ends,
+                self.frames,
+                self.product,
+                self.protein_id,
+                self.qualifiers,
+            )
+        else:
+            self.guid = guid
 
     def __str__(self):
         frame_str = ", ".join([str(p) for p in self.frames])
@@ -109,81 +92,193 @@ class CDSInterval:
     def __repr__(self):
         return "<{}>".format(str(self))
 
-    def __eq__(self, other):
-        if type(other) is not CDSInterval:
-            return False
-        elif self.frames != other.frames:
-            return False
-        return self.chunk_relative_location == other.chunk_relative_location
+    @property
+    def id(self) -> str:
+        return self.protein_id
 
-    def __hash__(self):
-        return hash((self._location, self.frames[0]))
+    @property
+    def name(self) -> str:
+        return self.product
 
-    def __len__(self) -> int:
-        return len(self._location)
-
-    def lift_over_to_first_ancestor_of_type(
-        self, sequence_type: Optional[Union[str, SequenceType]] = SequenceType.CHROMOSOME
-    ) -> Location:
+    def to_dict(self, chromosome_relative_coordinates: bool = True) -> Dict[str, Any]:
         """
-        Lifts the location member to another coordinate system. Is a no-op if there is no parent assigned.
+        Convert this CDS to a dictionary representation. Note that the dictionary representation can only
+        use CDSFrame, not CDSPhase.
+        Args:
+            chromosome_relative_coordinates: Optional flag to export the interval in chromosome relative
+                or chunk-relative coordinates.
+                TODO: This cannot be set to False until the ability to subset the CDSFrames list is implemented.
 
         Returns:
-            The lifted Location.
+             A dictionary representation that can be passed to :meth:`CDSInterval.from_dict()`
         """
-        if self._location.parent is None:
-            return self._location
-        return self._location.lift_over_to_first_ancestor_of_type(sequence_type)
+        cds_frames = [f.name for f in self.frames]
 
-    @property
-    def chromosome_location(self) -> Location:
-        """Returns the Location of this in *chromosome coordinates*
+        if chromosome_relative_coordinates:
+            cds_starts = self._genomic_starts
+            cds_ends = self._genomic_ends
+        else:
+            raise NotImplementedError
 
-        NOTE: If this CDSInterval is built over a sequence chunk, using this accessor method
-        will return a location without sequence information. Please be careful using the location member
-        directly!
+        return dict(
+            cds_starts=cds_starts,
+            cds_ends=cds_ends,
+            strand=self.strand.name,
+            cds_frames=cds_frames,
+            qualifiers=self._export_qualifiers_to_list(),
+            sequence_name=self.sequence_name,
+            sequence_guid=self.sequence_guid,
+            protein_id=self.protein_id,
+            product=self.product,
+        )
+
+    @staticmethod
+    def from_dict(vals: Dict[str, Any], parent_or_seq_chunk_parent: Optional[Parent] = None) -> "CDSInterval":
         """
-        return self.lift_over_to_first_ancestor_of_type(SequenceType.CHROMOSOME)
+        Construct a :class:`CDSInterval` from a dictionary representation such as one produced by
+        :meth:`CDSInterval.to_dict()`. The frames must be CDSFrame, not CDSPhase.
+        Args:
+            vals: A dictionary representation.
+            parent_or_seq_chunk_parent: An optional Parent to associate with this new interval.
 
-    @property
-    def chunk_relative_location(self) -> Location:
-        """Returns the Location of this in *chunk relative coordinates*"""
-        return self._location
+        """
+        return CDSInterval(
+            cds_starts=vals["cds_starts"],
+            cds_ends=vals["cds_ends"],
+            strand=Strand[vals["strand"]],
+            frames_or_phases=[CDSFrame[x] for x in vals["cds_frames"]],
+            qualifiers=vals["qualifiers"],
+            sequence_name=vals["sequence_name"],
+            sequence_guid=vals["sequence_guid"],
+            protein_id=vals["protein_id"],
+            product=vals["product"],
+        )
 
-    @property
-    def blocks(self) -> List[Location]:
-        """Returns the blocks of this location"""
-        return self.chromosome_location.blocks
+    @staticmethod
+    def from_location(
+        location: Location,
+        cds_frames: List[Union[CDSFrame, CDSPhase]],
+        sequence_guid: Optional[UUID] = None,
+        sequence_name: Optional[str] = None,
+        protein_id: Optional[str] = None,
+        product: Optional[str] = None,
+        qualifiers: Optional[Dict[Hashable, QualifierValue]] = None,
+        guid: Optional[UUID] = None,
+    ) -> "CDSInterval":
+        """A convenience function that allows for construction of a :class:`CDSInterval` from a location object,
+        a list of CDSFrames or CDSPhase, and optional metadata."""
+        return CDSInterval(
+            cds_starts=[x.start for x in location.blocks],
+            cds_ends=[x.end for x in location.blocks],
+            strand=location.strand,
+            frames_or_phases=cds_frames,
+            sequence_guid=sequence_guid,
+            sequence_name=sequence_name,
+            protein_id=protein_id,
+            product=product,
+            qualifiers=qualifiers,
+            guid=guid,
+            parent_or_seq_chunk_parent=location.parent,
+        )
 
-    @property
-    def chunk_relative_blocks(self) -> List[Location]:
-        """Returns the chunk relative blocks of this location"""
-        return self.chunk_relative_location.blocks
+    @staticmethod
+    def from_chunk_relative_location(
+        location: Location,
+        cds_frames: List[Union[CDSFrame, CDSPhase]],
+        sequence_guid: Optional[UUID] = None,
+        sequence_name: Optional[str] = None,
+        protein_id: Optional[str] = None,
+        product: Optional[str] = None,
+        qualifiers: Optional[Dict[Hashable, QualifierValue]] = None,
+        guid: Optional[UUID] = None,
+    ) -> "CDSInterval":
+        """
+        Allows construction of a TranscriptInterval from a chunk-relative location. This is a location
+        present on a sequence chunk, which could be a sequence produced
 
-    @property
-    def strand(self) -> Strand:
-        """Pass up the Strand of this CDS's Location"""
-        return self.chunk_relative_location.strand
+        This location should
+        be built by something like this:
 
-    @property
-    def start(self) -> int:
-        """Returns genome relative start position."""
-        return self.lift_over_to_first_ancestor_of_type(SequenceType.CHROMOSOME).start
+        .. code-block:: python
 
-    @property
-    def end(self) -> int:
-        """Returns genome relative end position."""
-        return self.lift_over_to_first_ancestor_of_type(SequenceType.CHROMOSOME).end
+            from inscripta.biocantor.io.parser import seq_chunk_to_parent
+            parent = seq_chunk_to_parent('AANAAATGGCGAGCACCTAACCCCCNCC', "NC_000913.3", 222213, 222241)
+            loc = SingleInterval(5, 20, Strand.PLUS, parent=parent)
 
-    @property
-    def chunk_relative_start(self) -> int:
-        """Returns chunk relative start position."""
-        return self.chunk_relative_location.start
+        And then, this can be lifted back to chromosomal coordinates like such:
 
-    @property
-    def chunk_relative_end(self) -> int:
-        """Returns chunk relative end position."""
-        return self.chunk_relative_location.end
+        .. code-block:: python
+
+            loc.lift_over_to_first_ancestor_of_type("chromosome")
+
+        """
+        chromosome_location = location.lift_over_to_first_ancestor_of_type("chromosome")
+        return CDSInterval(
+            cds_starts=[x.start for x in chromosome_location.blocks],
+            cds_ends=[x.end for x in chromosome_location.blocks],
+            strand=location.strand,
+            frames_or_phases=cds_frames,
+            sequence_guid=sequence_guid,
+            sequence_name=sequence_name,
+            protein_id=protein_id,
+            product=product,
+            qualifiers=qualifiers,
+            guid=guid,
+            parent_or_seq_chunk_parent=location.parent,
+        )
+
+    def export_qualifiers(
+        self, parent_qualifiers: Optional[Dict[Hashable, Set[str]]] = None
+    ) -> Dict[Hashable, Set[Hashable]]:
+        """Exports qualifiers for GFF3/GenBank export"""
+        qualifiers = self._merge_qualifiers(parent_qualifiers)
+        for key, val in [
+            [BioCantorQualifiers.PROTEIN_ID.value, self.protein_id],
+            [BioCantorQualifiers.PRODUCT.value, self.product],
+        ]:
+            if not val:
+                continue
+            if key not in qualifiers:
+                qualifiers[key] = set()
+            qualifiers[key].add(val)
+        return qualifiers
+
+    def to_gff(
+        self,
+        parent: Optional[str] = None,
+        parent_qualifiers: Optional[Dict[Hashable, Set[str]]] = None,
+        chromosome_relative_coordinates: bool = True,
+    ) -> Iterable[GFFRow]:
+
+        qualifiers = self.export_qualifiers(parent_qualifiers)
+
+        cds_guid = str(self.guid)
+
+        if chromosome_relative_coordinates:
+            cds_blocks = zip(self._genomic_starts, self._genomic_ends)
+        else:
+            cds_blocks = [[x.start, x.end] for x in self.chunk_relative_blocks]
+
+        for i, block, frame in zip(count(1), cds_blocks, self.frames):
+            start, end = block
+            attributes = GFFAttributes(
+                id=f"{cds_guid}-{i}",
+                qualifiers=qualifiers,
+                name=self.protein_id,
+                parent=parent,
+            )
+            row = GFFRow(
+                self.sequence_name,
+                GFF_SOURCE,
+                BioCantorFeatureTypes.CDS,
+                start + 1,
+                end,
+                NULL_COLUMN,
+                self.strand,
+                frame.to_phase(),
+                attributes,
+            )
+            yield row
 
     @property
     def has_canonical_start_codon(self) -> bool:
@@ -209,17 +304,23 @@ class CDSInterval:
 
     def frame_iter(self) -> Iterator[CDSFrame]:
         """Iterate over frames taking strand into account"""
-        if self._location.strand == Strand.PLUS or self._location.strand == Strand.UNSTRANDED:
+        if (
+            self.chunk_relative_location.strand == Strand.PLUS
+            or self.chunk_relative_location.strand == Strand.UNSTRANDED
+        ):
             yield from self.frames
         else:
             yield from reversed(self.frames)
 
     def exon_iter(self) -> Iterator[SingleInterval]:
         """Iterate over exons in transcription direction"""
-        if self._location.strand == Strand.PLUS or self._location.strand == Strand.UNSTRANDED:
+        if (
+            self.chunk_relative_location.strand == Strand.PLUS
+            or self.chunk_relative_location.strand == Strand.UNSTRANDED
+        ):
             yield from self._location.blocks
         else:
-            yield from reversed(self._location.blocks)
+            yield from reversed(self.chunk_relative_location.blocks)
 
     @lru_cache(maxsize=1)
     def extract_sequence(self) -> Sequence:
@@ -245,6 +346,8 @@ class CDSInterval:
 
         NOTE: If this CDS is a subset of the original sequence, this number will represent the subset,
         not the original size!
+
+        TODO: Make this more efficient.
 
         Any leading or trailing bases that are annotated as CDS but cannot form a full codon
         are excluded. Additionally, any internal codons that are incomplete are excluded.
@@ -338,71 +441,74 @@ class CDSInterval:
         location: Location, starting_frame: Optional[CDSFrame] = CDSFrame.ZERO
     ) -> List[CDSFrame]:
         """
-        Construct a list of CDSFrames from a Location. This is intended to construct frames in situations where
-        the frames are not known. One example of such a case is when parsing GenBank files, which have only
-        a ``codon_start`` field to measure the offset at the start of translation.
+            Construct a list of CDSFrames from a Location. This is intended to construct frames in situations where
+            the frames are not known. One example of such a case is when parsing GenBank files, which have only
+            a ``codon_start`` field to measure the offset at the start of translation.
 
-        This function is extremely hard to understand, so I hope the below example helps:
-
-
-        1. Plus strand:
-
-        ```
-        CompoundInterval([0, 7, 12], [5, 11, 18], Strand.PLUS)
-        ```
-
-        ```
-        Index:      0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21
-        Sequence:   A A A C A A A A G G G  T  A  C  C  C  A  A  A  A  A  A
-        Exons:      A A A C A     A G G G     A  C  C  C  A  A
-        Zero Frame: 0 1 2 0 1     2 0 1 2     0  1  2  0  1  2
-        One Frame:  - 0 1 2 0     1 2 0 1     2  0  1  2  0  1
-        Two Frame:  - - 0 1 2     0 1 2 0     1  2  0  1  2  0
-        ```
-
-        In the non-zero case, the ``[0, 1, 2]`` cycle is offset by 1 or 2 bases.
-
-        So, for this test case we expect the frames to be:
-
-        ```
-        Zero Frame: [0, 2, 0]
-        One Frame:  [1, 1, 2]
-        Two Frame:  [2, 0, 1]
-        ```
-
-        2. Minus strand:
-
-        ```
-        CompoundInterval([0, 7, 12], [5, 11, 18], Strand.MINUS)
-        ```
-
-        ```
-        Index:      0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21
-        Sequence:   A A A C A A A A G G G  T  A  C  C  C  A  A  A  A  A  A
-        Exons:      A A A C A     A G G G     A  C  C  C  A  A
-        Zero Frame: 2 1 0 2 1     0 2 1 0     2  1  0  2  1  0
-        One Frame:  1 0 2 1 0     2 1 0 2     1  0  2  1  0  -
-        Two Frame:  0 2 1 0 2     1 0 2 1     0  2  1  0  -  -
-        ```
-
-        Now, for negative strand CDS intervals, the frame list is still in plus strand orientation.
-
-        So, for this test case we expect the frames to be:
-
-        ```
-        Zero Frame: [1, 0, 0]
-        One Frame:  [0, 2, 1]
-        Two Frame:  [2, 1, 2]
-        ```
+            This function is extremely hard to understand, so I hope the below example helps:
 
 
-        Args:
-            location: A interval of the CDS.
-            starting_frame: Frame to start iteration with. If ``codon_start`` was the source of this value,
-                then you would subtract one before converting to :class:`CDSFrame`.
+            1. Plus strand:
 
-        Returns:
-            A list of :class:`CDSFrame` that could be combined with the input Location to build a :class:`CDSInterval`.
+            .. code-block::
+
+                CompoundInterval([0, 7, 12], [5, 11, 18], Strand.PLUS)
+
+
+            .. code-block::
+
+                Index:      0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21
+                Sequence:   A A A C A A A A G G G  T  A  C  C  C  A  A  A  A  A  A
+                Exons:      A A A C A     A G G G     A  C  C  C  A  A
+                Zero Frame: 0 1 2 0 1     2 0 1 2     0  1  2  0  1  2
+                One Frame:  - 0 1 2 0     1 2 0 1     2  0  1  2  0  1
+                Two Frame:  - - 0 1 2     0 1 2 0     1  2  0  1  2  0
+
+
+            In the non-zero case, the ``[0, 1, 2]`` cycle is offset by 1 or 2 bases.
+
+            So, for this test case we expect the frames to be:
+
+        .. code-block::
+
+                Zero Frame: [0, 2, 0]
+                One Frame:  [1, 1, 2]
+                Two Frame:  [2, 0, 1]
+
+
+            2. Minus strand:
+
+            .. code-block::
+
+                CompoundInterval([0, 7, 12], [5, 11, 18], Strand.MINUS)
+
+
+            .. code-block::
+                Index:      0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21
+                Sequence:   A A A C A A A A G G G  T  A  C  C  C  A  A  A  A  A  A
+                Exons:      A A A C A     A G G G     A  C  C  C  A  A
+                Zero Frame: 2 1 0 2 1     0 2 1 0     2  1  0  2  1  0
+                One Frame:  1 0 2 1 0     2 1 0 2     1  0  2  1  0  -
+                Two Frame:  0 2 1 0 2     1 0 2 1     0  2  1  0  -  -
+
+
+            Now, for negative strand CDS intervals, the frame list is still in plus strand orientation.
+
+            So, for this test case we expect the frames to be:
+
+            .. code-block::
+                Zero Frame: [1, 0, 0]
+                One Frame:  [0, 2, 1]
+                Two Frame:  [2, 1, 2]
+
+            Args:
+                location: A interval of the CDS.
+                starting_frame: Frame to start iteration with. If ``codon_start`` was the source of this value,
+                    then you would subtract one before converting to :class:`CDSFrame`.
+
+            Returns:
+                A list of :class:`CDSFrame` that could be combined with the input Location to build a
+                :class:`CDSInterval`.
         """
         # edge case: if there is only one block, then just return the starting frame
         if location.num_blocks == 1:
@@ -432,10 +538,10 @@ class CDSInterval:
         Returns:
             A new :class:`CDSInterval` that has been merged.
         """
-        new_loc = self._location.optimize_blocks()
+        new_loc = self.chunk_relative_location.optimize_blocks()
         first_frame = next(self.frame_iter())
         frames = CDSInterval.construct_frames_from_location(new_loc, first_frame)
-        return CDSInterval(new_loc, frames)
+        return CDSInterval.from_location(new_loc, frames)
 
     def optimize_and_combine_blocks(self) -> "CDSInterval":
         """
@@ -447,7 +553,16 @@ class CDSInterval:
         Returns:
             A new :class:`CDSInterval` that has been merged.
         """
-        new_loc = self._location.optimize_and_combine_blocks()
+        new_loc = self.chunk_relative_location.optimize_and_combine_blocks()
         first_frame = next(self.frame_iter())
         frames = CDSInterval.construct_frames_from_location(new_loc, first_frame)
-        return CDSInterval(new_loc, frames)
+        return CDSInterval.from_location(new_loc, frames)
+
+    def to_bed12(
+        self,
+        score: Optional[int] = 0,
+        rgb: Optional[RGB] = RGB(0, 0, 0),
+        name: Optional[str] = "feature_name",
+        chromosome_relative_coordinates: bool = True,
+    ) -> BED12:
+        raise NotImplementedError

@@ -1,8 +1,13 @@
 import pytest
-from inscripta.biocantor.exc import ValidationException, EmptyLocationException, NoSuchAncestorException
+
+from inscripta.biocantor.exc import (
+    ValidationException,
+    EmptyLocationException,
+    NoSuchAncestorException,
+)
+from inscripta.biocantor.gene.feature import FeatureInterval
 from inscripta.biocantor.io.gff3.exc import GFF3MissingSequenceNameError
 from inscripta.biocantor.io.models import FeatureIntervalModel
-from inscripta.biocantor.gene.feature import NullSequenceException
 from inscripta.biocantor.location.location_impl import SingleInterval, CompoundInterval
 from inscripta.biocantor.location.strand import Strand
 from inscripta.biocantor.parent.parent import Parent, SequenceType
@@ -228,12 +233,6 @@ class TestFeatureInterval:
         val = feat.intersect(value)
         expected = FeatureIntervalModel.Schema().load(expected).to_feature_interval()
         assert str(expected) == str(val)
-
-    def test_no_such_ancestor(self):
-        with pytest.raises(NullSequenceException):
-            _ = se_unspliced.to_feature_interval(
-                parent_or_seq_chunk_parent=Parent(sequence_type=SequenceType.CHROMOSOME)
-            )
 
     @pytest.mark.parametrize(
         "schema,parent,expected_spliced",
@@ -495,18 +494,6 @@ class TestFeatureIntervalSequenceSubset:
         assert feat.chunk_relative_start + 1 == feat.start
         assert feat.chunk_relative_end + 1 == feat.end
 
-    @pytest.mark.parametrize(
-        "schema,parent,expected_exception",
-        [
-            [e3_spliced, Parent(), ValidationException],
-            [e3_spliced_minus, Parent(sequence_type=SequenceType.CHROMOSOME), NullSequenceException],
-            [se_unspliced, Parent(sequence_type=SequenceType.SEQUENCE_CHUNK), NullSequenceException],
-        ],
-    )
-    def test_constructor_exceptions(self, schema, parent, expected_exception):
-        with pytest.raises(expected_exception):
-            _ = schema.to_feature_interval(parent)
-
     def test_dict(self):
         feat = e3_spliced.to_feature_interval(parent_genome2_1_15)
         feat2 = e3_spliced.to_feature_interval()
@@ -520,3 +507,28 @@ class TestFeatureIntervalSequenceSubset:
         del rel_d["feature_interval_guid"]
         assert rel_d != d
         assert [x + 1 for x in rel_d["interval_starts"]] == list(d["interval_starts"])
+
+
+class TestFeatureWithoutModel:
+    @pytest.mark.parametrize(
+        "feat",
+        [
+            dict(
+                interval_starts=[2, 8, 12],
+                interval_ends=[5, 13, 18],
+                strand=Strand.PLUS,
+            ),
+            dict(
+                interval_starts=[2, 8, 12],
+                interval_ends=[5, 13, 18],
+                strand=Strand.PLUS,
+                parent_or_seq_chunk_parent=Sequence(
+                    "AAAGGAAAGTCCCTGAAAAAA", Alphabet.NT_EXTENDED_GAPPED, type=SequenceType.CHROMOSOME
+                ),
+            ),
+        ],
+    )
+    def test_constructor(self, feat):
+        feat = FeatureInterval(**feat)
+        feat2 = FeatureInterval.from_location(feat._location)
+        assert feat == feat2

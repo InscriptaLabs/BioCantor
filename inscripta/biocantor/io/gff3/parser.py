@@ -23,7 +23,7 @@ from Bio.SeqRecord import SeqRecord
 from gffutils.feature import Feature
 from gffutils.interface import FeatureDB
 from inscripta.biocantor.gene.biotype import Biotype
-from inscripta.biocantor.gene.cds import CDSPhase
+from inscripta.biocantor.gene.cds_frame import CDSPhase
 from inscripta.biocantor.io.gff3.constants import (
     GFF3Headers,
     BioCantorGFF3ReservedQualifiers,
@@ -153,15 +153,16 @@ def _parse_genes(chrom: str, db: FeatureDB) -> List[Dict]:
 
             if len(cds) == 0:
                 cds_starts = cds_ends = cds_frames = None
-                protein_id = None
+                protein_id = product = None
             else:
                 # sort by start and end in case two blocks start at the same position
                 cds = sorted(cds, key=lambda c: (c.start, c.end))
                 cds_starts = [x.start - 1 for x in cds]
                 cds_ends = [x.end for x in cds]
                 cds_frames = [CDSPhase.from_int(int(f.frame)).to_frame().name for f in cds]
-                # NCBI encodes protein IDs on the CDS feature
+                # NCBI encodes protein IDs and products on the CDS feature
                 protein_id = cds[0].attributes.get("protein_id", [None])[0]
+                product = cds[0].attributes.get("product", [None])[0]
 
             tx = dict(
                 exon_starts=exon_starts,
@@ -177,6 +178,7 @@ def _parse_genes(chrom: str, db: FeatureDB) -> List[Dict]:
                 transcript_symbol=transcript_symbol,
                 sequence_name=chrom,
                 protein_id=protein_id,
+                product=product,
             )
             transcripts.append(tx)
 
