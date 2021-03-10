@@ -921,6 +921,45 @@ class TestTranscriptWithoutModel:
         assert tx == tx2
 
     @pytest.mark.parametrize(
+        "location,expected",
+        [
+            (
+                SingleInterval(
+                    5,
+                    20,
+                    Strand.PLUS,
+                    parent=Parent(
+                        id="NC_000913.3:222213-222241",
+                        sequence=Sequence(
+                            "AANAAATGGCGAGCACCTAACCCCCNCC",
+                            Alphabet.NT_EXTENDED,
+                            type=SequenceType.SEQUENCE_CHUNK,
+                            parent=Parent(
+                                id="NC_000913.3",
+                                location=SingleInterval(
+                                    222213,
+                                    222241,
+                                    Strand.PLUS,
+                                    parent=Parent(
+                                        id="NC_000913.3",
+                                        sequence_type=SequenceType.CHROMOSOME,
+                                        location=SingleInterval(222213, 222241, Strand.PLUS),
+                                    ),
+                                ),
+                                sequence_type=SequenceType.CHROMOSOME,
+                            ),
+                        ),
+                    ),
+                ),
+                SingleInterval(222218, 222233, Strand.PLUS),
+            )
+        ],
+    )
+    def test_chunk_relative_constructor(self, location, expected):
+        cds = TranscriptInterval.from_chunk_relative_location(location)
+        assert cds.chromosome_location.reset_parent(None) == expected
+
+    @pytest.mark.parametrize(
         "tx",
         [
             dict(

@@ -397,6 +397,67 @@ class TranscriptInterval(AbstractFeatureInterval):
             parent_or_seq_chunk_parent=location.parent,
         )
 
+    @staticmethod
+    def from_chunk_relative_location(
+        location: Location,
+        cds: Optional[CDSInterval] = None,
+        qualifiers: Optional[Dict[Hashable, QualifierValue]] = None,
+        is_primary_tx: Optional[bool] = None,
+        transcript_id: Optional[str] = None,
+        transcript_symbol: Optional[str] = None,
+        transcript_type: Optional[Biotype] = None,
+        sequence_guid: Optional[UUID] = None,
+        sequence_name: Optional[str] = None,
+        protein_id: Optional[str] = None,
+        product: Optional[str] = None,
+        guid: Optional[UUID] = None,
+        transcript_guid: Optional[UUID] = None,
+    ) -> "TranscriptInterval":
+        """
+        Allows construction of a TranscriptInterval from a chunk-relative location. This is a location
+        present on a sequence chunk, which could be a sequence produced
+
+        This location should
+        be built by something like this:
+
+        .. code-block:: python
+
+            from inscripta.biocantor.io.parser import seq_chunk_to_parent
+            parent = seq_chunk_to_parent('AANAAATGGCGAGCACCTAACCCCCNCC', "NC_000913.3", 222213, 222241)
+            loc = SingleInterval(5, 20, Strand.PLUS, parent=parent)
+
+        And then, this can be lifted back to chromosomal coordinates like such:
+
+        .. code-block:: python
+
+            loc.lift_over_to_first_ancestor_of_type("chromosome")
+
+        """
+
+        chromosome_location = location.lift_over_to_first_ancestor_of_type("chromosome")
+        if cds:
+            cds_chromosome_location = cds.chunk_relative_location.lift_over_to_first_ancestor_of_type("chromosome")
+        return TranscriptInterval(
+            exon_starts=[x.start for x in chromosome_location.blocks],
+            exon_ends=[x.end for x in chromosome_location.blocks],
+            strand=location.strand,
+            cds_starts=[x.start for x in cds_chromosome_location.blocks] if cds else None,
+            cds_ends=[x.end for x in cds_chromosome_location.blocks] if cds else None,
+            cds_frames=cds.frames if cds else None,
+            guid=guid,
+            transcript_guid=transcript_guid,
+            qualifiers=qualifiers,
+            is_primary_tx=is_primary_tx,
+            transcript_id=transcript_id,
+            transcript_symbol=transcript_symbol,
+            transcript_type=Biotype[transcript_type] if transcript_type else None,
+            sequence_name=sequence_name,
+            sequence_guid=sequence_guid,
+            protein_id=protein_id,
+            product=product,
+            parent_or_seq_chunk_parent=location.parent,
+        )
+
     def intersect(
         self,
         location: Location,

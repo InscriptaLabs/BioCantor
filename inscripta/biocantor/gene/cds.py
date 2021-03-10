@@ -181,6 +181,52 @@ class CDSInterval(AbstractFeatureInterval):
             parent_or_seq_chunk_parent=location.parent,
         )
 
+    @staticmethod
+    def from_chunk_relative_location(
+        location: Location,
+        cds_frames: List[Union[CDSFrame, CDSPhase]],
+        sequence_guid: Optional[UUID] = None,
+        sequence_name: Optional[str] = None,
+        protein_id: Optional[str] = None,
+        product: Optional[str] = None,
+        qualifiers: Optional[Dict[Hashable, QualifierValue]] = None,
+        guid: Optional[UUID] = None,
+    ) -> "CDSInterval":
+        """
+        Allows construction of a TranscriptInterval from a chunk-relative location. This is a location
+        present on a sequence chunk, which could be a sequence produced
+
+        This location should
+        be built by something like this:
+
+        .. code-block:: python
+
+            from inscripta.biocantor.io.parser import seq_chunk_to_parent
+            parent = seq_chunk_to_parent('AANAAATGGCGAGCACCTAACCCCCNCC', "NC_000913.3", 222213, 222241)
+            loc = SingleInterval(5, 20, Strand.PLUS, parent=parent)
+
+        And then, this can be lifted back to chromosomal coordinates like such:
+
+        .. code-block:: python
+
+            loc.lift_over_to_first_ancestor_of_type("chromosome")
+
+        """
+        chromosome_location = location.lift_over_to_first_ancestor_of_type("chromosome")
+        return CDSInterval(
+            cds_starts=[x.start for x in chromosome_location.blocks],
+            cds_ends=[x.end for x in chromosome_location.blocks],
+            strand=location.strand,
+            frames_or_phases=cds_frames,
+            sequence_guid=sequence_guid,
+            sequence_name=sequence_name,
+            protein_id=protein_id,
+            product=product,
+            qualifiers=qualifiers,
+            guid=guid,
+            parent_or_seq_chunk_parent=location.parent,
+        )
+
     def export_qualifiers(
         self, parent_qualifiers: Optional[Dict[Hashable, Set[str]]] = None
     ) -> Dict[Hashable, Set[Hashable]]:

@@ -1,4 +1,5 @@
 import pytest
+
 from inscripta.biocantor.exc import InvalidCDSIntervalError
 from inscripta.biocantor.gene.cds import CDSInterval, TranslationTable
 from inscripta.biocantor.gene.cds_frame import CDSPhase, CDSFrame
@@ -6,6 +7,7 @@ from inscripta.biocantor.gene.codon import Codon
 from inscripta.biocantor.location.location_impl import CompoundInterval, SingleInterval
 from inscripta.biocantor.location.strand import Strand
 from inscripta.biocantor.parent import SequenceType
+from inscripta.biocantor.parent.parent import Parent
 from inscripta.biocantor.sequence import Sequence
 from inscripta.biocantor.sequence.alphabet import Alphabet
 
@@ -1144,6 +1146,46 @@ class TestCDSInterval:
         cds = CDSInterval(**cds)
         cds2 = CDSInterval.from_location(cds._location, cds.frames)
         assert cds == cds2
+
+    @pytest.mark.parametrize(
+        "location,cds_frames,expected",
+        [
+            (
+                SingleInterval(
+                    5,
+                    20,
+                    Strand.PLUS,
+                    parent=Parent(
+                        id="NC_000913.3:222213-222241",
+                        sequence=Sequence(
+                            "AANAAATGGCGAGCACCTAACCCCCNCC",
+                            Alphabet.NT_EXTENDED,
+                            type=SequenceType.SEQUENCE_CHUNK,
+                            parent=Parent(
+                                id="NC_000913.3",
+                                location=SingleInterval(
+                                    222213,
+                                    222241,
+                                    Strand.PLUS,
+                                    parent=Parent(
+                                        id="NC_000913.3",
+                                        sequence_type=SequenceType.CHROMOSOME,
+                                        location=SingleInterval(222213, 222241, Strand.PLUS),
+                                    ),
+                                ),
+                                sequence_type=SequenceType.CHROMOSOME,
+                            ),
+                        ),
+                    ),
+                ),
+                [CDSFrame.ZERO],
+                SingleInterval(222218, 222233, Strand.PLUS),
+            )
+        ],
+    )
+    def test_chunk_relative_constructor(self, location, cds_frames, expected):
+        cds = CDSInterval.from_chunk_relative_location(location, cds_frames)
+        assert cds.chromosome_location.reset_parent(None) == expected
 
     @pytest.mark.parametrize(
         "cds",
