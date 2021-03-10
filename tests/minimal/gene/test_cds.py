@@ -1107,3 +1107,53 @@ class TestCDSInterval:
             [CDSFrame.ONE.to_phase(), CDSFrame.ONE.to_phase(), CDSFrame.ZERO.to_phase()],
         )
         assert list(cds.scan_codons()) == [Codon.TCC, Codon.CTG, Codon.AAA]
+
+    @pytest.mark.parametrize(
+        "cds",
+        [
+            dict(
+                cds_starts=[2, 8, 12],
+                cds_ends=[5, 13, 18],
+                strand=Strand.PLUS,
+                frames=[CDSFrame.ONE, CDSFrame.ONE, CDSFrame.ONE],
+            ),
+            dict(
+                cds_starts=[2, 8, 12],
+                cds_ends=[5, 13, 18],
+                strand=Strand.PLUS,
+                frames=[CDSFrame.ONE, CDSFrame.ONE, CDSFrame.ONE],
+                parent_or_seq_chunk_parent=Sequence(
+                    "AAAGGAAAGTCCCTGAAAAAA", Alphabet.NT_EXTENDED_GAPPED, type=SequenceType.CHROMOSOME
+                ),
+            ),
+        ],
+    )
+    def test_constructor(self, cds):
+        cds = CDSInterval(**cds)
+        cds2 = CDSInterval.from_location(cds._location, cds.frames)
+        assert cds == cds2
+
+    @pytest.mark.parametrize(
+        "cds",
+        [
+            dict(
+                cds_starts=[2, 8, 12],
+                cds_ends=[5, 13, 18],
+                strand=Strand.PLUS,
+                frames=[CDSFrame.ONE, CDSFrame.ONE, CDSFrame.ONE],
+            ),
+            dict(
+                cds_starts=[2, 8, 12],
+                cds_ends=[5, 13, 18],
+                strand=Strand.PLUS,
+                frames=[CDSFrame.ONE, CDSFrame.ONE, CDSFrame.ONE],
+                parent_or_seq_chunk_parent=Sequence(
+                    "AAAGGAAAGTCCCTGAAAAAA", Alphabet.NT_EXTENDED_GAPPED, type=SequenceType.CHROMOSOME
+                ),
+            ),
+        ],
+    )
+    def test_dict(self, cds):
+        cds = CDSInterval(**cds)
+        cds2 = CDSInterval.from_dict(cds.to_dict())
+        assert cds == cds2

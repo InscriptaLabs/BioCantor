@@ -129,7 +129,7 @@ class CDSInterval(AbstractFeatureInterval):
             cds_starts=vals["cds_starts"],
             cds_ends=vals["cds_ends"],
             strand=Strand[vals["strand"]],
-            frames=vals["cds_frames"],
+            frames=[CDSFrame[x] for x in vals["cds_frames"]],
             qualifiers=vals["qualifiers"],
             sequence_name=vals["sequence_name"],
             sequence_guid=vals["sequence_guid"],

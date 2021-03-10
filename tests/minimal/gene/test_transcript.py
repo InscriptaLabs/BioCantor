@@ -9,6 +9,7 @@ from inscripta.biocantor.exc import (
 )
 from inscripta.biocantor.gene.cds_frame import CDSFrame
 from inscripta.biocantor.io.models import TranscriptIntervalModel
+from inscripta.biocantor.gene.transcript import TranscriptInterval
 from inscripta.biocantor.location.location_impl import SingleInterval, CompoundInterval, EmptyLocation
 from inscripta.biocantor.location.strand import Strand
 from inscripta.biocantor.parent.parent import Parent, SequenceType
@@ -899,6 +900,54 @@ class TestTranscript:
         tx = se_noncoding.to_transcript_interval()
         with pytest.raises(NoncodingTranscriptError):
             _ = tx.has_in_frame_stop
+
+
+class TestTranscriptWithoutModel:
+    @pytest.mark.parametrize(
+        "tx",
+        [
+            dict(
+                exon_starts=[2, 8, 12],
+                exon_ends=[5, 13, 18],
+                strand=Strand.PLUS,
+            ),
+            dict(
+                exon_starts=[2, 8, 12],
+                exon_ends=[5, 13, 18],
+                strand=Strand.PLUS,
+                parent_or_seq_chunk_parent=Sequence(
+                    "AAAGGAAAGTCCCTGAAAAAA", Alphabet.NT_EXTENDED_GAPPED, type=SequenceType.CHROMOSOME
+                ),
+            ),
+        ],
+    )
+    def test_constructor(self, tx):
+        tx = TranscriptInterval(**tx)
+        tx2 = TranscriptInterval.from_location(tx._location)
+        assert tx == tx2
+
+    @pytest.mark.parametrize(
+        "tx",
+        [
+            dict(
+                exon_starts=[2, 8, 12],
+                exon_ends=[5, 13, 18],
+                strand=Strand.PLUS,
+            ),
+            dict(
+                exon_starts=[2, 8, 12],
+                exon_ends=[5, 13, 18],
+                strand=Strand.PLUS,
+                parent_or_seq_chunk_parent=Sequence(
+                    "AAAGGAAAGTCCCTGAAAAAA", Alphabet.NT_EXTENDED_GAPPED, type=SequenceType.CHROMOSOME
+                ),
+            ),
+        ],
+    )
+    def test_dict(self, tx):
+        tx = TranscriptInterval(**tx)
+        tx2 = TranscriptInterval.from_dict(tx.to_dict())
+        assert tx == tx2
 
 
 class TestQualifiers:
