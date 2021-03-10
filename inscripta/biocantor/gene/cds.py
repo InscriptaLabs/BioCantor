@@ -17,7 +17,6 @@ from inscripta.biocantor.parent.parent import Parent
 from inscripta.biocantor.sequence import Sequence
 from inscripta.biocantor.sequence.alphabet import Alphabet
 from inscripta.biocantor.util.hashing import digest_object
-from inscripta.biocantor.util.object_validation import ObjectValidation
 
 
 class CDSInterval(AbstractFeatureInterval):

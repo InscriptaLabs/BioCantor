@@ -21,7 +21,6 @@ from inscripta.biocantor.location.strand import Strand
 from inscripta.biocantor.parent.parent import Parent, SequenceType
 from inscripta.biocantor.util.bins import bins
 from inscripta.biocantor.util.hashing import digest_object
-from inscripta.biocantor.util.object_validation import ObjectValidation
 
 
 class FeatureInterval(AbstractFeatureInterval):
