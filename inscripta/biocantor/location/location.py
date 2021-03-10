@@ -217,6 +217,8 @@ class Location(ABC):
             Other Location
         match_strand
             If set to True, automatically return False if given interval Strand does not match this Location's Strand
+        full_span
+            If set to True, compare the full span of this Location to the full span of the other Location.
 
         Returns
         -------
@@ -330,6 +332,9 @@ class Location(ABC):
         match_strand
             If set to True, automatically return EmptyLocation() if other Location has a different Strand than
             this Location
+        full_span
+            If set to True, compare the full span of this Location to the full span of the other Location.
+
         """
 
     @abstractmethod
@@ -378,7 +383,8 @@ class Location(ABC):
         """
 
     def contains(self, other: "Location", match_strand: bool = False, full_span: bool = False):
-        """Returns True iff this location contains the other"""
+        """Returns True iff this location contains the other. If ``full_span`` is ``True``, the full span of
+        both locations are compared."""
         if not self.has_overlap(other, match_strand, full_span):
             return False
         other_to_compare = other.reset_parent(None)
@@ -387,6 +393,4 @@ class Location(ABC):
                 self.reset_parent(None).intersection(other_to_compare, match_strand=match_strand, full_span=full_span)
             ) == len(other_to_compare)
         else:
-            return len(
-                self.reset_parent(None).intersection(other_to_compare, match_strand=match_strand, full_span=full_span)
-            ) == len(other_to_compare._full_span_interval)
+            return self.reset_parent(None)._full_span_interval.contains(other_to_compare._full_span_interval)

@@ -2985,200 +2985,281 @@ class TestCompoundInterval:
     @pytest.mark.parametrize(
         "si,ci,exp",
         [
+            # ci extends to the right of si
             (
                 SingleInterval(10, 20, Strand.PLUS),
                 CompoundInterval([0, 25], [5, 30], Strand.PLUS),
                 SingleInterval(10, 20, Strand.PLUS),
             ),
+            # ci extends to the left of si
             (
                 SingleInterval(10, 30, Strand.PLUS),
                 CompoundInterval([0, 25], [5, 30], Strand.PLUS),
                 SingleInterval(10, 30, Strand.PLUS),
             ),
+            # ci extends to the left and to the right of si
             (
                 SingleInterval(0, 15, Strand.PLUS),
                 CompoundInterval([0, 25], [5, 30], Strand.PLUS),
                 SingleInterval(0, 15, Strand.PLUS),
             ),
+            # ci is within the bounds of si, which starts at 0
             (
                 SingleInterval(0, 15, Strand.PLUS),
                 CompoundInterval([0, 5], [10, 12], Strand.PLUS),
                 SingleInterval(0, 12, Strand.PLUS),
             ),
+            # ci is within the bounds of si
             (
                 SingleInterval(5, 15, Strand.PLUS),
                 CompoundInterval([0, 5], [10, 12], Strand.PLUS),
                 SingleInterval(5, 12, Strand.PLUS),
             ),
+            # si is larger than ci
+            (
+                SingleInterval(5, 25, Strand.PLUS),
+                CompoundInterval([8, 16], [15, 20], Strand.PLUS),
+                SingleInterval(8, 20, Strand.PLUS),
+            ),
+            # si extends to the left of ci
+            (
+                SingleInterval(5, 25, Strand.PLUS),
+                CompoundInterval([10, 16], [15, 20], Strand.PLUS),
+                SingleInterval(10, 20, Strand.PLUS),
+            ),
+            # si extends to the right of ci
+            (
+                SingleInterval(5, 40, Strand.PLUS),
+                CompoundInterval([10, 16], [15, 20], Strand.PLUS),
+                SingleInterval(10, 20, Strand.PLUS),
+            ),
+            # different parents are always EmptyLocation despite having overlap
+            (
+                SingleInterval(5, 15, Strand.PLUS, parent="parent1"),
+                CompoundInterval([0, 5], [10, 12], Strand.PLUS, parent="parent2"),
+                EmptyLocation(),
+            ),
         ],
     )
     def test_full_span_intersection_single_interval(self, si, ci, exp):
         assert si.intersection(ci, full_span=True) == ci.intersection(si, full_span=True) == exp
+        ci.strand = Strand.MINUS
+        assert si.intersection(ci, full_span=True) == ci.intersection(si, full_span=True) == EmptyLocation()
+        assert si.intersection(ci, match_strand=False, full_span=True) == exp
 
     @pytest.mark.parametrize(
         "si,ci,has_overlap",
         [
+            # ci extends to the right of si
             (
                 SingleInterval(10, 20, Strand.PLUS),
                 CompoundInterval([0, 25], [5, 30], Strand.PLUS),
                 True,
             ),
+            # ci extends to the left of si
             (
                 SingleInterval(10, 30, Strand.PLUS),
                 CompoundInterval([0, 25], [5, 30], Strand.PLUS),
                 True,
             ),
+            # ci extends to the right of si
             (
                 SingleInterval(0, 15, Strand.PLUS),
                 CompoundInterval([0, 25], [5, 30], Strand.PLUS),
                 True,
             ),
+            # ci both exons overlap si
             (
                 SingleInterval(0, 15, Strand.PLUS),
                 CompoundInterval([0, 5], [10, 12], Strand.PLUS),
                 True,
             ),
+            # ci both exons overlap si
             (
                 SingleInterval(5, 15, Strand.PLUS),
                 CompoundInterval([0, 5], [10, 12], Strand.PLUS),
                 True,
             ),
+            # ci exon1 overlaps si
             (
                 SingleInterval(0, 3, Strand.PLUS),
                 CompoundInterval([0, 5], [10, 12], Strand.PLUS),
                 True,
             ),
+            # ci extends to the left of si
             (
                 SingleInterval(12, 15, Strand.PLUS),
                 CompoundInterval([0, 5], [10, 12], Strand.PLUS),
+                False,
+            ),
+            # si is larger than ci
+            (
+                SingleInterval(5, 25, Strand.PLUS),
+                CompoundInterval([8, 16], [15, 20], Strand.PLUS),
+                True,
+            ),
+            # si extends to the left of ci
+            (
+                SingleInterval(5, 25, Strand.PLUS),
+                CompoundInterval([10, 16], [15, 20], Strand.PLUS),
+                True,
+            ),
+            # si extends to the right of ci
+            (
+                SingleInterval(5, 40, Strand.PLUS),
+                CompoundInterval([10, 16], [15, 20], Strand.PLUS),
+                True,
+            ),
+            # different parent never overlaps
+            (
+                SingleInterval(0, 3, Strand.PLUS, parent="parent1"),
+                CompoundInterval([0, 5], [10, 12], Strand.PLUS, parent="parent2"),
                 False,
             ),
         ],
     )
     def test_full_span_overlaps_single_interval(self, si, ci, has_overlap):
         assert si.has_overlap(ci, full_span=True) == ci.has_overlap(si, full_span=True) == has_overlap
+        ci.strand = Strand.MINUS
+        assert (
+            si.has_overlap(ci, match_strand=True, full_span=True)
+            == ci.has_overlap(si, match_strand=True, full_span=True)
+            == False
+        )
+        assert si.has_overlap(ci, match_strand=False, full_span=True) == has_overlap
 
     @pytest.mark.parametrize(
         "ci1,ci2,exp",
         [
+            # ci1 == ci2
             (
                 CompoundInterval([0, 25], [5, 30], Strand.PLUS),
                 CompoundInterval([0, 25], [5, 30], Strand.PLUS),
                 SingleInterval(0, 30, Strand.PLUS),
             ),
+            # ci2 extends to the left of ci1
             (
                 CompoundInterval([10, 25], [30, 40], Strand.PLUS),
                 CompoundInterval([0, 25], [5, 30], Strand.PLUS),
                 SingleInterval(10, 30, Strand.PLUS),
             ),
+            # ci2 extends to the right of ci1
+            (
+                CompoundInterval([10, 25], [30, 40], Strand.PLUS),
+                CompoundInterval([0, 25], [5, 50], Strand.PLUS),
+                SingleInterval(10, 40, Strand.PLUS),
+            ),
+            # ci2 extends to the left and to the right of ci1
             (
                 CompoundInterval([10, 25], [30, 40], Strand.PLUS),
                 CompoundInterval([0, 25], [5, 40], Strand.PLUS),
                 SingleInterval(10, 40, Strand.PLUS),
             ),
+            # mismatched parents
+            (
+                CompoundInterval([10, 25], [30, 40], Strand.PLUS, parent="parent1"),
+                CompoundInterval([0, 25], [5, 40], Strand.PLUS, parent="parent2"),
+                EmptyLocation(),
+            ),
         ],
     )
     def test_full_span_intersection_compound_interval(self, ci1, ci2, exp):
         assert ci1.intersection(ci2, full_span=True) == ci1.intersection(ci2, full_span=True) == exp
+        ci2.strand = Strand.MINUS
+        assert ci1.intersection(ci2, full_span=True) == ci1.intersection(ci2, full_span=True) == EmptyLocation()
+        assert ci1.intersection(ci2, match_strand=False, full_span=True) == exp
 
     @pytest.mark.parametrize(
         "ci1,ci2,has_overlap",
         [
+            # ci2 == ci1
             (
                 CompoundInterval([0, 25], [5, 30], Strand.PLUS),
                 CompoundInterval([0, 25], [5, 30], Strand.PLUS),
                 True,
             ),
-            (
-                CompoundInterval([10, 25], [30, 40], Strand.PLUS),
-                CompoundInterval([0, 25], [5, 30], Strand.PLUS),
-                True,
-            ),
+            # ci2 extends to the left of ci1
             (
                 CompoundInterval([10, 25], [30, 40], Strand.PLUS),
-                CompoundInterval([0, 25], [5, 40], Strand.PLUS),
+                CompoundInterval([0, 25], [5, 30], Strand.PLUS),
                 True,
             ),
+            # ci2 extends to the right of ci1
+            (
+                CompoundInterval([10, 25], [30, 40], Strand.PLUS),
+                CompoundInterval([19, 25], [25, 50], Strand.PLUS),
+                True,
+            ),
+            # ci2 extends to the left and right of exons of ci1
+            (
+                CompoundInterval([10, 25], [30, 40], Strand.PLUS),
+                CompoundInterval([0, 25], [5, 50], Strand.PLUS),
+                True,
+            ),
+            # ci2 overlaps exon1 of ci1
             (
                 CompoundInterval([10, 25], [30, 40], Strand.PLUS),
                 CompoundInterval([10], [30], Strand.PLUS),
                 True,
             ),
+            # ci2 is to the left of ci1
             (
                 CompoundInterval([10, 25], [30, 40], Strand.PLUS),
                 CompoundInterval([0, 7], [5, 9], Strand.PLUS),
                 False,
             ),
-            # entirely intronic overlap is still true
+            # ci2 is all intronic to ci1
             (
                 CompoundInterval([0, 40], [2, 45], Strand.PLUS),
                 CompoundInterval([10], [35], Strand.PLUS),
                 True,
             ),
+            # ci2 is all intronic to ci1
             (
                 CompoundInterval([0, 40], [2, 45], Strand.PLUS),
                 CompoundInterval([10, 20], [25, 30], Strand.PLUS),
                 True,
             ),
+            # ci2 is all intronic to ci1
             (
                 CompoundInterval([0, 40], [2, 45], Strand.PLUS),
                 CompoundInterval([10, 20], [25, 40], Strand.PLUS),
                 True,
             ),
+            # mismatched parents
+            (
+                CompoundInterval([0, 40], [2, 45], Strand.PLUS, parent="parent1"),
+                CompoundInterval([10, 20], [25, 40], Strand.PLUS, parent="parent2"),
+                False,
+            ),
         ],
     )
     def test_full_span_overlaps_compound_interval(self, ci1, ci2, has_overlap):
         assert ci1.has_overlap(ci2, full_span=True) == ci1.has_overlap(ci2, full_span=True) == has_overlap
-
-    @pytest.mark.parametrize(
-        "ci1,ci2,contains",
-        [
-            (
-                CompoundInterval([0, 25], [5, 30], Strand.PLUS),
-                CompoundInterval([0, 25], [5, 30], Strand.PLUS),
-                True,
-            ),
-            (
-                CompoundInterval([10, 25], [30, 40], Strand.PLUS),
-                CompoundInterval([0, 25], [5, 30], Strand.PLUS),
-                False,
-            ),
-            (
-                CompoundInterval([10, 25], [30, 40], Strand.PLUS),
-                CompoundInterval([0, 25], [5, 40], Strand.PLUS),
-                False,
-            ),
-            (
-                CompoundInterval([10, 25], [30, 40], Strand.PLUS),
-                CompoundInterval([0, 25], [5, 40], Strand.PLUS),
-                False,
-            ),
-            (
-                CompoundInterval([10, 25], [30, 40], Strand.PLUS),
-                CompoundInterval([12, 25], [15, 39], Strand.PLUS),
-                True,
-            ),
-        ],
-    )
-    def test_full_span_contains_compound_interval(self, ci1, ci2, contains):
-        assert ci1.contains(ci2, full_span=True) == contains
-        ci1.strand = Strand.MINUS
-        assert ci1.contains(ci2, full_span=True, match_strand=False) == contains
+        ci2.strand = Strand.MINUS
+        assert (
+            ci1.has_overlap(ci2, match_strand=True, full_span=True)
+            == ci1.has_overlap(ci2, match_strand=True, full_span=True)
+            == False
+        )
+        assert ci1.has_overlap(ci2, match_strand=False, full_span=True) == has_overlap
 
     @pytest.mark.parametrize(
         "ci1,ci2,has_overlap",
         [
-            # entirely intronic overlap is still true
+            # entirely intronic overlap is no longer true
             (
                 CompoundInterval([0, 40], [2, 45], Strand.PLUS),
                 CompoundInterval([10], [35], Strand.PLUS),
                 False,
             ),
+            # entirely intronic overlap is no longer true
             (
                 CompoundInterval([0, 40], [2, 45], Strand.PLUS),
                 CompoundInterval([10, 20], [25, 30], Strand.PLUS),
                 False,
             ),
+            # entirely intronic overlap is no longer true
             (
                 CompoundInterval([0, 40], [2, 45], Strand.PLUS),
                 CompoundInterval([10, 20], [25, 40], Strand.PLUS),
@@ -3191,3 +3272,49 @@ class TestCompoundInterval:
         assert ci1.has_overlap(ci2) == has_overlap
         ci1.strand = Strand.MINUS
         assert ci1.has_overlap(ci2, match_strand=False) == has_overlap
+
+    @pytest.mark.parametrize(
+        "ci1,ci2,contains",
+        [
+            # identical things are contained
+            (
+                CompoundInterval([0, 25], [5, 30], Strand.PLUS),
+                CompoundInterval([0, 25], [5, 30], Strand.PLUS),
+                True,
+            ),
+            # ci2 extends to the left of ci1
+            (
+                CompoundInterval([10, 25], [30, 40], Strand.PLUS),
+                CompoundInterval([0, 25], [5, 30], Strand.PLUS),
+                False,
+            ),
+            # ci2 extends to the right of ci1
+            (
+                CompoundInterval([10, 25], [30, 40], Strand.PLUS),
+                CompoundInterval([12, 25], [15, 45], Strand.PLUS),
+                False,
+            ),
+            # ci2 extends to the left and right of ci1
+            (
+                CompoundInterval([10, 25], [30, 40], Strand.PLUS),
+                CompoundInterval([0, 25], [5, 40], Strand.PLUS),
+                False,
+            ),
+            # ci2 is contained on both sides
+            (
+                CompoundInterval([10, 25], [30, 40], Strand.PLUS),
+                CompoundInterval([12, 25], [15, 39], Strand.PLUS),
+                True,
+            ),
+            # mismatched parents
+            (
+                CompoundInterval([10, 25], [30, 40], Strand.PLUS, parent="parent1"),
+                CompoundInterval([12, 25], [15, 39], Strand.PLUS, parent="parent2"),
+                False,
+            ),
+        ],
+    )
+    def test_full_span_contains_compound_interval(self, ci1, ci2, contains):
+        assert ci1.contains(ci2, full_span=True) == contains
+        ci1.strand = Strand.MINUS
+        assert ci1.contains(ci2, full_span=True, match_strand=False) == contains

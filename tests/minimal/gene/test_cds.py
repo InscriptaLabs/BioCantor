@@ -1108,6 +1108,18 @@ class TestCDSInterval:
         )
         assert list(cds.scan_codons()) == [Codon.TCC, Codon.CTG, Codon.AAA]
 
+    def test_frame_to_phase_mixed_exception(self):
+        with pytest.raises(InvalidCDSIntervalError):
+            _ = CDSInterval.from_location(
+                CompoundInterval(
+                    [2, 8, 12],
+                    [5, 13, 18],
+                    Strand.PLUS,
+                    parent=Sequence("AAAGGAAAGTCCCTGAAAAAA", Alphabet.NT_EXTENDED_GAPPED, type=SequenceType.CHROMOSOME),
+                ),
+                [CDSFrame.ONE.to_phase(), CDSFrame.ONE, CDSFrame.ZERO.to_phase()],
+            )
+
     @pytest.mark.parametrize(
         "cds",
         [
@@ -1115,13 +1127,13 @@ class TestCDSInterval:
                 cds_starts=[2, 8, 12],
                 cds_ends=[5, 13, 18],
                 strand=Strand.PLUS,
-                frames=[CDSFrame.ONE, CDSFrame.ONE, CDSFrame.ONE],
+                frames_or_phases=[CDSFrame.ONE, CDSFrame.ONE, CDSFrame.ONE],
             ),
             dict(
                 cds_starts=[2, 8, 12],
                 cds_ends=[5, 13, 18],
                 strand=Strand.PLUS,
-                frames=[CDSFrame.ONE, CDSFrame.ONE, CDSFrame.ONE],
+                frames_or_phases=[CDSFrame.ONE, CDSFrame.ONE, CDSFrame.ONE],
                 parent_or_seq_chunk_parent=Sequence(
                     "AAAGGAAAGTCCCTGAAAAAA", Alphabet.NT_EXTENDED_GAPPED, type=SequenceType.CHROMOSOME
                 ),
@@ -1140,13 +1152,13 @@ class TestCDSInterval:
                 cds_starts=[2, 8, 12],
                 cds_ends=[5, 13, 18],
                 strand=Strand.PLUS,
-                frames=[CDSFrame.ONE, CDSFrame.ONE, CDSFrame.ONE],
+                frames_or_phases=[CDSFrame.ONE, CDSFrame.ONE, CDSFrame.ONE],
             ),
             dict(
                 cds_starts=[2, 8, 12],
                 cds_ends=[5, 13, 18],
                 strand=Strand.PLUS,
-                frames=[CDSFrame.ONE, CDSFrame.ONE, CDSFrame.ONE],
+                frames_or_phases=[CDSFrame.ONE, CDSFrame.ONE, CDSFrame.ONE],
                 parent_or_seq_chunk_parent=Sequence(
                     "AAAGGAAAGTCCCTGAAAAAA", Alphabet.NT_EXTENDED_GAPPED, type=SequenceType.CHROMOSOME
                 ),
@@ -1157,3 +1169,15 @@ class TestCDSInterval:
         cds = CDSInterval(**cds)
         cds2 = CDSInterval.from_dict(cds.to_dict())
         assert cds == cds2
+
+    def test_dict_exception(self):
+        cds = CDSInterval(
+            **dict(
+                cds_starts=[2, 8, 12],
+                cds_ends=[5, 13, 18],
+                strand=Strand.PLUS,
+                frames_or_phases=[CDSFrame.ONE, CDSFrame.ONE, CDSFrame.ONE],
+            )
+        )
+        with pytest.raises(NotImplementedError):
+            _ = cds.to_dict(chromosome_relative_coordinates=False)

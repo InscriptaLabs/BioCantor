@@ -209,9 +209,15 @@ class SingleInterval(Location):
         )
 
     def has_overlap(self, other: Location, match_strand: bool = False, full_span: bool = False) -> bool:
+        """Compares the overlap of this interval to another interval. If ``full_span`` is ``True``,
+        then this interval is compared to the full span of the other interval, regardless of type of
+        the other interval.
+
         # Todo: Should this always be 'False'?  If our intervals are on different chromosomes, they can't overlap
         #   (chr1:100-200 doesn't overlap chr2:150-250) but just because they have different parents doesn't mean
         #   they can't overlap...
+        """
+
         if self.parent_id != other.parent_id:
             return False
         if self.parent or other.parent:
@@ -279,6 +285,15 @@ class SingleInterval(Location):
         raise NotImplementedError(f"Distance type not implemented: {distance_type.value}")
 
     def intersection(self, other: Location, match_strand: bool = True, full_span: bool = False) -> Location:
+        """Intersects this SingleInterval with another Location.
+
+        Args:
+            other: The other Location.
+            match_strand: Match strand or ignore strand?
+            full_span: Perform comparison on the full span of the other interval? Trivial for this SingleInterval,
+                but relevant if ``other`` is a CompoundInterval.
+
+        """
         if not self.has_overlap(other, match_strand=match_strand, full_span=full_span):
             return EmptyLocation()
         if type(other) is SingleInterval:
@@ -621,10 +636,12 @@ class CompoundInterval(Location):
         return intersect_same_strand.reset_strand(relative_strand.relative_to(self.strand))
 
     def has_overlap(self, other: Location, match_strand: bool = False, full_span: bool = False) -> bool:
+        """If full_span is ``True``, then the full span of both this location *and* the ``other`` location
+        are used for the comparison.
+        """
         if full_span:
-            return self._full_span_interval.has_overlap(other, match_strand, full_span)
-        else:
-            return any((interval.has_overlap(other, match_strand, full_span) for interval in self._single_intervals))
+            return self._full_span_interval.has_overlap(other, match_strand, full_span=True)
+        return any((interval.has_overlap(other, match_strand, full_span=False) for interval in self._single_intervals))
 
     def optimize_blocks(self) -> Location:
         """
@@ -746,6 +763,15 @@ class CompoundInterval(Location):
             raise NotImplementedError(f"Unknown distance type {distance_type.value}")
 
     def intersection(self, other: Location, match_strand: bool = True, full_span: bool = False) -> Location:
+        """Intersects this CompoundInterval with another Location.
+
+        Args:
+            other: The other Location.
+            match_strand: Match strand or ignore strand?
+            full_span: Perform comparison on the full span of the other interval? In all cases, the comparison
+                is performed on the full span.
+
+        """
         if not self.has_overlap(other, match_strand=match_strand, full_span=full_span):
             return EmptyLocation()
         if type(other) is SingleInterval:

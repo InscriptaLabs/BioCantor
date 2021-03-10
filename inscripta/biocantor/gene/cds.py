@@ -22,11 +22,9 @@ from inscripta.biocantor.util.object_validation import ObjectValidation
 
 class CDSInterval(AbstractFeatureInterval):
     """
-    An wrapper for a Location that gives it a concept of Frames.
-    Frame must be recorded individually on *every interval*.
-
-    This is necessary to be able to encode programmed frame shifts and indel variation that
-    would break frame, but that are likely just errors in assembly or annotation.
+    This class represents a CDS interval, or an interval with coding potential. This is generally only used
+    as a member of a :class:`~biocantor.gene.transcript.TranscriptInterval`. This class adds metadata and frame
+    information to a Location object, and adds an understanding of codons, codon iteration, and translation.
     """
 
     _identifiers = ["protein_id", "product"]
@@ -36,7 +34,7 @@ class CDSInterval(AbstractFeatureInterval):
         cds_starts: List[int],
         cds_ends: List[int],
         strand: Strand,
-        frames: List[Union[CDSFrame, CDSPhase]],
+        frames_or_phases: List[Union[CDSFrame, CDSPhase]],
         sequence_guid: Optional[UUID] = None,
         sequence_name: Optional[str] = None,
         protein_id: Optional[str] = None,
@@ -60,18 +58,24 @@ class CDSInterval(AbstractFeatureInterval):
         self.protein_id = protein_id
         self._import_qualifiers_from_list(qualifiers)
 
-        if len(frames) != self.num_blocks:
-            raise InvalidCDSIntervalError("Number of frame entries must match number of exons")
+        if len(frames_or_phases) != self.num_blocks:
+            raise InvalidCDSIntervalError("Number of frame or phase entries must match number of exons")
 
         if len(self._location) == 0:
             raise InvalidCDSIntervalError("Cannot have an empty CDS interval")
 
-        # internally we work with Frame, but support Phase
-        for i, frame_or_phase in enumerate(frames):
-            if isinstance(frame_or_phase, CDSPhase):
-                frame_or_phase = frame_or_phase.to_frame()
-                frames[i] = frame_or_phase
-        self.frames = frames
+        # only allow either all CDSFrame or all CDSPhase
+        is_frame = isinstance(frames_or_phases[0], CDSFrame)
+        for frame_or_phase in frames_or_phases[1:]:
+            if is_frame and isinstance(frame_or_phase, CDSPhase):
+                raise InvalidCDSIntervalError("Cannot mix frame and phase")
+            elif not is_frame and isinstance(frame_or_phase, CDSFrame):
+                raise InvalidCDSIntervalError("Cannot mix frame and phase")
+
+        if is_frame:
+            self.frames = frames_or_phases
+        else:
+            self.frames = [x.to_frame() for x in frames_or_phases]
 
         if guid is None:
             self.guid = digest_object(
@@ -101,15 +105,24 @@ class CDSInterval(AbstractFeatureInterval):
         return self.product
 
     def to_dict(self, chromosome_relative_coordinates: bool = True) -> Dict[str, Any]:
+        """
+        Convert this CDS to a dictionary representation. Note that the dictionary representation can only
+        use CDSFrame, not CDSPhase.
+        Args:
+            chromosome_relative_coordinates: Optional flag to export the interval in chromosome relative
+                or chunk-relative coordinates.
+                TODO: This cannot be set to False until the ability to subset the CDSFrames list is implemented.
+
+        Returns:
+             A dictionary representation that can be passed to :meth:`CDSInterval.from_dict()`
+        """
         cds_frames = [f.name for f in self.frames]
 
         if chromosome_relative_coordinates:
             cds_starts = self._genomic_starts
             cds_ends = self._genomic_ends
         else:
-            cds_starts, cds_ends = list(zip(*([x.start, x.end] for x in self.chunk_relative_blocks)))
-            # TODO: validate this code
-            cds_frames = cds_frames[: self.num_chunk_relative_blocks]
+            raise NotImplementedError
 
         return dict(
             cds_starts=cds_starts,
@@ -125,11 +138,19 @@ class CDSInterval(AbstractFeatureInterval):
 
     @staticmethod
     def from_dict(vals: Dict[str, Any], parent_or_seq_chunk_parent: Optional[Parent] = None) -> "CDSInterval":
+        """
+        Construct a :class:`CDSInterval` from a dictionary representation such as one produced by
+        :meth:`CDSInterval.to_dict()`. The frames must be CDSFrame, not CDSPhase.
+        Args:
+            vals: A dictionary representation.
+            parent_or_seq_chunk_parent: An optional Parent to associate with this new interval.
+
+        """
         return CDSInterval(
             cds_starts=vals["cds_starts"],
             cds_ends=vals["cds_ends"],
             strand=Strand[vals["strand"]],
-            frames=[CDSFrame[x] for x in vals["cds_frames"]],
+            frames_or_phases=[CDSFrame[x] for x in vals["cds_frames"]],
             qualifiers=vals["qualifiers"],
             sequence_name=vals["sequence_name"],
             sequence_guid=vals["sequence_guid"],
@@ -148,11 +169,13 @@ class CDSInterval(AbstractFeatureInterval):
         qualifiers: Optional[Dict[Hashable, QualifierValue]] = None,
         guid: Optional[UUID] = None,
     ) -> "CDSInterval":
+        """A convenience function that allows for construction of a :class:`CDSInterval` from a location object,
+        a list of CDSFrames or CDSPhase, and optional metadata."""
         return CDSInterval(
             cds_starts=[x.start for x in location.blocks],
             cds_ends=[x.end for x in location.blocks],
             strand=location.strand,
-            frames=cds_frames,
+            frames_or_phases=cds_frames,
             sequence_guid=sequence_guid,
             sequence_name=sequence_name,
             protein_id=protein_id,

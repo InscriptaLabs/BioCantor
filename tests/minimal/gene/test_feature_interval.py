@@ -7,6 +7,7 @@ from inscripta.biocantor.exc import (
 )
 from inscripta.biocantor.io.gff3.exc import GFF3MissingSequenceNameError
 from inscripta.biocantor.io.models import FeatureIntervalModel
+from inscripta.biocantor.gene.feature import FeatureInterval
 from inscripta.biocantor.location.location_impl import SingleInterval, CompoundInterval
 from inscripta.biocantor.location.strand import Strand
 from inscripta.biocantor.parent.parent import Parent, SequenceType
@@ -524,3 +525,28 @@ class TestFeatureIntervalSequenceSubset:
         del rel_d["feature_interval_guid"]
         assert rel_d != d
         assert [x + 1 for x in rel_d["interval_starts"]] == list(d["interval_starts"])
+
+
+class TestFeatureWithoutModel:
+    @pytest.mark.parametrize(
+        "feat",
+        [
+            dict(
+                interval_starts=[2, 8, 12],
+                interval_ends=[5, 13, 18],
+                strand=Strand.PLUS,
+            ),
+            dict(
+                interval_starts=[2, 8, 12],
+                interval_ends=[5, 13, 18],
+                strand=Strand.PLUS,
+                parent_or_seq_chunk_parent=Sequence(
+                    "AAAGGAAAGTCCCTGAAAAAA", Alphabet.NT_EXTENDED_GAPPED, type=SequenceType.CHROMOSOME
+                ),
+            ),
+        ],
+    )
+    def test_constructor(self, feat):
+        feat = FeatureInterval(**feat)
+        feat2 = FeatureInterval.from_location(feat._location)
+        assert feat == feat2

@@ -3235,6 +3235,13 @@ class TestSingleInterval:
                 False,
                 False,
             ),
+            # different parent
+            (
+                SingleInterval(0, 20, Strand.PLUS, parent="parent1"),
+                CompoundInterval([3, 10], [5, 12], Strand.MINUS, parent="parent2"),
+                False,
+                False,
+            ),
         ],
     )
     def test_contains_compound_interval(self, interval, other, match_strand, expected):
@@ -3249,6 +3256,13 @@ class TestSingleInterval:
                 CompoundInterval([5, 20], [15, 25], Strand.PLUS),
                 False,
                 True,
+            ),
+            # Overlapping but different parent
+            (
+                SingleInterval(0, 30, Strand.PLUS, parent="parent1"),
+                CompoundInterval([5, 20], [15, 25], Strand.PLUS, parent="parent2"),
+                False,
+                False,
             ),
             # No overlap
             (

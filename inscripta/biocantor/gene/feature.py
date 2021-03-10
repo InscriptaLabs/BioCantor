@@ -151,11 +151,10 @@ class FeatureInterval(AbstractFeatureInterval):
         feature_name: Optional[str] = None,
         is_primary_feature: Optional[str] = None,
     ) -> "FeatureInterval":
-        interval_starts, interval_ends = zip(*location.blocks)
 
         return FeatureInterval(
-            interval_starts=interval_starts,
-            interval_ends=interval_ends,
+            interval_starts=[x.start for x in location.blocks],
+            interval_ends=[x.end for x in location.blocks],
             strand=location.strand,
             guid=guid,
             feature_guid=feature_guid,
