@@ -45,9 +45,6 @@ class CDSInterval(AbstractFeatureInterval):
     ):
 
         self._location = self.initialize_location(cds_starts, cds_ends, strand, parent_or_seq_chunk_parent)
-        if self._location.parent:
-            ObjectValidation.require_location_has_parent_with_sequence(self._location)
-
         self._genomic_starts = cds_starts
         self._genomic_ends = cds_ends
         self.start = cds_starts[0]

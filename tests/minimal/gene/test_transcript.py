@@ -421,12 +421,6 @@ class TestTranscript:
             _ = schema.to_transcript_interval()
             _ = schema.to_transcript_interval(parent_or_seq_chunk_parent=parent)
 
-    def test_no_such_ancestor(self):
-        with pytest.raises(NullSequenceException):
-            _ = se_unspliced.to_transcript_interval(
-                parent_or_seq_chunk_parent=Parent(sequence_type=SequenceType.CHROMOSOME)
-            )
-
     @pytest.mark.parametrize(
         "schema,value,expected",
         [

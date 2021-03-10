@@ -112,12 +112,10 @@ class TranscriptInterval(AbstractFeatureInterval):
         else:
             self.cds = self._cds_frames = self._cds_start = self._cds_end = None
 
-        if self._location.parent:
-            ObjectValidation.require_location_has_parent_with_sequence(self._location)
-            if self.cds:
-                ObjectValidation.require_locations_have_same_nonempty_parent(
-                    self._location, self.cds.chunk_relative_location
-                )
+        if self._location.parent and self.cds:
+            ObjectValidation.require_locations_have_same_nonempty_parent(
+                self._location, self.cds.chunk_relative_location
+            )
 
         self._genomic_starts = exon_starts
         self._genomic_ends = exon_ends

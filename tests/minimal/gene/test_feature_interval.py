@@ -234,12 +234,6 @@ class TestFeatureInterval:
         expected = FeatureIntervalModel.Schema().load(expected).to_feature_interval()
         assert str(expected) == str(val)
 
-    def test_no_such_ancestor(self):
-        with pytest.raises(NullSequenceException):
-            _ = se_unspliced.to_feature_interval(
-                parent_or_seq_chunk_parent=Parent(sequence_type=SequenceType.CHROMOSOME)
-            )
-
     @pytest.mark.parametrize(
         "schema,parent,expected_spliced",
         [
@@ -499,18 +493,6 @@ class TestFeatureIntervalSequenceSubset:
         feat = e3_spliced.to_feature_interval(parent_or_seq_chunk_parent=parent_genome2_1_15)
         assert feat.chunk_relative_start + 1 == feat.start
         assert feat.chunk_relative_end + 1 == feat.end
-
-    @pytest.mark.parametrize(
-        "schema,parent,expected_exception",
-        [
-            [e3_spliced, Parent(), ValidationException],
-            [e3_spliced_minus, Parent(sequence_type=SequenceType.CHROMOSOME), NullSequenceException],
-            [se_unspliced, Parent(sequence_type=SequenceType.SEQUENCE_CHUNK), NullSequenceException],
-        ],
-    )
-    def test_constructor_exceptions(self, schema, parent, expected_exception):
-        with pytest.raises(expected_exception):
-            _ = schema.to_feature_interval(parent)
 
     def test_dict(self):
         feat = e3_spliced.to_feature_interval(parent_genome2_1_15)

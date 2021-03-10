@@ -240,7 +240,7 @@ class AbstractInterval(ABC):
 
             chunk_parent = parent_or_seq_chunk_parent.first_ancestor_of_type(SequenceType.SEQUENCE_CHUNK)
             if not chunk_parent.sequence:
-                raise NullSequenceException("Must have a sequence if a parent is provided.")
+                raise NullSequenceException("Must have a sequence if a sequence-chunk parent is provided.")
 
             location = location.reset_parent(chunk_parent.parent)
             sequence_chunk = chunk_parent.sequence
@@ -250,9 +250,6 @@ class AbstractInterval(ABC):
 
         # since this is a whole genome, we don't need to lift anything up
         elif parent_or_seq_chunk_parent.has_ancestor_of_type(SequenceType.CHROMOSOME):
-            if not parent_or_seq_chunk_parent.first_ancestor_of_type(SequenceType.CHROMOSOME).sequence:
-                raise NullSequenceException("Must have a sequence if a parent is provided.")
-
             return location.reset_parent(parent_or_seq_chunk_parent)
 
         else:

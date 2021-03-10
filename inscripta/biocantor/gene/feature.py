@@ -48,9 +48,6 @@ class FeatureInterval(AbstractFeatureInterval):
         parent_or_seq_chunk_parent: Optional[Parent] = None,
     ):
         self._location = self.initialize_location(interval_starts, interval_ends, strand, parent_or_seq_chunk_parent)
-        if self._location.parent:
-            ObjectValidation.require_location_has_parent_with_sequence(self._location)
-
         self._genomic_starts = interval_starts
         self._genomic_ends = interval_ends
         self.start = self.genomic_start = interval_starts[0]
