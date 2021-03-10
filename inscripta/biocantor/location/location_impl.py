@@ -781,15 +781,18 @@ class CompoundInterval(Location):
         raise UnsupportedOperationException(f"Not implemented for type {type(other)}")
 
     def _intersection_single_interval(self, other: Location, match_strand: bool, full_span: bool = False) -> Location:
+        """Intersections with full span are always symmetric full span (both are considered as full span)"""
         ObjectValidation.require_object_has_type(other, SingleInterval)
         interval_intersections = []
         if full_span is False:
             for single_interval in self._single_intervals:
-                if single_interval.has_overlap(other, match_strand=match_strand):
-                    interval_intersections.append(single_interval.intersection(other, match_strand=match_strand))
+                if single_interval.has_overlap(other, match_strand=match_strand, full_span=False):
+                    interval_intersections.append(
+                        single_interval.intersection(other, match_strand=match_strand, full_span=False)
+                    )
             return CompoundInterval._from_single_intervals_no_validation(interval_intersections).optimize_blocks()
         else:
-            return self._full_span_interval.intersection(other, match_strand)
+            return self._full_span_interval.intersection(other, match_strand, full_span=True)
 
     def _intersection_compound_interval(self, other: Location, match_strand: bool, full_span: bool = False) -> Location:
         ObjectValidation.require_object_has_type(other, CompoundInterval)
