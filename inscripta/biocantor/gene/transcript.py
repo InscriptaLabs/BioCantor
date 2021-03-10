@@ -123,8 +123,6 @@ class TranscriptInterval(AbstractFeatureInterval):
         self._genomic_ends = exon_ends
         self.start = self.genomic_start = exon_starts[0]
         self.end = self.genomic_end = exon_ends[-1]
-        self._genomic_cds_starts = cds_starts
-        self._genomic_cds_ends = cds_ends
 
         self._is_primary_feature = is_primary_tx
         self.transcript_id = transcript_id
@@ -142,8 +140,6 @@ class TranscriptInterval(AbstractFeatureInterval):
             self.guid = digest_object(
                 self._genomic_starts,
                 self._genomic_ends,
-                self._genomic_cds_starts,
-                self._genomic_cds_ends,
                 self._cds_frames,
                 self.qualifiers,
                 self.transcript_id,
@@ -152,6 +148,7 @@ class TranscriptInterval(AbstractFeatureInterval):
                 self.protein_id,
                 self.sequence_name,
                 self.is_primary_tx,
+                self.cds.guid if self.cds else None,
             )
         else:
             self.guid = guid
@@ -199,7 +196,7 @@ class TranscriptInterval(AbstractFeatureInterval):
     def cds_size(self) -> int:
         """CDS size, regardless of chunk relativity (does not shrink)"""
         if self.is_coding:
-            return sum((end - start) for end, start in zip(self._genomic_cds_ends, self._genomic_cds_starts))
+            return sum((end - start) for end, start in zip(self.cds._genomic_ends, self.cds._genomic_starts))
         return 0
 
     @property
@@ -212,14 +209,14 @@ class TranscriptInterval(AbstractFeatureInterval):
     @property
     def cds_start(self) -> int:
         if self.is_coding:
-            return self._genomic_cds_starts[0]
+            return self.cds.start
         else:
             raise NoncodingTranscriptError("No CDS start for non-coding transcript")
 
     @property
     def cds_end(self) -> int:
         if self.is_coding:
-            return self._genomic_cds_ends[-1]
+            return self.cds.end
         else:
             raise NoncodingTranscriptError("No CDS end for non-coding transcript")
 
@@ -295,9 +292,12 @@ class TranscriptInterval(AbstractFeatureInterval):
         construction of a interval class.
         """
         super()._liftover_this_location_to_seq_chunk_parent(seq_chunk_parent)
-        self.cds._location = self.liftover_location_to_seq_chunk_parent(
-            self.cds.lift_over_to_first_ancestor_of_type(SequenceType.CHROMOSOME).reset_parent(seq_chunk_parent.parent)
-        )
+        if self.cds:
+            self.cds._location = self.liftover_location_to_seq_chunk_parent(
+                self.cds.lift_over_to_first_ancestor_of_type(SequenceType.CHROMOSOME).reset_parent(
+                    seq_chunk_parent.parent
+                )
+            )
 
     def to_dict(self, chromosome_relative_coordinates: bool = True) -> Dict[str, Any]:
         """Convert to a dict usable by :class:`biocantor.io.models.TranscriptIntervalModel`."""
@@ -308,8 +308,8 @@ class TranscriptInterval(AbstractFeatureInterval):
             exon_starts, exon_ends = list(zip(*((x.start, x.end) for x in self.relative_blocks)))
         if self.cds:
             if chromosome_relative_coordinates:
-                cds_starts = self._genomic_cds_starts
-                cds_ends = self._genomic_cds_ends
+                cds_starts = self.cds._genomic_starts
+                cds_ends = self.cds._genomic_ends
             else:
                 cds_starts, cds_ends = list(zip(*([x.start, x.end] for x in self.chunk_relative_cds_blocks)))
             cds_frames = [f.name for f in self.cds.frames]
