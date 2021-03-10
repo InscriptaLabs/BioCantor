@@ -3162,6 +3162,8 @@ class TestCompoundInterval:
     )
     def test_full_span_contains_compound_interval(self, ci1, ci2, contains):
         assert ci1.contains(ci2, full_span=True) == contains
+        ci1.strand = Strand.MINUS
+        assert ci1.contains(ci2, full_span=True, match_strand=False) == contains
 
     @pytest.mark.parametrize(
         "ci1,ci2,has_overlap",
@@ -3187,3 +3189,5 @@ class TestCompoundInterval:
     def test_complement_of_full_span(self, ci1, ci2, has_overlap):
         """Comparing full span tests above that are now False when not full span"""
         assert ci1.has_overlap(ci2) == has_overlap
+        ci1.strand = Strand.MINUS
+        assert ci1.has_overlap(ci2, match_strand=False) == has_overlap

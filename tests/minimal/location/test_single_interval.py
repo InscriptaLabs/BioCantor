@@ -3271,6 +3271,34 @@ class TestSingleInterval:
                 False,
                 False,
             ),
+            # Overlapping
+            (
+                SingleInterval(0, 30, Strand.PLUS),
+                CompoundInterval([5, 20], [15, 25], Strand.MINUS),
+                False,
+                True,
+            ),
+            # No overlap
+            (
+                SingleInterval(30, 40, Strand.PLUS),
+                CompoundInterval([5, 20], [15, 25], Strand.MINUS),
+                False,
+                False,
+            ),
+            # Contains one block of other
+            (
+                SingleInterval(0, 20, Strand.PLUS),
+                CompoundInterval([5, 20], [15, 25], Strand.MINUS),
+                False,
+                False,
+            ),
+            # Contained in other
+            (
+                SingleInterval(5, 10, Strand.PLUS),
+                CompoundInterval([5, 20], [15, 25], Strand.MINUS),
+                False,
+                False,
+            ),
         ],
     )
     def test_contains_compound_interval_full_span(self, interval, other, match_strand, expected):
