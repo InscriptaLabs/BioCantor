@@ -1,13 +1,13 @@
 import pytest
+
 from inscripta.biocantor.exc import (
     ValidationException,
     EmptyLocationException,
     NoSuchAncestorException,
-    NullSequenceException,
 )
+from inscripta.biocantor.gene.feature import FeatureInterval
 from inscripta.biocantor.io.gff3.exc import GFF3MissingSequenceNameError
 from inscripta.biocantor.io.models import FeatureIntervalModel
-from inscripta.biocantor.gene.feature import FeatureInterval
 from inscripta.biocantor.location.location_impl import SingleInterval, CompoundInterval
 from inscripta.biocantor.location.strand import Strand
 from inscripta.biocantor.parent.parent import Parent, SequenceType
