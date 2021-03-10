@@ -3124,7 +3124,7 @@ class TestCompoundInterval:
         assert (
             si.has_overlap(ci, match_strand=True, full_span=True)
             == ci.has_overlap(si, match_strand=True, full_span=True)
-            == False
+            == False  # noqa: E712
         )
         assert si.has_overlap(ci, match_strand=False, full_span=True) == has_overlap
 
@@ -3240,7 +3240,7 @@ class TestCompoundInterval:
         assert (
             ci1.has_overlap(ci2, match_strand=True, full_span=True)
             == ci1.has_overlap(ci2, match_strand=True, full_span=True)
-            == False
+            == False  # noqa: E712
         )
         assert ci1.has_overlap(ci2, match_strand=False, full_span=True) == has_overlap
 
