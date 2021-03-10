@@ -178,7 +178,7 @@ def _parse_genes(chrom: str, db: FeatureDB) -> List[Dict]:
                 transcript_symbol=transcript_symbol,
                 sequence_name=chrom,
                 protein_id=protein_id,
-                protein_product=product,
+                product=product,
             )
             transcripts.append(tx)
 

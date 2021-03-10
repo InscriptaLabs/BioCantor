@@ -283,7 +283,7 @@ class GeneFeature(Feature):
                 is_primary_tx=False,
                 transcript_id=tx.get_qualifier_from_tx_or_cds_features("transcript_id"),
                 protein_id=tx.get_qualifier_from_tx_or_cds_features("protein_id"),
-                protein_product=tx.get_qualifier_from_tx_or_cds_features("product"),
+                product=tx.get_qualifier_from_tx_or_cds_features("product"),
                 transcript_symbol=tx.get_qualifier_from_tx_or_cds_features("gene"),
                 transcript_type=transcript_biotype.name,
                 sequence_name=tx.record.id,

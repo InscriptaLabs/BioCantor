@@ -60,7 +60,7 @@ class TestGff3Parser:
             "is_primary_tx": False,
             "transcript_id": "NM_001080998.2",
             "protein_id": "NP_001074467.1",
-            "protein_product": "protein FRG2-like-1",
+            "product": "protein FRG2-like-1",
             "transcript_symbol": None,
             "transcript_type": Biotype.protein_coding,
             "sequence_name": "NC_000010.11",

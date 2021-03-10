@@ -93,7 +93,7 @@ class TranscriptIntervalModel(BaseModel):
     is_primary_tx: Optional[bool] = None
     transcript_id: Optional[str] = None
     protein_id: Optional[str] = None
-    protein_product: Optional[str] = None
+    product: Optional[str] = None
     transcript_symbol: Optional[str] = None
     transcript_type: Optional[Biotype] = None
     sequence_name: Optional[str] = None
@@ -127,7 +127,7 @@ class TranscriptIntervalModel(BaseModel):
             sequence_name=self.sequence_name,
             sequence_guid=self.sequence_guid,
             protein_id=self.protein_id,
-            protein_product=self.protein_product,
+            product=self.product,
             parent_or_seq_chunk_parent=parent_or_seq_chunk_parent,
         )
 

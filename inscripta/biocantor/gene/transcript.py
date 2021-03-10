@@ -62,7 +62,7 @@ class TranscriptInterval(AbstractFeatureInterval):
         sequence_guid: Optional[UUID] = None,
         sequence_name: Optional[str] = None,
         protein_id: Optional[str] = None,
-        protein_product: Optional[str] = None,
+        product: Optional[str] = None,
         guid: Optional[UUID] = None,
         transcript_guid: Optional[UUID] = None,
         parent_or_seq_chunk_parent: Optional[Parent] = None,
@@ -101,7 +101,7 @@ class TranscriptInterval(AbstractFeatureInterval):
                     sequence_guid,
                     sequence_name,
                     protein_id,
-                    protein_product,
+                    product,
                     parent_or_seq_chunk_parent=parent_or_seq_chunk_parent,
                 )
             except LocationOverlapException:
@@ -127,7 +127,7 @@ class TranscriptInterval(AbstractFeatureInterval):
         self.transcript_symbol = transcript_symbol
         self.transcript_type = transcript_type
         self.protein_id = protein_id
-        self.protein_product = protein_product
+        self.product = product
         self.sequence_guid = sequence_guid
         self.sequence_name = sequence_name
         self.bin = bins(self.start, self.end, fmt="bed")
@@ -330,7 +330,7 @@ class TranscriptInterval(AbstractFeatureInterval):
             sequence_name=self.sequence_name,
             sequence_guid=self.sequence_guid,
             protein_id=self.protein_id,
-            protein_product=self.protein_product,
+            product=self.product,
             transcript_guid=self.transcript_guid,
             transcript_interval_guid=self.guid,
         )
@@ -356,7 +356,7 @@ class TranscriptInterval(AbstractFeatureInterval):
             sequence_name=vals["sequence_name"],
             sequence_guid=vals["sequence_guid"],
             protein_id=vals["protein_id"],
-            protein_product=vals["protein_product"],
+            product=vals["product"],
             parent_or_seq_chunk_parent=parent_or_seq_chunk_parent,
         )
 
@@ -372,7 +372,7 @@ class TranscriptInterval(AbstractFeatureInterval):
         sequence_guid: Optional[UUID] = None,
         sequence_name: Optional[str] = None,
         protein_id: Optional[str] = None,
-        protein_product: Optional[str] = None,
+        product: Optional[str] = None,
         guid: Optional[UUID] = None,
         transcript_guid: Optional[UUID] = None,
     ) -> "TranscriptInterval":
@@ -393,7 +393,7 @@ class TranscriptInterval(AbstractFeatureInterval):
             sequence_name=sequence_name,
             sequence_guid=sequence_guid,
             protein_id=protein_id,
-            protein_product=protein_product,
+            product=product,
             parent_or_seq_chunk_parent=location.parent,
         )
 

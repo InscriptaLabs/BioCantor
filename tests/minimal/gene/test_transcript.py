@@ -1,15 +1,15 @@
 import pytest
+
 from inscripta.biocantor.exc import (
     InvalidCDSIntervalError,
     EmptyLocationException,
     NullParentException,
     NoncodingTranscriptError,
-    NullSequenceException,
     ValidationException,
 )
 from inscripta.biocantor.gene.cds_frame import CDSFrame
-from inscripta.biocantor.io.models import TranscriptIntervalModel
 from inscripta.biocantor.gene.transcript import TranscriptInterval
+from inscripta.biocantor.io.models import TranscriptIntervalModel
 from inscripta.biocantor.location.location_impl import SingleInterval, CompoundInterval, EmptyLocation
 from inscripta.biocantor.location.strand import Strand
 from inscripta.biocantor.parent.parent import Parent, SequenceType
