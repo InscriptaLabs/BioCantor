@@ -468,6 +468,7 @@ class AbstractFeatureInterval(AbstractInterval, ABC):
     @lru_cache(maxsize=1)
     def get_spliced_sequence(self) -> Sequence:
         """Returns the feature's *spliced*, *stranded* sequence."""
+        ObjectValidation.require_location_has_parent_with_sequence(self._location)
         return self.chunk_relative_location.extract_sequence()
 
     @lru_cache(maxsize=1)
@@ -479,6 +480,7 @@ class AbstractFeatureInterval(AbstractInterval, ABC):
     @lru_cache(maxsize=1)
     def get_genomic_sequence(self) -> Sequence:
         """Returns the feature's *unspliced*, *stranded* (transcription orientation) genomic sequence."""
+        ObjectValidation.require_location_has_parent_with_sequence(self._location)
         seq = self.chunk_relative_location.parent.sequence[self._location.start : self._location.end]
         if self.strand == Strand.PLUS:
             return seq

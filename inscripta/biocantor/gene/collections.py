@@ -41,7 +41,6 @@ from inscripta.biocantor.parent.parent import Parent, SequenceType
 from inscripta.biocantor.sequence import Sequence
 from inscripta.biocantor.util.bins import bins
 from inscripta.biocantor.util.hashing import digest_object
-from inscripta.biocantor.util.object_validation import ObjectValidation
 
 
 class AbstractFeatureIntervalCollection(AbstractInterval, ABC):
@@ -219,9 +218,6 @@ class GeneInterval(AbstractFeatureIntervalCollection):
             self.guid = guid
 
         self.guid_map = {x.guid: x for x in self.transcripts}
-
-        if self._location.parent:
-            ObjectValidation.require_location_has_parent_with_sequence(self._location)
 
     def __repr__(self):
         return (
@@ -509,9 +505,6 @@ class FeatureIntervalCollection(AbstractFeatureIntervalCollection):
 
         self.guid_map = {x.guid: x for x in self.feature_intervals}
 
-        if self._location.parent:
-            ObjectValidation.require_location_has_parent_with_sequence(self._location)
-
     def __repr__(self):
         return (
             f"{self.__class__.__name__}(identifiers={self.identifiers}, "
@@ -779,9 +772,6 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
         self.guid = digest_object(
             self._location, self.name, self.sequence_name, self.qualifiers, self.completely_within, self.children_guids
         )
-
-        if self._location.parent:
-            ObjectValidation.require_location_has_parent_with_sequence(self._location)
 
     def __repr__(self):
         return f"{self.__class__.__name__}({','.join(str(f) for f in self.iter_children())})"
