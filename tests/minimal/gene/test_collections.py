@@ -859,3 +859,11 @@ class TestAnnotationCollection:
         with pytest.raises(NullSequenceException):
             _ = obj2.get_reference_sequence()
         assert obj0.get_reference_sequence() == obj3.get_reference_sequence()
+
+        assert obj0.chromosome_location == obj0.chunk_relative_location
+        assert obj1.chromosome_location == obj1.chunk_relative_location
+        assert obj2.chromosome_location == obj2.chunk_relative_location
+        assert obj3.chromosome_location == obj3.chunk_relative_location
+        # OTOH, this is not the same
+        obj4 = self.annot.to_annotation_collection(parent_genome_10_49)
+        assert obj4.chromosome_location != obj4.chunk_relative_location

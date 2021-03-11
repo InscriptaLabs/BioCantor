@@ -1226,3 +1226,11 @@ class TestTranscriptIntervalSequenceSubset:
         tx3 = e3_spliced.to_transcript_interval(parent_nonstandard_type_with_sequence)
         seq = tx3.get_spliced_sequence()
         assert seq == seq0
+
+        assert tx0.chromosome_location == tx0.chunk_relative_location
+        assert tx1.chromosome_location == tx1.chunk_relative_location
+        assert tx2.chromosome_location == tx2.chunk_relative_location
+        assert tx3.chromosome_location == tx3.chunk_relative_location
+        # OTOH, this is not the same
+        tx4 = e3_spliced.to_transcript_interval(parent_genome2_1_15)
+        assert tx4.chromosome_location != tx4.chunk_relative_location

@@ -539,6 +539,14 @@ class TestFeatureIntervalSequenceSubset:
         seq = feat3.get_spliced_sequence()
         assert seq == seq0
 
+        assert feat0.chromosome_location == feat0.chunk_relative_location
+        assert feat1.chromosome_location == feat1.chunk_relative_location
+        assert feat2.chromosome_location == feat2.chunk_relative_location
+        assert feat3.chromosome_location == feat3.chunk_relative_location
+        # OTOH, this is not the same
+        feat4 = e3_spliced.to_feature_interval(parent_genome2_1_15)
+        assert feat4.chromosome_location != feat4.chunk_relative_location
+
 
 class TestFeatureWithoutModel:
     @pytest.mark.parametrize(
