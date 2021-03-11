@@ -1,10 +1,19 @@
 import itertools
+import re
+import os
 
 from setuptools import find_namespace_packages, setup
 
-import versioneer
+dependencies = ["biopython", "marshmallow_dataclass[enum,union]", "marshmallow", "methodtools"]
 
-dependencies = ["versioneer", "biopython", "marshmallow_dataclass[enum,union]", "marshmallow", "methodtools"]
+with open(
+    os.path.join(os.path.dirname(__file__), "inscripta", "biocantor", "__init__.py")
+) as v_file:
+    VERSION = (
+        re.compile(r""".*__version__ = ["'](.*?)['"]""", re.S)
+        .match(v_file.read())
+        .group(1)
+    )
 
 extra_dependencies = {
     "io": ["gffutils"],
@@ -42,8 +51,7 @@ setup(
     tests_require=extra_dependencies["test"],
     extras_require=extra_dependencies,
     install_requires=dependencies,
-    version=versioneer.get_version(),
-    cmdclass=versioneer.get_cmdclass(),
+    version=VERSION,
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",
