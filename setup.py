@@ -6,14 +6,8 @@ from setuptools import find_namespace_packages, setup
 
 dependencies = ["biopython", "marshmallow_dataclass[enum,union]", "marshmallow", "methodtools"]
 
-with open(
-    os.path.join(os.path.dirname(__file__), "inscripta", "biocantor", "__init__.py")
-) as v_file:
-    VERSION = (
-        re.compile(r""".*__version__ = ["'](.*?)['"]""", re.S)
-        .match(v_file.read())
-        .group(1)
-    )
+with open(os.path.join(os.path.dirname(__file__), "inscripta", "biocantor", "__init__.py")) as v_file:
+    VERSION = re.compile(r""".*__version__ = ["'](.*?)['"]""", re.S).match(v_file.read()).group(1)
 
 extra_dependencies = {
     "io": ["gffutils"],
