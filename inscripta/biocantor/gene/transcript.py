@@ -153,7 +153,7 @@ class TranscriptInterval(AbstractFeatureInterval):
         self.transcript_guid = transcript_guid
 
     def __str__(self):
-        return f"TranscriptInterval(({self._location}), cds=[{self.cds}], symbol={self.transcript_symbol})"
+        return f"TranscriptInterval(({self.chromosome_location}), cds=[{self.cds}], symbol={self.transcript_symbol})"
 
     def __repr__(self):
         return "<{}>".format(str(self))
