@@ -25,7 +25,7 @@ from inscripta.biocantor.io.gff3.rows import GFFAttributes, GFFRow
 from inscripta.biocantor.location.location import Location
 from inscripta.biocantor.location.location_impl import SingleInterval, EmptyLocation
 from inscripta.biocantor.location.strand import Strand
-from inscripta.biocantor.parent.parent import Parent, SequenceType
+from inscripta.biocantor.parent.parent import Parent
 from inscripta.biocantor.sequence.sequence import Sequence
 from inscripta.biocantor.util.bins import bins
 from inscripta.biocantor.util.hashing import digest_object
@@ -194,7 +194,7 @@ class TranscriptInterval(AbstractFeatureInterval):
     def cds_size(self) -> int:
         """CDS size, regardless of chunk relativity (does not shrink)"""
         if self.is_coding:
-            return sum((end - start) for end, start in zip(self.cds._genomic_ends, self.cds._genomic_starts))
+            return len(self.cds)
         return 0
 
     @property
@@ -291,11 +291,7 @@ class TranscriptInterval(AbstractFeatureInterval):
         """
         super()._liftover_this_location_to_seq_chunk_parent(seq_chunk_parent)
         if self.cds:
-            self.cds._location = self.liftover_location_to_seq_chunk_parent(
-                self.cds.lift_over_to_first_ancestor_of_type(SequenceType.CHROMOSOME).reset_parent(
-                    seq_chunk_parent.parent
-                )
-            )
+            self.cds._liftover_this_location_to_seq_chunk_parent(seq_chunk_parent)
 
     def to_dict(self, chromosome_relative_coordinates: bool = True) -> Dict[str, Any]:
         """Convert to a dict usable by :class:`biocantor.io.models.TranscriptIntervalModel`."""
@@ -531,7 +527,7 @@ class TranscriptInterval(AbstractFeatureInterval):
         """Converts a relative position along the CDS to sequence coordinate."""
         if not self.is_coding:
             raise NoncodingTranscriptError("No CDS positions on non-coding transcript")
-        return self.cds.lift_over_to_first_ancestor_of_type(SequenceType.CHROMOSOME).relative_to_parent_pos(pos)
+        return self.cds.chromosome_location.relative_to_parent_pos(pos)
 
     def cds_pos_to_chunk_relative(self, pos: int) -> int:
         """Converts a relative position along the CDS to chunk-relative sequence coordinate."""
@@ -543,9 +539,7 @@ class TranscriptInterval(AbstractFeatureInterval):
         """Converts a contiguous interval relative to the CDS to a spliced location on the sequence."""
         if not self.is_coding:
             raise NoncodingTranscriptError("No CDS positions on non-coding transcript")
-        return self.cds.lift_over_to_first_ancestor_of_type(
-            SequenceType.CHROMOSOME
-        ).relative_interval_to_parent_location(rel_start, rel_end, rel_strand)
+        return self.cds.chromosome_location.relative_interval_to_parent_location(rel_start, rel_end, rel_strand)
 
     def cds_interval_to_chunk_relative(self, rel_start: int, rel_end: int, rel_strand: Strand) -> Location:
         """Converts a contiguous interval relative to the CDS to a spliced location on the chunk-relative sequence."""
@@ -557,7 +551,7 @@ class TranscriptInterval(AbstractFeatureInterval):
         """Converts sequence position to relative position along the CDS."""
         if not self.is_coding:
             raise NoncodingTranscriptError("No CDS positions on non-coding transcript")
-        return self.cds.lift_over_to_first_ancestor_of_type(SequenceType.CHROMOSOME).parent_to_relative_pos(pos)
+        return self.cds.chromosome_location.parent_to_relative_pos(pos)
 
     def chunk_relative_pos_to_cds(self, pos: int) -> int:
         """Converts chunk-relative sequence position to relative position along the CDS."""
@@ -569,9 +563,8 @@ class TranscriptInterval(AbstractFeatureInterval):
         """Converts a contiguous interval on the sequence to a relative location within the CDS."""
         if not self.is_coding:
             raise NoncodingTranscriptError("No CDS positions on non-coding transcript")
-        loc = self.cds.lift_over_to_first_ancestor_of_type(SequenceType.CHROMOSOME)
-        i = SingleInterval(chr_start, chr_end, chr_strand, parent=loc.parent)
-        return loc.parent_to_relative_location(i)
+        i = SingleInterval(chr_start, chr_end, chr_strand, parent=self.cds.chromosome_location.parent)
+        return self.cds.chromosome_location.parent_to_relative_location(i)
 
     def chunk_relative_interval_to_cds(self, chr_start: int, chr_end: int, chr_strand: Strand) -> Location:
         """Converts a contiguous interval on the chunk-relative sequence to a relative location within the CDS."""

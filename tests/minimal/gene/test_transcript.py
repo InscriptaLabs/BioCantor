@@ -6,6 +6,7 @@ from inscripta.biocantor.exc import (
     NullParentException,
     NoncodingTranscriptError,
     ValidationException,
+    NullSequenceException,
 )
 from inscripta.biocantor.gene.cds_frame import CDSFrame
 from inscripta.biocantor.gene.transcript import TranscriptInterval
@@ -35,6 +36,12 @@ parent_genome2_1_15 = Parent(
             )
         ),
     )
+)
+
+parent_no_seq = Parent(sequence_type=SequenceType.CHROMOSOME)
+parent_nonstandard_type = Parent(sequence_type="SomeOtherType")
+parent_nonstandard_type_with_sequence = Parent(
+    sequence=Sequence(genome, Alphabet.NT_STRICT), sequence_type="SomeOtherType"
 )
 
 # Integer transcript definitions
@@ -1196,3 +1203,34 @@ class TestTranscriptIntervalSequenceSubset:
     def test_chunk_relative_interval_to_cds(self, start, end, strand, expected):
         tx = e3_spliced_utr.to_transcript_interval(parent_or_seq_chunk_parent=parent_genome2_1_15)
         assert tx.chunk_relative_interval_to_cds(start, end, strand).reset_parent(new_parent=None) == expected
+
+    def test_sequence_exceptions(self):
+        """All sequence accessors should raise good errors when attempted without sequence info"""
+        tx = e3_spliced.to_transcript_interval(parent_or_seq_chunk_parent=parent_no_seq)
+        with pytest.raises(NullSequenceException):
+            _ = tx.get_reference_sequence()
+        with pytest.raises(NullSequenceException):
+            _ = tx.get_spliced_sequence()
+        with pytest.raises(NullSequenceException):
+            _ = tx.get_genomic_sequence()
+
+    def test_nonstandard_parents(self):
+        tx0 = e3_spliced.to_transcript_interval(parent)
+        seq0 = tx0.get_spliced_sequence()
+        tx1 = e3_spliced.to_transcript_interval(parent_nonstandard_type)
+        with pytest.raises(NullSequenceException):
+            _ = tx1.get_spliced_sequence()
+        tx2 = e3_spliced.to_transcript_interval(parent_no_seq)
+        with pytest.raises(NullSequenceException):
+            _ = tx2.get_spliced_sequence()
+        tx3 = e3_spliced.to_transcript_interval(parent_nonstandard_type_with_sequence)
+        seq = tx3.get_spliced_sequence()
+        assert seq == seq0
+
+        assert tx0.chromosome_location == tx0.chunk_relative_location
+        assert tx1.chromosome_location == tx1.chunk_relative_location
+        assert tx2.chromosome_location == tx2.chunk_relative_location
+        assert tx3.chromosome_location == tx3.chunk_relative_location
+        # OTOH, this is not the same
+        tx4 = e3_spliced.to_transcript_interval(parent_genome2_1_15)
+        assert tx4.chromosome_location != tx4.chunk_relative_location

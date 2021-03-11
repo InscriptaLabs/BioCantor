@@ -7,6 +7,7 @@ from inscripta.biocantor.exc import (
     InvalidQueryError,
     NoSuchAncestorException,
     ValidationException,
+    NullSequenceException,
 )
 from inscripta.biocantor.gene.biotype import Biotype
 from inscripta.biocantor.gene.cds_frame import CDSFrame
@@ -40,6 +41,12 @@ parent_genome_10_49 = Parent(
             )
         ),
     )
+)
+
+parent_no_seq = Parent(sequence_type=SequenceType.CHROMOSOME)
+parent_nonstandard_type = Parent(sequence_type="SomeOtherType")
+parent_nonstandard_type_with_sequence = Parent(
+    sequence=Sequence(genome, Alphabet.NT_STRICT), sequence_type="SomeOtherType"
 )
 
 
@@ -165,6 +172,17 @@ class TestGene:
         assert list(obj.iter_children()) == list(obj)
         assert len(list(obj)) == 2
 
+    def test_nonstandard_parents(self):
+        obj0 = self.gene.to_gene_interval(parent_genome)
+        obj1 = self.gene.to_gene_interval(parent_no_seq)
+        obj2 = self.gene.to_gene_interval(parent_nonstandard_type)
+        obj3 = self.gene.to_gene_interval(parent_nonstandard_type_with_sequence)
+        with pytest.raises(NullSequenceException):
+            _ = obj1.get_reference_sequence()
+        with pytest.raises(NullSequenceException):
+            _ = obj2.get_reference_sequence()
+        assert obj0.get_reference_sequence() == obj3.get_reference_sequence()
+
 
 class TestFeatureIntervalCollection:
     feat1 = dict(
@@ -224,6 +242,17 @@ class TestFeatureIntervalCollection:
         obj = self.collection1.to_feature_collection()
         assert list(obj.iter_children()) == list(obj)
         assert len(list(obj)) == 2
+
+    def test_nonstandard_parents(self):
+        obj0 = self.collection1.to_feature_collection(parent_genome)
+        obj1 = self.collection1.to_feature_collection(parent_no_seq)
+        obj2 = self.collection1.to_feature_collection(parent_nonstandard_type)
+        obj3 = self.collection1.to_feature_collection(parent_nonstandard_type_with_sequence)
+        with pytest.raises(NullSequenceException):
+            _ = obj1.get_reference_sequence()
+        with pytest.raises(NullSequenceException):
+            _ = obj2.get_reference_sequence()
+        assert obj0.get_reference_sequence() == obj3.get_reference_sequence()
 
 
 class TestAnnotationCollection:
@@ -819,3 +848,22 @@ class TestAnnotationCollection:
         obj = self.annot.to_annotation_collection(parent_genome)
         assert list(obj.iter_children()) == list(obj)
         assert len(list(obj)) == 3
+
+    def test_nonstandard_parents(self):
+        obj0 = self.annot.to_annotation_collection(parent_genome)
+        obj1 = self.annot.to_annotation_collection(parent_no_seq)
+        obj2 = self.annot.to_annotation_collection(parent_nonstandard_type)
+        obj3 = self.annot.to_annotation_collection(parent_nonstandard_type_with_sequence)
+        with pytest.raises(NullSequenceException):
+            _ = obj1.get_reference_sequence()
+        with pytest.raises(NullSequenceException):
+            _ = obj2.get_reference_sequence()
+        assert obj0.get_reference_sequence() == obj3.get_reference_sequence()
+
+        assert obj0.chromosome_location == obj0.chunk_relative_location
+        assert obj1.chromosome_location == obj1.chunk_relative_location
+        assert obj2.chromosome_location == obj2.chunk_relative_location
+        assert obj3.chromosome_location == obj3.chunk_relative_location
+        # OTOH, this is not the same
+        obj4 = self.annot.to_annotation_collection(parent_genome_10_49)
+        assert obj4.chromosome_location != obj4.chunk_relative_location

@@ -4,6 +4,7 @@ from inscripta.biocantor.exc import (
     ValidationException,
     EmptyLocationException,
     NoSuchAncestorException,
+    NullSequenceException,
 )
 from inscripta.biocantor.gene.feature import FeatureInterval
 from inscripta.biocantor.io.gff3.exc import GFF3MissingSequenceNameError
@@ -50,6 +51,13 @@ parent_genome2_2_8 = Parent(
             )
         ),
     )
+)
+
+
+parent_no_seq = Parent(sequence_type=SequenceType.CHROMOSOME)
+parent_nonstandard_type = Parent(sequence_type="SomeOtherType")
+parent_nonstandard_type_with_sequence = Parent(
+    sequence=Sequence(genome, Alphabet.NT_STRICT), sequence_type="SomeOtherType"
 )
 
 
@@ -489,6 +497,16 @@ class TestFeatureIntervalSequenceSubset:
         assert str(feat.get_reference_sequence()) == expected_genomic
         assert str(feat.get_genomic_sequence()) == expected_stranded_genomic
 
+    def test_sequence_exceptions(self):
+        """All sequence accessors should raise good errors when attempted without sequence info"""
+        feat = e3_spliced.to_feature_interval(parent_or_seq_chunk_parent=parent_no_seq)
+        with pytest.raises(NullSequenceException):
+            _ = feat.get_reference_sequence()
+        with pytest.raises(NullSequenceException):
+            _ = feat.get_spliced_sequence()
+        with pytest.raises(NullSequenceException):
+            _ = feat.get_genomic_sequence()
+
     def test_start_end(self):
         feat = e3_spliced.to_feature_interval(parent_or_seq_chunk_parent=parent_genome2_1_15)
         assert feat.chunk_relative_start + 1 == feat.start
@@ -507,6 +525,27 @@ class TestFeatureIntervalSequenceSubset:
         del rel_d["feature_interval_guid"]
         assert rel_d != d
         assert [x + 1 for x in rel_d["interval_starts"]] == list(d["interval_starts"])
+
+    def test_nonstandard_parents(self):
+        feat0 = e3_spliced.to_feature_interval(parent)
+        seq0 = feat0.get_spliced_sequence()
+        feat1 = e3_spliced.to_feature_interval(parent_nonstandard_type)
+        with pytest.raises(NullSequenceException):
+            _ = feat1.get_spliced_sequence()
+        feat2 = e3_spliced.to_feature_interval(parent_no_seq)
+        with pytest.raises(NullSequenceException):
+            _ = feat2.get_spliced_sequence()
+        feat3 = e3_spliced.to_feature_interval(parent_nonstandard_type_with_sequence)
+        seq = feat3.get_spliced_sequence()
+        assert seq == seq0
+
+        assert feat0.chromosome_location == feat0.chunk_relative_location
+        assert feat1.chromosome_location == feat1.chunk_relative_location
+        assert feat2.chromosome_location == feat2.chunk_relative_location
+        assert feat3.chromosome_location == feat3.chunk_relative_location
+        # OTOH, this is not the same
+        feat4 = e3_spliced.to_feature_interval(parent_genome2_1_15)
+        assert feat4.chromosome_location != feat4.chunk_relative_location
 
 
 class TestFeatureWithoutModel:

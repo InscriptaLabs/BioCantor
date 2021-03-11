@@ -114,13 +114,18 @@ class AbstractInterval(ABC):
 
     @property
     def chromosome_location(self) -> Location:
-        """Returns the Location of this in *chromosome coordinates*
+        """Returns the Location of this in *chromosome coordinates*.
+
+        If the coordinate system is unknown, this will return the same coordinate system as
+        ``chunk_relative_location``, that is the true underlying ``_location`` member.
 
         NOTE: If this Interval is built over a sequence chunk, using this accessor method
         will return a location without sequence information. Please be careful using the location member
         directly!
         """
-        return self.lift_over_to_first_ancestor_of_type(SequenceType.CHROMOSOME)
+        if self.chunk_relative_location.has_ancestor_of_type(SequenceType.CHROMOSOME):
+            return self.lift_over_to_first_ancestor_of_type(SequenceType.CHROMOSOME)
+        return self.chunk_relative_location
 
     @property
     def chunk_relative_location(self) -> Location:
@@ -248,12 +253,8 @@ class AbstractInterval(ABC):
             interval_rel_to_chunk = interval_location_rel_to_chunk.reset_parent(parent_or_seq_chunk_parent)
             return interval_rel_to_chunk
 
-        # since this is a whole genome, we don't need to lift anything up
-        elif parent_or_seq_chunk_parent.has_ancestor_of_type(SequenceType.CHROMOSOME):
-            return location.reset_parent(parent_or_seq_chunk_parent)
-
-        else:
-            raise ValidationException("Provided Parent has no sequence of type 'chromosome' or 'sequence_chunk'.")
+        # since this is a whole genome (or something unknown), we don't need to lift anything up
+        return location.reset_parent(parent_or_seq_chunk_parent)
 
     def _liftover_this_location_to_seq_chunk_parent(
         self,
@@ -467,6 +468,7 @@ class AbstractFeatureInterval(AbstractInterval, ABC):
     @lru_cache(maxsize=1)
     def get_spliced_sequence(self) -> Sequence:
         """Returns the feature's *spliced*, *stranded* sequence."""
+        ObjectValidation.require_location_has_parent_with_sequence(self._location)
         return self.chunk_relative_location.extract_sequence()
 
     @lru_cache(maxsize=1)
@@ -478,6 +480,7 @@ class AbstractFeatureInterval(AbstractInterval, ABC):
     @lru_cache(maxsize=1)
     def get_genomic_sequence(self) -> Sequence:
         """Returns the feature's *unspliced*, *stranded* (transcription orientation) genomic sequence."""
+        ObjectValidation.require_location_has_parent_with_sequence(self._location)
         seq = self.chunk_relative_location.parent.sequence[self._location.start : self._location.end]
         if self.strand == Strand.PLUS:
             return seq

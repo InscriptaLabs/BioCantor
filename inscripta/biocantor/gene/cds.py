@@ -92,6 +92,9 @@ class CDSInterval(AbstractFeatureInterval):
     def __repr__(self):
         return "<{}>".format(str(self))
 
+    def __len__(self):
+        return sum((end - start) for end, start in zip(self._genomic_ends, self._genomic_starts))
+
     @property
     def id(self) -> str:
         return self.protein_id
