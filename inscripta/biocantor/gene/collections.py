@@ -886,8 +886,9 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
 
         seq_subset = self.chunk_relative_location.extract_sequence()[chunk_relative_start:chunk_relative_end]
 
+        parent_id = self.chunk_relative_location.parent.id
         return Parent(
-            id=f"{self.sequence_name}:{start}-{end}",
+            id=f"{parent_id}:{start}-{end}",
             sequence=Sequence(
                 str(seq_subset),
                 self.chunk_relative_location.parent.sequence.alphabet,
@@ -897,7 +898,7 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
                         start,
                         end,
                         Strand.PLUS,
-                        parent=Parent(id=self.sequence_name, sequence_type=SequenceType.CHROMOSOME),
+                        parent=Parent(id=parent_id, sequence_type=SequenceType.CHROMOSOME),
                     )
                 ),
             ),
