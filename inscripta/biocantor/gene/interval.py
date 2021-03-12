@@ -259,7 +259,10 @@ class AbstractInterval(ABC):
             # ensure that both chromosomes are the same chromosome
             loc_chrom = location.first_ancestor_of_type(SequenceType.CHROMOSOME)
             par_chrom = parent_or_seq_chunk_parent.first_ancestor_of_type(SequenceType.CHROMOSOME)
-            ObjectValidation.require_parents_equal_except_location_and_sequence(loc_chrom, par_chrom)
+            if loc_chrom.sequence and par_chrom.sequence:
+                ObjectValidation.require_parents_equal_except_location(loc_chrom, par_chrom)
+            else:
+                ObjectValidation.require_parents_equal_except_location_and_sequence(loc_chrom, par_chrom)
 
             location = location.lift_over_to_first_ancestor_of_type(SequenceType.CHROMOSOME).reset_parent(
                 parent_or_seq_chunk_parent.parent
@@ -304,7 +307,10 @@ class AbstractInterval(ABC):
         if self.chunk_relative_location.has_ancestor_of_type(SequenceType.CHROMOSOME):
             loc_chrom = self.chunk_relative_location.first_ancestor_of_type(SequenceType.CHROMOSOME)
             par_chrom = parent_or_seq_chunk_parent.first_ancestor_of_type(SequenceType.CHROMOSOME)
-            ObjectValidation.require_parents_equal_except_location_and_sequence(loc_chrom, par_chrom)
+            if loc_chrom.sequence and par_chrom.sequence:
+                ObjectValidation.require_parents_equal_except_location(loc_chrom, par_chrom)
+            else:
+                ObjectValidation.require_parents_equal_except_location_and_sequence(loc_chrom, par_chrom)
 
         return self.from_dict(self.to_dict(), parent_or_seq_chunk_parent)
 

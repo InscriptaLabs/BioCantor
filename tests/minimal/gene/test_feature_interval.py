@@ -587,6 +587,9 @@ class TestFeatureIntervalSequenceSubset:
         with pytest.raises(MismatchedParentException):
             _ = feat2.liftover_to_parent_or_seq_chunk_parent(parent_no_seq)
 
+        with pytest.raises(MismatchedParentException):
+            _ = feat2.liftover_to_parent_or_seq_chunk_parent(parent)
+
 
 class TestFeatureWithoutModel:
     @pytest.mark.parametrize(
