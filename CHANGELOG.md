@@ -20,7 +20,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Removed versioneer in favor of hard coded versions.
 
 
-
 ### Fixed
 - Some functions on Interval objects were not operating in chromosome coordinates
 - `AnnotationCollection.query_by_position()` was not returning valid results if the parent was a sequence chunk.

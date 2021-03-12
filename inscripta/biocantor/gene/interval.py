@@ -8,7 +8,7 @@ from uuid import UUID
 
 from methodtools import lru_cache
 
-from inscripta.biocantor.exc import ValidationException, NullSequenceException
+from inscripta.biocantor.exc import ValidationException, NullSequenceException, NoSuchAncestorException
 from inscripta.biocantor.io.bed import RGB, BED12
 from inscripta.biocantor.io.gff3.rows import GFFRow
 from inscripta.biocantor.location import Location, Strand
@@ -243,12 +243,24 @@ class AbstractInterval(ABC):
             ValidationException: If ``parent_or_seq_chunk_parent`` has no ancestor of type ``chromosome`` or
                 ``sequence_chunk``.
             NullSequenceException: If ``parent_or_seq_chunk_parent`` has no usable sequence ancestor.
+            NoSuchAncestorException: If ``location`` has a ``sequence_chunk`` ancestor, but no ``chromosome`` ancestor.
+                Such a relationship is required to lift from one chunk to a new chunk.
         """
         if parent_or_seq_chunk_parent is None:
             return location
 
         # if we are already a subset, we need to first lift back to genomic coordinates before lifting to this chunk
         if location.has_ancestor_of_type(SequenceType.SEQUENCE_CHUNK):
+            if not location.has_ancestor_of_type(SequenceType.CHROMOSOME):
+                raise NoSuchAncestorException(
+                    "This location does not have a chromosome ancestor of its sequence chunk, "
+                    "which means it is not possible to lift to a new a chunk through the chromosome coordinates."
+                )
+            # ensure that both chromosomes are the same chromosome
+            loc_chrom = location.first_ancestor_of_type(SequenceType.CHROMOSOME)
+            par_chrom = parent_or_seq_chunk_parent.first_ancestor_of_type(SequenceType.CHROMOSOME)
+            ObjectValidation.require_parents_equal_except_location_and_sequence(loc_chrom, par_chrom)
+
             location = location.lift_over_to_first_ancestor_of_type(SequenceType.CHROMOSOME).reset_parent(
                 parent_or_seq_chunk_parent.parent
             )
@@ -276,8 +288,24 @@ class AbstractInterval(ABC):
         This function returns a copy of this interval lifted over to a new coordinate system. If this interval
         is already in chunk-relative coordinates, it is first lifted back up the chromosome coordinates before
         the liftover occurs. This means that there *must* be a Parent somewhere in the ancestry with
-        type "chromosome".
+        type "chromosome", and that Parent must match the supplied parent except for location information.
+
+        Validation has to happen here in addition to in ``liftover_location_to_seq_chunk_parent()``, because
+        at this point the parent of this current interval is still known. Once the ``to_dict()`` operation is performed,
+        this information is list, and the new parent is applied under the assumption that it is valid.
         """
+        if self.chunk_relative_location.has_ancestor_of_type(SequenceType.SEQUENCE_CHUNK):
+            if not self.chunk_relative_location.has_ancestor_of_type(SequenceType.CHROMOSOME):
+                raise NoSuchAncestorException(
+                    "This location does not have a chromosome ancestor of its sequence chunk, "
+                    "which means it is not possible to lift to a new a chunk through the chromosome coordinates."
+                )
+
+        if self.chunk_relative_location.has_ancestor_of_type(SequenceType.CHROMOSOME):
+            loc_chrom = self.chunk_relative_location.first_ancestor_of_type(SequenceType.CHROMOSOME)
+            par_chrom = parent_or_seq_chunk_parent.first_ancestor_of_type(SequenceType.CHROMOSOME)
+            ObjectValidation.require_parents_equal_except_location_and_sequence(loc_chrom, par_chrom)
+
         return self.from_dict(self.to_dict(), parent_or_seq_chunk_parent)
 
     def _liftover_this_location_to_seq_chunk_parent(

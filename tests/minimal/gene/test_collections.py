@@ -24,29 +24,33 @@ from inscripta.biocantor.sequence.alphabet import Alphabet
 from inscripta.biocantor.sequence.sequence import Sequence
 
 genome = "TTTTTTTTTTAAGTATTCTTGGACCTAATTAAAAAAAAAAAAAAAAAAACCCCC"
-parent_genome = Parent(sequence=Sequence(genome, Alphabet.NT_STRICT), sequence_type=SequenceType.CHROMOSOME)
+parent_genome = Parent(
+    id="genome", sequence=Sequence(genome, Alphabet.NT_STRICT), sequence_type=SequenceType.CHROMOSOME
+)
 parent_genome_with_location = Parent(
+    id="genome",
     sequence=Sequence(genome, Alphabet.NT_STRICT),
     sequence_type=SequenceType.CHROMOSOME,
     location=SingleInterval(0, len(genome), Strand.PLUS),
 )
 parent_genome_10_49 = Parent(
+    id="genome_10_49",
     sequence=Sequence(
         genome[10:49],
         Alphabet.NT_EXTENDED_GAPPED,
         type=SequenceType.SEQUENCE_CHUNK,
         parent=Parent(
             location=SingleInterval(
-                10, 49, Strand.PLUS, parent=Parent(id="genome_10_49", sequence_type=SequenceType.CHROMOSOME)
+                10, 49, Strand.PLUS, parent=Parent(id="genome", sequence_type=SequenceType.CHROMOSOME)
             )
         ),
-    )
+    ),
 )
 
-parent_no_seq = Parent(sequence_type=SequenceType.CHROMOSOME)
-parent_nonstandard_type = Parent(sequence_type="SomeOtherType")
+parent_no_seq = Parent(sequence_type=SequenceType.CHROMOSOME, id="genome")
+parent_nonstandard_type = Parent(sequence_type="SomeOtherType", id="genome")
 parent_nonstandard_type_with_sequence = Parent(
-    sequence=Sequence(genome, Alphabet.NT_STRICT), sequence_type="SomeOtherType"
+    sequence=Sequence(genome, Alphabet.NT_STRICT), sequence_type="SomeOtherType", id="genome"
 )
 
 
