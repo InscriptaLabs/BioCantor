@@ -52,6 +52,13 @@ class ObjectValidation:
             )
 
     @staticmethod
+    def require_parents_equal_except_location_and_sequence(parent1, parent2):
+        if not parent1.equals_except_location(parent2, require_same_sequence=False):
+            raise MismatchedParentException(
+                "Parents must be equal except location and sequence info:\n{}\n  !=\n{}".format(parent1, parent2)
+            )
+
+    @staticmethod
     def require_locations_have_same_nonempty_parent(location1, location2):
         ObjectValidation.require_location_has_parent(location1)
         ObjectValidation.require_location_has_parent(location2)

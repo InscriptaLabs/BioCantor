@@ -5,6 +5,7 @@ from inscripta.biocantor.exc import (
     EmptyLocationException,
     NoSuchAncestorException,
     NullSequenceException,
+    MismatchedParentException,
 )
 from inscripta.biocantor.gene.feature import FeatureInterval
 from inscripta.biocantor.io.gff3.exc import GFF3MissingSequenceNameError
@@ -17,48 +18,58 @@ from inscripta.biocantor.sequence.sequence import Sequence
 
 # these features will be shared across all tests
 genome = "GTATTCTTGGACCTAATT"
-parent = Parent(sequence=Sequence(genome, Alphabet.NT_STRICT), sequence_type=SequenceType.CHROMOSOME)
+parent = Parent(id="genome", sequence=Sequence(genome, Alphabet.NT_STRICT), sequence_type=SequenceType.CHROMOSOME)
 # offset the genome to show parent
 genome2 = "AAGTATTCTTGGACCTAATT"
-parent_genome2 = Parent(sequence=Sequence(genome2, Alphabet.NT_STRICT), sequence_type=SequenceType.CHROMOSOME)
+parent_genome2 = Parent(
+    id="genome2", sequence=Sequence(genome2, Alphabet.NT_STRICT), sequence_type=SequenceType.CHROMOSOME
+)
 parent_genome2_minus = Parent(
-    sequence=Sequence(genome2, Alphabet.NT_STRICT), strand=Strand.MINUS, sequence_type=SequenceType.CHROMOSOME
+    id="genome2_minus",
+    sequence=Sequence(genome2, Alphabet.NT_STRICT),
+    strand=Strand.MINUS,
+    sequence_type=SequenceType.CHROMOSOME,
 )
 
 # slice the genome down to contain some of the transcripts
 parent_genome2_1_15 = Parent(
+    id="genome2_1_15",
     sequence=Sequence(
         genome2[1:15],
         Alphabet.NT_EXTENDED_GAPPED,
         type=SequenceType.SEQUENCE_CHUNK,
         parent=Parent(
             location=SingleInterval(
-                1, 15, Strand.PLUS, parent=Parent(id="genome_1_15", sequence_type=SequenceType.CHROMOSOME)
+                1, 15, Strand.PLUS, parent=Parent(id="genome2", sequence_type=SequenceType.CHROMOSOME)
             )
         ),
-    )
+    ),
 )
 
 # slice the genome down to contain none the transcripts
 parent_genome2_2_8 = Parent(
+    id="genome2_2_8",
     sequence=Sequence(
         genome2[2:8],
         Alphabet.NT_EXTENDED_GAPPED,
         type=SequenceType.SEQUENCE_CHUNK,
         parent=Parent(
             location=SingleInterval(
-                2, 8, Strand.PLUS, parent=Parent(id="genome_2_8", sequence_type=SequenceType.CHROMOSOME)
+                2, 8, Strand.PLUS, parent=Parent(id="genome2", sequence_type=SequenceType.CHROMOSOME)
             )
         ),
-    )
+    ),
 )
 
 
 parent_no_seq = Parent(sequence_type=SequenceType.CHROMOSOME)
-parent_nonstandard_type = Parent(sequence_type="SomeOtherType")
+parent_no_seq_with_id = Parent(sequence_type=SequenceType.CHROMOSOME, id="genome2")
+parent_chunk_only = Parent(sequence_type=SequenceType.SEQUENCE_CHUNK)
+parent_nonstandard_type = Parent(sequence_type="SomeOtherType", id="genome2")
 parent_nonstandard_type_with_sequence = Parent(
     sequence=Sequence(genome, Alphabet.NT_STRICT), sequence_type="SomeOtherType"
 )
+parent_named = Parent(sequence_type=SequenceType.CHROMOSOME, id="chrom")
 
 
 # Integer feature definitions
@@ -302,7 +313,7 @@ class TestFeatureInterval:
     )
     def test_reset_parent(self, schema, expected):
         feat = schema.to_feature_interval(parent_or_seq_chunk_parent=parent)
-        feat.reset_parent(parent_genome2)
+        feat._reset_parent(parent_genome2)
         assert str(feat.get_spliced_sequence()) == str(expected)
 
     def test_object_conversion(self):
@@ -546,6 +557,38 @@ class TestFeatureIntervalSequenceSubset:
         # OTOH, this is not the same
         feat4 = e3_spliced.to_feature_interval(parent_genome2_1_15)
         assert feat4.chromosome_location != feat4.chunk_relative_location
+
+    def test_liftover_to_parent_or_seq_chunk_parent(self):
+        feat0 = e3_spliced.to_feature_interval(parent_genome2)
+        feat1 = feat0.liftover_to_parent_or_seq_chunk_parent(parent_genome2_1_15)
+        assert str(feat0.get_spliced_sequence()) == str(feat1.get_spliced_sequence())
+        assert feat0.chromosome_location.reset_parent(None) == feat1.chromosome_location.reset_parent(None)
+        # bringing in a null parent means no sequence anymore
+        feat2 = feat0.liftover_to_parent_or_seq_chunk_parent(parent_no_seq_with_id)
+        with pytest.raises(NullSequenceException):
+            _ = feat2.get_spliced_sequence()
+
+        # we can also start in chunk coordinates, then lift to different chunk coordinates
+        feat_chunk = e3_spliced.to_feature_interval(parent_genome2_1_15)
+        feat_subchunk = feat_chunk.liftover_to_parent_or_seq_chunk_parent(parent_genome2_2_8)
+        # this is now a subset
+        assert str(feat_subchunk.get_spliced_sequence()) in str(feat_chunk.get_spliced_sequence())
+
+    def test_liftover_to_parent_or_seq_chunk_parent_exception(self):
+        feat0 = e3_spliced.to_feature_interval(parent_genome2_1_15)
+        with pytest.raises(MismatchedParentException):
+            _ = feat0.liftover_to_parent_or_seq_chunk_parent(parent_named)
+
+        feat1 = e3_spliced.to_feature_interval(parent_genome2)
+        with pytest.raises(MismatchedParentException):
+            _ = feat1.liftover_to_parent_or_seq_chunk_parent(parent_named)
+
+        feat2 = e3_spliced.to_feature_interval(parent_genome2_1_15)
+        with pytest.raises(MismatchedParentException):
+            _ = feat2.liftover_to_parent_or_seq_chunk_parent(parent_no_seq)
+
+        with pytest.raises(MismatchedParentException):
+            _ = feat2.liftover_to_parent_or_seq_chunk_parent(parent)
 
 
 class TestFeatureWithoutModel:

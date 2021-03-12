@@ -24,29 +24,33 @@ from inscripta.biocantor.sequence.alphabet import Alphabet
 from inscripta.biocantor.sequence.sequence import Sequence
 
 genome = "TTTTTTTTTTAAGTATTCTTGGACCTAATTAAAAAAAAAAAAAAAAAAACCCCC"
-parent_genome = Parent(sequence=Sequence(genome, Alphabet.NT_STRICT), sequence_type=SequenceType.CHROMOSOME)
+parent_genome = Parent(
+    id="genome", sequence=Sequence(genome, Alphabet.NT_STRICT), sequence_type=SequenceType.CHROMOSOME
+)
 parent_genome_with_location = Parent(
+    id="genome",
     sequence=Sequence(genome, Alphabet.NT_STRICT),
     sequence_type=SequenceType.CHROMOSOME,
     location=SingleInterval(0, len(genome), Strand.PLUS),
 )
 parent_genome_10_49 = Parent(
+    id="genome_10_49",
     sequence=Sequence(
         genome[10:49],
         Alphabet.NT_EXTENDED_GAPPED,
         type=SequenceType.SEQUENCE_CHUNK,
         parent=Parent(
             location=SingleInterval(
-                10, 49, Strand.PLUS, parent=Parent(id="genome_10_49", sequence_type=SequenceType.CHROMOSOME)
+                10, 49, Strand.PLUS, parent=Parent(id="genome", sequence_type=SequenceType.CHROMOSOME)
             )
         ),
-    )
+    ),
 )
 
-parent_no_seq = Parent(sequence_type=SequenceType.CHROMOSOME)
-parent_nonstandard_type = Parent(sequence_type="SomeOtherType")
+parent_no_seq = Parent(sequence_type=SequenceType.CHROMOSOME, id="genome")
+parent_nonstandard_type = Parent(sequence_type="SomeOtherType", id="genome")
 parent_nonstandard_type_with_sequence = Parent(
-    sequence=Sequence(genome, Alphabet.NT_STRICT), sequence_type="SomeOtherType"
+    sequence=Sequence(genome, Alphabet.NT_STRICT), sequence_type="SomeOtherType", id="genome"
 )
 
 
@@ -823,22 +827,22 @@ class TestAnnotationCollection:
     def test_reset_parent_noop(self):
         obj = self.annot.to_annotation_collection()
         # no-op
-        obj.reset_parent()
+        obj._reset_parent()
         # equivalent
-        obj.reset_parent(None)
+        obj._reset_parent(None)
 
     def test_reset_parent_null(self):
         obj = self.annot.to_annotation_collection(parent_genome)
         for child in obj:
             assert child._location.parent
-        obj.reset_parent()
+        obj._reset_parent()
         for child in obj:
             assert not child._location.parent
 
     def test_reset_parent(self):
         obj = self.annot.to_annotation_collection(parent_genome)
         obj2 = obj.query_by_position(20, 40)
-        obj2.reset_parent(parent_genome)
+        obj2._reset_parent(parent_genome)
         # the coordinates are now broken, so the sequences are wrong
         for rec in obj2:
             orig_rec = next(obj.query_by_guids([rec.guid]).__iter__()).feature_intervals[0]
@@ -867,3 +871,14 @@ class TestAnnotationCollection:
         # OTOH, this is not the same
         obj4 = self.annot.to_annotation_collection(parent_genome_10_49)
         assert obj4.chromosome_location != obj4.chunk_relative_location
+
+    def test_lift_to_new_coordinates(self):
+        obj0 = self.annot.to_annotation_collection(parent_genome)
+        obj1 = obj0.liftover_to_parent_or_seq_chunk_parent(parent_genome_10_49)
+        assert str(obj1.get_reference_sequence()) in str(obj0.get_reference_sequence())
+        assert obj1.start == 2 and obj1.end == 40
+        for gene in obj1:
+            orig_gene = next(obj0.query_by_feature_identifiers(gene.identifiers).iter_children())
+            orig_tx_or_feat = next(orig_gene.iter_children())
+            tx_or_feat = next(gene.iter_children())
+            assert str(orig_tx_or_feat.get_spliced_sequence()) == str(tx_or_feat.get_spliced_sequence())

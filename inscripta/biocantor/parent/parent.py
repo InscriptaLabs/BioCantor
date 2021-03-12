@@ -110,14 +110,14 @@ class Parent:
             return False
         return self.location == other.location and self.strand is other.strand
 
-    def equals_except_location(self, other):
+    def equals_except_location(self, other, require_same_sequence: bool = True):
         if type(other) is not Parent:
             return False
         if self.id != other.id:
             return False
         if self.sequence_type != other.sequence_type:
             return False
-        if self.sequence != other.sequence:
+        if require_same_sequence and self.sequence != other.sequence:
             return False
         if self.parent and other.parent and self.parent != other.parent:
             return False

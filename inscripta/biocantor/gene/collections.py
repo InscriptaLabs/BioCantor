@@ -74,7 +74,7 @@ class AbstractFeatureIntervalCollection(AbstractInterval, ABC):
             ids: List of GUIDs, or unique IDs.
         """
 
-    def reset_parent(self, parent: Optional[Parent] = None) -> None:
+    def _reset_parent(self, parent: Optional[Parent] = None) -> None:
         """Reset parent of this collection, and all of its children.
 
         NOTE: This function modifies this collection in-place, and does not return a new copy. This is different
@@ -89,7 +89,7 @@ class AbstractFeatureIntervalCollection(AbstractInterval, ABC):
         """
         self._location = self._location.reset_parent(parent)
         for child in self:
-            child.reset_parent(parent)
+            child._reset_parent(parent)
 
     def _initialize_location(self, start: int, end: int, parent_or_seq_chunk_parent: Optional[Parent] = None):
         """
@@ -106,7 +106,7 @@ class AbstractFeatureIntervalCollection(AbstractInterval, ABC):
             if parent_or_seq_chunk_parent.has_ancestor_of_type(SequenceType.SEQUENCE_CHUNK):
                 super()._liftover_this_location_to_seq_chunk_parent(parent_or_seq_chunk_parent)
             else:
-                self.reset_parent(parent_or_seq_chunk_parent)
+                self._reset_parent(parent_or_seq_chunk_parent)
 
     def get_reference_sequence(self) -> Sequence:
         """Returns the *plus strand* sequence for this interval"""

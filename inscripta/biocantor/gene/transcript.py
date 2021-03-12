@@ -153,7 +153,7 @@ class TranscriptInterval(AbstractFeatureInterval):
         self.transcript_guid = transcript_guid
 
     def __str__(self):
-        return f"TranscriptInterval(({self._location}), cds=[{self.cds}], symbol={self.transcript_symbol})"
+        return f"TranscriptInterval(({self.chromosome_location}), cds=[{self.cds}], symbol={self.transcript_symbol})"
 
     def __repr__(self):
         return "<{}>".format(str(self))
@@ -258,14 +258,14 @@ class TranscriptInterval(AbstractFeatureInterval):
         """Returns the name of this transcript. Provides a shared API across genes/transcripts and features."""
         return self.transcript_symbol
 
-    def reset_parent(self, parent: Optional[Parent] = None):
+    def _reset_parent(self, parent: Optional[Parent] = None):
         """
         Convenience function that wraps location.reset_parent(). Overrides the parent function in
         :class:`~biocantor.gene.feature.AbstractInterval` in order to also update the CDS interval.
         """
         if self.is_coding:
-            self.cds._location = self.cds._location.reset_parent(parent)
-        super().reset_parent(parent)
+            self.cds._reset_parent(parent)
+        super()._reset_parent(parent)
 
     def _liftover_this_location_to_seq_chunk_parent(
         self,
