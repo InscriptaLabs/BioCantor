@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Added
 - Improved docstrings on interval objects.
 - Location objects now have a `full_span` optional flag on all `intersction`, `overlaps` and `contains` functions. This flag has compound intervals be treated as their full span, i.e. from start to end, regardless of compound structure. This flag defaults to `False` in all cases. When two `CompoundInterval` are compared, they are both always compared in their full spans when this flag is `True`.
+- `Interval` and `IntervalCollection` objects now are capable of being lifted to arbitrary coordinate systems, returning a new copy. These operations rely on first lifting to a shared chromosomal coordinate system.
 
 
 ### Changed
@@ -15,7 +16,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - All objects that accept `SequenceType` information accepts either the `SequenceType` enum OR raw strings.
 - `AnnotationCollection` will look at the provided `parent_or_seq_chunk_parent` to see if the bounds of the object can be inferred from the parent object. This is only performed if no `start`/`end` are explicitly provided. If neither are provided, the bounds of the collection are the bounds of its children.
 - Refactored `CDSInterval` to be based on `AbstractFeatureInterval`. Moved `CDSPhase` and `CDSFrame` to accomodate the circular import this introduced.
-- All `Inteval` objects are allowed to have *chromosome* parents without sequence information.  
+- All `Interval` objects are allowed to have *chromosome* parents without sequence information.  
 
 
 ### Fixed
