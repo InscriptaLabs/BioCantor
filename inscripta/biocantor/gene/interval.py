@@ -225,10 +225,16 @@ class AbstractInterval(ABC):
 
         This convenience function detects which kind of parent is given, and sets up the appropriate location.
 
+        This function also handles the case where the ``location`` argument is already chunk-relative. If this is the
+        case, the ``location`` object is first lifted back to its chromosomal coordinates, then lifted back down
+        on to this new chunk.
 
         Args:
-            location: A location object, likely produced by :meth:`initialize_location()`.
-            parent_or_seq_chunk_parent: An optional parent, either as a full chromosome or as a sequence chunk.
+            location: A location object, likely produced by :meth:`initialize_location()`. Could also be the location
+                of an existing AbstractInterval subclass, such as when the method
+                ``liftover_interval_to_parent_or_seq_chunk_parent()`` is called.
+            parent_or_seq_chunk_parent: An optional parent, either as a full chromosome or as a sequence chunk. If
+                not provided, this function is a no-op.
 
         Returns:
             A :class:`Location` object.
@@ -241,7 +247,13 @@ class AbstractInterval(ABC):
         if parent_or_seq_chunk_parent is None:
             return location
 
-        elif parent_or_seq_chunk_parent.has_ancestor_of_type(SequenceType.SEQUENCE_CHUNK):
+        # if we are already a subset, we need to first lift back to genomic coordinates before lifting to this chunk
+        if location.has_ancestor_of_type(SequenceType.SEQUENCE_CHUNK):
+            location = location.lift_over_to_first_ancestor_of_type(SequenceType.CHROMOSOME).reset_parent(
+                parent_or_seq_chunk_parent.parent
+            )
+
+        if parent_or_seq_chunk_parent.has_ancestor_of_type(SequenceType.SEQUENCE_CHUNK):
 
             chunk_parent = parent_or_seq_chunk_parent.first_ancestor_of_type(SequenceType.SEQUENCE_CHUNK)
             if not chunk_parent.sequence:
@@ -256,6 +268,18 @@ class AbstractInterval(ABC):
         # since this is a whole genome (or something unknown), we don't need to lift anything up
         return location.reset_parent(parent_or_seq_chunk_parent)
 
+    def liftover_to_parent_or_seq_chunk_parent(
+        self,
+        parent_or_seq_chunk_parent: Parent,
+    ) -> "AbstractInterval":
+        """
+        This function returns a copy of this interval lifted over to a new coordinate system. If this interval
+        is already in chunk-relative coordinates, it is first lifted back up the chromosome coordinates before
+        the liftover occurs. This means that there *must* be a Parent somewhere in the ancestry with
+        type "chromosome".
+        """
+        return self.from_dict(self.to_dict(), parent_or_seq_chunk_parent)
+
     def _liftover_this_location_to_seq_chunk_parent(
         self,
         seq_chunk_parent: Parent,
@@ -269,7 +293,6 @@ class AbstractInterval(ABC):
 
         This function calls the parent static method :meth:`AbstractInterval.liftover_location_to_seq_chunk_parent()`,
         but differs in two key ways:
-
         1. It acts on an instantiated subclass of this abstract class, modifying the location.
         2. It handles the case where a subclass is already a slice, by first lifting up to genomic coordinates.
 
@@ -286,7 +309,7 @@ class AbstractInterval(ABC):
             location = self._location
         self._location = self.liftover_location_to_seq_chunk_parent(location, seq_chunk_parent)
 
-    def reset_parent(self, parent: Optional[Parent] = None) -> None:
+    def _reset_parent(self, parent: Optional[Parent] = None) -> None:
         """
         Convenience function that wraps location.reset_parent().
 

@@ -302,7 +302,7 @@ class TestFeatureInterval:
     )
     def test_reset_parent(self, schema, expected):
         feat = schema.to_feature_interval(parent_or_seq_chunk_parent=parent)
-        feat.reset_parent(parent_genome2)
+        feat._reset_parent(parent_genome2)
         assert str(feat.get_spliced_sequence()) == str(expected)
 
     def test_object_conversion(self):
@@ -546,6 +546,25 @@ class TestFeatureIntervalSequenceSubset:
         # OTOH, this is not the same
         feat4 = e3_spliced.to_feature_interval(parent_genome2_1_15)
         assert feat4.chromosome_location != feat4.chunk_relative_location
+
+    def test_liftover_to_parent_or_seq_chunk_parent(self):
+        feat0 = e3_spliced.to_feature_interval(parent_genome2)
+        feat1 = feat0.liftover_to_parent_or_seq_chunk_parent(parent_genome2_1_15)
+        assert str(feat0.get_spliced_sequence()) == str(feat1.get_spliced_sequence())
+        assert feat0.chromosome_location.reset_parent(None) == feat1.chromosome_location.reset_parent(None)
+        # bringing in a null parent means no sequence anymore
+        feat2 = feat0.liftover_to_parent_or_seq_chunk_parent(parent_no_seq)
+        with pytest.raises(NullSequenceException):
+            _ = feat2.get_spliced_sequence()
+        # we can also use nonstandard parents
+        feat3 = feat0.liftover_to_parent_or_seq_chunk_parent(parent_nonstandard_type)
+        assert feat0.chromosome_location.reset_parent(None) == feat3.chromosome_location.reset_parent(None)
+
+        # we can also start in chunk coordinates, then lift to different chunk coordinates
+        feat_chunk = e3_spliced.to_feature_interval(parent_genome2_1_15)
+        feat_subchunk = feat_chunk.liftover_to_parent_or_seq_chunk_parent(parent_genome2_2_8)
+        # this is now a subset
+        assert str(feat_subchunk.get_spliced_sequence()) in str(feat_chunk.get_spliced_sequence())
 
 
 class TestFeatureWithoutModel:

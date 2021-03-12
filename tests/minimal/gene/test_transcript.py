@@ -747,7 +747,7 @@ class TestTranscript:
     )
     def test_reset_parent(self, schema, expected):
         tx = schema.to_transcript_interval(parent_or_seq_chunk_parent=parent)
-        tx.reset_parent(parent_genome2)
+        tx._reset_parent(parent_genome2)
         assert str(tx.get_protein_sequence()) == str(expected)
 
     def test_object_conversion(self):
@@ -1234,3 +1234,21 @@ class TestTranscriptIntervalSequenceSubset:
         # OTOH, this is not the same
         tx4 = e3_spliced.to_transcript_interval(parent_genome2_1_15)
         assert tx4.chromosome_location != tx4.chunk_relative_location
+
+    def test_liftover_to_parent_or_seq_chunk_parent(self):
+        tx0 = e3_spliced.to_transcript_interval(parent_genome2)
+        tx1 = tx0.liftover_to_parent_or_seq_chunk_parent(parent_genome2_1_15)
+        assert str(tx0.get_spliced_sequence()) == str(tx1.get_spliced_sequence())
+        assert tx0.chromosome_location.reset_parent(None) == tx1.chromosome_location.reset_parent(None)
+        # bringing in a null parent means no sequence anymore
+        tx2 = tx0.liftover_to_parent_or_seq_chunk_parent(parent_no_seq)
+        with pytest.raises(NullSequenceException):
+            _ = tx2.get_spliced_sequence()
+        # we can also use nonstandard parents
+        tx3 = tx0.liftover_to_parent_or_seq_chunk_parent(parent_nonstandard_type)
+        assert tx0.chromosome_location.reset_parent(None) == tx3.chromosome_location.reset_parent(None)
+
+        # we can also start in chunk coordinates, then lift to chromosome coordinates
+        tx_chunk = e3_spliced.to_transcript_interval(parent_genome2_1_15)
+        tx_chromchunk = tx_chunk.liftover_to_parent_or_seq_chunk_parent(parent_genome2)
+        assert str(tx_chromchunk.get_spliced_sequence()) == str(tx_chunk.get_spliced_sequence())
