@@ -87,7 +87,7 @@ class TestGff3Parser:
 
     def test_parse_peg10(self, test_data_dir):
         """
-        PEG10 is a gene with a -1 frameshift in one isoform, that is paresd using the RefSeq parser.
+        PEG10 is a gene with a -1 frameshift in one isoform, that is parsed using the RefSeq parser.
         """
         gff = test_data_dir / "PEG10_minus1frameshift.gff3"
         rec = list(parse_standard_gff3(gff))[0]

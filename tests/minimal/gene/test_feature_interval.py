@@ -614,3 +614,11 @@ class TestFeatureWithoutModel:
         feat = FeatureInterval(**feat)
         feat2 = FeatureInterval.from_location(feat._location)
         assert feat == feat2
+
+
+class TestOverlappingInterval:
+    def test_overlapping_interval(self):
+        exon_starts, exon_ends = ([2, 5], [6, 10])
+        strand = Strand.PLUS
+        i = FeatureInterval.initialize_location(exon_starts, exon_ends, strand, parent_genome2_1_15)
+        assert i.num_blocks == 2
