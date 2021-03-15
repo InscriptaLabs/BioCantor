@@ -1,5 +1,5 @@
 from copy import deepcopy
-
+from uuid import UUID
 import pytest
 from inscripta.biocantor.exc import (
     InvalidAnnotationError,
