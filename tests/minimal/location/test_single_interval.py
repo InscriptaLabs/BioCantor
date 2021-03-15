@@ -1983,6 +1983,187 @@ class TestSingleInterval:
     @pytest.mark.parametrize(
         "interval,sequence_type,expected",
         [
+            # Parent
+            (
+                SingleInterval(
+                    5,
+                    10,
+                    Strand.MINUS,
+                    parent=Parent(sequence_type="chr"),
+                ),
+                "chr",
+                SingleInterval(
+                    5,
+                    10,
+                    Strand.MINUS,
+                    parent=Parent(sequence_type="chr"),
+                ),
+            ),
+            # Grandparent, parent has no type
+            (
+                SingleInterval(
+                    5,
+                    10,
+                    Strand.PLUS,
+                    parent=Parent(
+                        id="parent",
+                        parent=Parent(
+                            id="grandparent",
+                            strand=Strand.PLUS,
+                            sequence_type="chr",
+                            location=SingleInterval(100, 200, Strand.PLUS),
+                        ),
+                    ),
+                ),
+                "chr",
+                SingleInterval(
+                    105,
+                    110,
+                    Strand.PLUS,
+                    Parent(
+                        id="grandparent",
+                        strand=Strand.PLUS,
+                        sequence_type="chr",
+                    ),
+                ),
+            ),
+            # Grandparent, plus strand, parent has all attributes including its own parent
+            (
+                SingleInterval(
+                    2,
+                    4,
+                    Strand.PLUS,
+                    Parent(
+                        id="parent",
+                        sequence_type="chr",
+                        strand=Strand.PLUS,
+                        location=SingleInterval(2, 4, Strand.PLUS),
+                        sequence=Sequence("AAAAA", Alphabet.NT_STRICT),
+                        parent=Parent(
+                            id="grandparent",
+                            sequence_type="seq_chunk",
+                            strand=Strand.MINUS,
+                            location=SingleInterval(5, 10, Strand.MINUS),
+                            parent="great_grandparent",
+                        ),
+                    ),
+                ),
+                "seq_chunk",
+                SingleInterval(
+                    6,
+                    8,
+                    Strand.MINUS,
+                    Parent(
+                        id="grandparent",
+                        sequence_type="seq_chunk",
+                        parent="great_grandparent",
+                    ),
+                ),
+            ),
+            # Grandparent, minus/plus
+            (
+                SingleInterval(
+                    2,
+                    4,
+                    Strand.MINUS,
+                    Parent(
+                        id="parent",
+                        sequence_type="seq_chunk",
+                        parent=Parent(
+                            id="grandparent",
+                            sequence_type="unknown",
+                            location=SingleInterval(3, 7, Strand.PLUS),
+                        ),
+                    ),
+                ),
+                "unknown",
+                SingleInterval(
+                    5,
+                    7,
+                    Strand.MINUS,
+                    Parent(id="grandparent", sequence_type="unknown"),
+                ),
+            ),
+            # Grandparent, minus/minus
+            (
+                SingleInterval(
+                    2,
+                    4,
+                    Strand.MINUS,
+                    Parent(
+                        id="parent",
+                        sequence_type="seq_chunk",
+                        parent=Parent(
+                            id="grandparent",
+                            sequence_type="unknown",
+                            strand=Strand.MINUS,
+                            location=SingleInterval(3, 7, Strand.MINUS),
+                        ),
+                    ),
+                ),
+                "unknown",
+                SingleInterval(
+                    3,
+                    5,
+                    Strand.PLUS,
+                    Parent(id="grandparent", sequence_type="unknown"),
+                ),
+            ),
+            # Great grandparent, parent and grandparent have no type
+            (
+                SingleInterval(
+                    2,
+                    4,
+                    Strand.PLUS,
+                    Parent(
+                        id="parent",
+                        parent=Parent(
+                            id="grandparent",
+                            location=SingleInterval(0, 5, Strand.MINUS),
+                            parent=Parent(
+                                id="great_grandparent",
+                                sequence_type="unknown",
+                                location=SingleInterval(2, 8, Strand.PLUS),
+                            ),
+                        ),
+                    ),
+                ),
+                "unknown",
+                SingleInterval(
+                    3,
+                    5,
+                    Strand.MINUS,
+                    Parent(id="great_grandparent", sequence_type="unknown"),
+                ),
+            ),
+            # Great grandparent, minus/minus
+            (
+                SingleInterval(
+                    2,
+                    4,
+                    Strand.MINUS,
+                    Parent(
+                        id="parent",
+                        sequence_type="seq_chunk",
+                        parent=Parent(
+                            id="grandparent",
+                            location=SingleInterval(0, 5, Strand.PLUS),
+                            parent=Parent(
+                                id="great_grandparent",
+                                sequence_type="unknown",
+                                location=SingleInterval(2, 8, Strand.MINUS),
+                            ),
+                        ),
+                    ),
+                ),
+                "unknown",
+                SingleInterval(
+                    4,
+                    6,
+                    Strand.PLUS,
+                    Parent(id="great_grandparent", sequence_type="unknown"),
+                ),
+            ),
             # overlapping interval is child of a contiguous genome
             (
                 CompoundInterval(
