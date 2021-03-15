@@ -2164,6 +2164,29 @@ class TestSingleInterval:
                     Parent(id="great_grandparent", sequence_type="unknown"),
                 ),
             ),
+            # overlapping interval is child of a contiguous genome
+            (
+                CompoundInterval(
+                    [5, 10],
+                    [11, 20],
+                    Strand.PLUS,
+                    Parent(
+                        id="chunk",
+                        parent=Parent(
+                            location=SingleInterval(
+                                3,
+                                100,
+                                Strand.PLUS,
+                                parent=Parent(id="genome", sequence_type="chromosome"),
+                            )
+                        ),
+                    ),
+                ),
+                "chromosome",
+                CompoundInterval(
+                    [8, 13], [14, 23], Strand.PLUS, parent=Parent(id="genome", sequence_type="chromosome")
+                ),
+            ),
         ],
     )
     def test_lift_over_to_first_ancestor_of_type(self, interval, sequence_type, expected):
