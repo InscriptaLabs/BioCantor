@@ -897,10 +897,14 @@ class CompoundInterval(Location):
         rel_loc_each_single_interval = [
             other.parent_to_relative_location(block) for block in self.blocks if other.has_overlap(block)
         ]
-        return reduce(
-            lambda location1, location2: location1.union(location2),
-            rel_loc_each_single_interval,
-        ).optimize_blocks()
+        if not rel_loc_each_single_interval:
+            return EmptyLocation()
+        rel_starts = [block.start for loc in rel_loc_each_single_interval for block in loc.blocks]
+        rel_ends = [block.end for loc in rel_loc_each_single_interval for block in loc.blocks]
+        rel_strand = rel_loc_each_single_interval[0].strand
+        rel_parent = rel_loc_each_single_interval[0].parent
+        parent = rel_parent.strip_location_info() if rel_parent else None
+        return CompoundInterval(rel_starts, rel_ends, rel_strand, parent).optimize_blocks()
 
     def merge_overlapping(self) -> Location:
         """If this compound interval is overlapping, merge the overlaps"""
