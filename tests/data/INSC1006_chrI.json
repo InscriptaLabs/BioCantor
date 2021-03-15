@@ -20,14 +20,12 @@
                         ],
                         "note": [
                             "CAT transcript id: T0000001; CAT alignment id: IsoSeq-PB.2586.1; CAT novel prediction: IsoSeq"
-                        ],
-                        "product": [
-                            "CAT novel prediction: IsoSeq"
                         ]
                     },
                     "is_primary_tx": false,
                     "transcript_id": "GI526_G0000001",
                     "protein_id": null,
+                    "product": null,
                     "transcript_symbol": "GI526_G0000001",
                     "transcript_type": "ncRNA",
                     "sequence_name": "CM021111.1",
@@ -70,14 +68,12 @@
                         ],
                         "note": [
                             "CAT transcript id: T0000002; CAT alignment id: NM_001178204.1-0; CAT source transcript id: NM_001178204.1; CAT source transcript biotype: protein_coding"
-                        ],
-                        "product": [
-                            "GDH3 isoform 1"
                         ]
                     },
                     "is_primary_tx": false,
                     "transcript_id": "GI526_G0000002",
-                    "protein_id": null,
+                    "protein_id": "KAF1903245.1",
+                    "product": "GDH3 isoform 1",
                     "transcript_symbol": "GDH3",
                     "transcript_type": "protein_coding",
                     "sequence_name": "CM021111.1",
@@ -125,9 +121,6 @@
                         "gene": [
                             "BDH2"
                         ],
-                        "product": [
-                            "BDH2 isoform 1"
-                        ],
                         "translation": [
                             "MRALAYFGKGNIRFTNHLKEPHIVAPDELVIDIAWCGICGTDLHEYTDGPIFFPEDGHTHEISHNPLPQAMGHEMAGTVLEVGPSVKNLKVGDKVVVEPTGTCRDRYRWPLSPKVDKEWCAACKKGYYNICSYLGLCGAGVQSGGFAEGVVMNESHCYKVPDFVPLDVAALIQPLAVCWHAIRVCEFKAGSTALIIGAGPIGLGTILALNAAGCKDIVVSEPAKVRRELAEKMGARVYDPTAHAAKESIDYLRSIADGGDGFDYTFDCSGLEVTLNAAIQCLTFRGTAVNLAMWGHHKIQFSPMDITLHERKYTGSMCYTHHDFETVIEALEEGRIDIDRARHMITGRVNIEDGLDGAIMKLINEKESTIKIILTPNNHGELNREADNEKKEISELSSRKDQERLRESINEAKLRHT"
                         ]
@@ -135,6 +128,7 @@
                     "is_primary_tx": false,
                     "transcript_id": "GI526_G0000003",
                     "protein_id": "KAF1903246.1",
+                    "product": "BDH2 isoform 1",
                     "transcript_symbol": "BDH2",
                     "transcript_type": "protein_coding",
                     "sequence_name": "CM021111.1",
@@ -175,14 +169,12 @@
                         ],
                         "note": [
                             "CAT transcript id: T0000004; CAT alignment id: NM_001178202.2-0; CAT source transcript id: NM_001178202.2; CAT source transcript biotype: protein_coding"
-                        ],
-                        "product": [
-                            "BDH1 isoform 1"
                         ]
                     },
                     "is_primary_tx": false,
                     "transcript_id": "GI526_G0000004",
                     "protein_id": null,
+                    "product": null,
                     "transcript_symbol": "BDH1",
                     "transcript_type": "protein_coding",
                     "sequence_name": "CM021111.1",

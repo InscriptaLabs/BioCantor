@@ -277,11 +277,12 @@
                     "is_primary_tx": false,
                     "transcript_id": null,
                     "protein_id": null,
+                    "product": null,
                     "transcript_symbol": "gene1",
                     "transcript_type": "protein_coding",
                     "sequence_name": "chr1",
                     "sequence_guid": null,
-                    "transcript_interval_guid": "091e4f39-d756-c2d7-83af-a30ca92dcd81",
+                    "transcript_interval_guid": "63706b65-5c25-df0f-166d-35c5da060ca5",
                     "transcript_guid": null
                 },
                 {
@@ -322,11 +323,12 @@
                     "is_primary_tx": false,
                     "transcript_id": null,
                     "protein_id": null,
+                    "product": null,
                     "transcript_symbol": "gene1",
                     "transcript_type": "protein_coding",
                     "sequence_name": "chr1",
                     "sequence_guid": null,
-                    "transcript_interval_guid": "c4af4386-2b62-d958-d7fd-496f3c69fffe",
+                    "transcript_interval_guid": "c4c941c6-beba-b523-e2a2-46a42ee5ef60",
                     "transcript_guid": null
                 }
             ],
@@ -350,7 +352,7 @@
             },
             "sequence_name": "chr1",
             "sequence_guid": null,
-            "gene_guid": "0d0d716e-e504-ca80-400b-4aae0e80a20a"
+            "gene_guid": "540a9f3e-de58-cdc8-e629-7e1de6665826"
         }
     ],
     "name": "chr1",

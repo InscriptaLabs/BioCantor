@@ -6,7 +6,7 @@ from Bio.SeqFeature import FeatureLocation, CompoundLocation
 from inscripta.biocantor.exc import NoSuchAncestorException, NullParentException
 from inscripta.biocantor.location.distance import DistanceType
 from inscripta.biocantor.location.strand import Strand
-from inscripta.biocantor.parent import Parent
+from inscripta.biocantor.parent import Parent, SequenceType
 from inscripta.biocantor.sequence import Sequence
 from inscripta.biocantor.util.object_validation import ObjectValidation
 
@@ -80,6 +80,11 @@ class Location(ABC):
     @abstractmethod
     def is_overlapping(self) -> bool:
         """Returns True if this interval contains overlaps; always False for SingleInterval"""
+
+    @property
+    @abstractmethod
+    def _full_span_interval(self) -> "Location":
+        """Returns the full span of this interval; is trivial for a SingleInterval and EmptyLocation"""
 
     @abstractmethod
     def scan_blocks(self) -> Iterator["Location"]:
@@ -202,7 +207,7 @@ class Location(ABC):
             yield self.relative_interval_to_parent_location(curr_start, curr_start + window_size, Strand.PLUS)
 
     @abstractmethod
-    def has_overlap(self, other: "Location", match_strand: bool = False) -> bool:
+    def has_overlap(self, other: "Location", match_strand: bool = False, full_span: bool = False) -> bool:
         """Returns True iff this Location shares at least one position with the given Location.
         For subclasses representing discontiguous locations, regions between blocks are not considered.
 
@@ -212,6 +217,8 @@ class Location(ABC):
             Other Location
         match_strand
             If set to True, automatically return False if given interval Strand does not match this Location's Strand
+        full_span
+            If set to True, compare the full span of this Location to the full span of the other Location.
 
         Returns
         -------
@@ -262,7 +269,7 @@ class Location(ABC):
         """Returns a BioPython interval type; since they do not have a shared base class, we need a union"""
         pass
 
-    def first_ancestor_of_type(self, sequence_type: str) -> Parent:
+    def first_ancestor_of_type(self, sequence_type: Union[str, SequenceType]) -> Parent:
         """Returns the Parent object representing the closest ancestor (parent, parent of parent, etc.)
         of this location which has the given sequence type. Raises NoSuchAncestorException if no ancestor with
         the given type exists."""
@@ -270,14 +277,14 @@ class Location(ABC):
             raise NoSuchAncestorException("Location has no parent")
         return self.parent.first_ancestor_of_type(sequence_type, include_self=True)
 
-    def has_ancestor_of_type(self, sequence_type: str) -> bool:
+    def has_ancestor_of_type(self, sequence_type: Union[str, SequenceType]) -> bool:
         """Returns True if some ancestor (parent, parent of parent, etc.) of of this location has the given sequence
         type, or False otherwise."""
         if not self.parent:
             return False
         return self.parent.has_ancestor_of_type(sequence_type, include_self=True)
 
-    def lift_over_to_first_ancestor_of_type(self, sequence_type: str) -> "Location":
+    def lift_over_to_first_ancestor_of_type(self, sequence_type: Union[str, SequenceType]) -> "Location":
         """Returns a new Location representing the liftover of this Location to its closest ancestor sequence (parent,
         parent of parent, etc.) which has the given sequence type. If the immediate parent has the given type,
         returns this Location. Raises NoSuchAncestorException if no ancestor with the given type exists."""
@@ -313,7 +320,7 @@ class Location(ABC):
         return lifted_to_grandparent.lift_over_to_sequence(sequence)
 
     @abstractmethod
-    def intersection(self, other: "Location", match_strand: bool = True) -> "Location":
+    def intersection(self, other: "Location", match_strand: bool = True, full_span: bool = False) -> "Location":
         """Returns a new Location representing the intersection of this Location with the other Location.
         Returned Location, if nonempty, has the same Strand as this Location. This operation is commutative
         if match_strand is True.
@@ -325,6 +332,9 @@ class Location(ABC):
         match_strand
             If set to True, automatically return EmptyLocation() if other Location has a different Strand than
             this Location
+        full_span
+            If set to True, compare the full span of this Location to the full span of the other Location.
+
         """
 
     @abstractmethod
@@ -372,11 +382,15 @@ class Location(ABC):
             Non-negative integer: amount to extend downstream relative to Strand
         """
 
-    def contains(self, other: "Location", match_strand: bool = False):
-        """Returns True iff this location contains the other"""
-        if not self.has_overlap(other, match_strand):
+    def contains(self, other: "Location", match_strand: bool = False, full_span: bool = False):
+        """Returns True iff this location contains the other. If ``full_span`` is ``True``, the full span of
+        both locations are compared."""
+        if not self.has_overlap(other, match_strand, full_span):
             return False
         other_to_compare = other.reset_parent(None)
-        return len(self.reset_parent(None).intersection(other_to_compare, match_strand=match_strand)) == len(
-            other_to_compare
-        )
+        if full_span is False:
+            return len(
+                self.reset_parent(None).intersection(other_to_compare, match_strand=match_strand, full_span=full_span)
+            ) == len(other_to_compare)
+        else:
+            return self.reset_parent(None)._full_span_interval.contains(other_to_compare._full_span_interval)

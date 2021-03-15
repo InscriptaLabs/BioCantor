@@ -3,7 +3,7 @@ import json
 import pytest
 from Bio import SeqIO
 from inscripta.biocantor.gene.biotype import Biotype
-from inscripta.biocantor.gene.cds import CDSFrame
+from inscripta.biocantor.gene.cds_frame import CDSFrame
 from inscripta.biocantor.io.gff3.exc import GFF3FastaException
 from inscripta.biocantor.io.gff3.parser import (
     parse_gff3_embedded_fasta,
@@ -55,12 +55,12 @@ class TestGff3Parser:
                 "Dbxref": ["Ensembl:ENST00000425520.2", "Genbank:NM_001080998.2", "GeneID:441581", "HGNC:HGNC:33518"],
                 "gbkey": ["mRNA"],
                 "gene": ["FRG2B"],
-                "product": ["FSHD region gene 2 family member B"],
                 "tag": ["MANE Select"],
             },
             "is_primary_tx": False,
             "transcript_id": "NM_001080998.2",
             "protein_id": "NP_001074467.1",
+            "product": "protein FRG2-like-1",
             "transcript_symbol": None,
             "transcript_type": Biotype.protein_coding,
             "sequence_name": "NC_000010.11",
@@ -87,7 +87,7 @@ class TestGff3Parser:
 
     def test_parse_peg10(self, test_data_dir):
         """
-        PEG10 is a gene with a -1 frameshift in one isoform, that is paresd using the RefSeq parser.
+        PEG10 is a gene with a -1 frameshift in one isoform, that is parsed using the RefSeq parser.
         """
         gff = test_data_dir / "PEG10_minus1frameshift.gff3"
         rec = list(parse_standard_gff3(gff))[0]
@@ -110,6 +110,19 @@ class TestGff3Parser:
         c = recs[0].annotation
         with open(test_data_dir / json_file) as fh:
             assert AnnotationCollectionModel.Schema().load(json.load(fh)) == c
+
+    def test_transcript_inference(self, test_data_dir):
+        recs = list(parse_standard_gff3(test_data_dir / "feature_test_1.gff"))
+        c = recs[0].annotation.to_annotation_collection()
+        # 4 total genes
+        assert len(c.genes) == 4
+        # two different types of pseudogene transcripts were inferred, one without exons and one with exons
+        # one gene with an invalid biotype who was set to None
+        assert len([x for x in c.genes if x.gene_type == Biotype.pseudogene]) == 2
+        assert len([x for x in c.genes if x.gene_type == Biotype.lncRNA]) == 1
+        invalid_biotype = [x for x in c.genes if not x.gene_type]
+        assert len(invalid_biotype) == 1
+        assert list(invalid_biotype[0].qualifiers["provided_biotype"])[0] == "invalid"
 
 
 class TestGff3FastaParser:

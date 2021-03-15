@@ -17,7 +17,7 @@ from inscripta.biocantor.io.gff3.constants import (
     BioCantorFeatureTypes,
 )
 from inscripta.biocantor.location import Strand
-from inscripta.biocantor.gene.cds import CDSPhase
+from inscripta.biocantor.gene.cds_frame import CDSPhase
 from inscripta.biocantor.io.gff3.exc import GFF3ExportException, ReservedKeyWarning
 
 
@@ -65,9 +65,10 @@ class GFFAttributes:
 
     Multiple attributes of the same type are indicated by separating the values with the comma "," character, as in:
 
-    ```
-    Parent=AF2312,AB2812,abc-3
-    ```
+    .. code-block::
+
+        Parent=AF2312,AB2812,abc-3
+
 
     Note that attribute names are case sensitive. "Parent" is not the same as "parent".
 

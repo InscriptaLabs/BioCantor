@@ -1,37 +1,51 @@
 import pytest
+
 from inscripta.biocantor.exc import (
     InvalidCDSIntervalError,
     EmptyLocationException,
     NullParentException,
     NoncodingTranscriptError,
-    NullSequenceException,
     ValidationException,
+    NullSequenceException,
 )
-from inscripta.biocantor.gene.cds import CDSFrame
+from inscripta.biocantor.gene.cds_frame import CDSFrame
+from inscripta.biocantor.gene.transcript import TranscriptInterval
 from inscripta.biocantor.io.models import TranscriptIntervalModel
 from inscripta.biocantor.location.location_impl import SingleInterval, CompoundInterval, EmptyLocation
 from inscripta.biocantor.location.strand import Strand
-from inscripta.biocantor.parent.parent import Parent
+from inscripta.biocantor.parent.parent import Parent, SequenceType
 from inscripta.biocantor.sequence.alphabet import Alphabet
 from inscripta.biocantor.sequence.sequence import Sequence
 
 # these features will be shared across all tests
 genome = "GTATTCTTGGACCTAATT"
-parent = Parent(sequence=Sequence(genome, Alphabet.NT_STRICT), sequence_type="chromosome")
+parent = Parent(id="genome", sequence=Sequence(genome, Alphabet.NT_STRICT), sequence_type=SequenceType.CHROMOSOME)
 # offset the genome to show parent
 genome2 = "AAGTATTCTTGGACCTAATT"
-parent_genome2 = Parent(sequence=Sequence(genome2, Alphabet.NT_STRICT), sequence_type="chromosome")
+parent_genome2 = Parent(
+    id="genome2", sequence=Sequence(genome2, Alphabet.NT_STRICT), sequence_type=SequenceType.CHROMOSOME
+)
 
 # slice the genome down to contain some of the transcripts
 parent_genome2_1_15 = Parent(
+    id="genome2_1_15",
     sequence=Sequence(
         genome2[1:15],
         Alphabet.NT_EXTENDED_GAPPED,
-        type="sequence_chunk",
+        type=SequenceType.SEQUENCE_CHUNK,
         parent=Parent(
-            location=SingleInterval(1, 15, Strand.PLUS, parent=Parent(id="genome_0_15", sequence_type="chromosome"))
+            location=SingleInterval(
+                1, 15, Strand.PLUS, parent=Parent(id="genome2", sequence_type=SequenceType.CHROMOSOME)
+            )
         ),
-    )
+    ),
+)
+
+parent_no_seq = Parent(sequence_type=SequenceType.CHROMOSOME)
+parent_no_seq_with_id = Parent(sequence_type=SequenceType.CHROMOSOME, id="genome2")
+parent_nonstandard_type = Parent(sequence_type="SomeOtherType", id="genome2")
+parent_nonstandard_type_with_sequence = Parent(
+    sequence=Sequence(genome, Alphabet.NT_STRICT), sequence_type="SomeOtherType"
 )
 
 # Integer transcript definitions
@@ -418,10 +432,6 @@ class TestTranscript:
             _ = schema.to_transcript_interval()
             _ = schema.to_transcript_interval(parent_or_seq_chunk_parent=parent)
 
-    def test_no_such_ancestor(self):
-        with pytest.raises(NullSequenceException):
-            _ = se_unspliced.to_transcript_interval(parent_or_seq_chunk_parent=Parent(sequence_type="chromosome"))
-
     @pytest.mark.parametrize(
         "schema,value,expected",
         [
@@ -741,7 +751,7 @@ class TestTranscript:
     )
     def test_reset_parent(self, schema, expected):
         tx = schema.to_transcript_interval(parent_or_seq_chunk_parent=parent)
-        tx.reset_parent(parent_genome2)
+        tx._reset_parent(parent_genome2)
         assert str(tx.get_protein_sequence()) == str(expected)
 
     def test_object_conversion(self):
@@ -867,7 +877,7 @@ class TestTranscript:
 
     def test_frameshifted(self):
         genome = "ATGGGGTGATGA"
-        parent_genome = Parent(sequence=Sequence(genome, Alphabet.NT_STRICT), sequence_type="chromosome")
+        parent_genome = Parent(sequence=Sequence(genome, Alphabet.NT_STRICT), sequence_type=SequenceType.CHROMOSOME)
         tx = dict(
             exon_starts=[0],
             exon_ends=[12],
@@ -895,6 +905,93 @@ class TestTranscript:
         tx = se_noncoding.to_transcript_interval()
         with pytest.raises(NoncodingTranscriptError):
             _ = tx.has_in_frame_stop
+
+
+class TestTranscriptWithoutModel:
+    @pytest.mark.parametrize(
+        "tx",
+        [
+            dict(
+                exon_starts=[2, 8, 12],
+                exon_ends=[5, 13, 18],
+                strand=Strand.PLUS,
+            ),
+            dict(
+                exon_starts=[2, 8, 12],
+                exon_ends=[5, 13, 18],
+                strand=Strand.PLUS,
+                parent_or_seq_chunk_parent=Sequence(
+                    "AAAGGAAAGTCCCTGAAAAAA", Alphabet.NT_EXTENDED_GAPPED, type=SequenceType.CHROMOSOME
+                ),
+            ),
+        ],
+    )
+    def test_constructor(self, tx):
+        tx = TranscriptInterval(**tx)
+        tx2 = TranscriptInterval.from_location(tx._location)
+        assert tx == tx2
+
+    @pytest.mark.parametrize(
+        "location,expected",
+        [
+            (
+                SingleInterval(
+                    5,
+                    20,
+                    Strand.PLUS,
+                    parent=Parent(
+                        id="NC_000913.3:222213-222241",
+                        sequence=Sequence(
+                            "AANAAATGGCGAGCACCTAACCCCCNCC",
+                            Alphabet.NT_EXTENDED,
+                            type=SequenceType.SEQUENCE_CHUNK,
+                            parent=Parent(
+                                id="NC_000913.3",
+                                location=SingleInterval(
+                                    222213,
+                                    222241,
+                                    Strand.PLUS,
+                                    parent=Parent(
+                                        id="NC_000913.3",
+                                        sequence_type=SequenceType.CHROMOSOME,
+                                        location=SingleInterval(222213, 222241, Strand.PLUS),
+                                    ),
+                                ),
+                                sequence_type=SequenceType.CHROMOSOME,
+                            ),
+                        ),
+                    ),
+                ),
+                SingleInterval(222218, 222233, Strand.PLUS),
+            )
+        ],
+    )
+    def test_chunk_relative_constructor(self, location, expected):
+        cds = TranscriptInterval.from_chunk_relative_location(location)
+        assert cds.chromosome_location.reset_parent(None) == expected
+
+    @pytest.mark.parametrize(
+        "tx",
+        [
+            dict(
+                exon_starts=[2, 8, 12],
+                exon_ends=[5, 13, 18],
+                strand=Strand.PLUS,
+            ),
+            dict(
+                exon_starts=[2, 8, 12],
+                exon_ends=[5, 13, 18],
+                strand=Strand.PLUS,
+                parent_or_seq_chunk_parent=Sequence(
+                    "AAAGGAAAGTCCCTGAAAAAA", Alphabet.NT_EXTENDED_GAPPED, type=SequenceType.CHROMOSOME
+                ),
+            ),
+        ],
+    )
+    def test_dict(self, tx):
+        tx = TranscriptInterval(**tx)
+        tx2 = TranscriptInterval.from_dict(tx.to_dict())
+        assert tx == tx2
 
 
 class TestQualifiers:
@@ -1110,3 +1207,48 @@ class TestTranscriptIntervalSequenceSubset:
     def test_chunk_relative_interval_to_cds(self, start, end, strand, expected):
         tx = e3_spliced_utr.to_transcript_interval(parent_or_seq_chunk_parent=parent_genome2_1_15)
         assert tx.chunk_relative_interval_to_cds(start, end, strand).reset_parent(new_parent=None) == expected
+
+    def test_sequence_exceptions(self):
+        """All sequence accessors should raise good errors when attempted without sequence info"""
+        tx = e3_spliced.to_transcript_interval(parent_or_seq_chunk_parent=parent_no_seq)
+        with pytest.raises(NullSequenceException):
+            _ = tx.get_reference_sequence()
+        with pytest.raises(NullSequenceException):
+            _ = tx.get_spliced_sequence()
+        with pytest.raises(NullSequenceException):
+            _ = tx.get_genomic_sequence()
+
+    def test_nonstandard_parents(self):
+        tx0 = e3_spliced.to_transcript_interval(parent)
+        seq0 = tx0.get_spliced_sequence()
+        tx1 = e3_spliced.to_transcript_interval(parent_nonstandard_type)
+        with pytest.raises(NullSequenceException):
+            _ = tx1.get_spliced_sequence()
+        tx2 = e3_spliced.to_transcript_interval(parent_no_seq)
+        with pytest.raises(NullSequenceException):
+            _ = tx2.get_spliced_sequence()
+        tx3 = e3_spliced.to_transcript_interval(parent_nonstandard_type_with_sequence)
+        seq = tx3.get_spliced_sequence()
+        assert seq == seq0
+
+        assert tx0.chromosome_location == tx0.chunk_relative_location
+        assert tx1.chromosome_location == tx1.chunk_relative_location
+        assert tx2.chromosome_location == tx2.chunk_relative_location
+        assert tx3.chromosome_location == tx3.chunk_relative_location
+        # OTOH, this is not the same
+        tx4 = e3_spliced.to_transcript_interval(parent_genome2_1_15)
+        assert tx4.chromosome_location != tx4.chunk_relative_location
+
+    def test_liftover_to_parent_or_seq_chunk_parent(self):
+        tx0 = e3_spliced.to_transcript_interval(parent_genome2)
+        tx1 = tx0.liftover_to_parent_or_seq_chunk_parent(parent_genome2_1_15)
+        assert str(tx0.get_spliced_sequence()) == str(tx1.get_spliced_sequence())
+        assert tx0.chromosome_location.reset_parent(None) == tx1.chromosome_location.reset_parent(None)
+        # bringing in a null parent means no sequence anymore
+        tx2 = tx0.liftover_to_parent_or_seq_chunk_parent(parent_no_seq_with_id)
+        with pytest.raises(NullSequenceException):
+            _ = tx2.get_spliced_sequence()
+        # we can also start in chunk coordinates, then lift to chromosome coordinates
+        tx_chunk = e3_spliced.to_transcript_interval(parent_genome2_1_15)
+        tx_chromchunk = tx_chunk.liftover_to_parent_or_seq_chunk_parent(parent_genome2)
+        assert str(tx_chromchunk.get_spliced_sequence()) == str(tx_chunk.get_spliced_sequence())

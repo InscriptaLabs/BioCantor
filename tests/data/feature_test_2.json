@@ -43,6 +43,35 @@
             "transcripts": [
                 {
                     "exon_starts": [
+                        2
+                    ],
+                    "exon_ends": [
+                        18
+                    ],
+                    "strand": "PLUS",
+                    "cds_starts": [
+                        5
+                    ],
+                    "cds_ends": [
+                        9
+                    ],
+                    "cds_frames": [
+                        "ZERO"
+                    ],
+                    "qualifiers": null,
+                    "is_primary_tx": false,
+                    "transcript_id": null,
+                    "protein_id": null,
+                    "product": null,
+                    "transcript_symbol": "tx1",
+                    "transcript_type": "protein_coding",
+                    "sequence_name": "chr1",
+                    "sequence_guid": null,
+                    "transcript_interval_guid": null,
+                    "transcript_guid": null
+                },
+                {
+                    "exon_starts": [
                         2,
                         7,
                         12
@@ -72,35 +101,8 @@
                     "is_primary_tx": false,
                     "transcript_id": null,
                     "protein_id": null,
-                    "transcript_symbol": null,
-                    "transcript_type": "protein_coding",
-                    "sequence_name": "chr1",
-                    "sequence_guid": null,
-                    "transcript_interval_guid": null,
-                    "transcript_guid": null
-                },
-                {
-                    "exon_starts": [
-                        2
-                    ],
-                    "exon_ends": [
-                        18
-                    ],
-                    "strand": "PLUS",
-                    "cds_starts": [
-                        5
-                    ],
-                    "cds_ends": [
-                        9
-                    ],
-                    "cds_frames": [
-                        "ZERO"
-                    ],
-                    "qualifiers": null,
-                    "is_primary_tx": false,
-                    "transcript_id": null,
-                    "protein_id": null,
-                    "transcript_symbol": null,
+                    "product": null,
+                    "transcript_symbol": "tx2",
                     "transcript_type": "protein_coding",
                     "sequence_name": "chr1",
                     "sequence_guid": null,

@@ -33,7 +33,8 @@ from Bio.SeqFeature import SeqFeature
 from Bio.SeqRecord import SeqRecord
 
 from inscripta.biocantor.gene.biotype import Biotype
-from inscripta.biocantor.gene.cds import CDSFrame, CDSInterval
+from inscripta.biocantor.gene.cds import CDSInterval
+from inscripta.biocantor.gene.cds_frame import CDSFrame
 from inscripta.biocantor.io.features import extract_feature_types, extract_feature_name_id, merge_qualifiers
 from inscripta.biocantor.io.genbank.constants import (
     GeneFeatures,
@@ -280,9 +281,10 @@ class GeneFeature(Feature):
                 cds_frames=cds_frames,
                 qualifiers=tx.feature.qualifiers,
                 is_primary_tx=False,
-                transcript_id=tx.feature.qualifiers.get("transcript_id", [None])[0],
-                protein_id=tx.feature.qualifiers.get("protein_id", [None])[0],
-                transcript_symbol=tx.feature.qualifiers.get("gene", [None])[0],
+                transcript_id=tx.get_qualifier_from_tx_or_cds_features("transcript_id"),
+                protein_id=tx.get_qualifier_from_tx_or_cds_features("protein_id"),
+                product=tx.get_qualifier_from_tx_or_cds_features("product"),
+                transcript_symbol=tx.get_qualifier_from_tx_or_cds_features("gene"),
                 transcript_type=transcript_biotype.name,
                 sequence_name=tx.record.id,
             )
@@ -348,6 +350,14 @@ class TranscriptFeature(Feature):
         for f in self.children:
             if f.type == GeneIntervalFeatures.CDS.value:
                 yield f
+
+    def get_qualifier_from_tx_or_cds_features(self, qualifier: str) -> Optional[str]:
+        """Get a specific qualifier, if it exists. Look at tx first, then children"""
+        if qualifier in self.feature.qualifiers:
+            return self.feature.qualifiers[qualifier][0]
+        for feature in self.cds_features:
+            if qualifier in feature.feature.qualifiers:
+                return feature.feature.qualifiers[qualifier][0]
 
     def iterate_intervals(self) -> Iterable[Tuple[int, int]]:
         """Iterate over the location parts"""

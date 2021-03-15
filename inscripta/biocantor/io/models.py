@@ -6,7 +6,7 @@ from typing import List, Optional, ClassVar, Type, Dict, Union
 from uuid import UUID
 
 from inscripta.biocantor.gene.biotype import Biotype
-from inscripta.biocantor.gene.cds import CDSFrame
+from inscripta.biocantor.gene.cds_frame import CDSFrame
 from inscripta.biocantor.gene.collections import GeneInterval, FeatureIntervalCollection, AnnotationCollection
 from inscripta.biocantor.gene.feature import FeatureInterval
 from inscripta.biocantor.gene.transcript import TranscriptInterval
@@ -93,6 +93,7 @@ class TranscriptIntervalModel(BaseModel):
     is_primary_tx: Optional[bool] = None
     transcript_id: Optional[str] = None
     protein_id: Optional[str] = None
+    product: Optional[str] = None
     transcript_symbol: Optional[str] = None
     transcript_type: Optional[Biotype] = None
     sequence_name: Optional[str] = None
@@ -126,6 +127,7 @@ class TranscriptIntervalModel(BaseModel):
             sequence_name=self.sequence_name,
             sequence_guid=self.sequence_guid,
             protein_id=self.protein_id,
+            product=self.product,
             parent_or_seq_chunk_parent=parent_or_seq_chunk_parent,
         )
 
