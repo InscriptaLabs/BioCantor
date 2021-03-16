@@ -335,6 +335,9 @@ class SingleInterval(Location):
             raise ValueError("Intervals must all have same strand")
         return CompoundInterval([self.start, other.start], [self.end, other.end], self.strand, new_parent)
 
+    def union_preserve_overlaps(self, other: "Location") -> "Location":
+        return _union_preserve_overlaps(self, other)
+
     def minus(self, other: Location, match_strand: bool = True) -> Location:
         if not self.has_overlap(other, match_strand=match_strand):
             return self
@@ -860,6 +863,9 @@ class CompoundInterval(Location):
         blocks = sorted(self.blocks + other.blocks)
         return self._merge_compound_blocks(blocks)
 
+    def union_preserve_overlaps(self, other: "Location") -> "Location":
+        return _union_preserve_overlaps(self, other)
+
     def minus(self, other: Location, match_strand: bool = True) -> Location:
         if not self.has_overlap(other, match_strand=match_strand):
             return self.optimize_blocks()
@@ -1043,6 +1049,9 @@ class _EmptyLocation(Location):
     def union(self, other: Location) -> Location:
         raise EmptyLocationException
 
+    def union_preserve_overlaps(self, other: Location) -> Location:
+        raise EmptyLocationException
+
     def minus(self, other: Location, match_strand: bool = True) -> Location:
         return self
 
@@ -1069,3 +1078,14 @@ def EmptyLocation():
     if _EmptyLocation._instance is None:
         _EmptyLocation._instance = _EmptyLocation()
     return _EmptyLocation._instance
+
+
+def _union_preserve_overlaps(loc1: Location, loc2: Location) -> Location:
+    if loc1.strand != loc2.strand:
+        raise InvalidStrandException(f"Strands do not match: {loc1.strand} != {loc2.strand}")
+    if loc1.parent:
+        ObjectValidation.require_parents_equal_except_location(loc1.parent, loc2.parent)
+    starts = [block.start for loc in [loc1, loc2] for block in loc.blocks]
+    ends = [block.end for loc in [loc1, loc2] for block in loc.blocks]
+    parent = loc1.parent.strip_location_info() if loc1.parent else None
+    return CompoundInterval(starts, ends, loc1.strand, parent).optimize_blocks()

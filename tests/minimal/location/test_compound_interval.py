@@ -2210,6 +2210,47 @@ class TestCompoundInterval:
     def test_union_compound_interval(self, location1, location2, expected):
         assert location1.union(location2) == expected
 
+    @pytest.mark.parametrize("interval,other,exp", [
+        # No overlap
+        (
+            CompoundInterval([0], [5], Strand.PLUS),
+            CompoundInterval([6, 10], [7, 11], Strand.PLUS),
+            CompoundInterval([0, 6, 10], [5, 7, 11], Strand.PLUS),
+        ),
+        # Adjacent blocks
+        (
+            CompoundInterval([0], [5], Strand.PLUS),
+            CompoundInterval([5, 10], [6, 11], Strand.PLUS),
+            CompoundInterval([0, 10], [6, 11], Strand.PLUS),
+        ),
+        # Overlapping blocks, has parent
+        (
+            CompoundInterval([0], [5], Strand.PLUS, parent="seq"),
+            CompoundInterval([4], [10], Strand.PLUS, parent="seq"),
+            CompoundInterval([0, 4], [5, 10], Strand.PLUS, parent="seq"),
+        ),
+    ])
+    def test_union_preserve_overlaps(self, interval, other, exp):
+        assert interval.union_preserve_overlaps(other) == exp
+
+    @pytest.mark.parametrize("interval,other,exp_exception", [
+        # Different parents
+        (
+            CompoundInterval([0], [5], Strand.PLUS, parent="seq1"),
+            CompoundInterval([0], [5], Strand.PLUS, parent="seq2"),
+            MismatchedParentException,
+        ),
+        # Different strands
+        (
+                CompoundInterval([0], [5], Strand.PLUS),
+                CompoundInterval([0], [5], Strand.UNSTRANDED),
+                InvalidStrandException,
+        ),
+    ])
+    def test_union_preserve_overlaps_error(self, interval, other, exp_exception):
+        with pytest.raises(exp_exception):
+            interval.union_preserve_overlaps(other)
+
     @pytest.mark.parametrize(
         "interval,expected",
         [  # this is a real example of a -1 frameshift gene in E. coli
