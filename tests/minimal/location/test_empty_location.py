@@ -151,3 +151,11 @@ class TestEmptyLocation:
 
     def test_has_ancestor_of_type(self):
         assert EmptyLocation().has_ancestor_of_type("seqtype") is False
+
+    def test_union(self):
+        with pytest.raises(EmptyLocationException):
+            EmptyLocation().union(SingleInterval(0, 1, Strand.PLUS))
+
+    def test_union_preserve_overlaps(self):
+        with pytest.raises(EmptyLocationException):
+            EmptyLocation().union_preserve_overlaps(SingleInterval(0, 1, Strand.PLUS))
