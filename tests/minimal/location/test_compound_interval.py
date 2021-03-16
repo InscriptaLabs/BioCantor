@@ -2235,13 +2235,13 @@ class TestCompoundInterval:
             (
                 CompoundInterval([5, 6], [10, 12], Strand.PLUS),
                 CompoundInterval([3, 5], [8, 10], Strand.PLUS),
-                CompoundInterval([3, 5, 5, 6], [8, 10, 10, 12], Strand.PLUS)
+                CompoundInterval([3, 5, 5, 6], [8, 10, 10, 12], Strand.PLUS),
             ),
             # Double overlapping intervals, result has 5-10 and 6-10 interval
             (
                 CompoundInterval([5, 6], [10, 12], Strand.PLUS),
                 CompoundInterval([3, 6], [8, 10], Strand.PLUS),
-                CompoundInterval([3, 5, 6, 6], [8, 10, 10, 12], Strand.PLUS)
+                CompoundInterval([3, 5, 6, 6], [8, 10, 10, 12], Strand.PLUS),
             ),
         ],
     )
