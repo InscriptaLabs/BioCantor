@@ -122,11 +122,13 @@ def seq_chunk_to_parent(
     Returns:
         An instantiated Parent object ready to be passed to a constructor.
     """
+    chunk_id = f"{sequence_name}:{start}-{end}"
     return Parent(
-        id=f"{sequence_name}:{start}-{end}",
+        id=chunk_id,
         sequence=Sequence(
             seq,
             alphabet,
+            id=chunk_id,
             type=SequenceType.SEQUENCE_CHUNK,
             parent=Parent(
                 location=SingleInterval(
