@@ -340,7 +340,13 @@ class Location(ABC):
     @abstractmethod
     def union(self, other: "Location") -> "Location":
         """Returns a new Location representing the union of this Location with the other Location. This operation
-        is commutative. Raises ValueError if locations cannot be combined."""
+        is commutative. Raises exception if locations cannot be combined."""
+
+    @abstractmethod
+    def union_preserve_overlaps(self, other: "Location") -> "Location":
+        """Returns a new Location representing the union of this Location with the other Location, retaining
+        overlapping blocks where applicable. This operation is commutative. Raises exception if locations cannot
+        be combined."""
 
     @abstractmethod
     def minus(self, other: "Location", match_strand: bool = True) -> "Location":
