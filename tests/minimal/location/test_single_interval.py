@@ -2670,43 +2670,49 @@ class TestSingleInterval:
         with pytest.raises(expected_exception):
             interval.union(compound_interval)
 
-    @pytest.mark.parametrize("interval,other,exp", [
-        # No overlap
-        (
-            SingleInterval(0, 5, Strand.PLUS),
-            CompoundInterval([6, 10], [7, 11], Strand.PLUS),
-            CompoundInterval([0, 6, 10], [5, 7, 11], Strand.PLUS),
-        ),
-        # Adjacent blocks
-        (
-            SingleInterval(0, 5, Strand.PLUS),
-            CompoundInterval([5, 10], [6, 11], Strand.PLUS),
-            CompoundInterval([0, 10], [6, 11], Strand.PLUS),
-        ),
-        # Overlapping blocks, has parent
-        (
-            SingleInterval(0, 5, Strand.PLUS, parent="seq"),
-            SingleInterval(4, 10, Strand.PLUS, parent="seq"),
-            CompoundInterval([0, 4], [5, 10], Strand.PLUS, parent="seq"),
-        ),
-    ])
+    @pytest.mark.parametrize(
+        "interval,other,exp",
+        [
+            # No overlap
+            (
+                SingleInterval(0, 5, Strand.PLUS),
+                CompoundInterval([6, 10], [7, 11], Strand.PLUS),
+                CompoundInterval([0, 6, 10], [5, 7, 11], Strand.PLUS),
+            ),
+            # Adjacent blocks
+            (
+                SingleInterval(0, 5, Strand.PLUS),
+                CompoundInterval([5, 10], [6, 11], Strand.PLUS),
+                CompoundInterval([0, 10], [6, 11], Strand.PLUS),
+            ),
+            # Overlapping blocks, has parent
+            (
+                SingleInterval(0, 5, Strand.PLUS, parent="seq"),
+                SingleInterval(4, 10, Strand.PLUS, parent="seq"),
+                CompoundInterval([0, 4], [5, 10], Strand.PLUS, parent="seq"),
+            ),
+        ],
+    )
     def test_union_preserve_overlaps(self, interval, other, exp):
         assert interval.union_preserve_overlaps(other) == exp
 
-    @pytest.mark.parametrize("interval,other,exp_exception", [
-        # Different parents
-        (
-            SingleInterval(0, 5, Strand.PLUS, parent="seq1"),
-            SingleInterval(0, 5, Strand.PLUS, parent="seq2"),
-            MismatchedParentException,
-        ),
-        # Different strands
-        (
+    @pytest.mark.parametrize(
+        "interval,other,exp_exception",
+        [
+            # Different parents
+            (
+                SingleInterval(0, 5, Strand.PLUS, parent="seq1"),
+                SingleInterval(0, 5, Strand.PLUS, parent="seq2"),
+                MismatchedParentException,
+            ),
+            # Different strands
+            (
                 SingleInterval(0, 5, Strand.PLUS),
                 SingleInterval(0, 5, Strand.UNSTRANDED),
                 InvalidStrandException,
-        ),
-    ])
+            ),
+        ],
+    )
     def test_union_preserve_overlaps_error(self, interval, other, exp_exception):
         with pytest.raises(exp_exception):
             interval.union_preserve_overlaps(other)

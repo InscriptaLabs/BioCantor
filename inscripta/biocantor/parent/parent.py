@@ -215,8 +215,9 @@ class Parent:
             self.parent.location.relative_interval_to_parent_location(block.start, block.end, block.strand)
             for block in self.location.blocks
         ]
-        lifted_blocks_union = reduce(lambda location1, location2: location1.union_preserve_overlaps(location2),
-                                     lifted_blocks)
+        lifted_blocks_union = reduce(
+            lambda location1, location2: location1.union_preserve_overlaps(location2), lifted_blocks
+        )
         location_with_parent = lifted_blocks_union.reset_parent(self.parent.strip_location_info())
         return location_with_parent
 
