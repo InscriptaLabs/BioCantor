@@ -448,7 +448,7 @@ class TranscriptInterval(AbstractFeatureInterval):
         return TranscriptInterval(
             exon_starts=[x.start for x in chromosome_location.blocks],
             exon_ends=[x.end for x in chromosome_location.blocks],
-            strand=location.strand,
+            strand=chromosome_location.strand,
             cds_starts=[x.start for x in cds_chromosome_location.blocks] if cds else None,
             cds_ends=[x.end for x in cds_chromosome_location.blocks] if cds else None,
             cds_frames=cds.frames if cds else None,

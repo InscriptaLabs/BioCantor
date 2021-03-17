@@ -1288,6 +1288,25 @@ class TestCDSInterval:
                     ),
                 ),
             ),
+            # negative strand chunk hierarchy works just fine
+            Parent(
+                id="test:0-9",
+                location=SingleInterval(0, 9, Strand.MINUS),
+                sequence=Sequence(
+                    "ATACGATCA",
+                    alphabet,
+                    id="test:0-9",
+                    type=SequenceType.SEQUENCE_CHUNK,
+                    parent=Parent(
+                        location=SingleInterval(
+                            0,
+                            9,
+                            Strand.PLUS,
+                            parent=Parent(id="test", sequence_type=SequenceType.CHROMOSOME),
+                        )
+                    ),
+                ),
+            ),
         ],
     )
     def test_from_chunk_relative_location(self, parent):
