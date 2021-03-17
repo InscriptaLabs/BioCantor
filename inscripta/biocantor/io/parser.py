@@ -83,7 +83,7 @@ def seq_to_parent(
     """Convert a string into a Parent object. This is the intermediate that transfers a BioPython sequence object to
     a BioCantor sequence object.
 
-    NOTE: This sequnece is assumed to be the entire chromosome.
+    NOTE: This sequence is assumed to be the entire chromosome.
 
     Args:
         seq: String of sequence.
