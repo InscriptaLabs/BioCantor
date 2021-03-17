@@ -285,7 +285,6 @@ class AbstractInterval(ABC):
 
             location = location.reset_parent(chunk_parent.parent)
             sequence_chunk = chunk_parent.sequence
-            # TODO: Use strict parent checking
             try:
                 interval_location_rel_to_chunk = sequence_chunk.location_on_parent.parent_to_relative_location(location)
             except LocationOverlapException as e:
