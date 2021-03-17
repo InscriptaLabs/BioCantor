@@ -4,9 +4,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.4.3]
 ### Changed
 - Added a parent-level sequence identifier to the output of `biocantor.io.parser.seq_chunk_to_parent()`.
+- `seq_chunk_to_parent()` accepts a `strand` argument that allows for the sequence chunk to be strand-referenced.
 
 
 ## [0.4.2]
