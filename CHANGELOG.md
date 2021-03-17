@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+### Changed
+- Added a parent-level sequence identifier to the output of `biocantor.io.parser.seq_chunk_to_parent()`.
+
+
 ## [0.4.2]
 ### Added
 - ``Location.union_preserve_overlaps()`` function added. This function produces the union of intervals, while preserving all overlaps.
