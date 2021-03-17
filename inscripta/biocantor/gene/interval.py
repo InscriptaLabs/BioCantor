@@ -8,7 +8,12 @@ from uuid import UUID
 
 from methodtools import lru_cache
 
-from inscripta.biocantor.exc import ValidationException, NullSequenceException, NoSuchAncestorException
+from inscripta.biocantor.exc import (
+    ValidationException,
+    NullSequenceException,
+    NoSuchAncestorException,
+    LocationOverlapException,
+)
 from inscripta.biocantor.io.bed import RGB, BED12
 from inscripta.biocantor.io.gff3.rows import GFFRow
 from inscripta.biocantor.location import Location, Strand
@@ -269,6 +274,10 @@ class AbstractInterval(ABC):
             )
 
         if parent_or_seq_chunk_parent.has_ancestor_of_type(SequenceType.SEQUENCE_CHUNK):
+            if not parent_or_seq_chunk_parent.has_ancestor_of_type(SequenceType.CHROMOSOME):
+                raise NoSuchAncestorException(
+                    "Must have a chromosome in the hierarchy if a sequence chunk is provided."
+                )
 
             chunk_parent = parent_or_seq_chunk_parent.first_ancestor_of_type(SequenceType.SEQUENCE_CHUNK)
             if not chunk_parent.sequence:
@@ -276,7 +285,13 @@ class AbstractInterval(ABC):
 
             location = location.reset_parent(chunk_parent.parent)
             sequence_chunk = chunk_parent.sequence
-            interval_location_rel_to_chunk = sequence_chunk.location_on_parent.parent_to_relative_location(location)
+            try:
+                interval_location_rel_to_chunk = sequence_chunk.location_on_parent.parent_to_relative_location(location)
+            except LocationOverlapException as e:
+                raise LocationOverlapException(
+                    f"Locations did not overlap. Does the parent or seq chunk parent have the right "
+                    f"chunk-chromosome hierarchy? Original error: {e}"
+                )
             interval_rel_to_chunk = interval_location_rel_to_chunk.reset_parent(parent_or_seq_chunk_parent)
             return interval_rel_to_chunk
 

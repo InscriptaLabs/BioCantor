@@ -388,8 +388,8 @@ class SingleInterval(Location):
         else:
             return self.extend_absolute(extend_downstream, extend_upstream)
 
-    def _location_relative_to(self, other: Location) -> Location:
-        intersection = other.intersection(self, match_strand=False)
+    def _location_relative_to(self, other: Location, strict_parent_compare: bool = False) -> Location:
+        intersection = other.intersection(self, match_strand=False, strict_parent_compare=strict_parent_compare)
         rel_pos_1 = other.parent_to_relative_pos(intersection.start)
         rel_pos_2 = other.parent_to_relative_pos(intersection.end - 1)
         rel_start, rel_end = min(rel_pos_1, rel_pos_2), max(rel_pos_1, rel_pos_2) + 1

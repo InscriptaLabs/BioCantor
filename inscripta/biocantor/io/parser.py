@@ -104,6 +104,7 @@ def seq_chunk_to_parent(
     sequence_name: Union[UUID, str],
     start: int,
     end: int,
+    strand: Optional[Strand] = Strand.PLUS,
     alphabet: Optional[Alphabet] = Alphabet.NT_EXTENDED_GAPPED,
 ) -> Parent:
     """Construct a sequence chunk parent from a sequence. This is used when an annotation collection is being
@@ -117,6 +118,7 @@ def seq_chunk_to_parent(
         sequence_name: The name of the sequence.
         start: The genomic start position of this sequence.
         end: The genomic end position of this sequence.
+        strand: The strand this chunk is relative to the genome.
         alphabet: The alphabet the sequence is in.
 
     Returns:
@@ -134,7 +136,7 @@ def seq_chunk_to_parent(
                 location=SingleInterval(
                     start,
                     end,
-                    Strand.PLUS,
+                    strand,
                     parent=Parent(id=sequence_name, sequence_type=SequenceType.CHROMOSOME),
                 )
             ),
