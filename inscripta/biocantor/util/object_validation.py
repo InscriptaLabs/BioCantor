@@ -46,7 +46,16 @@ class ObjectValidation:
 
     @staticmethod
     def require_parents_equal_except_location(parent1, parent2):
-        if not parent1.equals_except_location(parent2):
+        is_error = False
+        if parent1 is None and parent2 is None:
+            return
+        elif parent1 is None and parent2 is not None:
+            is_error = True
+        elif parent1 is not None and parent2 is None:
+            is_error = True
+        elif not parent1.equals_except_location(parent2):
+            is_error = True
+        if is_error:
             raise MismatchedParentException(
                 "Parents must be equal except location info:\n{}\n  !=\n{}".format(parent1, parent2)
             )
