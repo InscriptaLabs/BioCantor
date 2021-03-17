@@ -13,6 +13,7 @@ from inscripta.biocantor.exc import (
     LocationOverlapException,
     NoncodingTranscriptError,
     InvalidCDSIntervalError,
+    NoSuchAncestorException,
 )
 from inscripta.biocantor.gene.biotype import Biotype
 from inscripta.biocantor.gene.cds import CDSInterval
@@ -25,7 +26,7 @@ from inscripta.biocantor.io.gff3.rows import GFFAttributes, GFFRow
 from inscripta.biocantor.location.location import Location
 from inscripta.biocantor.location.location_impl import SingleInterval, EmptyLocation
 from inscripta.biocantor.location.strand import Strand
-from inscripta.biocantor.parent.parent import Parent
+from inscripta.biocantor.parent.parent import Parent, SequenceType
 from inscripta.biocantor.sequence.sequence import Sequence
 from inscripta.biocantor.util.bins import bins
 from inscripta.biocantor.util.hashing import digest_object
@@ -372,6 +373,11 @@ class TranscriptInterval(AbstractFeatureInterval):
         guid: Optional[UUID] = None,
         transcript_guid: Optional[UUID] = None,
     ) -> "TranscriptInterval":
+        if location.has_ancestor_of_type(SequenceType.SEQUENCE_CHUNK):
+            raise NoSuchAncestorException(
+                "Cannot call from_location with a chunk-relative location. Use from_chunk_relative_location()."
+            )
+
         return TranscriptInterval(
             exon_starts=[x.start for x in location.blocks],
             exon_ends=[x.end for x in location.blocks],
@@ -429,10 +435,16 @@ class TranscriptInterval(AbstractFeatureInterval):
             loc.lift_over_to_first_ancestor_of_type("chromosome")
 
         """
+        if not location.has_ancestor_of_type(SequenceType.SEQUENCE_CHUNK):
+            raise NoSuchAncestorException("Must have a sequence chunk in the parent hierarchy.")
 
         chromosome_location = location.lift_over_to_first_ancestor_of_type("chromosome")
+
         if cds:
+            if not cds.chunk_relative_location.has_ancestor_of_type(SequenceType.SEQUENCE_CHUNK):
+                raise NoSuchAncestorException("Must have a sequence chunk in the parent hierarchy.")
             cds_chromosome_location = cds.chunk_relative_location.lift_over_to_first_ancestor_of_type("chromosome")
+
         return TranscriptInterval(
             exon_starts=[x.start for x in chromosome_location.blocks],
             exon_ends=[x.end for x in chromosome_location.blocks],

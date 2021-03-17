@@ -1,6 +1,6 @@
 import pytest
 
-from inscripta.biocantor.exc import InvalidCDSIntervalError
+from inscripta.biocantor.exc import InvalidCDSIntervalError, NoSuchAncestorException
 from inscripta.biocantor.gene.cds import CDSInterval, TranslationTable
 from inscripta.biocantor.gene.cds_frame import CDSPhase, CDSFrame
 from inscripta.biocantor.gene.codon import Codon
@@ -1223,3 +1223,89 @@ class TestCDSInterval:
         )
         with pytest.raises(NotImplementedError):
             _ = cds.to_dict(chromosome_relative_coordinates=False)
+
+    @pytest.mark.parametrize(
+        "parent",
+        [
+            # standard chromosome
+            Parent(sequence=Sequence("ATACGATCA", Alphabet.NT_EXTENDED_GAPPED, type=SequenceType.CHROMOSOME)),
+            # no type
+            Parent(sequence=Sequence("ATACGATCA", Alphabet.NT_EXTENDED_GAPPED)),
+            # non-standard type
+            Parent(sequence=Sequence("ATACGATCA", Alphabet.NT_EXTENDED_GAPPED, type="nonstandard")),
+        ],
+    )
+    def test_from_location(self, parent):
+        _ = CDSInterval.from_location(SingleInterval(0, 9, Strand.PLUS, parent), [CDSFrame.ZERO])
+
+    @pytest.mark.parametrize(
+        "parent",
+        [
+            # flat chunk
+            Parent(sequence=Sequence("ATACGATCA", Alphabet.NT_EXTENDED_GAPPED, type=SequenceType.SEQUENCE_CHUNK)),
+            # proper chunk hierarchy
+            Parent(
+                id="test:0-9",
+                sequence=Sequence(
+                    "ATACGATCA",
+                    alphabet,
+                    id="test:0-9",
+                    type=SequenceType.SEQUENCE_CHUNK,
+                    parent=Parent(
+                        location=SingleInterval(
+                            0,
+                            9,
+                            Strand.PLUS,
+                            parent=Parent(id="test", sequence_type=SequenceType.CHROMOSOME),
+                        )
+                    ),
+                ),
+            ),
+        ],
+    )
+    def test_from_location_exception(self, parent):
+        with pytest.raises(NoSuchAncestorException):
+            _ = CDSInterval.from_location(SingleInterval(0, 9, Strand.PLUS, parent), [CDSFrame.ZERO])
+
+    @pytest.mark.parametrize(
+        "parent",
+        [
+            # proper chunk hierarchy
+            Parent(
+                id="test:0-9",
+                sequence=Sequence(
+                    "ATACGATCA",
+                    alphabet,
+                    id="test:0-9",
+                    type=SequenceType.SEQUENCE_CHUNK,
+                    parent=Parent(
+                        location=SingleInterval(
+                            0,
+                            9,
+                            Strand.PLUS,
+                            parent=Parent(id="test", sequence_type=SequenceType.CHROMOSOME),
+                        )
+                    ),
+                ),
+            ),
+        ],
+    )
+    def test_from_chunk_relative_location(self, parent):
+        _ = CDSInterval.from_chunk_relative_location(SingleInterval(0, 9, Strand.PLUS, parent), [CDSFrame.ZERO])
+
+    @pytest.mark.parametrize(
+        "parent",
+        [
+            # flat chunk
+            Parent(sequence=Sequence("ATACGATCA", Alphabet.NT_EXTENDED_GAPPED, type=SequenceType.SEQUENCE_CHUNK)),
+            # standard chromosome
+            Parent(sequence=Sequence("ATACGATCA", Alphabet.NT_EXTENDED_GAPPED, type=SequenceType.CHROMOSOME)),
+            # no type
+            Parent(sequence=Sequence("ATACGATCA", Alphabet.NT_EXTENDED_GAPPED)),
+            # non-standard type
+            Parent(sequence=Sequence("ATACGATCA", Alphabet.NT_EXTENDED_GAPPED, type="nonstandard")),
+        ],
+    )
+    def test_from_chunk_relative_location_exception(self, parent):
+        with pytest.raises(NoSuchAncestorException):
+            _ = CDSInterval.from_chunk_relative_location(SingleInterval(0, 9, Strand.PLUS, parent), [CDSFrame.ZERO])

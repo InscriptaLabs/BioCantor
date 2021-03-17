@@ -4,7 +4,7 @@ from uuid import UUID
 
 from methodtools import lru_cache
 
-from inscripta.biocantor.exc import InvalidCDSIntervalError
+from inscripta.biocantor.exc import InvalidCDSIntervalError, NoSuchAncestorException
 from inscripta.biocantor.gene.cds_frame import CDSPhase, CDSFrame
 from inscripta.biocantor.gene.codon import Codon, TranslationTable
 from inscripta.biocantor.gene.interval import AbstractFeatureInterval, QualifierValue
@@ -13,7 +13,7 @@ from inscripta.biocantor.io.gff3.constants import GFF_SOURCE, NULL_COLUMN, BioCa
 from inscripta.biocantor.io.gff3.rows import GFFAttributes, GFFRow
 from inscripta.biocantor.location.location import Location, Strand
 from inscripta.biocantor.location.location_impl import SingleInterval, CompoundInterval
-from inscripta.biocantor.parent.parent import Parent
+from inscripta.biocantor.parent.parent import Parent, SequenceType
 from inscripta.biocantor.sequence import Sequence
 from inscripta.biocantor.sequence.alphabet import Alphabet
 from inscripta.biocantor.util.hashing import digest_object
@@ -170,6 +170,11 @@ class CDSInterval(AbstractFeatureInterval):
     ) -> "CDSInterval":
         """A convenience function that allows for construction of a :class:`CDSInterval` from a location object,
         a list of CDSFrames or CDSPhase, and optional metadata."""
+        if location.has_ancestor_of_type(SequenceType.SEQUENCE_CHUNK):
+            raise NoSuchAncestorException(
+                "Cannot call from_location with a chunk-relative location. Use from_chunk_relative_location()."
+            )
+
         return CDSInterval(
             cds_starts=[x.start for x in location.blocks],
             cds_ends=[x.end for x in location.blocks],
@@ -215,7 +220,10 @@ class CDSInterval(AbstractFeatureInterval):
             loc.lift_over_to_first_ancestor_of_type("chromosome")
 
         """
-        chromosome_location = location.lift_over_to_first_ancestor_of_type("chromosome")
+        if not location.has_ancestor_of_type(SequenceType.SEQUENCE_CHUNK):
+            raise NoSuchAncestorException("Must have a sequence chunk in the parent hierarchy.")
+
+        chromosome_location = location.lift_over_to_first_ancestor_of_type(SequenceType.CHROMOSOME)
         return CDSInterval(
             cds_starts=[x.start for x in chromosome_location.blocks],
             cds_ends=[x.end for x in chromosome_location.blocks],
