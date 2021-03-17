@@ -276,8 +276,7 @@ class AbstractInterval(ABC):
 
             location = location.reset_parent(chunk_parent.parent)
             sequence_chunk = chunk_parent.sequence
-            interval_location_rel_to_chunk = sequence_chunk.location_on_parent
-            interval_location_rel_to_chunk = interval_location_rel_to_chunk.parent_to_relative_location(location)
+            interval_location_rel_to_chunk = sequence_chunk.location_on_parent.parent_to_relative_location(location)
             interval_rel_to_chunk = interval_location_rel_to_chunk.reset_parent(parent_or_seq_chunk_parent)
             return interval_rel_to_chunk
 
