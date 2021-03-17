@@ -888,7 +888,8 @@ class TestCompoundInterval:
     def test_has_overlap_error(self):
         with pytest.raises(MismatchedParentException):
             CompoundInterval([0], [1], Strand.PLUS, parent="seq1").has_overlap(
-                SingleInterval(0, 1, Strand.PLUS, parent="seq2"), strict_parent_compare=True)
+                SingleInterval(0, 1, Strand.PLUS, parent="seq2"), strict_parent_compare=True
+            )
 
     @pytest.mark.parametrize(
         "location,expected",
@@ -2403,7 +2404,8 @@ class TestCompoundInterval:
     def test_intersection_error(self):
         with pytest.raises(MismatchedParentException):
             CompoundInterval([0], [1], Strand.PLUS, parent="seq1").intersection(
-                SingleInterval(0, 1, Strand.PLUS, parent="seq2"), strict_parent_compare=True)
+                SingleInterval(0, 1, Strand.PLUS, parent="seq2"), strict_parent_compare=True
+            )
 
     @pytest.mark.parametrize(
         "location1,location2,match_strand,expected",
@@ -2627,7 +2629,8 @@ class TestCompoundInterval:
     def test_minus_error(self):
         with pytest.raises(MismatchedParentException):
             CompoundInterval([0], [1], Strand.PLUS, parent="seq1").minus(
-                SingleInterval(0, 1, Strand.PLUS, parent="seq2"), strict_parent_compare=True)
+                SingleInterval(0, 1, Strand.PLUS, parent="seq2"), strict_parent_compare=True
+            )
 
     @pytest.mark.parametrize(
         "location,extend_left,extend_right,expected",
@@ -2858,7 +2861,8 @@ class TestCompoundInterval:
     def test_contains_error(self):
         with pytest.raises(MismatchedParentException):
             CompoundInterval([0], [1], Strand.PLUS, parent="seq1").contains(
-                SingleInterval(0, 1, Strand.PLUS, parent="seq2"), strict_parent_compare=True)
+                SingleInterval(0, 1, Strand.PLUS, parent="seq2"), strict_parent_compare=True
+            )
 
     @pytest.mark.parametrize(
         "single_interval,compound_interval,expected",

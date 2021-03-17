@@ -1421,7 +1421,8 @@ class TestSingleInterval:
     def test_has_overlap_error(self):
         with pytest.raises(MismatchedParentException):
             SingleInterval(0, 1, Strand.PLUS, parent="seq1").has_overlap(
-                SingleInterval(0, 1, Strand.PLUS, parent="seq2"), strict_parent_compare=True)
+                SingleInterval(0, 1, Strand.PLUS, parent="seq2"), strict_parent_compare=True
+            )
 
     @pytest.mark.parametrize(
         "interval,expected",
@@ -1805,10 +1806,10 @@ class TestSingleInterval:
                 0,
             ),
             (
-                    SingleInterval(0, 5, Strand.PLUS),
-                    CompoundInterval.from_single_intervals([SingleInterval(7, 10, Strand.PLUS)]),
-                    DistanceType.INNER,
-                    2,
+                SingleInterval(0, 5, Strand.PLUS),
+                CompoundInterval.from_single_intervals([SingleInterval(7, 10, Strand.PLUS)]),
+                DistanceType.INNER,
+                2,
             ),
         ],
     )
@@ -1819,7 +1820,8 @@ class TestSingleInterval:
     def test_distance_to_error(self):
         with pytest.raises(MismatchedParentException):
             SingleInterval(0, 1, Strand.PLUS, parent="seq1").distance_to(
-                SingleInterval(0, 1, Strand.PLUS, parent="seq2"))
+                SingleInterval(0, 1, Strand.PLUS, parent="seq2")
+            )
 
     @pytest.mark.parametrize(
         "interval,sequence_type,expected",
@@ -2799,11 +2801,12 @@ class TestSingleInterval:
 
     def test_intersection_error(self):
         # Interval grandparents have different IDs
-        seq1 = Sequence('A', Alphabet.NT_STRICT, parent=Sequence('A', Alphabet.NT_STRICT, id='ps1'))
-        seq2 = Sequence('A', Alphabet.NT_STRICT, parent=Sequence('A', Alphabet.NT_STRICT, id='ps2'))
+        seq1 = Sequence("A", Alphabet.NT_STRICT, parent=Sequence("A", Alphabet.NT_STRICT, id="ps1"))
+        seq2 = Sequence("A", Alphabet.NT_STRICT, parent=Sequence("A", Alphabet.NT_STRICT, id="ps2"))
         with pytest.raises(MismatchedParentException):
             SingleInterval(0, 1, Strand.PLUS, parent=seq1).intersection(
-                SingleInterval(0, 1, Strand.PLUS, parent=seq2), strict_parent_compare=True)
+                SingleInterval(0, 1, Strand.PLUS, parent=seq2), strict_parent_compare=True
+            )
 
     @pytest.mark.parametrize(
         "compound_interval,single_interval,match_strand,expected",
@@ -3085,7 +3088,8 @@ class TestSingleInterval:
     def test_minus_error(self):
         with pytest.raises(MismatchedParentException):
             SingleInterval(0, 1, Strand.PLUS, parent="seq1").minus(
-                SingleInterval(0, 1, Strand.PLUS, parent="seq2"), strict_parent_compare=True)
+                SingleInterval(0, 1, Strand.PLUS, parent="seq2"), strict_parent_compare=True
+            )
 
     @pytest.mark.parametrize(
         "location,extend_left,extend_right,expected",
@@ -3406,7 +3410,8 @@ class TestSingleInterval:
     def test_contains_error(self):
         with pytest.raises(MismatchedParentException):
             SingleInterval(0, 1, Strand.PLUS, parent="seq1").contains(
-                SingleInterval(0, 1, Strand.PLUS, parent="seq2"), strict_parent_compare=True)
+                SingleInterval(0, 1, Strand.PLUS, parent="seq2"), strict_parent_compare=True
+            )
 
     @pytest.mark.parametrize(
         "location,expected_output",

@@ -207,8 +207,13 @@ class Location(ABC):
             yield self.relative_interval_to_parent_location(curr_start, curr_start + window_size, Strand.PLUS)
 
     @abstractmethod
-    def has_overlap(self, other: "Location", match_strand: bool = False, full_span: bool = False,
-                    strict_parent_compare: bool = False) -> bool:
+    def has_overlap(
+        self,
+        other: "Location",
+        match_strand: bool = False,
+        full_span: bool = False,
+        strict_parent_compare: bool = False,
+    ) -> bool:
         """Returns True iff this Location shares at least one position with the given Location.
         For subclasses representing discontiguous locations, regions between blocks are not considered.
 
@@ -323,8 +328,9 @@ class Location(ABC):
         return lifted_to_grandparent.lift_over_to_sequence(sequence)
 
     @abstractmethod
-    def intersection(self, other: "Location", match_strand: bool = True, full_span: bool = False,
-                     strict_parent_compare: bool = False) -> "Location":
+    def intersection(
+        self, other: "Location", match_strand: bool = True, full_span: bool = False, strict_parent_compare: bool = False
+    ) -> "Location":
         """Returns a new Location representing the intersection of this Location with the other Location.
         Returned Location, if nonempty, has the same Strand as this Location. This operation is commutative
         if match_strand is True.
@@ -397,8 +403,13 @@ class Location(ABC):
             Non-negative integer: amount to extend downstream relative to Strand
         """
 
-    def contains(self, other: "Location", match_strand: bool = False, full_span: bool = False,
-                 strict_parent_compare: bool = False) -> bool:
+    def contains(
+        self,
+        other: "Location",
+        match_strand: bool = False,
+        full_span: bool = False,
+        strict_parent_compare: bool = False,
+    ) -> bool:
         """Returns True iff this location contains the other. If ``full_span`` is ``True``, the full span of
         both locations are compared.
 

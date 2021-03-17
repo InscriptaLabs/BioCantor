@@ -208,8 +208,9 @@ class SingleInterval(Location):
             parent=new_parent,
         )
 
-    def has_overlap(self, other: Location, match_strand: bool = False, full_span: bool = False,
-                    strict_parent_compare: bool = False) -> bool:
+    def has_overlap(
+        self, other: Location, match_strand: bool = False, full_span: bool = False, strict_parent_compare: bool = False
+    ) -> bool:
         """Compares the overlap of this interval to another interval. If ``full_span`` is ``True``,
         then this interval is compared to the full span of the other interval, regardless of type of
         the other interval.
@@ -287,8 +288,9 @@ class SingleInterval(Location):
             return max(distances)
         raise NotImplementedError(f"Distance type not implemented: {distance_type.value}")
 
-    def intersection(self, other: Location, match_strand: bool = True, full_span: bool = False,
-                     strict_parent_compare: bool = False) -> Location:
+    def intersection(
+        self, other: Location, match_strand: bool = True, full_span: bool = False, strict_parent_compare: bool = False
+    ) -> Location:
         """Intersects this SingleInterval with another Location.
 
         Args:
@@ -646,8 +648,9 @@ class CompoundInterval(Location):
         )
         return intersect_same_strand.reset_strand(relative_strand.relative_to(self.strand))
 
-    def has_overlap(self, other: Location, match_strand: bool = False, full_span: bool = False,
-                    strict_parent_compare: bool = False) -> bool:
+    def has_overlap(
+        self, other: Location, match_strand: bool = False, full_span: bool = False, strict_parent_compare: bool = False
+    ) -> bool:
         """If full_span is ``True``, then the full span of both this location *and* the ``other`` location
         are used for the comparison.
         """
@@ -777,8 +780,9 @@ class CompoundInterval(Location):
         else:
             raise NotImplementedError(f"Unknown distance type {distance_type.value}")
 
-    def intersection(self, other: Location, match_strand: bool = True, full_span: bool = False,
-                     strict_parent_compare: bool = False) -> Location:
+    def intersection(
+        self, other: Location, match_strand: bool = True, full_span: bool = False, strict_parent_compare: bool = False
+    ) -> Location:
         """Intersects this CompoundInterval with another Location.
 
         Args:
@@ -1033,8 +1037,9 @@ class _EmptyLocation(Location):
     ) -> Location:
         raise EmptyLocationException
 
-    def has_overlap(self, other: Location, match_strand: bool = False, full_span: bool = False,
-                    strict_parent_compare: bool = False) -> bool:
+    def has_overlap(
+        self, other: Location, match_strand: bool = False, full_span: bool = False, strict_parent_compare: bool = False
+    ) -> bool:
         if strict_parent_compare:
             ObjectValidation.require_parents_equal_except_location(self.parent, other.parent)
         return False
@@ -1063,8 +1068,9 @@ class _EmptyLocation(Location):
     def distance_to(self, other: Location, distance_type: DistanceType = DistanceType.INNER) -> int:
         raise EmptyLocationException
 
-    def intersection(self, other: Location, match_strand: bool = True, full_span: bool = False,
-                     strict_parent_compare: bool = False) -> Location:
+    def intersection(
+        self, other: Location, match_strand: bool = True, full_span: bool = False, strict_parent_compare: bool = False
+    ) -> Location:
         if strict_parent_compare:
             ObjectValidation.require_parents_equal_except_location(self.parent, other.parent)
         return self
