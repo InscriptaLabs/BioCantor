@@ -1,3 +1,4 @@
+import pytest
 from inscripta.biocantor.location.location_impl import SingleInterval
 from inscripta.biocantor.parent import Parent, SequenceType
 from inscripta.biocantor.sequence.alphabet import Alphabet
@@ -15,8 +16,9 @@ def test_seq_to_parent():
     )
 
 
-def test_seq_chunk_to_parent():
-    obs = seq_chunk_to_parent("ATGCATGC", "TestSeq", 200, 208)
+@pytest.mark.parametrize("strand", [Strand.PLUS, Strand.MINUS])
+def test_seq_chunk_to_parent(strand):
+    obs = seq_chunk_to_parent("ATGCATGC", "TestSeq", 200, 208, strand=strand)
     assert obs == Parent(
         id="TestSeq:200-208",
         sequence_type=SequenceType.SEQUENCE_CHUNK,
@@ -30,16 +32,16 @@ def test_seq_chunk_to_parent():
             parent=Parent(
                 id="TestSeq",
                 sequence_type=SequenceType.CHROMOSOME,
-                strand=Strand.PLUS,
+                strand=strand,
                 location=SingleInterval(
                     200,
                     208,
-                    Strand.PLUS,
+                    strand,
                     parent=Parent(
                         id="TestSeq",
                         sequence_type=SequenceType.CHROMOSOME,
-                        strand=Strand.PLUS,
-                        location=SingleInterval(200, 208, Strand.PLUS),
+                        strand=strand,
+                        location=SingleInterval(200, 208, strand),
                         sequence=None,
                         parent=None,
                     ),
@@ -48,8 +50,8 @@ def test_seq_chunk_to_parent():
                 parent=Parent(
                     id="TestSeq",
                     sequence_type=SequenceType.CHROMOSOME,
-                    strand=Strand.PLUS,
-                    location=SingleInterval(200, 208, Strand.PLUS, parent=None),
+                    strand=strand,
+                    location=SingleInterval(200, 208, strand, parent=None),
                     sequence=None,
                     parent=None,
                 ),
