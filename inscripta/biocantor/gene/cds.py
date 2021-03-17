@@ -227,7 +227,7 @@ class CDSInterval(AbstractFeatureInterval):
         return CDSInterval(
             cds_starts=[x.start for x in chromosome_location.blocks],
             cds_ends=[x.end for x in chromosome_location.blocks],
-            strand=location.strand,
+            strand=chromosome_location.strand,
             frames_or_phases=cds_frames,
             sequence_guid=sequence_guid,
             sequence_name=sequence_name,
