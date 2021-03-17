@@ -1418,6 +1418,11 @@ class TestSingleInterval:
     def test_has_overlap(self, interval, other, match_strand, expected):
         assert interval.has_overlap(other, match_strand) == expected
 
+    def test_has_overlap_error(self):
+        with pytest.raises(MismatchedParentException):
+            SingleInterval(0, 1, Strand.PLUS, parent="seq1").has_overlap(
+                SingleInterval(0, 1, Strand.PLUS, parent="seq2"), strict_parent_compare=True)
+
     @pytest.mark.parametrize(
         "interval,expected",
         [
@@ -1799,25 +1804,22 @@ class TestSingleInterval:
                 DistanceType.ENDS,
                 0,
             ),
+            (
+                    SingleInterval(0, 5, Strand.PLUS),
+                    CompoundInterval.from_single_intervals([SingleInterval(7, 10, Strand.PLUS)]),
+                    DistanceType.INNER,
+                    2,
+            ),
         ],
     )
     def test_distance_to(self, interval, other, distance_type, expected):
         print(interval, other, expected)  # %%%
         assert interval.distance_to(other, distance_type) == expected
 
-    @pytest.mark.parametrize(
-        "interval,other,distance_type,expected",
-        [
-            (
-                SingleInterval(0, 5, Strand.PLUS),
-                CompoundInterval.from_single_intervals([SingleInterval(7, 10, Strand.PLUS)]),
-                DistanceType.INNER,
-                2,
-            )
-        ],
-    )
-    def test_distance_to_error(self, interval, other, distance_type, expected):
-        assert interval.distance_to(other, distance_type) == expected
+    def test_distance_to_error(self):
+        with pytest.raises(MismatchedParentException):
+            SingleInterval(0, 1, Strand.PLUS, parent="seq1").distance_to(
+                SingleInterval(0, 1, Strand.PLUS, parent="seq2"))
 
     @pytest.mark.parametrize(
         "interval,sequence_type,expected",
@@ -2795,6 +2797,14 @@ class TestSingleInterval:
                 == expected
             )
 
+    def test_intersection_error(self):
+        # Interval grandparents have different IDs
+        seq1 = Sequence('A', Alphabet.NT_STRICT, parent=Sequence('A', Alphabet.NT_STRICT, id='ps1'))
+        seq2 = Sequence('A', Alphabet.NT_STRICT, parent=Sequence('A', Alphabet.NT_STRICT, id='ps2'))
+        with pytest.raises(MismatchedParentException):
+            SingleInterval(0, 1, Strand.PLUS, parent=seq1).intersection(
+                SingleInterval(0, 1, Strand.PLUS, parent=seq2), strict_parent_compare=True)
+
     @pytest.mark.parametrize(
         "compound_interval,single_interval,match_strand,expected",
         [
@@ -3071,6 +3081,11 @@ class TestSingleInterval:
     )
     def test_minus_compound_interval_with_overlap(self, location1, location2, match_strand, expected):
         assert location1.minus(location2, match_strand) == expected
+
+    def test_minus_error(self):
+        with pytest.raises(MismatchedParentException):
+            SingleInterval(0, 1, Strand.PLUS, parent="seq1").minus(
+                SingleInterval(0, 1, Strand.PLUS, parent="seq2"), strict_parent_compare=True)
 
     @pytest.mark.parametrize(
         "location,extend_left,extend_right,expected",
@@ -3387,6 +3402,11 @@ class TestSingleInterval:
     )
     def test_contains_compound_interval_full_span(self, interval, other, match_strand, expected):
         assert interval.contains(other, match_strand, full_span=True) is expected
+
+    def test_contains_error(self):
+        with pytest.raises(MismatchedParentException):
+            SingleInterval(0, 1, Strand.PLUS, parent="seq1").contains(
+                SingleInterval(0, 1, Strand.PLUS, parent="seq2"), strict_parent_compare=True)
 
     @pytest.mark.parametrize(
         "location,expected_output",

@@ -1,6 +1,6 @@
 import pytest
 
-from inscripta.biocantor.exc import EmptyLocationException
+from inscripta.biocantor.exc import EmptyLocationException, MismatchedParentException
 from inscripta.biocantor.location.location_impl import (
     EmptyLocation,
     SingleInterval,
@@ -83,6 +83,10 @@ class TestEmptyLocation:
     def test_intersection(self, other):
         assert EmptyLocation().intersection(other) == EmptyLocation()
 
+    def test_intersection_error(self):
+        with pytest.raises(MismatchedParentException):
+            EmptyLocation().intersection(SingleInterval(0, 1, Strand.PLUS, parent="seq"), strict_parent_compare=True)
+
     @pytest.mark.parametrize(
         "other",
         [
@@ -93,6 +97,10 @@ class TestEmptyLocation:
     )
     def test_minus(self, other):
         assert EmptyLocation().minus(other) == EmptyLocation()
+
+    def test_minus_error(self):
+        with pytest.raises(MismatchedParentException):
+            EmptyLocation().minus(SingleInterval(0, 1, Strand.PLUS, parent="seq"), strict_parent_compare=True)
 
     @pytest.mark.parametrize(
         "other",
@@ -111,6 +119,18 @@ class TestEmptyLocation:
 
     def test_has_overlap(self):
         assert EmptyLocation().has_overlap(EmptyLocation()) is False
+
+    def test_has_overlap_error(self):
+        with pytest.raises(MismatchedParentException):
+            EmptyLocation().has_overlap(SingleInterval(0, 1, Strand.PLUS, parent="seq"), strict_parent_compare=True)
+
+    def test_contains(self):
+        assert not EmptyLocation().contains(EmptyLocation())
+        assert not EmptyLocation().contains(SingleInterval(0, 1, Strand.PLUS))
+
+    def test_contains_error(self):
+        with pytest.raises(MismatchedParentException):
+            EmptyLocation().contains(SingleInterval(0, 1, Strand.PLUS, parent="seq"), strict_parent_compare=True)
 
     def test_reverse(self):
         assert EmptyLocation().reverse() == EmptyLocation()

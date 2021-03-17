@@ -207,7 +207,8 @@ class Location(ABC):
             yield self.relative_interval_to_parent_location(curr_start, curr_start + window_size, Strand.PLUS)
 
     @abstractmethod
-    def has_overlap(self, other: "Location", match_strand: bool = False, full_span: bool = False) -> bool:
+    def has_overlap(self, other: "Location", match_strand: bool = False, full_span: bool = False,
+                    strict_parent_compare: bool = False) -> bool:
         """Returns True iff this Location shares at least one position with the given Location.
         For subclasses representing discontiguous locations, regions between blocks are not considered.
 
@@ -219,6 +220,8 @@ class Location(ABC):
             If set to True, automatically return False if given interval Strand does not match this Location's Strand
         full_span
             If set to True, compare the full span of this Location to the full span of the other Location.
+        strict_parent_compare
+            Raise MismatchedParentException if parents do not match
 
         Returns
         -------
@@ -320,7 +323,8 @@ class Location(ABC):
         return lifted_to_grandparent.lift_over_to_sequence(sequence)
 
     @abstractmethod
-    def intersection(self, other: "Location", match_strand: bool = True, full_span: bool = False) -> "Location":
+    def intersection(self, other: "Location", match_strand: bool = True, full_span: bool = False,
+                     strict_parent_compare: bool = False) -> "Location":
         """Returns a new Location representing the intersection of this Location with the other Location.
         Returned Location, if nonempty, has the same Strand as this Location. This operation is commutative
         if match_strand is True.
@@ -334,6 +338,8 @@ class Location(ABC):
             this Location
         full_span
             If set to True, compare the full span of this Location to the full span of the other Location.
+        strict_parent_compare
+            Raise MismatchedParentException if parents do not match
 
         """
 
@@ -349,7 +355,7 @@ class Location(ABC):
         be combined."""
 
     @abstractmethod
-    def minus(self, other: "Location", match_strand: bool = True) -> "Location":
+    def minus(self, other: "Location", match_strand: bool = True, strict_parent_compare: bool = False) -> "Location":
         """Returns a new Location representing this Location minus its intersection with the other Location.
         Returned Location has the same Strand as this Location. If there is no intersection, returns this Location.
         This operation is not commutative.
@@ -361,6 +367,9 @@ class Location(ABC):
         match_strand
             If set to True, automatically return this Location if other Location has a different Strand than this
             Location
+        strict_parent_compare
+            Raise MismatchedParentException if parents do not match
+
         """
 
     @abstractmethod
@@ -388,9 +397,26 @@ class Location(ABC):
             Non-negative integer: amount to extend downstream relative to Strand
         """
 
-    def contains(self, other: "Location", match_strand: bool = False, full_span: bool = False):
+    def contains(self, other: "Location", match_strand: bool = False, full_span: bool = False,
+                 strict_parent_compare: bool = False) -> bool:
         """Returns True iff this location contains the other. If ``full_span`` is ``True``, the full span of
-        both locations are compared."""
+        both locations are compared.
+
+        Parameters
+        ----------
+        other
+            Other location
+        match_strand
+            If set to True, automatically return EmptyLocation() if other Location has a different Strand than
+            this Location
+        full_span
+            If set to True, compare the full span of this Location to the full span of the other Location.
+        strict_parent_compare
+            Raise MismatchedParentException if parents do not match
+
+        """
+        if strict_parent_compare:
+            ObjectValidation.require_parents_equal_except_location(self.parent, other.parent)
         if not self.has_overlap(other, match_strand, full_span):
             return False
         other_to_compare = other.reset_parent(None)
