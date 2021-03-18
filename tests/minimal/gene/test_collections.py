@@ -1276,3 +1276,12 @@ class TestNegative:
         assert str(a.genes[0].get_primary_transcript().get_spliced_sequence()) == str(
             a_neg.genes[0].get_primary_transcript().get_spliced_sequence()
         )
+
+    def test_subquery_neg_chunk(self):
+        """Querying by interval still produces valid transcripts"""
+        a_neg = self.annot_minus.to_annotation_collection(parent_genome_rev_5_44)
+        a_neg_subquery = a_neg.query_by_position(12, 28)
+        assert str(a_neg_subquery.genes[0].get_reference_sequence()) == str(a_neg.genes[0].get_reference_sequence())
+        assert str(a_neg.genes[0].get_primary_transcript().get_spliced_sequence()) == str(
+            a_neg_subquery.genes[0].get_primary_transcript().get_spliced_sequence()
+        )
