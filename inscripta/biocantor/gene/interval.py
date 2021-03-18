@@ -161,6 +161,11 @@ class AbstractInterval(ABC):
     @property
     def strand(self) -> Strand:
         """Returns strand of location."""
+        return self.chromosome_location.strand
+
+    @property
+    def chunk_relative_strand(self) -> Strand:
+        """Returns strand of location."""
         return self.chunk_relative_location.strand
 
     @property

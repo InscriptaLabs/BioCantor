@@ -897,7 +897,7 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
                     location=SingleInterval(
                         start,
                         end,
-                        Strand.PLUS,
+                        self.chunk_relative_location.strand,
                         parent=Parent(id=parent_id, sequence_type=SequenceType.CHROMOSOME),
                     )
                 ),

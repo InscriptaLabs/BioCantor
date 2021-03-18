@@ -22,6 +22,8 @@ from inscripta.biocantor.location.strand import Strand
 from inscripta.biocantor.parent.parent import Parent, SequenceType
 from inscripta.biocantor.sequence.alphabet import Alphabet
 from inscripta.biocantor.sequence.sequence import Sequence
+from inscripta.biocantor.io.parser import seq_chunk_to_parent
+
 
 genome = "TTTTTTTTTTAAGTATTCTTGGACCTAATTAAAAAAAAAAAAAAAAAAACCCCC"
 parent_genome = Parent(
@@ -882,3 +884,111 @@ class TestAnnotationCollection:
             orig_tx_or_feat = next(orig_gene.iter_children())
             tx_or_feat = next(gene.iter_children())
             assert str(orig_tx_or_feat.get_spliced_sequence()) == str(tx_or_feat.get_spliced_sequence())
+
+    def test_query_by_identifiers_subset(self):
+        model = {
+            "feature_collections": [],
+            "genes": [
+                {
+                    "transcripts": [
+                        {
+                            "exon_starts": [2972668],
+                            "exon_ends": [2973862],
+                            "strand": "MINUS",
+                            "cds_starts": [2972668],
+                            "cds_ends": [2973862],
+                            "cds_frames": ["ZERO"],
+                            "qualifiers": {
+                                "gene": ["lplT"],
+                                "locus_tag": ["b2835"],
+                                "gene_synonym": ["ECK2831; JW2803; ygeD"],
+                                "function": ["orf; Drug/analog sensitivity"],
+                                "GO_process": ["GO:0042493 - response to drug"],
+                                "note": ["putative resistance proteins"],
+                                "codon_start": ["1"],
+                                "transl_table": ["11"],
+                                "product": ["lysophospholipid transporter"],
+                                "protein_id": ["NP_417312.1"],
+                                "db_xref": [
+                                    "ASAP:ABE-0009300",
+                                    "EcoGene:EG12455",
+                                    "GeneID:947317",
+                                    "UniProtKB/Swiss-Prot:P39196",
+                                ],
+                                "translation": [
+                                    "MSESVHTNTSLWSKGMKAVIVAQFLSAFGDNALLFATLALLKAQFYPEWSQPILQMVFVGAYILFAPFVGQVADSFAKGRV"
+                                    "MMFANGLKLLGAASICFGINPFLGYTLVGVGAAAYSPAKYGILGELTTGSKLVKANGLMEASTIAAILLGSVAGGVLADWH"
+                                    "VLVALAACALAYGGAVVANIYIPKLAAARPGQSWNLINMTRSFLNACTSLWRNGETRFSLVGTSLFWGAGVTLRFLLVLWV"
+                                    "PVALGITDNATPTYLNAMVAIGIVVGAGAAAKLVTLETVSRCMPAGILIGVVVLIFSLQHELLPAYALLMLIGVMGGFFVV"
+                                    "PLNALLQERGKKSVGAGNAIAVQNLGENSAMLLMLGIYSLAVMIGIPVVPIGIGFGALFALAITALWIWQRRH"
+                                ],
+                            },
+                            "is_primary_tx": False,
+                            "transcript_id": None,
+                            "protein_id": "NP_417312.1",
+                            "product": "lysophospholipid transporter",
+                            "transcript_symbol": "lplT",
+                            "transcript_type": "protein_coding",
+                            "sequence_name": "NC_000913.3",
+                            "sequence_guid": None,
+                            "transcript_interval_guid": "91e4286f-9757-2bb9-1b50-2a42a9c668f0",
+                            "transcript_guid": None,
+                        }
+                    ],
+                    "gene_id": None,
+                    "gene_symbol": "lplT",
+                    "gene_type": "protein_coding",
+                    "locus_tag": "b2835",
+                    "qualifiers": {
+                        "gene": ["lplT"],
+                        "locus_tag": ["b2835"],
+                        "gene_synonym": ["ECK2831; JW2803; ygeD"],
+                        "db_xref": ["EcoGene:EG12455", "GeneID:947317"],
+                    },
+                    "sequence_name": "NC_000913.3",
+                    "sequence_guid": None,
+                    "gene_guid": "52745f9e-9ee8-7a2b-78cf-aa60aec4312b",
+                },
+            ],
+            "name": "NC_000913.3",
+            "id": None,
+            "sequence_name": "NC_000913.3",
+            "sequence_guid": None,
+            "sequence_path": None,
+            "qualifiers": {
+                "organism": ["Escherichia coli str. K-12 substr. MG1655"],
+                "mol_type": ["genomic DNA"],
+                "strain": ["K-12"],
+                "sub_strain": ["MG1655"],
+                "db_xref": ["taxon:511145"],
+            },
+            "start": 2972468,
+            "end": 2974062,
+            "completely_within": False,
+        }
+        chunk = seq_chunk_to_parent(
+            "CAAAGGCGAGGCACTGGTGCTTTTCACCACAGATAACGAACTGACGCGCGATAAGTTGCAACAGTATGCCCGCGAGCACGGCGTGCCGGAGCTTGCTGTACC"
+            "GCGCGATATTCGCTATCTGAAACAGATGCCATTACTTGGCAGCGGCAAACCTGACTTTGTCACGTTGAAAAGCTGGGTAGACGAAGCGGAACAACACGATGA"
+            "GTGAGTCAGTGCACACTAACACTTCGTTGTGGTCGAAGGGGATGAAAGCGGTTATCGTGGCGCAGTTTCTCTCTGCGTTTGGCGATAATGCCCTACTGTTTG"
+            "CCACTCTGGCGTTACTGAAAGCGCAGTTCTATCCGGAGTGGAGCCAGCCCATCCTGCAAATGGTGTTTGTAGGTGCTTACATTCTTTTTGCGCCGTTTGTCG"
+            "GGCAGGTGGCGGATAGCTTCGCCAAAGGCCGGGTGATGATGTTTGCCAACGGCCTGAAGCTGCTGGGCGCAGCCAGTATCTGCTTTGGTATCAATCCGTTTC"
+            "TCGGCTATACGCTGGTGGGTGTTGGTGCTGCAGCCTATTCACCGGCGAAATACGGTATTCTCGGCGAATTAACCACGGGTAGTAAGTTAGTGAAAGCTAACG"
+            "GTTTAATGGAAGCTTCTACCATAGCGGCGATTTTGCTCGGTTCCGTAGCCGGTGGTGTGCTGGCTGACTGGCATGTCCTCGTCGCCCTGGCCGCATGCGCAC"
+            "TGGCCTACGGTGGTGCGGTCGTTGCCAATATCTACATTCCCAAACTGGCGGCGGCGCGTCCGGGGCAGTCCTGGAATCTCATCAACATGACCCGCAGTTTCC"
+            "TGAATGCCTGCACCTCGCTATGGCGCAATGGTGAAACGCGTTTTTCGCTGGTGGGCACCAGTTTATTCTGGGGAGCGGGTGTCACGCTGCGTTTCCTGTTGG"
+            "TGCTGTGGGTACCGGTGGCGCTGGGCATTACCGATAACGCTACGCCCACCTATCTCAACGCGATGGTAGCGATTGGTATCGTGGTTGGCGCAGGTGCGGCAG"
+            "CGAAGTTAGTTACGCTGGAAACCGTGTCACGCTGTATGCCAGCCGGGATTTTGATTGGCGTGGTGGTACTGATTTTTTCCCTGCAACACGAGCTGCTGCCAG"
+            "CCTATGCCTTGTTGATGCTGATTGGCGTGATGGGGGGCTTTTTTGTCGTTCCGCTCAATGCGTTGCTACAGGAGCGGGGTAAAAAAAGCGTCGGGGCGGGGA"
+            "ATGCGATTGCAGTACAAAACCTTGGCGAAAACAGCGCCATGTTGTTGATGCTGGGCATTTACTCGCTGGCGGTAATGATAGGCATCCCGGTCGTGCCCATTG"
+            "GCATTGGCTTCGGTGCGCTGTTTGCGCTGGCAATAACGGCGCTGTGGATCTGGCAGCGCCGTCATTAATATTTAACGCCGGTTTTAACCGGCGTTAATCTTA"
+            "TGGTGCCGGATAAGTATAAACCTGATGCACCGCTTCAATTTCAGCTAATACGTCTTCGCTTAACTCCAGATGCAAACTTTCGATGTTAGTTTTCAGCTGATC"
+            "CATCGTGGTTGCGCCCAGCAGAGTGCTGGCAACAAACGGTTGACGGCGTACAAACGCGAGCGCC",
+            strand=Strand.MINUS,
+            sequence_name="'NC_000913.3'",
+            start=2972468,
+            end=2974062,
+            alphabet=Alphabet.NT_EXTENDED,
+        )
+        a = AnnotationCollectionModel.Schema().load(model)
+        aa = a.to_annotation_collection(chunk)
+        assert not aa.query_by_feature_identifiers("lplT").genes[0].transcripts[0].has_in_frame_stop
