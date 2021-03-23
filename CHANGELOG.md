@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [0.4.4]
+### Fixed
+- `AnnotationCollection._subset_parent()` now uses `seq_chunk_to_parent` and pulls out the chromosome ID from the chromosome record.
+- `CDSInterval.from_dict()` now passes along the parent provided.
+
+
 ## [0.4.3]
 ### Added
 - `strict_parent_compare` parameter for binary set theory operations.
