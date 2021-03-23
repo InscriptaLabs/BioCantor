@@ -887,22 +887,9 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
         seq_subset = self.chunk_relative_location.extract_sequence()[chunk_relative_start:chunk_relative_end]
 
         parent_id = self.chunk_relative_location.parent.id
-        return Parent(
-            id=f"{parent_id}:{start}-{end}",
-            sequence=Sequence(
-                str(seq_subset),
-                self.chunk_relative_location.parent.sequence.alphabet,
-                type=SequenceType.SEQUENCE_CHUNK,
-                parent=Parent(
-                    location=SingleInterval(
-                        start,
-                        end,
-                        Strand.PLUS,
-                        parent=Parent(id=parent_id, sequence_type=SequenceType.CHROMOSOME),
-                    )
-                ),
-            ),
-        )
+        from inscripta.biocantor.io.parser import seq_chunk_to_parent
+        return seq_chunk_to_parent(str(seq_subset), parent_id, start, end, self.chromosome_location.strand,
+                                   self.chunk_relative_location.parent.sequence.alphabet)
 
     def query_by_position(
         self,

@@ -155,6 +155,7 @@ class CDSInterval(AbstractFeatureInterval):
             sequence_guid=vals["sequence_guid"],
             protein_id=vals["protein_id"],
             product=vals["product"],
+            parent_or_seq_chunk_parent=parent_or_seq_chunk_parent,
         )
 
     @staticmethod
