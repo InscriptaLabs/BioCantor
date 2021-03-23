@@ -870,7 +870,9 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
         if start == self.start and end == self.end:
             return self.chunk_relative_location.parent
 
-        chunk_relative_start = self.lift_over_to_first_ancestor_of_type(SequenceType.CHROMOSOME).parent_to_relative_pos(
+        chrom_ancestor = self.lift_over_to_first_ancestor_of_type(SequenceType.CHROMOSOME)
+
+        chunk_relative_start = chrom_ancestor.parent_to_relative_pos(
             start
         )
 
@@ -886,7 +888,7 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
 
         seq_subset = self.chunk_relative_location.extract_sequence()[chunk_relative_start:chunk_relative_end]
 
-        parent_id = self.chunk_relative_location.parent.id
+        parent_id = chrom_ancestor.parent.id
         # TODO: FIXME: handle circular imports by doing this import within the function
         from inscripta.biocantor.io.parser import seq_chunk_to_parent
 
