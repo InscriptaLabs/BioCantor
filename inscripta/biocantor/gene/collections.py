@@ -872,9 +872,7 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
 
         chrom_ancestor = self.lift_over_to_first_ancestor_of_type(SequenceType.CHROMOSOME)
 
-        chunk_relative_start = chrom_ancestor.parent_to_relative_pos(
-            start
-        )
+        chunk_relative_start = chrom_ancestor.parent_to_relative_pos(start)
 
         # handle the edge case where the end is the end of the current chunk
         if end == self.end:
