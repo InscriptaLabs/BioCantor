@@ -887,9 +887,17 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
         seq_subset = self.chunk_relative_location.extract_sequence()[chunk_relative_start:chunk_relative_end]
 
         parent_id = self.chunk_relative_location.parent.id
+        # TODO: FIXME: handle circular imports by doing this import within the function
         from inscripta.biocantor.io.parser import seq_chunk_to_parent
-        return seq_chunk_to_parent(str(seq_subset), parent_id, start, end, self.chromosome_location.strand,
-                                   self.chunk_relative_location.parent.sequence.alphabet)
+
+        return seq_chunk_to_parent(
+            str(seq_subset),
+            parent_id,
+            start,
+            end,
+            self.chromosome_location.strand,
+            self.chunk_relative_location.parent.sequence.alphabet,
+        )
 
     def query_by_position(
         self,
