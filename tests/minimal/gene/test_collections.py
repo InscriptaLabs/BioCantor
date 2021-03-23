@@ -24,7 +24,6 @@ from inscripta.biocantor.sequence.alphabet import Alphabet
 from inscripta.biocantor.sequence.sequence import Sequence
 from inscripta.biocantor.io.parser import seq_chunk_to_parent
 
-
 genome = "TTTTTTTTTTAAGTATTCTTGGACCTAATTAAAAAAAAAAAAAAAAAAACCCCC"
 parent_genome = Parent(
     id="genome", sequence=Sequence(genome, Alphabet.NT_STRICT), sequence_type=SequenceType.CHROMOSOME
@@ -995,7 +994,8 @@ class TestAnnotationCollection:
                                     "UniProtKB/Swiss-Prot:P0A9T4",
                                 ],
                                 "translation": [
-                                    "MQYHRIPHSSLEVSTLGLGTMTFGEQNSEADAHAQLDYAVAQGINLIDVAEMYPVPPRPETQGLTETYVGNWLAKHGSREKLIIASKVSGPSRNNDKGIRPDQALDRKNIREALHDSLKRLQTDYLDLYQVHWPQRPTNCFGKLGYSWTDSAPAVSLLDTLDALAEYQRAGKIRYIGVSNETAFGVMRYLHLADKHDLPRIVTIQNPYSLLNRSFEVGLAEVSQYEGVELLAYSCLGFGTLTGKYLNGAKPAGARNTLFSRFTRYSGEQTQKAVAAYVDIARRHGLDPAQMALAFVRRQPFVASTLLGATTMDQLKTNIESLHLELSEDVLAEIEAVHQVYTYPAP"  # noqa: E501
+                                    "MQYHRIPHSSLEVSTLGLGTMTFGEQNSEADAHAQLDYAVAQGINLIDVAEMYPVPPRPETQGLTETYVGNWLAKHGSREKLIIASKVSGPSRNNDKGIRPDQALDRKNIREALHDSLKRLQTDYLDLYQVHWPQRPTNCFGKLGYSWTDSAPAVSLLDTLDALAEYQRAGKIRYIGVSNETAFGVMRYLHLADKHDLPRIVTIQNPYSLLNRSFEVGLAEVSQYEGVELLAYSCLGFGTLTGKYLNGAKPAGARNTLFSRFTRYSGEQTQKAVAAYVDIARRHGLDPAQMALAFVRRQPFVASTLLGATTMDQLKTNIESLHLELSEDVLAEIEAVHQVYTYPAP"
+                                    # noqa: E501
                                 ],
                             },
                             "is_primary_tx": False,
@@ -1051,7 +1051,8 @@ class TestAnnotationCollection:
                                     "UniProtKB/Swiss-Prot:P39196",
                                 ],
                                 "translation": [
-                                    "MSESVHTNTSLWSKGMKAVIVAQFLSAFGDNALLFATLALLKAQFYPEWSQPILQMVFVGAYILFAPFVGQVADSFAKGRVMMFANGLKLLGAASICFGINPFLGYTLVGVGAAAYSPAKYGILGELTTGSKLVKANGLMEASTIAAILLGSVAGGVLADWHVLVALAACALAYGGAVVANIYIPKLAAARPGQSWNLINMTRSFLNACTSLWRNGETRFSLVGTSLFWGAGVTLRFLLVLWVPVALGITDNATPTYLNAMVAIGIVVGAGAAAKLVTLETVSRCMPAGILIGVVVLIFSLQHELLPAYALLMLIGVMGGFFVVPLNALLQERGKKSVGAGNAIAVQNLGENSAMLLMLGIYSLAVMIGIPVVPIGIGFGALFALAITALWIWQRRH"  # noqa: E501
+                                    "MSESVHTNTSLWSKGMKAVIVAQFLSAFGDNALLFATLALLKAQFYPEWSQPILQMVFVGAYILFAPFVGQVADSFAKGRVMMFANGLKLLGAASICFGINPFLGYTLVGVGAAAYSPAKYGILGELTTGSKLVKANGLMEASTIAAILLGSVAGGVLADWHVLVALAACALAYGGAVVANIYIPKLAAARPGQSWNLINMTRSFLNACTSLWRNGETRFSLVGTSLFWGAGVTLRFLLVLWVPVALGITDNATPTYLNAMVAIGIVVGAGAAAKLVTLETVSRCMPAGILIGVVVLIFSLQHELLPAYALLMLIGVMGGFFVVPLNALLQERGKKSVGAGNAIAVQNLGENSAMLLMLGIYSLAVMIGIPVVPIGIGFGALFALAITALWIWQRRH"
+                                    # noqa: E501
                                 ],
                             },
                             "is_primary_tx": False,
@@ -1118,7 +1119,8 @@ class TestAnnotationCollection:
                                     "UniProtKB/Swiss-Prot:P31119",
                                 ],
                                 "translation": [
-                                    "MLFSFFRNLCRVLYRVRVTGDTQALKGERVLITPNHVSFIDGILLGLFLPVRPVFAVYTSISQQWYMRWLKSFIDFVPLDPTQPMAIKHLVRLVEQGRPVVIFPEGRITTTGSLMKIYDGAGFVAAKSGATVIPVRIEGAELTHFSRLKGLVKRRLFPQITLHILPPTQVAMPDAPRARDRRKIAGEMLHQIMMEARMAVRPRETLYESLLSAMYRFGAGKKCVEDVNFTPDSYRKLLTKTLFVGRILEKYSVEGERIGLMLPNAGISAAVIFGAIARRRMPAMMNYTAGVKGLTSAITAAEIKTIFTSRQFLDKGKLWHLPEQLTQVRWVYLEDLKADVTTADKVWIFAHLLMPRLAQVKQQPEEEALILFTSGSEGHPKGVVHSHKSILANVEQIKTIADFTTNDRFMSALPLFHSFGLTVGLFTPLLTGAEVFLYPSPLHYRIVPELVYDRSCTVLFGTSTFLGHYARFANPYDFYRLRYVVAGAEKLQESTKQLWQDKFGLRILEGYGVTECAPVVSINVPMAAKPGTVGRILPGMDARLLSVPGIEEGGRLQLKGPNIMNGYLRVEKPGVLEVPTAENVRGEMERGWYDTGDIVRFDEQGFVQIQGRAKRFAKIAGEMVSLEMVEQLALGVSPDKVHATAIKSDASKGEALVLFTTDNELTRDKLQQYAREHGVPELAVPRDIRYLKQMPLLGSGKPDFVTLKSWVDEAEQHDE"  # noqa: E501
+                                    "MLFSFFRNLCRVLYRVRVTGDTQALKGERVLITPNHVSFIDGILLGLFLPVRPVFAVYTSISQQWYMRWLKSFIDFVPLDPTQPMAIKHLVRLVEQGRPVVIFPEGRITTTGSLMKIYDGAGFVAAKSGATVIPVRIEGAELTHFSRLKGLVKRRLFPQITLHILPPTQVAMPDAPRARDRRKIAGEMLHQIMMEARMAVRPRETLYESLLSAMYRFGAGKKCVEDVNFTPDSYRKLLTKTLFVGRILEKYSVEGERIGLMLPNAGISAAVIFGAIARRRMPAMMNYTAGVKGLTSAITAAEIKTIFTSRQFLDKGKLWHLPEQLTQVRWVYLEDLKADVTTADKVWIFAHLLMPRLAQVKQQPEEEALILFTSGSEGHPKGVVHSHKSILANVEQIKTIADFTTNDRFMSALPLFHSFGLTVGLFTPLLTGAEVFLYPSPLHYRIVPELVYDRSCTVLFGTSTFLGHYARFANPYDFYRLRYVVAGAEKLQESTKQLWQDKFGLRILEGYGVTECAPVVSINVPMAAKPGTVGRILPGMDARLLSVPGIEEGGRLQLKGPNIMNGYLRVEKPGVLEVPTAENVRGEMERGWYDTGDIVRFDEQGFVQIQGRAKRFAKIAGEMVSLEMVEQLALGVSPDKVHATAIKSDASKGEALVLFTTDNELTRDKLQQYAREHGVPELAVPRDIRYLKQMPLLGSGKPDFVTLKSWVDEAEQHDE"
+                                    # noqa: E501
                                 ],
                             },
                             "is_primary_tx": False,
@@ -1194,7 +1196,6 @@ class TestAnnotationCollection:
 
 
 class TestNegative:
-
     tx1 = dict(
         exon_starts=[12],
         exon_ends=[28],
@@ -1285,3 +1286,55 @@ class TestNegative:
         assert str(a_neg.genes[0].get_primary_transcript().get_spliced_sequence()) == str(
             a_neg_subquery.genes[0].get_primary_transcript().get_spliced_sequence()
         )
+
+    def test_nested_parents(self):
+        """Querying by interval should be robust to arbitrarily nested parents."""
+        nested_parent = Parent(
+            id="testseq:10-49",
+            sequence_type=SequenceType.SEQUENCE_CHUNK,
+            strand=Strand.PLUS,
+            location=SingleInterval(10, 49, Strand.PLUS),
+            sequence=Sequence(
+                genome,
+                type=SequenceType.SEQUENCE_CHUNK,
+                id="testseq:10-49",
+                alphabet=Alphabet.NT_EXTENDED,
+                parent=Parent(
+                    id="testseq",
+                    sequence_type=SequenceType.CHROMOSOME,
+                    location=SingleInterval(
+                        0,
+                        54,
+                        Strand.PLUS,
+                        parent=Parent(
+                            id="testseq",
+                            sequence_type=SequenceType.CHROMOSOME,
+                            location=SingleInterval(
+                                0,
+                                54,
+                                Strand.PLUS,
+                                parent=Parent(
+                                    id="testseq",
+                                    sequence_type=SequenceType.CHROMOSOME,
+                                    location=SingleInterval(0, 54, Strand.PLUS),
+                                ),
+                            ),
+                        ),
+                    ),
+                ),
+            ),
+        )
+
+        obj = self.annot.to_annotation_collection(nested_parent)
+        assert obj.chromosome_location.parent.id == "testseq"
+
+        ref_obj = self.annot.to_annotation_collection(parent_genome)
+        assert str(obj.genes[0].get_reference_sequence()) == str(ref_obj.genes[0].get_reference_sequence())
+        assert str(obj.genes[0].get_primary_transcript().get_spliced_sequence()) == str(
+            ref_obj.genes[0].get_primary_transcript().get_spliced_sequence()
+        )
+
+        # the below test used to fail before `AnnotationCollection._subset_parent()` understood to look
+        # for the sequence ID on the first chromosome ancestor type.
+        subquery = obj.query_by_position(10, 28, completely_within=False)
+        assert subquery.chromosome_location.parent.id == "testseq"
