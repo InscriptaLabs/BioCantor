@@ -141,7 +141,14 @@ class Location(ABC):
 
     def location_relative_to(self, other: "Location", optimize_blocks: bool = True) -> "Location":
         """Converts this Location to a Location relative to another Location. The Locations must overlap.
-        The returned value represents the relative location of the overlap within the other Location."""
+        The returned value represents the relative location of the overlap within the other Location.
+
+        If ``optimize_blocks`` is ``True``, the resulting Location will not have any adjacent or overlapping
+        intervals. This is often desirable, because the output of this function can have weird coordinates
+        when the locations are overlapping or adjacent. However, there are some cases where it is desirable
+        to retain the original block structure. One such example are CDS where adjacent blocks or overlapping
+        blocks are used to model frameshifts or indels.
+        """
         if other.is_empty:
             return other
         if self.parent or other.parent:

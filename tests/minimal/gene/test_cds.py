@@ -1,6 +1,6 @@
 import pytest
 
-from inscripta.biocantor.exc import InvalidCDSIntervalError, NoSuchAncestorException
+from inscripta.biocantor.exc import InvalidCDSIntervalError, NoSuchAncestorException, MismatchedFrameException
 from inscripta.biocantor.gene.cds import CDSInterval, TranslationTable
 from inscripta.biocantor.gene.cds_frame import CDSPhase, CDSFrame
 from inscripta.biocantor.gene.codon import Codon
@@ -1087,7 +1087,7 @@ class TestCDSInterval:
         assert list(cds.optimize_and_combine_blocks().scan_codons()) == expected
 
     def test_frame_exception(self):
-        with pytest.raises(InvalidCDSIntervalError):
+        with pytest.raises(MismatchedFrameException):
             _ = CDSInterval.from_location(
                 CompoundInterval(
                     [2, 8, 12],
@@ -1111,7 +1111,7 @@ class TestCDSInterval:
         assert list(cds.scan_codons()) == [Codon.TCC, Codon.CTG, Codon.AAA]
 
     def test_frame_to_phase_mixed_exception(self):
-        with pytest.raises(InvalidCDSIntervalError):
+        with pytest.raises(MismatchedFrameException):
             _ = CDSInterval.from_location(
                 CompoundInterval(
                     [2, 8, 12],

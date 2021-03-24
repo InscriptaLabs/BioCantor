@@ -387,6 +387,8 @@ class SingleInterval(Location):
     def _location_relative_to(
         self, other: Location, strict_parent_compare: bool = False, optimize_blocks: bool = True
     ) -> Location:
+        """``optimize_blocks`` is not used here, but is still a keyword argument to ensure a unified
+        API between SingleInterval and CompoundInterval."""
         intersection = other.intersection(self, match_strand=False, strict_parent_compare=strict_parent_compare)
         rel_pos_1 = other.parent_to_relative_pos(intersection.start)
         rel_pos_2 = other.parent_to_relative_pos(intersection.end - 1)

@@ -61,7 +61,7 @@ class CDSInterval(AbstractFeatureInterval):
         self._import_qualifiers_from_list(qualifiers)
 
         if len(frames_or_phases) != len(self._genomic_starts):
-            raise InvalidCDSIntervalError("Number of frame or phase entries must match number of exons")
+            raise MismatchedFrameException("Number of frame or phase entries must match number of exons")
 
         if len(self._location) == 0:
             raise InvalidCDSIntervalError("Cannot have an empty CDS interval")
@@ -70,9 +70,9 @@ class CDSInterval(AbstractFeatureInterval):
         is_frame = isinstance(frames_or_phases[0], CDSFrame)
         for frame_or_phase in frames_or_phases[1:]:
             if is_frame and isinstance(frame_or_phase, CDSPhase):
-                raise InvalidCDSIntervalError("Cannot mix frame and phase")
+                raise MismatchedFrameException("Cannot mix frame and phase")
             elif not is_frame and isinstance(frame_or_phase, CDSFrame):
-                raise InvalidCDSIntervalError("Cannot mix frame and phase")
+                raise MismatchedFrameException("Cannot mix frame and phase")
 
         if is_frame:
             self.frames = frames_or_phases
@@ -360,7 +360,12 @@ class CDSInterval(AbstractFeatureInterval):
         return c.is_stop_codon
 
     def frame_iter(self, chunk_relative_frames: bool = True) -> Iterator[CDSFrame]:
-        """Iterate over frames taking strand into account"""
+        """Iterate over frames taking strand into account.
+
+        If ``chunk_relative_frames`` is ``True``, then this iterator will only iterate over frames that
+        overlap the relative chunk. These frames will potentially be reduced in quantity, and also shifted to handle
+        exons that are now partial exons.
+        """
         frames = self.frames if chunk_relative_frames is False else self.chunk_relative_frames
         if (
             self.chunk_relative_location.strand == Strand.PLUS
