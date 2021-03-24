@@ -1,6 +1,6 @@
 import pytest
 
-from inscripta.biocantor.exc import InvalidCDSIntervalError, NoSuchAncestorException, MismatchedFrameException
+from inscripta.biocantor.exc import NoSuchAncestorException, MismatchedFrameException
 from inscripta.biocantor.gene.cds import CDSInterval, TranslationTable
 from inscripta.biocantor.gene.cds_frame import CDSPhase, CDSFrame
 from inscripta.biocantor.gene.codon import Codon
