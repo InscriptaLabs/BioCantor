@@ -459,6 +459,31 @@ class TestCompoundInterval:
     @pytest.mark.parametrize(
         "location,parent_location,expected",
         [
+            # overlapping
+            (
+                CompoundInterval([0, 5], [3, 10], Strand.PLUS, parent="parent"),
+                SingleInterval(5, 7, Strand.MINUS, parent="parent"),
+                SingleInterval(3, 5, Strand.MINUS),
+            ),
+            # adjacent
+            (
+                CompoundInterval([0, 5], [5, 10], Strand.PLUS, parent="parent"),
+                SingleInterval(5, 7, Strand.MINUS, parent="parent"),
+                SingleInterval(5, 7, Strand.MINUS),
+            ),
+        ],
+    )
+    def test_parent_to_relative_location_single_interval_no_optimize(self, location, parent_location, expected):
+        """Since this is a SingleInterval, optimize_blocks does nothing here"""
+        assert (
+            location.parent_to_relative_location(parent_location, optimize_blocks=False)
+            == location.parent_to_relative_location(parent_location)
+            == expected
+        )
+
+    @pytest.mark.parametrize(
+        "location,parent_location,expected",
+        [
             # Both have parent
             (
                 CompoundInterval([0, 10], [5, 15], Strand.PLUS, parent="parent"),
@@ -493,6 +518,38 @@ class TestCompoundInterval:
     )
     def test_parent_to_relative_location_compound_interval(self, location, parent_location, expected):
         assert location.parent_to_relative_location(parent_location) == expected
+
+    @pytest.mark.parametrize(
+        "location,parent_location,expected",
+        [
+            # location overlaps
+            (
+                CompoundInterval([0, 5], [10, 20], Strand.PLUS),
+                CompoundInterval([5, 20], [12, 30], Strand.PLUS),
+                CompoundInterval([5], [17], Strand.PLUS),
+            ),
+            # parent location overlaps
+            (
+                CompoundInterval([5, 20], [12, 30], Strand.PLUS),
+                CompoundInterval([0, 5], [10, 20], Strand.PLUS),
+                CompoundInterval([0, 0], [5, 7], Strand.PLUS),
+            ),
+            # parent location has adjacent block
+            (
+                CompoundInterval([0, 10], [5, 20], Strand.PLUS),
+                CompoundInterval([0, 10], [10, 20], Strand.PLUS),
+                CompoundInterval([0, 5], [5, 15], Strand.PLUS),
+            ),
+            # location has adjacent block
+            (
+                CompoundInterval([0, 10], [10, 20], Strand.PLUS),
+                CompoundInterval([0, 10], [5, 20], Strand.PLUS),
+                CompoundInterval([0, 10], [5, 20], Strand.PLUS),
+            ),
+        ],
+    )
+    def test_parent_to_relative_location_compound_interval_no_optimize(self, location, parent_location, expected):
+        assert location.parent_to_relative_location(parent_location, optimize_blocks=False) == expected
 
     @pytest.mark.parametrize(
         "location,parent_location,expected_exception",

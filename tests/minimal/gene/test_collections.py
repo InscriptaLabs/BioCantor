@@ -751,7 +751,7 @@ class TestAnnotationCollection:
         assert r._location == expected
 
     @pytest.mark.parametrize(
-        "start,end,coding_only,completely_within,min_start,max_end",
+        "start,end,coding_only,completely_within,expanded_start,expanded_end",
         [
             (12, 13, False, False, 12, 28),
             (12, 15, False, False, 12, 28),
@@ -763,15 +763,70 @@ class TestAnnotationCollection:
         end,
         completely_within,
         coding_only,
-        min_start,
-        max_end,
+        expanded_start,
+        expanded_end,
     ):
         """The span of the AnnotationCollection object is the original query, but the full range
         of the child objects are larger"""
-        obj = self.annot_no_range.to_annotation_collection()
-        r = obj.query_by_position(start, end, coding_only, completely_within)
-        assert min(x.start for x in r) == min_start
-        assert max(x.end for x in r) == max_end
+        obj = self.annot_no_range.to_annotation_collection(parent_genome)
+        r = obj.query_by_position(start, end, coding_only, completely_within, expand_location_to_children=True)
+        assert min(x.chromosome_location.start for x in r) == expanded_start
+        assert max(x.chromosome_location.end for x in r) == expanded_end
+        # without expansion the children are all sliced
+        r2 = obj.query_by_position(start, end, coding_only, completely_within, expand_location_to_children=False)
+        assert min(x.chromosome_location.start for x in r2) == start
+        assert max(x.chromosome_location.end for x in r2) == end
+
+    @pytest.mark.parametrize(
+        "start,end,expected_translations,expected_mrna",
+        [
+            (12, 13, {"tx1": "F", "tx2": "IL"}, {"tx1": "GTATTCTTGGACCTAA", "tx2": "GTATCTTACC"}),
+            (12, 20, {"tx1": "F", "tx2": "IL"}, {"tx1": "GTATTCTTGGACCTAA", "tx2": "GTATCTTACC"}),
+            (12, 25, {"tx1": "F", "tx2": "IL"}, {"tx1": "GTATTCTTGGACCTAA", "tx2": "GTATCTTACC"}),
+        ],
+    )
+    def test_position_queries_expanded_range_translation(
+        self,
+        start,
+        end,
+        expected_translations,
+        expected_mrna,
+    ):
+        """The span of the AnnotationCollection object is the original query, but the full range
+        of the child objects are larger, and so the translation does not change even when the query is supposed to
+        slice down the gene"""
+        obj = self.annot_no_range.to_annotation_collection(parent_genome)
+        r = obj.query_by_position(
+            start, end, coding_only=True, completely_within=False, expand_location_to_children=True
+        )
+        for gene in r.genes:
+            for tx in gene.transcripts:
+                assert expected_translations[tx.transcript_symbol] == str(tx.get_protein_sequence())
+                assert expected_mrna[tx.transcript_symbol] == str(tx.get_spliced_sequence())
+
+    @pytest.mark.parametrize(
+        "start,end,expected_translations,expected_mrna",
+        [
+            (12, 20, {"tx1": "F", "tx2": "I"}, {"tx1": "GTATTCTT", "tx2": "GTATCTT"}),
+            (12, 25, {"tx1": "F", "tx2": "IL"}, {"tx1": "GTATTCTTGGACC", "tx2": "GTATCTTACC"}),
+        ],
+    )
+    def test_position_queries_sliced_range_translation(
+        self,
+        start,
+        end,
+        expected_translations,
+        expected_mrna,
+    ):
+        """The span of the AnnotationCollection object is the original query, but the full range
+        of the child objects are larger, and so the translation does not change even when the query is supposed to
+        slice down the gene"""
+        obj = self.annot_no_range.to_annotation_collection(parent_genome)
+        r = obj.query_by_position(start, end, coding_only=True, completely_within=False)
+        for gene in r.genes:
+            for tx in gene.transcripts:
+                assert expected_translations[tx.transcript_symbol] == str(tx.get_protein_sequence())
+                assert expected_mrna[tx.transcript_symbol] == str(tx.get_spliced_sequence())
 
     @pytest.mark.parametrize(
         "start,end,coding_only,completely_within,expected_identifiers",

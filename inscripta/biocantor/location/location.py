@@ -123,21 +123,23 @@ class Location(ABC):
     def relative_to_parent_pos(self, relative_pos: int) -> int:
         """Converts a position relative to this Location to a position on the parent"""
 
-    def parent_to_relative_location(self, parent_location: "Location") -> "Location":
+    def parent_to_relative_location(self, parent_location: "Location", optimize_blocks: bool = True) -> "Location":
         """Converts a Location on the parent to a Location relative to this Location.
 
         Parameters
         ----------
         parent_location
             Location with the same parent as this Location. Both parents can be None.
+        optimize_blocks
+            Run optimize_blocks on the resulting location?
 
         Returns
         -------
         New Location relative to this Location.
         """
-        return parent_location.location_relative_to(self)
+        return parent_location.location_relative_to(self, optimize_blocks=optimize_blocks)
 
-    def location_relative_to(self, other: "Location") -> "Location":
+    def location_relative_to(self, other: "Location", optimize_blocks: bool = True) -> "Location":
         """Converts this Location to a Location relative to another Location. The Locations must overlap.
         The returned value represents the relative location of the overlap within the other Location."""
         if other.is_empty:
@@ -149,10 +151,10 @@ class Location(ABC):
                 )
             ObjectValidation.require_parents_equal_except_location(self.parent, other.parent)
         ObjectValidation.require_locations_overlap(self, other)
-        return self._location_relative_to(other)
+        return self._location_relative_to(other, optimize_blocks=optimize_blocks)
 
     @abstractmethod
-    def _location_relative_to(self, other: "Location") -> "Location":
+    def _location_relative_to(self, other: "Location", optimize_blocks: bool = True) -> "Location":
         raise NotImplementedError
 
     @abstractmethod
