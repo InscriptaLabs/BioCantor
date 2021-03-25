@@ -1,6 +1,6 @@
 import pytest
 
-from inscripta.biocantor.exc import InvalidCDSIntervalError, NoSuchAncestorException
+from inscripta.biocantor.exc import NoSuchAncestorException, MismatchedFrameException
 from inscripta.biocantor.gene.cds import CDSInterval, TranslationTable
 from inscripta.biocantor.gene.cds_frame import CDSPhase, CDSFrame
 from inscripta.biocantor.gene.codon import Codon
@@ -616,7 +616,7 @@ class TestCDSInterval:
     )
     def test_scan_codon_locations(self, cds, expected):
         assert list(cds.scan_codon_locations()) == expected
-        # run again to prove caching doesn't exist
+        # run again to prove caching doesn't kill the iterator
         assert list(cds.scan_codon_locations()) == expected
 
     @pytest.mark.parametrize(
@@ -1087,7 +1087,7 @@ class TestCDSInterval:
         assert list(cds.optimize_and_combine_blocks().scan_codons()) == expected
 
     def test_frame_exception(self):
-        with pytest.raises(InvalidCDSIntervalError):
+        with pytest.raises(MismatchedFrameException):
             _ = CDSInterval.from_location(
                 CompoundInterval(
                     [2, 8, 12],
@@ -1111,7 +1111,7 @@ class TestCDSInterval:
         assert list(cds.scan_codons()) == [Codon.TCC, Codon.CTG, Codon.AAA]
 
     def test_frame_to_phase_mixed_exception(self):
-        with pytest.raises(InvalidCDSIntervalError):
+        with pytest.raises(MismatchedFrameException):
             _ = CDSInterval.from_location(
                 CompoundInterval(
                     [2, 8, 12],
@@ -1328,3 +1328,181 @@ class TestCDSInterval:
     def test_from_chunk_relative_location_exception(self, parent):
         with pytest.raises(NoSuchAncestorException):
             _ = CDSInterval.from_chunk_relative_location(SingleInterval(0, 9, Strand.PLUS, parent), [CDSFrame.ZERO])
+
+    @pytest.mark.parametrize(
+        "parent,exp_frames,exp_codons",
+        [
+            # normal flat genome
+            (
+                Sequence("AAAGGAAAGTCCCTGAAAAAA", Alphabet.NT_EXTENDED_GAPPED, type=SequenceType.CHROMOSOME),
+                [CDSFrame.ZERO, CDSFrame.TWO],
+                [Codon.AGG, Codon.AAA, Codon.GTT, Codon.CCC, Codon.TGA],
+            ),
+            # sequence subset that removes 1bp of exon
+            (
+                Parent(
+                    id="test:3-21",
+                    sequence=Sequence(
+                        "AAAGGAAAGTCCCTGAAAAAA"[3:],
+                        alphabet,
+                        id="test:3-21",
+                        type=SequenceType.SEQUENCE_CHUNK,
+                        parent=Parent(
+                            location=SingleInterval(
+                                3,
+                                21,
+                                Strand.PLUS,
+                                parent=Parent(id="test", sequence_type=SequenceType.CHROMOSOME),
+                            )
+                        ),
+                    ),
+                ),
+                [CDSFrame.TWO, CDSFrame.TWO],
+                [Codon.AAA, Codon.GTT, Codon.CCC, Codon.TGA],
+            ),
+            # sequence subset that removes 1st exon
+            (
+                Parent(
+                    id="test:10-21",
+                    sequence=Sequence(
+                        "AAAGGAAAGTCCCTGAAAAAA"[10:],
+                        alphabet,
+                        id="test:10-21",
+                        type=SequenceType.SEQUENCE_CHUNK,
+                        parent=Parent(
+                            location=SingleInterval(
+                                10,
+                                21,
+                                Strand.PLUS,
+                                parent=Parent(id="test", sequence_type=SequenceType.CHROMOSOME),
+                            )
+                        ),
+                    ),
+                ),
+                [CDSFrame.ONE],
+                # translation doesn't change because the original 1st exon is sliced off in codon iteration
+                [Codon.CCT, Codon.GAA],
+            ),
+            # sequence subset that removes last exon and 1bp of 2nd exon
+            (
+                Parent(
+                    id="test:0-9",
+                    sequence=Sequence(
+                        "AAAGGAAAGTCCCTGAAAAAA"[:9],
+                        alphabet,
+                        id="test:0-9",
+                        type=SequenceType.SEQUENCE_CHUNK,
+                        parent=Parent(
+                            location=SingleInterval(
+                                0,
+                                9,
+                                Strand.PLUS,
+                                parent=Parent(id="test", sequence_type=SequenceType.CHROMOSOME),
+                            )
+                        ),
+                    ),
+                ),
+                [CDSFrame.ZERO],
+                [Codon.AGG, Codon.AAA],
+            ),
+        ],
+    )
+    def test_cds_frame_slicing_overlapping_cds(self, parent, exp_frames, exp_codons):
+        """This CDS has a 1bp programmed frameshift, and so this must be maintained
+        when it is sliced down.
+        """
+        cds = CDSInterval(
+            [2, 9],
+            [10, 18],
+            Strand.PLUS,
+            [CDSFrame.ZERO, CDSFrame.TWO],
+            parent_or_seq_chunk_parent=parent,
+        )
+        assert cds.chunk_relative_frames == exp_frames
+        assert list(cds.scan_codons()) == exp_codons
+
+    @pytest.mark.parametrize(
+        "parent,exp_frames,exp_codons",
+        [
+            # normal flat genome
+            (
+                Sequence("AAAGGAAAGTCCCTGAAAAAA", Alphabet.NT_EXTENDED_GAPPED, type=SequenceType.CHROMOSOME),
+                [CDSFrame.ZERO, CDSFrame.TWO, CDSFrame.ZERO, CDSFrame.ZERO, CDSFrame.TWO],
+                [Codon.AGA, Codon.CCC, Codon.GAA],
+            ),
+            # sequence subset that removes 1st exon
+            (
+                Parent(
+                    id="test:5-21",
+                    sequence=Sequence(
+                        "AAAGGAAAGTCCCTGAAAAAA"[5:],
+                        alphabet,
+                        id="test:5-21",
+                        type=SequenceType.SEQUENCE_CHUNK,
+                        parent=Parent(
+                            location=SingleInterval(
+                                5,
+                                21,
+                                Strand.PLUS,
+                                parent=Parent(id="test", sequence_type=SequenceType.CHROMOSOME),
+                            )
+                        ),
+                    ),
+                ),
+                [CDSFrame.TWO, CDSFrame.ZERO, CDSFrame.ZERO, CDSFrame.TWO],
+                [Codon.CCC, Codon.GAA],
+            ),
+            # sequence subset that removes last block
+            (
+                Parent(
+                    id="test:0-13",
+                    sequence=Sequence(
+                        "AAAGGAAAGTCCCTGAAAAAA"[:13],
+                        alphabet,
+                        id="test:0-13",
+                        type=SequenceType.SEQUENCE_CHUNK,
+                        parent=Parent(
+                            location=SingleInterval(
+                                0,
+                                13,
+                                Strand.PLUS,
+                                parent=Parent(id="test", sequence_type=SequenceType.CHROMOSOME),
+                            )
+                        ),
+                    ),
+                ),
+                [CDSFrame.ZERO, CDSFrame.TWO, CDSFrame.ZERO],
+                [Codon.AGA, Codon.CCC],
+            ),
+        ],
+    )
+    def test_cds_frame_slicing_small_exons(self, parent, exp_frames, exp_codons):
+        cds = CDSInterval(
+            [2, 6, 10, 14, 16],
+            [4, 7, 13, 16, 17],
+            Strand.PLUS,
+            [CDSFrame.ZERO, CDSFrame.TWO, CDSFrame.ZERO, CDSFrame.ZERO, CDSFrame.TWO],
+            parent_or_seq_chunk_parent=parent,
+        )
+        assert cds.chunk_relative_frames == exp_frames
+        assert list(cds.scan_codons()) == exp_codons
+
+    def test_frameshift_overlapping(self):
+        """This tests an edge case of overlapping CDS intervals and their codon scanning.
+
+        This CDS should have every base of the transcript used in the translation, including the
+        12th base (a C), which should be read twice.
+        """
+        cds = CDSInterval(
+            **dict(
+                cds_starts=[2, 8, 12],
+                cds_ends=[5, 13, 18],
+                strand=Strand.PLUS,
+                frames_or_phases=[CDSFrame.ZERO, CDSFrame.ZERO, CDSFrame.TWO],
+                parent_or_seq_chunk_parent=Sequence(
+                    "AAAGGAAAGTCCCTGAAAAAA", Alphabet.NT_EXTENDED_GAPPED, type=SequenceType.CHROMOSOME
+                ),
+            ),
+        )
+        assert str(cds.get_spliced_sequence()) == "AGGGTCCCCTGAAA"
+        assert str(cds.extract_sequence()) == "AGGGTCCCCTGA"

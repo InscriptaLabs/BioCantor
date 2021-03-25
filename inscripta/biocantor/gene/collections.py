@@ -905,6 +905,7 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
         end: Optional[int] = None,
         coding_only: Optional[bool] = False,
         completely_within: Optional[bool] = True,
+        expand_location_to_children: Optional[bool] = False,
     ) -> "AnnotationCollection":
         """Filter this annotation collection object based on positions, sequence, and boolean flags.
 
@@ -913,9 +914,13 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
         ``[0,9], [21, 30]``.
 
         The resulting :class:`AnnotationCollection` returned will have a `._location` member whose bounds
-        exactly match the query. However, the child genes/feature collections will potentially extend beyond this range,
+        exactly match the query. If ``expand_location_to_children`` is ``True``, then the
+        child genes/feature collections will potentially extend beyond this range,
         in order to encapsulate their full length. The resulting gene/feature collections will potentially have a
         reduced set of transcripts/features, if those transcripts/features are outside the query range.
+        However, if ``expand_location_to_children`` is ``False``, then the child genes/feature collections
+        will have location objects that represent the exact bounds of the query, which means that they
+        may be sliced down.
 
         Here is an example (equals are exons, dashes are introns):
 
@@ -953,6 +958,9 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
             coding_only: Filter for coding genes only?
             completely_within: Strict *query* boundaries? If ``False``, features that partially overlap
                 will be included in the output. Bins optimization cannot be used, so these queries are slower.
+            expand_location_to_children: Should the underlying location objects be expanded so that no
+                child gene/transcripts get sliced? If this is ``False``, then the constituent objects may not
+                actually represent their full lengths, although the original position information is retained.
 
         Returns:
            :class:`AnnotationCollection` that may be empty, and otherwise will contain new copies of every
@@ -1022,12 +1030,9 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
                 else:
                     genes_to_keep.append(gene_or_feature_collection)
 
-        # keep track of the original query start/end intervals to pass up to the constructor
-        query_start = start
-        query_end = end
         # if completely within is False, expand the range of seq_chunk_parent to retain the full span
         # of all child intervals. This prevents features getting cut in half.
-        if completely_within is False:
+        if expand_location_to_children is True and completely_within is False:
             for g_or_fc in itertools.chain(features_collections_to_keep, genes_to_keep):
                 if g_or_fc.start < start:
                     start = g_or_fc.start
@@ -1046,8 +1051,8 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
                 sequence_guid=self.sequence_guid,
                 sequence_path=self.sequence_path,
                 qualifiers=self._export_qualifiers_to_list(),
-                start=query_start,
-                end=query_end,
+                start=start,
+                end=end,
                 completely_within=completely_within,
             ),
             parent_or_seq_chunk_parent=seq_chunk_parent,

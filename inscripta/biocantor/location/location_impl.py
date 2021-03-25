@@ -214,10 +214,6 @@ class SingleInterval(Location):
         """Compares the overlap of this interval to another interval. If ``full_span`` is ``True``,
         then this interval is compared to the full span of the other interval, regardless of type of
         the other interval.
-
-        # Todo: Should this always be 'False'?  If our intervals are on different chromosomes, they can't overlap
-        #   (chr1:100-200 doesn't overlap chr2:150-250) but just because they have different parents doesn't mean
-        #   they can't overlap...
         """
         if strict_parent_compare:
             ObjectValidation.require_parents_equal_except_location(self.parent, other.parent)
@@ -388,7 +384,11 @@ class SingleInterval(Location):
         else:
             return self.extend_absolute(extend_downstream, extend_upstream)
 
-    def _location_relative_to(self, other: Location, strict_parent_compare: bool = False) -> Location:
+    def _location_relative_to(
+        self, other: Location, strict_parent_compare: bool = False, optimize_blocks: bool = True
+    ) -> Location:
+        """``optimize_blocks`` is not used here, but is still a keyword argument to ensure a unified
+        API between SingleInterval and CompoundInterval."""
         intersection = other.intersection(self, match_strand=False, strict_parent_compare=strict_parent_compare)
         rel_pos_1 = other.parent_to_relative_pos(intersection.start)
         rel_pos_2 = other.parent_to_relative_pos(intersection.end - 1)
@@ -920,7 +920,7 @@ class CompoundInterval(Location):
         else:
             return self.extend_absolute(extend_downstream, extend_upstream)
 
-    def _location_relative_to(self, other: Location) -> Location:
+    def _location_relative_to(self, other: Location, optimize_blocks: bool = True) -> Location:
         rel_loc_each_single_interval = [
             other.parent_to_relative_location(block) for block in self.blocks if other.has_overlap(block)
         ]
@@ -931,7 +931,10 @@ class CompoundInterval(Location):
         rel_strand = rel_loc_each_single_interval[0].strand
         rel_parent = rel_loc_each_single_interval[0].parent
         parent = rel_parent.strip_location_info() if rel_parent else None
-        return CompoundInterval(rel_starts, rel_ends, rel_strand, parent).optimize_blocks()
+        if optimize_blocks:
+            return CompoundInterval(rel_starts, rel_ends, rel_strand, parent).optimize_blocks()
+        else:
+            return CompoundInterval(rel_starts, rel_ends, rel_strand, parent)
 
     def merge_overlapping(self) -> Location:
         """If this compound interval is overlapping, merge the overlaps"""
@@ -1059,10 +1062,10 @@ class _EmptyLocation(Location):
     def shift_position(self, shift: int) -> Location:
         raise EmptyLocationException
 
-    def location_relative_to(self, other: Location) -> Location:
+    def location_relative_to(self, other: Location, optimize_blocks: bool = True) -> Location:
         return self
 
-    def _location_relative_to(self, other: Location) -> Location:
+    def _location_relative_to(self, other: Location, optimize_blocks: bool = True) -> Location:
         return self
 
     def distance_to(self, other: Location, distance_type: DistanceType = DistanceType.INNER) -> int:
