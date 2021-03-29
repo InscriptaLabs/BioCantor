@@ -777,6 +777,21 @@ class TestAnnotationCollection:
         assert min(x.chromosome_location.start for x in r2) == start
         assert max(x.chromosome_location.end for x in r2) == end
 
+    def test_position_queries_expanded_range_exception(self):
+        """If expand range is true, then an exception is thrown on sequence chunks if they expand beyond the chunk"""
+        obj = self.annot_no_range.to_annotation_collection(parent_genome)
+        # first query by range to produce a chunk-relative collection
+        obj2 = obj.query_by_position(12, 20, completely_within=False)
+        with pytest.raises(InvalidQueryError):
+            _ = obj2.query_by_position(15, 20, expand_location_to_children=True, completely_within=False)
+        # this is fine without range expansion
+        _ = obj2.query_by_position(15, 20, completely_within=False)
+
+        # this is fine without sequence info as well
+        obj = self.annot_no_range.to_annotation_collection()
+        obj2 = obj.query_by_position(12, 20, completely_within=False)
+        _ = obj2.query_by_position(15, 20, expand_location_to_children=True, completely_within=False)
+
     @pytest.mark.parametrize(
         "start,end,expected_translations,expected_mrna",
         [
@@ -833,8 +848,8 @@ class TestAnnotationCollection:
         [
             # query removes everything due to completely_within=True
             (21, 22, False, True, set()),
-            # feat1 and feat3 lost due to no overlap with query
-            (21, 22, False, False, {"feat2", "tx1", "tx2"}),
+            # entirely intronic query removes non-overlapping isoforms tx2/feat2
+            (21, 22, False, False, {"tx1"}),
             # tx1 hits 28, feat3 starts at 35, so nothing here
             (28, 35, False, False, set()),
             # moving to 36 now retains feat3
@@ -843,6 +858,7 @@ class TestAnnotationCollection:
             (27, 36, False, False, {"tx1", "feat3"}),
             # moving to 24 now retains all but feat1
             (24, 36, False, False, {"tx1", "tx2", "feat2", "feat3"}),
+
         ],
     )
     def test_position_queries_lose_isoforms(
@@ -853,12 +869,14 @@ class TestAnnotationCollection:
         coding_only,
         expected_identifiers,
     ):
-        obj = self.annot_no_range.to_annotation_collection()
-        r = obj.query_by_position(start, end, coding_only, completely_within)
-        if len(r) == 0:
-            assert expected_identifiers == set()
-        else:
-            assert set.union(*(y.identifiers for x in r for y in x)) == expected_identifiers
+        # test this with different parents to show that the parent doesn't change the outcome
+        for parent in [None, parent_genome, parent_genome_10_49]:
+            obj = self.annot_no_range.to_annotation_collection(parent)
+            r = obj.query_by_position(start, end, coding_only, completely_within)
+            if len(r) == 0:
+                assert expected_identifiers == set()
+            else:
+                assert set.union(*(y.identifiers for x in r for y in x)) == expected_identifiers
 
     def test_query_position_exceptions(self):
         obj = self.annot.to_annotation_collection()

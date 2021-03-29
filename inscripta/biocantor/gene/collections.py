@@ -922,6 +922,11 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
         will have location objects that represent the exact bounds of the query, which means that they
         may be sliced down.
 
+        In this case, it may also be the case that isoforms get dropped from the resulting
+        :class:`AnnotationCollection` if the associated location has a sequence chunk. This will be the case
+        if the interval ``[start, end]`` are entirely intronic for this isoform, because now this isoform
+        has no relationship to the underlying sequence sub-chunk.
+
         Here is an example (equals are exons, dashes are introns):
 
         .. code-block::
@@ -965,8 +970,12 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
         Returns:
            :class:`AnnotationCollection` that may be empty, and otherwise will contain new copies of every
             constituent member.
-        """
 
+        Raises:
+            InvalidQueryError: If the start/end bounds are not valid. This could be because they exceed the
+            bounds of the current interval. It could also happen if ``expand_location_to_children`` is ``True``
+            and the new expanded range would exceed the range of an associated sequence chunk.
+        """
         # bins are only valid if we have start, end and completely_within
         if completely_within and start and end:
             my_bins = bins(start, end, fmt="bed", one=False)
@@ -1018,7 +1027,7 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
                 valid_children_guids = [
                     child.guid
                     for child in gene_or_feature_collection
-                    if coordinate_fn(child.chromosome_location, match_strand=False, full_span=True)
+                    if coordinate_fn(child.chromosome_location, match_strand=False)
                 ]
                 # if we lost all isoforms, skip this gene entirely now
                 if not valid_children_guids:
@@ -1038,6 +1047,15 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
                     start = g_or_fc.start
                 if g_or_fc.end > end:
                     end = g_or_fc.end
+
+        # if there is a sequence chunk, then some validation checks must be performed
+        if self.chunk_relative_location.parent and self.chunk_relative_location.parent.sequence:
+            # not possible to expand range if it exceeds parent bounds
+            if start < self.start or end > self.end:
+                raise InvalidQueryError(
+                    f"Cannot expand range of location to {start}-{end} because the associated sequence chunk "
+                    f"lies from {self.start}-{self.end}"
+                )
 
         seq_chunk_parent = self._subset_parent(start, end)
 
