@@ -858,7 +858,6 @@ class TestAnnotationCollection:
             (27, 36, False, False, {"tx1", "feat3"}),
             # moving to 24 now retains all but feat1
             (24, 36, False, False, {"tx1", "tx2", "feat2", "feat3"}),
-
         ],
     )
     def test_position_queries_lose_isoforms(
