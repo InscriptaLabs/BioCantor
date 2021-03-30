@@ -1530,5 +1530,5 @@ class TestCDSInterval:
                 ),
             ),
         )
-        assert cds1 != cds2
-        assert hash(cds1) == hash(cds2)  # Location comparison does not compare sequence
+        assert cds1 != cds2  # Location equality comparison does compare sequence
+        assert hash(cds1) == hash(cds2)  # Location hash comparison does not compare sequence
