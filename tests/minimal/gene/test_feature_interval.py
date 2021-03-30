@@ -615,6 +615,11 @@ class TestFeatureWithoutModel:
         feat2 = FeatureInterval.from_location(feat._location)
         assert feat == feat2
 
+    def test_equality_different_parents(self):
+        feat1 = e3_spliced.to_feature_interval(parent_genome2)
+        feat2 = e3_spliced.to_feature_interval(parent_genome2_1_15)
+        assert feat1 != feat2
+
 
 class TestOverlappingInterval:
     def test_overlapping_interval(self):

@@ -53,11 +53,14 @@ class AbstractInterval(ABC):
     def __eq__(self, other):
         if not isinstance(other, self.__class__):
             return False
-        return self.to_dict() == other.to_dict()
+        elif not self.to_dict() == other.to_dict():
+            return False
+        else:
+            return self.chunk_relative_location == other.chunk_relative_location
 
     def __hash__(self):
         """Produces a hash, which is the GUID."""
-        return hash(self.guid)
+        return hash((self.guid, self.chunk_relative_location))
 
     @abstractmethod
     def to_dict(self, chromosome_relative_coordinates: bool = True) -> Dict[str, Any]:

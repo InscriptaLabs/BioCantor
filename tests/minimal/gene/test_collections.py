@@ -269,6 +269,12 @@ class TestGene:
             _ = obj2.get_reference_sequence()
         assert obj0.get_reference_sequence() == obj3.get_reference_sequence()
 
+    def test_equality_different_parents(self):
+        obj1 = self.gene.to_gene_interval(parent_genome_10_49)
+        obj2 = self.gene.to_gene_interval(parent_genome_rev_5_44)
+        assert obj1 != obj2
+        assert hash(obj1) != hash(obj2)
+
 
 class TestFeatureIntervalCollection:
     feat1 = dict(
@@ -339,6 +345,12 @@ class TestFeatureIntervalCollection:
         with pytest.raises(NullSequenceException):
             _ = obj2.get_reference_sequence()
         assert obj0.get_reference_sequence() == obj3.get_reference_sequence()
+
+    def test_equality_different_parents(self):
+        obj1 = self.collection1.to_feature_collection(parent_genome_10_49)
+        obj2 = self.collection1.to_feature_collection(parent_genome_rev_5_44)
+        assert obj1 != obj2
+        assert hash(obj1) != hash(obj2)
 
 
 class TestAnnotationCollection:
@@ -1407,3 +1419,9 @@ class TestNegative:
         # for the sequence ID on the first chromosome ancestor type.
         subquery = obj.query_by_position(10, 28, completely_within=False)
         assert subquery.chromosome_location.parent.id == "testseq"
+
+    def test_equality_different_parents(self):
+        obj1 = self.annot.to_annotation_collection(parent_genome_10_49)
+        obj2 = self.annot.to_annotation_collection(parent_genome_rev_5_44)
+        assert obj1 != obj2
+        assert hash(obj1) != hash(obj2)

@@ -854,6 +854,12 @@ class TestTranscript:
         tx2 = schema2.to_transcript_interval()
         assert (tx1 == tx2) == is_eq
 
+    def test_equality_different_parents(self):
+        tx1 = e3_spliced.to_transcript_interval(parent_genome2)
+        tx2 = e3_spliced.to_transcript_interval(parent_genome2_1_15)
+        assert tx1 != tx2
+        assert hash(tx1) != hash(tx2)
+
     def test_cds_start_end(self):
         tx = e3_spliced.to_transcript_interval()
         assert tx.is_coding
@@ -992,7 +998,7 @@ class TestTranscriptWithoutModel:
     def test_dict(self, tx):
         tx = TranscriptInterval(**tx)
         tx2 = TranscriptInterval.from_dict(tx.to_dict())
-        assert tx == tx2
+        assert tx.to_dict() == tx2.to_dict()
 
 
 class TestQualifiers:
