@@ -1018,12 +1018,13 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
             elif my_bins and not any(child.bin in my_bins for child in gene_or_feature_collection):
                 continue
 
-            # regardless of completely_within flag, first just look for overlaps
+            # regardless of completely_within flag, first just look for overlaps on the gene/feature collection level
             elif query_loc.has_overlap(
                 gene_or_feature_collection.chromosome_location, match_strand=False, full_span=True
             ):
 
                 # Filter features/transcripts in the gene/feature collection for overlapping the range
+                # do not do full-span matching here in order to filter out isoforms that do not overlap the parent
                 valid_children_guids = [
                     child.guid
                     for child in gene_or_feature_collection

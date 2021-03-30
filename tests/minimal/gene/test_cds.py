@@ -1210,7 +1210,7 @@ class TestCDSInterval:
     def test_dict(self, cds):
         cds = CDSInterval(**cds)
         cds2 = CDSInterval.from_dict(cds.to_dict())
-        assert cds == cds2
+        assert cds.to_dict() == cds2.to_dict()
 
     def test_dict_exception(self):
         cds = CDSInterval(
@@ -1506,3 +1506,29 @@ class TestCDSInterval:
         )
         assert str(cds.get_spliced_sequence()) == "AGGGTCCCCTGAAA"
         assert str(cds.extract_sequence()) == "AGGGTCCCCTGA"
+
+    def test_equality_different_parents(self):
+        cds1 = CDSInterval(
+            **dict(
+                cds_starts=[2, 8, 12],
+                cds_ends=[5, 13, 18],
+                strand=Strand.PLUS,
+                frames_or_phases=[CDSFrame.ZERO, CDSFrame.ZERO, CDSFrame.TWO],
+                parent_or_seq_chunk_parent=Sequence(
+                    "AAAGGAAAGTCCCTGAAAAAA", Alphabet.NT_EXTENDED_GAPPED, type=SequenceType.CHROMOSOME
+                ),
+            ),
+        )
+        cds2 = CDSInterval(
+            **dict(
+                cds_starts=[2, 8, 12],
+                cds_ends=[5, 13, 18],
+                strand=Strand.PLUS,
+                frames_or_phases=[CDSFrame.ZERO, CDSFrame.ZERO, CDSFrame.TWO],
+                parent_or_seq_chunk_parent=Sequence(
+                    "AAAGGAAAGTCCCTGAAAAA", Alphabet.NT_EXTENDED_GAPPED, type=SequenceType.CHROMOSOME
+                ),
+            ),
+        )
+        assert cds1 != cds2  # Location equality comparison does compare sequence
+        assert hash(cds1) == hash(cds2)  # Location hash comparison does not compare sequence
