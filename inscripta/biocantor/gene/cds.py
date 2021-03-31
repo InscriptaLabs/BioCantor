@@ -54,6 +54,8 @@ class CDSInterval(AbstractFeatureInterval):
         self._genomic_ends = cds_ends
         self.start = cds_starts[0]
         self.end = cds_ends[-1]
+        self._strand = strand
+        self._parent_or_seq_chunk_parent = parent_or_seq_chunk_parent
         self.sequence_guid = sequence_guid
         self.sequence_name = sequence_name
         self.product = product
@@ -63,7 +65,7 @@ class CDSInterval(AbstractFeatureInterval):
         if len(frames_or_phases) != len(self._genomic_starts):
             raise MismatchedFrameException("Number of frame or phase entries must match number of exons")
 
-        if len(self._location) == 0:
+        if len(self.chromosome_location) == 0:
             raise InvalidCDSIntervalError("Cannot have an empty CDS interval")
 
         # only allow either all CDSFrame or all CDSPhase
@@ -129,8 +131,10 @@ class CDSInterval(AbstractFeatureInterval):
             # this is OK to do here since the original genomic intervals retain the overlapping information
             if isinstance(self.chromosome_location, SingleInterval):
                 chrom_loc = self.chromosome_location
-            else:
+            elif isinstance(self.chromosome_location, CompoundInterval):
                 chrom_loc = self.chromosome_location.optimize_and_combine_blocks()
+            else:
+                return frames
             intersection = genomic_exon.intersection(chrom_loc, match_strand=False)
 
             if intersection.is_empty:
@@ -153,18 +157,17 @@ class CDSInterval(AbstractFeatureInterval):
         Args:
             chromosome_relative_coordinates: Optional flag to export the interval in chromosome relative
                 or chunk-relative coordinates.
-                TODO: This cannot be set to False until the ability to subset the CDSFrames list is implemented.
 
         Returns:
              A dictionary representation that can be passed to :meth:`CDSInterval.from_dict()`
         """
-        cds_frames = [f.name for f in self.frames]
-
         if chromosome_relative_coordinates:
             cds_starts = self._genomic_starts
             cds_ends = self._genomic_ends
+            cds_frames = [f.name for f in self.frames]
         else:
-            raise NotImplementedError
+            cds_starts, cds_ends = list(zip(*([x.start, x.end] for x in self.chunk_relative_blocks)))
+            cds_frames = [f.name for f in self.chunk_relative_frames]
 
         return dict(
             cds_starts=cds_starts,

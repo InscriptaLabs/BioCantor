@@ -13,6 +13,7 @@ from typing import Optional, TextIO, Iterable, Union, Dict, List, Set, Hashable
 
 from inscripta.biocantor.gene.biotype import Biotype
 from inscripta.biocantor.gene.codon import TranslationTable
+from inscripta.biocantor.gene.cds import CDSInterval
 from inscripta.biocantor.gene.collections import AnnotationCollection, GeneInterval, TranscriptInterval
 from inscripta.biocantor.io.genbank.constants import (
     GeneFeatures,
@@ -471,7 +472,7 @@ class TblGene:
         locus_tag: Optional[str] = None,
         translation_table: Optional[TranslationTable] = TranslationTable.DEFAULT,
     ):
-        self.gene = gene
+        gene = GeneInterval.from_dict(gene.to_dict(), parent_or_seq_chunk_parent=gene.chunk_relative_location.parent)
 
         # the location of the transcripts and its CDS intervals must be merged because NCBI does not like
         # adjacent blocks. This must be performed before we instantiate GeneTblFeature because performing this process
@@ -479,11 +480,12 @@ class TblGene:
         # potentially overlapping representation was able to properly represent the ORF. This is an inherent limitation
         # of the TBL format (as well as the GenBank format).
         for tx in gene.transcripts:
-            if isinstance(tx.chromosome_location, CompoundInterval):
-                tx._location = tx.chromosome_location.optimize_and_combine_blocks()
+            if isinstance(tx._location, CompoundInterval):
+                tx._location = tx._location.optimize_and_combine_blocks()
             if gene.is_coding:
                 if isinstance(tx.cds_location, CompoundInterval):
                     tx.cds = tx.cds.optimize_and_combine_blocks()
+        self.gene = gene
 
         self.gene_tbl = GeneTblFeature(self.gene, locus_tag)
 

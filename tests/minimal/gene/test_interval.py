@@ -151,28 +151,6 @@ class TestAbstractInterval:
                 ),
                 NullSequenceException,
             ),
-            # chunk location must overlap genomic location
-            (
-                SingleInterval(0, 10, Strand.PLUS),
-                Parent(
-                    id="test:11-20",
-                    sequence=Sequence(
-                        "ATACGATCA",
-                        Alphabet.NT_EXTENDED_GAPPED,
-                        id="test:11-20",
-                        type=SequenceType.SEQUENCE_CHUNK,
-                        parent=Parent(
-                            location=SingleInterval(
-                                11,
-                                20,
-                                Strand.PLUS,
-                                parent=Parent(id="test", sequence_type=SequenceType.CHROMOSOME),
-                            )
-                        ),
-                    ),
-                ),
-                LocationOverlapException,
-            ),
             # if location is on a chunk, must be a proper chunk with a chromosome
             (
                 SingleInterval(0, 10, Strand.PLUS, parent=Parent(sequence_type=SequenceType.SEQUENCE_CHUNK)),
