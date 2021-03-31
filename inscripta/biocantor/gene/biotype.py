@@ -52,4 +52,4 @@ Biotype = HasMemberMixin(
 )
 
 
-UNKNOWN_BIOTYPE = "unknown"
+UNKNOWN_BIOTYPE = "unspecified"
