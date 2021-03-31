@@ -870,9 +870,9 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
         if start == self.start and end == self.end:
             return self.chunk_relative_location.parent
 
-        chunk_relative_start = self.lift_over_to_first_ancestor_of_type(SequenceType.CHROMOSOME).parent_to_relative_pos(
-            start
-        )
+        chrom_ancestor = self.lift_over_to_first_ancestor_of_type(SequenceType.CHROMOSOME)
+
+        chunk_relative_start = chrom_ancestor.parent_to_relative_pos(start)
 
         # handle the edge case where the end is the end of the current chunk
         if end == self.end:
@@ -886,22 +886,17 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
 
         seq_subset = self.chunk_relative_location.extract_sequence()[chunk_relative_start:chunk_relative_end]
 
-        parent_id = self.chunk_relative_location.parent.id
-        return Parent(
-            id=f"{parent_id}:{start}-{end}",
-            sequence=Sequence(
-                str(seq_subset),
-                self.chunk_relative_location.parent.sequence.alphabet,
-                type=SequenceType.SEQUENCE_CHUNK,
-                parent=Parent(
-                    location=SingleInterval(
-                        start,
-                        end,
-                        Strand.PLUS,
-                        parent=Parent(id=parent_id, sequence_type=SequenceType.CHROMOSOME),
-                    )
-                ),
-            ),
+        parent_id = chrom_ancestor.parent.id
+        # TODO: FIXME: handle circular imports by doing this import within the function
+        from inscripta.biocantor.io.parser import seq_chunk_to_parent
+
+        return seq_chunk_to_parent(
+            str(seq_subset),
+            parent_id,
+            start,
+            end,
+            self.chromosome_location.strand,
+            self.chunk_relative_location.parent.sequence.alphabet,
         )
 
     def query_by_position(
@@ -910,6 +905,7 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
         end: Optional[int] = None,
         coding_only: Optional[bool] = False,
         completely_within: Optional[bool] = True,
+        expand_location_to_children: Optional[bool] = False,
     ) -> "AnnotationCollection":
         """Filter this annotation collection object based on positions, sequence, and boolean flags.
 
@@ -918,9 +914,18 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
         ``[0,9], [21, 30]``.
 
         The resulting :class:`AnnotationCollection` returned will have a `._location` member whose bounds
-        exactly match the query. However, the child genes/feature collections will potentially extend beyond this range,
+        exactly match the query. If ``expand_location_to_children`` is ``True``, then the
+        child genes/feature collections will potentially extend beyond this range,
         in order to encapsulate their full length. The resulting gene/feature collections will potentially have a
         reduced set of transcripts/features, if those transcripts/features are outside the query range.
+        However, if ``expand_location_to_children`` is ``False``, then the child genes/feature collections
+        will have location objects that represent the exact bounds of the query, which means that they
+        may be sliced down.
+
+        In this case, it may also be the case that isoforms get dropped from the resulting
+        :class:`AnnotationCollection` if the associated location has a sequence chunk. This will be the case
+        if the interval ``[start, end]`` are entirely intronic for this isoform, because now this isoform
+        has no relationship to the underlying sequence sub-chunk.
 
         Here is an example (equals are exons, dashes are introns):
 
@@ -958,12 +963,19 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
             coding_only: Filter for coding genes only?
             completely_within: Strict *query* boundaries? If ``False``, features that partially overlap
                 will be included in the output. Bins optimization cannot be used, so these queries are slower.
+            expand_location_to_children: Should the underlying location objects be expanded so that no
+                child gene/transcripts get sliced? If this is ``False``, then the constituent objects may not
+                actually represent their full lengths, although the original position information is retained.
 
         Returns:
            :class:`AnnotationCollection` that may be empty, and otherwise will contain new copies of every
             constituent member.
-        """
 
+        Raises:
+            InvalidQueryError: If the start/end bounds are not valid. This could be because they exceed the
+            bounds of the current interval. It could also happen if ``expand_location_to_children`` is ``True``
+            and the new expanded range would exceed the range of an associated sequence chunk.
+        """
         # bins are only valid if we have start, end and completely_within
         if completely_within and start and end:
             my_bins = bins(start, end, fmt="bed", one=False)
@@ -1006,16 +1018,17 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
             elif my_bins and not any(child.bin in my_bins for child in gene_or_feature_collection):
                 continue
 
-            # regardless of completely_within flag, first just look for overlaps
+            # regardless of completely_within flag, first just look for overlaps on the gene/feature collection level
             elif query_loc.has_overlap(
                 gene_or_feature_collection.chromosome_location, match_strand=False, full_span=True
             ):
 
                 # Filter features/transcripts in the gene/feature collection for overlapping the range
+                # do not do full-span matching here in order to filter out isoforms that do not overlap the parent
                 valid_children_guids = [
                     child.guid
                     for child in gene_or_feature_collection
-                    if coordinate_fn(child.chromosome_location, match_strand=False, full_span=True)
+                    if coordinate_fn(child.chromosome_location, match_strand=False)
                 ]
                 # if we lost all isoforms, skip this gene entirely now
                 if not valid_children_guids:
@@ -1027,17 +1040,23 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
                 else:
                     genes_to_keep.append(gene_or_feature_collection)
 
-        # keep track of the original query start/end intervals to pass up to the constructor
-        query_start = start
-        query_end = end
         # if completely within is False, expand the range of seq_chunk_parent to retain the full span
         # of all child intervals. This prevents features getting cut in half.
-        if completely_within is False:
+        if expand_location_to_children is True and completely_within is False:
             for g_or_fc in itertools.chain(features_collections_to_keep, genes_to_keep):
                 if g_or_fc.start < start:
                     start = g_or_fc.start
                 if g_or_fc.end > end:
                     end = g_or_fc.end
+
+        # if there is a sequence chunk, then some validation checks must be performed
+        if self.chunk_relative_location.parent and self.chunk_relative_location.parent.sequence:
+            # not possible to expand range if it exceeds parent bounds
+            if start < self.start or end > self.end:
+                raise InvalidQueryError(
+                    f"Cannot expand range of location to {start}-{end} because the associated sequence chunk "
+                    f"lies from {self.start}-{self.end}"
+                )
 
         seq_chunk_parent = self._subset_parent(start, end)
 
@@ -1051,8 +1070,8 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
                 sequence_guid=self.sequence_guid,
                 sequence_path=self.sequence_path,
                 qualifiers=self._export_qualifiers_to_list(),
-                start=query_start,
-                end=query_end,
+                start=start,
+                end=end,
                 completely_within=completely_within,
             ),
             parent_or_seq_chunk_parent=seq_chunk_parent,

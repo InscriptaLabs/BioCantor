@@ -149,3 +149,11 @@ class NullSequenceException(ParentException):
     """
 
     pass
+
+
+class MismatchedFrameException(BioCantorException):
+    """
+    Raised when the frames list of a CDS does not match the location object.
+    """
+
+    pass

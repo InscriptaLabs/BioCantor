@@ -4,14 +4,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+
 ## [0.4.3]
+### Fixed
+- `AnnotationCollection._subset_parent()` now uses `seq_chunk_to_parent` and pulls out the chromosome ID from the chromosome record.
+- `CDSInterval.from_dict()` now passes along the parent provided.
+
 ### Added
 - `strict_parent_compare` parameter for binary set theory operations.
+- `AnnotationCollection.query_by_position()` has a new boolean flag `expand_location_to_children` that defaults to False, but if set to True will expand the interval to contain the transcripts. When False, it may be the case that transcripts will hvae their underlying location objects sliced down from their original coordinates. The original coordinates are still retained as integer members.
 
 ### Changed
 - Added a parent-level sequence identifier to the output of `biocantor.io.parser.seq_chunk_to_parent()`.
 - Added a `strand` argument to `biocantor.io.parser.seq_chunk_to_parent()`.
 - `seq_chunk_to_parent()` accepts a `strand` argument that allows for the sequence chunk to be strand-referenced.
+- `Location.parent_to_relative_location` and `Location.location_relative_to` now has a `optimize_blocks` flag that defaults to True. If this flag is False, then these operations will not collapse adjacent or overlapping blocks. 
 
 
 ## [0.4.2]
@@ -23,7 +30,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Improved docstrings on interval objects.
 - Location objects now have a `full_span` optional flag on all `intersction`, `overlaps` and `contains` functions. This flag has compound intervals be treated as their full span, i.e. from start to end, regardless of compound structure. This flag defaults to `False` in all cases. When two `CompoundInterval` are compared, they are both always compared in their full spans when this flag is `True`.
 - `Interval` and `IntervalCollection` objects now are capable of being lifted to arbitrary coordinate systems, returning a new copy. These operations rely on first lifting to a shared chromosomal coordinate system.
-
 
 ### Changed
 - New `SequenceType` enum stores whether interval sequences are `chromosome` or `chunk_relative`.

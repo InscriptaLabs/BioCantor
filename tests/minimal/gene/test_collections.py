@@ -24,7 +24,6 @@ from inscripta.biocantor.sequence.alphabet import Alphabet
 from inscripta.biocantor.sequence.sequence import Sequence
 from inscripta.biocantor.io.parser import seq_chunk_to_parent
 
-
 genome = "TTTTTTTTTTAAGTATTCTTGGACCTAATTAAAAAAAAAAAAAAAAAAACCCCC"
 parent_genome = Parent(
     id="genome", sequence=Sequence(genome, Alphabet.NT_STRICT), sequence_type=SequenceType.CHROMOSOME
@@ -270,6 +269,12 @@ class TestGene:
             _ = obj2.get_reference_sequence()
         assert obj0.get_reference_sequence() == obj3.get_reference_sequence()
 
+    def test_equality_different_parents(self):
+        obj1 = self.gene.to_gene_interval(parent_genome_10_49)
+        obj2 = self.gene.to_gene_interval(parent_genome_rev_5_44)
+        assert obj1 != obj2
+        assert hash(obj1) != hash(obj2)
+
 
 class TestFeatureIntervalCollection:
     feat1 = dict(
@@ -340,6 +345,12 @@ class TestFeatureIntervalCollection:
         with pytest.raises(NullSequenceException):
             _ = obj2.get_reference_sequence()
         assert obj0.get_reference_sequence() == obj3.get_reference_sequence()
+
+    def test_equality_different_parents(self):
+        obj1 = self.collection1.to_feature_collection(parent_genome_10_49)
+        obj2 = self.collection1.to_feature_collection(parent_genome_rev_5_44)
+        assert obj1 != obj2
+        assert hash(obj1) != hash(obj2)
 
 
 class TestAnnotationCollection:
@@ -752,7 +763,7 @@ class TestAnnotationCollection:
         assert r._location == expected
 
     @pytest.mark.parametrize(
-        "start,end,coding_only,completely_within,min_start,max_end",
+        "start,end,coding_only,completely_within,expanded_start,expanded_end",
         [
             (12, 13, False, False, 12, 28),
             (12, 15, False, False, 12, 28),
@@ -764,23 +775,93 @@ class TestAnnotationCollection:
         end,
         completely_within,
         coding_only,
-        min_start,
-        max_end,
+        expanded_start,
+        expanded_end,
     ):
         """The span of the AnnotationCollection object is the original query, but the full range
         of the child objects are larger"""
+        obj = self.annot_no_range.to_annotation_collection(parent_genome)
+        r = obj.query_by_position(start, end, coding_only, completely_within, expand_location_to_children=True)
+        assert min(x.chromosome_location.start for x in r) == expanded_start
+        assert max(x.chromosome_location.end for x in r) == expanded_end
+        # without expansion the children are all sliced
+        r2 = obj.query_by_position(start, end, coding_only, completely_within, expand_location_to_children=False)
+        assert min(x.chromosome_location.start for x in r2) == start
+        assert max(x.chromosome_location.end for x in r2) == end
+
+    def test_position_queries_expanded_range_exception(self):
+        """If expand range is true, then an exception is thrown on sequence chunks if they expand beyond the chunk"""
+        obj = self.annot_no_range.to_annotation_collection(parent_genome)
+        # first query by range to produce a chunk-relative collection
+        obj2 = obj.query_by_position(12, 20, completely_within=False)
+        with pytest.raises(InvalidQueryError):
+            _ = obj2.query_by_position(15, 20, expand_location_to_children=True, completely_within=False)
+        # this is fine without range expansion
+        _ = obj2.query_by_position(15, 20, completely_within=False)
+
+        # this is fine without sequence info as well
         obj = self.annot_no_range.to_annotation_collection()
-        r = obj.query_by_position(start, end, coding_only, completely_within)
-        assert min(x.start for x in r) == min_start
-        assert max(x.end for x in r) == max_end
+        obj2 = obj.query_by_position(12, 20, completely_within=False)
+        _ = obj2.query_by_position(15, 20, expand_location_to_children=True, completely_within=False)
+
+    @pytest.mark.parametrize(
+        "start,end,expected_translations,expected_mrna",
+        [
+            (12, 13, {"tx1": "F", "tx2": "IL"}, {"tx1": "GTATTCTTGGACCTAA", "tx2": "GTATCTTACC"}),
+            (12, 20, {"tx1": "F", "tx2": "IL"}, {"tx1": "GTATTCTTGGACCTAA", "tx2": "GTATCTTACC"}),
+            (12, 25, {"tx1": "F", "tx2": "IL"}, {"tx1": "GTATTCTTGGACCTAA", "tx2": "GTATCTTACC"}),
+        ],
+    )
+    def test_position_queries_expanded_range_translation(
+        self,
+        start,
+        end,
+        expected_translations,
+        expected_mrna,
+    ):
+        """The span of the AnnotationCollection object is the original query, but the full range
+        of the child objects are larger, and so the translation does not change even when the query is supposed to
+        slice down the gene"""
+        obj = self.annot_no_range.to_annotation_collection(parent_genome)
+        r = obj.query_by_position(
+            start, end, coding_only=True, completely_within=False, expand_location_to_children=True
+        )
+        for gene in r.genes:
+            for tx in gene.transcripts:
+                assert expected_translations[tx.transcript_symbol] == str(tx.get_protein_sequence())
+                assert expected_mrna[tx.transcript_symbol] == str(tx.get_spliced_sequence())
+
+    @pytest.mark.parametrize(
+        "start,end,expected_translations,expected_mrna",
+        [
+            (12, 20, {"tx1": "F", "tx2": "I"}, {"tx1": "GTATTCTT", "tx2": "GTATCTT"}),
+            (12, 25, {"tx1": "F", "tx2": "IL"}, {"tx1": "GTATTCTTGGACC", "tx2": "GTATCTTACC"}),
+        ],
+    )
+    def test_position_queries_sliced_range_translation(
+        self,
+        start,
+        end,
+        expected_translations,
+        expected_mrna,
+    ):
+        """The span of the AnnotationCollection object is the original query, but the full range
+        of the child objects are larger, and so the translation does not change even when the query is supposed to
+        slice down the gene"""
+        obj = self.annot_no_range.to_annotation_collection(parent_genome)
+        r = obj.query_by_position(start, end, coding_only=True, completely_within=False)
+        for gene in r.genes:
+            for tx in gene.transcripts:
+                assert expected_translations[tx.transcript_symbol] == str(tx.get_protein_sequence())
+                assert expected_mrna[tx.transcript_symbol] == str(tx.get_spliced_sequence())
 
     @pytest.mark.parametrize(
         "start,end,coding_only,completely_within,expected_identifiers",
         [
             # query removes everything due to completely_within=True
             (21, 22, False, True, set()),
-            # feat1 and feat3 lost due to no overlap with query
-            (21, 22, False, False, {"feat2", "tx1", "tx2"}),
+            # entirely intronic query removes non-overlapping isoforms tx2/feat2
+            (21, 22, False, False, {"tx1"}),
             # tx1 hits 28, feat3 starts at 35, so nothing here
             (28, 35, False, False, set()),
             # moving to 36 now retains feat3
@@ -799,12 +880,14 @@ class TestAnnotationCollection:
         coding_only,
         expected_identifiers,
     ):
-        obj = self.annot_no_range.to_annotation_collection()
-        r = obj.query_by_position(start, end, coding_only, completely_within)
-        if len(r) == 0:
-            assert expected_identifiers == set()
-        else:
-            assert set.union(*(y.identifiers for x in r for y in x)) == expected_identifiers
+        # test this with different parents to show that the parent doesn't change the outcome
+        for parent in [None, parent_genome, parent_genome_10_49]:
+            obj = self.annot_no_range.to_annotation_collection(parent)
+            r = obj.query_by_position(start, end, coding_only, completely_within)
+            if len(r) == 0:
+                assert expected_identifiers == set()
+            else:
+                assert set.union(*(y.identifiers for x in r for y in x)) == expected_identifiers
 
     def test_query_position_exceptions(self):
         obj = self.annot.to_annotation_collection()
@@ -1194,7 +1277,6 @@ class TestAnnotationCollection:
 
 
 class TestNegative:
-
     tx1 = dict(
         exon_starts=[12],
         exon_ends=[28],
@@ -1285,3 +1367,61 @@ class TestNegative:
         assert str(a_neg.genes[0].get_primary_transcript().get_spliced_sequence()) == str(
             a_neg_subquery.genes[0].get_primary_transcript().get_spliced_sequence()
         )
+
+    def test_nested_parents(self):
+        """Querying by interval should be robust to arbitrarily nested parents."""
+        nested_parent = Parent(
+            id="testseq:10-49",
+            sequence_type=SequenceType.SEQUENCE_CHUNK,
+            strand=Strand.PLUS,
+            location=SingleInterval(10, 49, Strand.PLUS),
+            sequence=Sequence(
+                genome,
+                type=SequenceType.SEQUENCE_CHUNK,
+                id="testseq:10-49",
+                alphabet=Alphabet.NT_EXTENDED,
+                parent=Parent(
+                    id="testseq",
+                    sequence_type=SequenceType.CHROMOSOME,
+                    location=SingleInterval(
+                        0,
+                        54,
+                        Strand.PLUS,
+                        parent=Parent(
+                            id="testseq",
+                            sequence_type=SequenceType.CHROMOSOME,
+                            location=SingleInterval(
+                                0,
+                                54,
+                                Strand.PLUS,
+                                parent=Parent(
+                                    id="testseq",
+                                    sequence_type=SequenceType.CHROMOSOME,
+                                    location=SingleInterval(0, 54, Strand.PLUS),
+                                ),
+                            ),
+                        ),
+                    ),
+                ),
+            ),
+        )
+
+        obj = self.annot.to_annotation_collection(nested_parent)
+        assert obj.chromosome_location.parent.id == "testseq"
+
+        ref_obj = self.annot.to_annotation_collection(parent_genome)
+        assert str(obj.genes[0].get_reference_sequence()) == str(ref_obj.genes[0].get_reference_sequence())
+        assert str(obj.genes[0].get_primary_transcript().get_spliced_sequence()) == str(
+            ref_obj.genes[0].get_primary_transcript().get_spliced_sequence()
+        )
+
+        # the below test used to fail before `AnnotationCollection._subset_parent()` understood to look
+        # for the sequence ID on the first chromosome ancestor type.
+        subquery = obj.query_by_position(10, 28, completely_within=False)
+        assert subquery.chromosome_location.parent.id == "testseq"
+
+    def test_equality_different_parents(self):
+        obj1 = self.annot.to_annotation_collection(parent_genome_10_49)
+        obj2 = self.annot.to_annotation_collection(parent_genome_rev_5_44)
+        assert obj1 != obj2
+        assert hash(obj1) != hash(obj2)

@@ -53,11 +53,14 @@ class AbstractInterval(ABC):
     def __eq__(self, other):
         if not isinstance(other, self.__class__):
             return False
-        return self.to_dict() == other.to_dict()
+        elif not self.to_dict() == other.to_dict():
+            return False
+        else:
+            return self.chunk_relative_location == other.chunk_relative_location
 
     def __hash__(self):
         """Produces a hash, which is the GUID."""
-        return hash(self.guid)
+        return hash((self.guid, self.chunk_relative_location))
 
     @abstractmethod
     def to_dict(self, chromosome_relative_coordinates: bool = True) -> Dict[str, Any]:
@@ -290,8 +293,11 @@ class AbstractInterval(ABC):
 
             location = location.reset_parent(chunk_parent.parent)
             sequence_chunk = chunk_parent.sequence
+            # do not optimize blocks here -- this retains adjacent CDS intervals
             try:
-                interval_location_rel_to_chunk = sequence_chunk.location_on_parent.parent_to_relative_location(location)
+                interval_location_rel_to_chunk = sequence_chunk.location_on_parent.parent_to_relative_location(
+                    location, optimize_blocks=False
+                )
             except LocationOverlapException as e:
                 raise LocationOverlapException(
                     f"Locations did not overlap. Does the parent or seq chunk parent have the right "

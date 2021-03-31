@@ -123,23 +123,32 @@ class Location(ABC):
     def relative_to_parent_pos(self, relative_pos: int) -> int:
         """Converts a position relative to this Location to a position on the parent"""
 
-    def parent_to_relative_location(self, parent_location: "Location") -> "Location":
+    def parent_to_relative_location(self, parent_location: "Location", optimize_blocks: bool = True) -> "Location":
         """Converts a Location on the parent to a Location relative to this Location.
 
         Parameters
         ----------
         parent_location
             Location with the same parent as this Location. Both parents can be None.
+        optimize_blocks
+            Run optimize_blocks on the resulting location?
 
         Returns
         -------
         New Location relative to this Location.
         """
-        return parent_location.location_relative_to(self)
+        return parent_location.location_relative_to(self, optimize_blocks=optimize_blocks)
 
-    def location_relative_to(self, other: "Location") -> "Location":
+    def location_relative_to(self, other: "Location", optimize_blocks: bool = True) -> "Location":
         """Converts this Location to a Location relative to another Location. The Locations must overlap.
-        The returned value represents the relative location of the overlap within the other Location."""
+        The returned value represents the relative location of the overlap within the other Location.
+
+        If ``optimize_blocks`` is ``True``, the resulting Location will not have any adjacent or overlapping
+        intervals. This is often desirable, because the output of this function can have weird coordinates
+        when the locations are overlapping or adjacent. However, there are some cases where it is desirable
+        to retain the original block structure. One such example are CDS where adjacent blocks or overlapping
+        blocks are used to model frameshifts or indels.
+        """
         if other.is_empty:
             return other
         if self.parent or other.parent:
@@ -149,10 +158,10 @@ class Location(ABC):
                 )
             ObjectValidation.require_parents_equal_except_location(self.parent, other.parent)
         ObjectValidation.require_locations_overlap(self, other)
-        return self._location_relative_to(other)
+        return self._location_relative_to(other, optimize_blocks=optimize_blocks)
 
     @abstractmethod
-    def _location_relative_to(self, other: "Location") -> "Location":
+    def _location_relative_to(self, other: "Location", optimize_blocks: bool = True) -> "Location":
         raise NotImplementedError
 
     @abstractmethod
