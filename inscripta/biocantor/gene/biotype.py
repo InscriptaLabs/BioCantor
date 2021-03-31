@@ -47,6 +47,7 @@ Biotype = HasMemberMixin(
         ["C_region_pseudogene", 31],
         ["J_segment_pseudogene", 32],
         ["V_segment_pseudogene", 33],
+        ["guide_RNA", 34],
     ],
 )
 
