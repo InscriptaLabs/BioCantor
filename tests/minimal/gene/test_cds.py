@@ -1212,17 +1212,84 @@ class TestCDSInterval:
         cds2 = CDSInterval.from_dict(cds.to_dict())
         assert cds.to_dict() == cds2.to_dict()
 
-    def test_dict_exception(self):
+    @pytest.mark.parametrize(
+        "parent,expected",
+        [
+            # cuts 1bp off the 1st exon, shifting everything to zero
+            (
+                Parent(
+                    id="test:3-21",
+                    sequence=Sequence(
+                        "AAAGGAAAGTCCCTGAAAAAA"[3:],
+                        Alphabet.NT_EXTENDED_GAPPED,
+                        id="test:3-21",
+                        type=SequenceType.SEQUENCE_CHUNK,
+                        parent=Parent(
+                            location=SingleInterval(
+                                3,
+                                21,
+                                Strand.PLUS,
+                                parent=Parent(id="test", sequence_type=SequenceType.CHROMOSOME),
+                            )
+                        ),
+                    ),
+                ),
+                {
+                    "cds_starts": (0, 5, 9),
+                    "cds_ends": (2, 10, 15),
+                    "strand": "PLUS",
+                    "cds_frames": ["ZERO", "ONE", "ONE"],
+                    "qualifiers": None,
+                    "sequence_name": None,
+                    "sequence_guid": None,
+                    "protein_id": None,
+                    "product": None,
+                },
+            ),
+            # cuts off the 1st exon entirely
+            (
+                Parent(
+                    id="test:3-21",
+                    sequence=Sequence(
+                        "AAAGGAAAGTCCCTGAAAAAA"[6:],
+                        Alphabet.NT_EXTENDED_GAPPED,
+                        id="test:3-21",
+                        type=SequenceType.SEQUENCE_CHUNK,
+                        parent=Parent(
+                            location=SingleInterval(
+                                6,
+                                21,
+                                Strand.PLUS,
+                                parent=Parent(id="test", sequence_type=SequenceType.CHROMOSOME),
+                            )
+                        ),
+                    ),
+                ),
+                {
+                    "cds_starts": (2, 6),
+                    "cds_ends": (7, 12),
+                    "strand": "PLUS",
+                    "cds_frames": ["ONE", "ONE"],
+                    "qualifiers": None,
+                    "sequence_name": None,
+                    "sequence_guid": None,
+                    "protein_id": None,
+                    "product": None,
+                },
+            ),
+        ],
+    )
+    def test_dict_chunk_relative(self, parent, expected):
         cds = CDSInterval(
             **dict(
                 cds_starts=[2, 8, 12],
                 cds_ends=[5, 13, 18],
                 strand=Strand.PLUS,
                 frames_or_phases=[CDSFrame.ONE, CDSFrame.ONE, CDSFrame.ONE],
-            )
+            ),
+            parent_or_seq_chunk_parent=parent,
         )
-        with pytest.raises(NotImplementedError):
-            _ = cds.to_dict(chromosome_relative_coordinates=False)
+        assert cds.to_dict(chromosome_relative_coordinates=False) == expected
 
     @pytest.mark.parametrize(
         "parent",

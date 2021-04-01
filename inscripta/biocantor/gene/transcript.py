@@ -30,7 +30,6 @@ from inscripta.biocantor.parent.parent import Parent, SequenceType
 from inscripta.biocantor.sequence.sequence import Sequence
 from inscripta.biocantor.util.bins import bins
 from inscripta.biocantor.util.hashing import digest_object
-from inscripta.biocantor.util.object_validation import ObjectValidation
 
 
 class TranscriptInterval(AbstractFeatureInterval):
@@ -113,13 +112,10 @@ class TranscriptInterval(AbstractFeatureInterval):
         else:
             self.cds = self._cds_frames = self._cds_start = self._cds_end = None
 
-        if self._location.parent and self.cds:
-            ObjectValidation.require_locations_have_same_nonempty_parent(
-                self._location, self.cds.chunk_relative_location
-            )
-
         self._genomic_starts = exon_starts
         self._genomic_ends = exon_ends
+        self._strand = strand
+        self._parent_or_seq_chunk_parent = parent_or_seq_chunk_parent
         self.start = self.genomic_start = exon_starts[0]
         self.end = self.genomic_end = exon_ends[-1]
 
@@ -305,9 +301,10 @@ class TranscriptInterval(AbstractFeatureInterval):
             if chromosome_relative_coordinates:
                 cds_starts = self.cds._genomic_starts
                 cds_ends = self.cds._genomic_ends
+                cds_frames = [f.name for f in self.cds.frames]
             else:
                 cds_starts, cds_ends = list(zip(*([x.start, x.end] for x in self.chunk_relative_cds_blocks)))
-            cds_frames = [f.name for f in self.cds.frames]
+                cds_frames = [f.name for f in self.cds.chunk_relative_frames]
         else:
             cds_starts = None
             cds_ends = None

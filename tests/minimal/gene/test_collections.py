@@ -600,6 +600,8 @@ class TestAnnotationCollection:
             orig_gene_or_feature = obj.guid_map[gene_or_feature.guid]
             for new_tx_or_feature in gene_or_feature:
                 orig_tx_or_feature = orig_gene_or_feature.guid_map[new_tx_or_feature.guid]
+                if new_tx_or_feature.chunk_relative_location.is_empty:
+                    continue
                 if len(new_tx_or_feature) == new_tx_or_feature.chunk_relative_size:
                     assert new_tx_or_feature.get_spliced_sequence() == orig_tx_or_feature.get_spliced_sequence()
                 else:
@@ -663,6 +665,10 @@ class TestAnnotationCollection:
             orig_gene_or_feature = obj.guid_map[gene_or_feature.guid]
             for new_tx_or_feature in gene_or_feature:
                 orig_tx_or_feature = orig_gene_or_feature.guid_map[new_tx_or_feature.guid]
+                # if there was no overlap between the query coordinates and an isoform (it was entirely intronic)
+                # then the sequence information is inherently lost
+                if new_tx_or_feature.chunk_relative_location.is_empty:
+                    continue
                 if len(new_tx_or_feature) == new_tx_or_feature.chunk_relative_size:
                     assert new_tx_or_feature.get_spliced_sequence() == orig_tx_or_feature.get_spliced_sequence()
                 else:
@@ -856,11 +862,11 @@ class TestAnnotationCollection:
                 assert expected_mrna[tx.transcript_symbol] == str(tx.get_spliced_sequence())
 
     @pytest.mark.parametrize(
-        "start,end,coding_only,completely_within,expected_identifiers",
+        "start,end,coding_only,completely_within,expected_nonempty_identifiers",
         [
             # query removes everything due to completely_within=True
             (21, 22, False, True, set()),
-            # entirely intronic query removes non-overlapping isoforms tx2/feat2
+            # entirely intronic query makes non-overlapping isoforms tx2/feat2/feat1 empty
             (21, 22, False, False, {"tx1"}),
             # tx1 hits 28, feat3 starts at 35, so nothing here
             (28, 35, False, False, set()),
@@ -872,22 +878,36 @@ class TestAnnotationCollection:
             (24, 36, False, False, {"tx1", "tx2", "feat2", "feat3"}),
         ],
     )
-    def test_position_queries_lose_isoforms(
+    def test_position_queries_intronic_queries(
         self,
         start,
         end,
         completely_within,
         coding_only,
-        expected_identifiers,
+        expected_nonempty_identifiers,
     ):
         # test this with different parents to show that the parent doesn't change the outcome
-        for parent in [None, parent_genome, parent_genome_10_49]:
+        for parent in [parent_genome, parent_genome_10_49]:
             obj = self.annot_no_range.to_annotation_collection(parent)
             r = obj.query_by_position(start, end, coding_only, completely_within)
             if len(r) == 0:
-                assert expected_identifiers == set()
+                assert expected_nonempty_identifiers == set()
             else:
-                assert set.union(*(y.identifiers for x in r for y in x)) == expected_identifiers
+                nonempty_identifiers = set()
+                for gene_or_feature in r:
+                    for child in gene_or_feature:
+                        if not child.chunk_relative_location.is_empty:
+                            nonempty_identifiers.update(child.identifiers)
+                assert nonempty_identifiers == expected_nonempty_identifiers
+
+    def test_position_queries_intronic(self):
+        obj = self.annot_no_range.to_annotation_collection(parent_genome)
+        r = obj.query_by_position(21, 22, completely_within=False)
+        for gene in r.genes:
+            for tx in gene.transcripts:
+                if tx.transcript_symbol in ["tx2", "feat2", "feat1"]:
+                    assert tx.chunk_relative_location.is_empty
+                    assert not tx.chromosome_location.is_empty
 
     def test_query_position_exceptions(self):
         obj = self.annot.to_annotation_collection()

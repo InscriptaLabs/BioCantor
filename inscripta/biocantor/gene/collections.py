@@ -55,6 +55,10 @@ class AbstractFeatureIntervalCollection(AbstractInterval, ABC):
         """Iterate over all children of this collection"""
         yield from self.iter_children()
 
+    @property
+    def strand(self) -> Strand:
+        return self.chromosome_location.strand
+
     @abstractmethod
     def iter_children(self) -> Iterable["AbstractInterval"]:
         """Iterate over the children"""
@@ -920,12 +924,9 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
         reduced set of transcripts/features, if those transcripts/features are outside the query range.
         However, if ``expand_location_to_children`` is ``False``, then the child genes/feature collections
         will have location objects that represent the exact bounds of the query, which means that they
-        may be sliced down.
-
-        In this case, it may also be the case that isoforms get dropped from the resulting
-        :class:`AnnotationCollection` if the associated location has a sequence chunk. This will be the case
-        if the interval ``[start, end]`` are entirely intronic for this isoform, because now this isoform
-        has no relationship to the underlying sequence sub-chunk.
+        may be sliced down. If the sliced down coordinates are entirely intronic for any isoform, then
+        this isoform will have an EmptyLocation `chunk_relative_location` member, because it is no longer
+        possible to have a relationship to the location object associated with this collection.
 
         Here is an example (equals are exons, dashes are introns):
 
@@ -1019,22 +1020,7 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
                 continue
 
             # regardless of completely_within flag, first just look for overlaps on the gene/feature collection level
-            elif query_loc.has_overlap(
-                gene_or_feature_collection.chromosome_location, match_strand=False, full_span=True
-            ):
-
-                # Filter features/transcripts in the gene/feature collection for overlapping the range
-                # do not do full-span matching here in order to filter out isoforms that do not overlap the parent
-                valid_children_guids = [
-                    child.guid
-                    for child in gene_or_feature_collection
-                    if coordinate_fn(child.chromosome_location, match_strand=False)
-                ]
-                # if we lost all isoforms, skip this gene entirely now
-                if not valid_children_guids:
-                    continue
-                gene_or_feature_collection = gene_or_feature_collection.query_by_guids(valid_children_guids)
-
+            elif coordinate_fn(gene_or_feature_collection.chromosome_location, match_strand=False, full_span=True):
                 if isinstance(gene_or_feature_collection, FeatureIntervalCollection):
                     features_collections_to_keep.append(gene_or_feature_collection)
                 else:
