@@ -12,13 +12,17 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Added
 - `strict_parent_compare` parameter for binary set theory operations.
-- `AnnotationCollection.query_by_position()` has a new boolean flag `expand_location_to_children` that defaults to False, but if set to True will expand the interval to contain the transcripts. When False, it may be the case that transcripts will hvae their underlying location objects sliced down from their original coordinates. The original coordinates are still retained as integer members.
+- `AnnotationCollection.query_by_position()` has a new boolean flag `expand_location_to_children` that defaults to False, but if set to True 
+will expand the interval to contain the transcripts. When False, it may be the case that transcripts will have their underlying location objects 
+sliced down from their original coordinates. The original coordinates are still retained as integer members. 
+If the query position is entirely intronic for an isoform, this isoform will have a `EmptyLocation` chunk relative location,
+but will still retain a `chromosome_location`.
 
 ### Changed
 - Added a parent-level sequence identifier to the output of `biocantor.io.parser.seq_chunk_to_parent()`.
-- Added a `strand` argument to `biocantor.io.parser.seq_chunk_to_parent()`.
-- `seq_chunk_to_parent()` accepts a `strand` argument that allows for the sequence chunk to be strand-referenced.
-- `Location.parent_to_relative_location` and `Location.location_relative_to` now has a `optimize_blocks` flag that defaults to True. If this flag is False, then these operations will not collapse adjacent or overlapping blocks. 
+- Added a `strand` argument to `biocantor.io.parser.seq_chunk_to_parent()` that allows for the sequence chunk to be strand-referenced.
+- `Location.parent_to_relative_location` and `Location.location_relative_to` now has a `optimize_blocks` flag that defaults to True. 
+If this flag is False, then these operations will not collapse adjacent or overlapping blocks. 
 
 
 ## [0.4.2]
