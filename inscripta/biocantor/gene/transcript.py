@@ -15,7 +15,7 @@ from inscripta.biocantor.exc import (
     InvalidCDSIntervalError,
     NoSuchAncestorException,
 )
-from inscripta.biocantor.gene.biotype import Biotype
+from inscripta.biocantor.gene.biotype import Biotype, UNKNOWN_BIOTYPE
 from inscripta.biocantor.gene.cds import CDSInterval
 from inscripta.biocantor.gene.cds_frame import CDSPhase, CDSFrame
 from inscripta.biocantor.gene.interval import AbstractFeatureInterval, QualifierValue
@@ -657,7 +657,10 @@ class TranscriptInterval(AbstractFeatureInterval):
         for key, val in [
             [BioCantorQualifiers.TRANSCRIPT_ID.value, self.transcript_id],
             [BioCantorQualifiers.TRANSCRIPT_NAME.value, self.transcript_symbol],
-            [BioCantorQualifiers.TRANSCRIPT_TYPE.value, self.transcript_type.name if self.transcript_type else None],
+            [
+                BioCantorQualifiers.TRANSCRIPT_TYPE.value,
+                self.transcript_type.name if self.transcript_type else UNKNOWN_BIOTYPE,
+            ],
             [BioCantorQualifiers.PROTEIN_ID.value, self.protein_id],
         ]:
             if not val:

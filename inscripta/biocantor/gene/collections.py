@@ -25,7 +25,7 @@ from inscripta.biocantor.exc import (
     InvalidQueryError,
     NoSuchAncestorException,
 )
-from inscripta.biocantor.gene.biotype import Biotype
+from inscripta.biocantor.gene.biotype import Biotype, UNKNOWN_BIOTYPE
 from inscripta.biocantor.gene.cds import CDSInterval
 from inscripta.biocantor.gene.cds_frame import CDSPhase
 from inscripta.biocantor.gene.feature import FeatureInterval
@@ -360,7 +360,7 @@ class GeneInterval(AbstractFeatureIntervalCollection):
         for key, val in [
             [BioCantorQualifiers.GENE_ID.value, self.gene_id],
             [BioCantorQualifiers.GENE_NAME.value, self.gene_symbol],
-            [BioCantorQualifiers.GENE_TYPE.value, self.gene_type.name if self.gene_type else None],
+            [BioCantorQualifiers.GENE_TYPE.value, self.gene_type.name if self.gene_type else UNKNOWN_BIOTYPE],
             [BioCantorQualifiers.LOCUS_TAG.value, self.locus_tag],
         ]:
             if not val:
