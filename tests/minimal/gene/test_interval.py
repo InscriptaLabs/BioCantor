@@ -2,10 +2,10 @@
 Test static methods on the base classes in biocantor.gene.interval
 """
 import pytest
+
 from inscripta.biocantor.exc import (
     NoSuchAncestorException,
     NullSequenceException,
-    LocationOverlapException,
     MismatchedParentException,
 )
 from inscripta.biocantor.gene.interval import AbstractInterval
