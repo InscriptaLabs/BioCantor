@@ -13,7 +13,6 @@ from typing import Optional, TextIO, Iterable, Union, Dict, List, Set, Hashable
 
 from inscripta.biocantor.gene.biotype import Biotype
 from inscripta.biocantor.gene.codon import TranslationTable
-from inscripta.biocantor.gene.cds import CDSInterval
 from inscripta.biocantor.gene.collections import AnnotationCollection, GeneInterval, TranscriptInterval
 from inscripta.biocantor.io.genbank.constants import (
     GeneFeatures,

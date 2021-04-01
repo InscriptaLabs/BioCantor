@@ -878,7 +878,7 @@ class TestAnnotationCollection:
             (24, 36, False, False, {"tx1", "tx2", "feat2", "feat3"}),
         ],
     )
-    def test_position_queries_lose_isoforms(
+    def test_position_queries_intronic_queries(
         self,
         start,
         end,
@@ -899,6 +899,15 @@ class TestAnnotationCollection:
                         if not child.chunk_relative_location.is_empty:
                             nonempty_identifiers.update(child.identifiers)
                 assert nonempty_identifiers == expected_nonempty_identifiers
+
+    def test_position_queries_intronic(self):
+        obj = self.annot_no_range.to_annotation_collection(parent_genome)
+        r = obj.query_by_position(21, 22, completely_within=False)
+        for gene in r.genes:
+            for tx in gene.transcripts:
+                if tx.transcript_symbol in ["tx2", "feat2", "feat1"]:
+                    assert tx.chunk_relative_location.is_empty
+                    assert not tx.chromosome_location.is_empty
 
     def test_query_position_exceptions(self):
         obj = self.annot.to_annotation_collection()
