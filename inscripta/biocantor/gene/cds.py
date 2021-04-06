@@ -308,6 +308,11 @@ class CDSInterval(AbstractFeatureInterval):
         chromosome_relative_coordinates: bool = True,
     ) -> Iterable[GFFRow]:
 
+        if not chromosome_relative_coordinates and not self.has_ancestor_of_type(SequenceType.SEQUENCE_CHUNK):
+            raise NoSuchAncestorException(
+                "Cannot export GFF in relative coordinates without a sequence_chunk ancestor."
+            )
+
         qualifiers = self.export_qualifiers(parent_qualifiers)
 
         cds_guid = str(self.guid)

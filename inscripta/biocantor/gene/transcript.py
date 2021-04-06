@@ -696,6 +696,11 @@ class TranscriptInterval(AbstractFeatureInterval):
         if not self.sequence_name:
             raise GFF3MissingSequenceNameError("Must have sequence names to export to GFF3.")
 
+        if not chromosome_relative_coordinates and not self.has_ancestor_of_type(SequenceType.SEQUENCE_CHUNK):
+            raise NoSuchAncestorException(
+                "Cannot export GFF in relative coordinates without a sequence_chunk ancestor."
+            )
+
         qualifiers = self.export_qualifiers(parent_qualifiers)
 
         tx_guid = str(self.guid)

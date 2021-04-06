@@ -985,6 +985,8 @@ class TestAnnotationCollection:
             item.sequence_name = "chr1"
             for subitem in item:
                 subitem.sequence_name = "chr1"
+                if hasattr(subitem, "cds"):
+                    subitem.cds.sequence_name = "chr1"
         with open(test_data_dir / "collection_gff3_export_chromosome_coordinates.gff") as fh:
             assert fh.read() == "\n".join(str(x) for x in obj.to_gff())
 
@@ -996,6 +998,8 @@ class TestAnnotationCollection:
             item.sequence_name = "chr1"
             for subitem in item:
                 subitem.sequence_name = "chr1"
+                if hasattr(subitem, "cds"):
+                    subitem.cds.sequence_name = "chr1"
         with open(test_data_dir / "collection_gff3_export_chunk_relative.gff") as fh:
             assert fh.read() == "\n".join(str(x) for x in obj.to_gff(chromosome_relative_coordinates=False))
 
