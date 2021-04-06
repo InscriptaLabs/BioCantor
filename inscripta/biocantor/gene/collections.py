@@ -1171,6 +1171,10 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
             in order to be able to export to GFF3 in chunk-relative coordinates. However, changing this
             is challenging due to all of the validation that exists to make sure that parents have sequences.
 
+        TODO: This output is not guaranteed to be in proper sort order. If two genes are overlapping, then
+            this will result in GFF3 rows that are gene ordered and not genomic ordered. The wrapper function
+            collection_to_gff3 fixes this for now.
+
         Args:
             chromosome_relative_coordinates: Output GFF in chromosome-relative coordinates? Will raise an exception
                 if there is not a ``sequence_chunk`` ancestor type.

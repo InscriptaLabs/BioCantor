@@ -58,8 +58,12 @@ def collection_to_gff3(
                 file=gff3_handle,
             )
 
+    # TODO: this extra sort step is necessary because AnnotationCollection are not guaranteed to always produce
+    # genomic ordered GFFRow objects. This can happen when two genes overlap.
     for collection in collections:
-        for item in collection.to_gff(chromosome_relative_coordinates=chromosome_relative_coordinates):
+        for item in sorted(
+            collection.to_gff(chromosome_relative_coordinates=chromosome_relative_coordinates), key=lambda x: x.start
+        ):
             print(item, file=gff3_handle)
 
     if add_sequences:
