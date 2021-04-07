@@ -1163,13 +1163,27 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
             parent_or_seq_chunk_parent=seq_chunk_parent,
         )
 
-    def to_gff(self, chromosome_relative_coordinates: bool = True) -> Iterable[GFFRow]:
+    def _unsorted_gff_iter(self, chromosome_relative_coordinates: bool = True) -> Iterable[GFFRow]:
         """Produces iterable of :class:`~biocantor.io.gff3.rows.GFFRow` for this annotation collection and its
         children.
 
-        TODO: It shouldn't be strictly necessary that a sequence is associated with this collection
-            in order to be able to export to GFF3 in chunk-relative coordinates. However, changing this
-            is challenging due to all of the validation that exists to make sure that parents have sequences.
+        The positions of the genes will be ordered by genomic position, but may not be globally position sorted
+        because it could be the case that children gene/features will overlap. This private function
+        exists to provide an iterator to sort in the main ``to_gff()`` function.
+
+        Args:
+            chromosome_relative_coordinates: Output GFF in chromosome-relative coordinates? Will raise an exception
+                if there is not a ``sequence_chunk`` ancestor type.
+
+        Yields:
+            :class:`~biocantor.io.gff3.rows.GFFRow`
+        """
+        for item in self.iter_children():
+            yield from item.to_gff(chromosome_relative_coordinates=chromosome_relative_coordinates)
+
+    def to_gff(self, chromosome_relative_coordinates: bool = True) -> Iterable[GFFRow]:
+        """Produces iterable of :class:`~biocantor.io.gff3.rows.GFFRow` for this annotation collection and its
+        children.
 
         Args:
             chromosome_relative_coordinates: Output GFF in chromosome-relative coordinates? Will raise an exception
@@ -1182,5 +1196,4 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
             NoSuchAncestorException: If ``chromosome_relative_coordinates`` is ``False`` but there is no
             ``sequence_chunk`` ancestor type.
         """
-        for item in self.iter_children():
-            yield from item.to_gff(chromosome_relative_coordinates=chromosome_relative_coordinates)
+        yield from sorted(self._unsorted_gff_iter(chromosome_relative_coordinates), key=lambda x: x.start)
