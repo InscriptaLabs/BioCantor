@@ -83,7 +83,7 @@ def seq_to_parent(
     """Convert a string into a Parent object. This is the intermediate that transfers a BioPython sequence object to
     a BioCantor sequence object.
 
-    NOTE: This sequnece is assumed to be the entire chromosome.
+    NOTE: This sequence is assumed to be the entire chromosome.
 
     Args:
         seq: String of sequence.
@@ -104,6 +104,7 @@ def seq_chunk_to_parent(
     sequence_name: Union[UUID, str],
     start: int,
     end: int,
+    strand: Optional[Strand] = Strand.PLUS,
     alphabet: Optional[Alphabet] = Alphabet.NT_EXTENDED_GAPPED,
 ) -> Parent:
     """Construct a sequence chunk parent from a sequence. This is used when an annotation collection is being
@@ -117,22 +118,25 @@ def seq_chunk_to_parent(
         sequence_name: The name of the sequence.
         start: The genomic start position of this sequence.
         end: The genomic end position of this sequence.
+        strand: The strand this chunk is relative to the genome.
         alphabet: The alphabet the sequence is in.
 
     Returns:
         An instantiated Parent object ready to be passed to a constructor.
     """
+    chunk_id = f"{sequence_name}:{start}-{end}"
     return Parent(
-        id=f"{sequence_name}:{start}-{end}",
+        id=chunk_id,
         sequence=Sequence(
             seq,
             alphabet,
+            id=chunk_id,
             type=SequenceType.SEQUENCE_CHUNK,
             parent=Parent(
                 location=SingleInterval(
                     start,
                     end,
-                    Strand.PLUS,
+                    strand,
                     parent=Parent(id=sequence_name, sequence_type=SequenceType.CHROMOSOME),
                 )
             ),

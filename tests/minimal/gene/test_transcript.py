@@ -7,6 +7,7 @@ from inscripta.biocantor.exc import (
     NoncodingTranscriptError,
     ValidationException,
     NullSequenceException,
+    NoSuchAncestorException,
 )
 from inscripta.biocantor.gene.cds_frame import CDSFrame
 from inscripta.biocantor.gene.transcript import TranscriptInterval
@@ -853,6 +854,12 @@ class TestTranscript:
         tx2 = schema2.to_transcript_interval()
         assert (tx1 == tx2) == is_eq
 
+    def test_equality_different_parents(self):
+        tx1 = e3_spliced.to_transcript_interval(parent_genome2)
+        tx2 = e3_spliced.to_transcript_interval(parent_genome2_1_15)
+        assert tx1 != tx2
+        assert hash(tx1) != hash(tx2)
+
     def test_cds_start_end(self):
         tx = e3_spliced.to_transcript_interval()
         assert tx.is_coding
@@ -991,7 +998,7 @@ class TestTranscriptWithoutModel:
     def test_dict(self, tx):
         tx = TranscriptInterval(**tx)
         tx2 = TranscriptInterval.from_dict(tx.to_dict())
-        assert tx == tx2
+        assert tx.to_dict() == tx2.to_dict()
 
 
 class TestQualifiers:
@@ -1252,3 +1259,89 @@ class TestTranscriptIntervalSequenceSubset:
         tx_chunk = e3_spliced.to_transcript_interval(parent_genome2_1_15)
         tx_chromchunk = tx_chunk.liftover_to_parent_or_seq_chunk_parent(parent_genome2)
         assert str(tx_chromchunk.get_spliced_sequence()) == str(tx_chunk.get_spliced_sequence())
+
+    @pytest.mark.parametrize(
+        "parent",
+        [
+            # standard chromosome
+            Parent(sequence=Sequence("ATACGATCA", Alphabet.NT_EXTENDED_GAPPED, type=SequenceType.CHROMOSOME)),
+            # no type
+            Parent(sequence=Sequence("ATACGATCA", Alphabet.NT_EXTENDED_GAPPED)),
+            # non-standard type
+            Parent(sequence=Sequence("ATACGATCA", Alphabet.NT_EXTENDED_GAPPED, type="nonstandard")),
+        ],
+    )
+    def test_from_location(self, parent):
+        _ = TranscriptInterval.from_location(SingleInterval(0, 9, Strand.PLUS, parent))
+
+    @pytest.mark.parametrize(
+        "parent",
+        [
+            # flat chunk
+            Parent(sequence=Sequence("ATACGATCA", Alphabet.NT_EXTENDED_GAPPED, type=SequenceType.SEQUENCE_CHUNK)),
+            # proper chunk hierarchy
+            Parent(
+                id="test:0-9",
+                sequence=Sequence(
+                    "ATACGATCA",
+                    Alphabet.NT_EXTENDED_GAPPED,
+                    id="test:0-9",
+                    type=SequenceType.SEQUENCE_CHUNK,
+                    parent=Parent(
+                        location=SingleInterval(
+                            0,
+                            9,
+                            Strand.PLUS,
+                            parent=Parent(id="test", sequence_type=SequenceType.CHROMOSOME),
+                        )
+                    ),
+                ),
+            ),
+        ],
+    )
+    def test_from_location_exception(self, parent):
+        with pytest.raises(NoSuchAncestorException):
+            _ = TranscriptInterval.from_location(SingleInterval(0, 9, Strand.PLUS, parent))
+
+    @pytest.mark.parametrize(
+        "parent",
+        [
+            # proper chunk hierarchy
+            Parent(
+                id="test:0-9",
+                sequence=Sequence(
+                    "ATACGATCA",
+                    Alphabet.NT_EXTENDED_GAPPED,
+                    id="test:0-9",
+                    type=SequenceType.SEQUENCE_CHUNK,
+                    parent=Parent(
+                        location=SingleInterval(
+                            0,
+                            9,
+                            Strand.PLUS,
+                            parent=Parent(id="test", sequence_type=SequenceType.CHROMOSOME),
+                        )
+                    ),
+                ),
+            ),
+        ],
+    )
+    def test_from_chunk_relative_location(self, parent):
+        _ = TranscriptInterval.from_chunk_relative_location(SingleInterval(0, 9, Strand.PLUS, parent))
+
+    @pytest.mark.parametrize(
+        "parent",
+        [
+            # flat chunk
+            Parent(sequence=Sequence("ATACGATCA", Alphabet.NT_EXTENDED_GAPPED, type=SequenceType.SEQUENCE_CHUNK)),
+            # standard chromosome
+            Parent(sequence=Sequence("ATACGATCA", Alphabet.NT_EXTENDED_GAPPED, type=SequenceType.CHROMOSOME)),
+            # no type
+            Parent(sequence=Sequence("ATACGATCA", Alphabet.NT_EXTENDED_GAPPED)),
+            # non-standard type
+            Parent(sequence=Sequence("ATACGATCA", Alphabet.NT_EXTENDED_GAPPED, type="nonstandard")),
+        ],
+    )
+    def test_from_chunk_relative_location_exception(self, parent):
+        with pytest.raises(NoSuchAncestorException):
+            _ = TranscriptInterval.from_chunk_relative_location(SingleInterval(0, 9, Strand.PLUS, parent))

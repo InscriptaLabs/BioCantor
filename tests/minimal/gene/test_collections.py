@@ -22,6 +22,7 @@ from inscripta.biocantor.location.strand import Strand
 from inscripta.biocantor.parent.parent import Parent, SequenceType
 from inscripta.biocantor.sequence.alphabet import Alphabet
 from inscripta.biocantor.sequence.sequence import Sequence
+from inscripta.biocantor.io.parser import seq_chunk_to_parent
 
 genome = "TTTTTTTTTTAAGTATTCTTGGACCTAATTAAAAAAAAAAAAAAAAAAACCCCC"
 parent_genome = Parent(
@@ -51,6 +52,87 @@ parent_no_seq = Parent(sequence_type=SequenceType.CHROMOSOME, id="genome")
 parent_nonstandard_type = Parent(sequence_type="SomeOtherType", id="genome")
 parent_nonstandard_type_with_sequence = Parent(
     sequence=Sequence(genome, Alphabet.NT_STRICT), sequence_type="SomeOtherType", id="genome"
+)
+
+genome_rev = "GGGGGTTTTTTTTTTTTTTTTTTTAATTAGGTCCAAGAATACTTAAAAAAAAAA"
+parent_genome_rev = Parent(
+    id="genome_rev",
+    sequence_type=SequenceType.SEQUENCE_CHUNK,
+    strand=None,
+    location=None,
+    sequence=Sequence(
+        data=genome_rev,
+        id="genome_rev",
+        alphabet=Alphabet.NT_EXTENDED_GAPPED,
+        type=SequenceType.SEQUENCE_CHUNK,
+        parent=Parent(
+            id="genome_rev",
+            sequence_type=SequenceType.CHROMOSOME,
+            strand=Strand.MINUS,
+            location=SingleInterval(
+                0,
+                54,
+                Strand.MINUS,
+                parent=Parent(
+                    id="genome_rev",
+                    sequence_type=SequenceType.CHROMOSOME,
+                    strand=Strand.MINUS,
+                    location=SingleInterval(0, 54, Strand.MINUS),
+                    sequence=None,
+                    parent=None,
+                ),
+            ),
+            sequence=None,
+            parent=Parent(
+                id="TestSeq",
+                sequence_type=SequenceType.CHROMOSOME,
+                strand=Strand.MINUS,
+                location=SingleInterval(0, 54, Strand.MINUS, parent=None),
+                sequence=None,
+                parent=None,
+            ),
+        ),
+    ),
+)
+
+parent_genome_rev_5_44 = Parent(
+    id="genome_rev_5_44",
+    sequence_type=SequenceType.SEQUENCE_CHUNK,
+    strand=None,
+    location=None,
+    sequence=Sequence(
+        data=genome_rev[5:44],
+        id="genome_rev_5_44",
+        alphabet=Alphabet.NT_EXTENDED_GAPPED,
+        type=SequenceType.SEQUENCE_CHUNK,
+        parent=Parent(
+            id="genome_rev",
+            sequence_type=SequenceType.CHROMOSOME,
+            strand=Strand.MINUS,
+            location=SingleInterval(
+                10,
+                49,
+                Strand.MINUS,
+                parent=Parent(
+                    id="genome_rev",
+                    sequence_type=SequenceType.CHROMOSOME,
+                    strand=Strand.MINUS,
+                    location=SingleInterval(10, 49, Strand.MINUS),
+                    sequence=None,
+                    parent=None,
+                ),
+            ),
+            sequence=None,
+            parent=Parent(
+                id="TestSeq",
+                sequence_type=SequenceType.CHROMOSOME,
+                strand=Strand.MINUS,
+                location=SingleInterval(10, 49, Strand.MINUS, parent=None),
+                sequence=None,
+                parent=None,
+            ),
+        ),
+    ),
 )
 
 
@@ -187,6 +269,12 @@ class TestGene:
             _ = obj2.get_reference_sequence()
         assert obj0.get_reference_sequence() == obj3.get_reference_sequence()
 
+    def test_equality_different_parents(self):
+        obj1 = self.gene.to_gene_interval(parent_genome_10_49)
+        obj2 = self.gene.to_gene_interval(parent_genome_rev_5_44)
+        assert obj1 != obj2
+        assert hash(obj1) != hash(obj2)
+
 
 class TestFeatureIntervalCollection:
     feat1 = dict(
@@ -257,6 +345,12 @@ class TestFeatureIntervalCollection:
         with pytest.raises(NullSequenceException):
             _ = obj2.get_reference_sequence()
         assert obj0.get_reference_sequence() == obj3.get_reference_sequence()
+
+    def test_equality_different_parents(self):
+        obj1 = self.collection1.to_feature_collection(parent_genome_10_49)
+        obj2 = self.collection1.to_feature_collection(parent_genome_rev_5_44)
+        assert obj1 != obj2
+        assert hash(obj1) != hash(obj2)
 
 
 class TestAnnotationCollection:
@@ -506,6 +600,8 @@ class TestAnnotationCollection:
             orig_gene_or_feature = obj.guid_map[gene_or_feature.guid]
             for new_tx_or_feature in gene_or_feature:
                 orig_tx_or_feature = orig_gene_or_feature.guid_map[new_tx_or_feature.guid]
+                if new_tx_or_feature.chunk_relative_location.is_empty:
+                    continue
                 if len(new_tx_or_feature) == new_tx_or_feature.chunk_relative_size:
                     assert new_tx_or_feature.get_spliced_sequence() == orig_tx_or_feature.get_spliced_sequence()
                 else:
@@ -569,6 +665,10 @@ class TestAnnotationCollection:
             orig_gene_or_feature = obj.guid_map[gene_or_feature.guid]
             for new_tx_or_feature in gene_or_feature:
                 orig_tx_or_feature = orig_gene_or_feature.guid_map[new_tx_or_feature.guid]
+                # if there was no overlap between the query coordinates and an isoform (it was entirely intronic)
+                # then the sequence information is inherently lost
+                if new_tx_or_feature.chunk_relative_location.is_empty:
+                    continue
                 if len(new_tx_or_feature) == new_tx_or_feature.chunk_relative_size:
                     assert new_tx_or_feature.get_spliced_sequence() == orig_tx_or_feature.get_spliced_sequence()
                 else:
@@ -669,7 +769,7 @@ class TestAnnotationCollection:
         assert r._location == expected
 
     @pytest.mark.parametrize(
-        "start,end,coding_only,completely_within,min_start,max_end",
+        "start,end,coding_only,completely_within,expanded_start,expanded_end",
         [
             (12, 13, False, False, 12, 28),
             (12, 15, False, False, 12, 28),
@@ -681,23 +781,93 @@ class TestAnnotationCollection:
         end,
         completely_within,
         coding_only,
-        min_start,
-        max_end,
+        expanded_start,
+        expanded_end,
     ):
         """The span of the AnnotationCollection object is the original query, but the full range
         of the child objects are larger"""
+        obj = self.annot_no_range.to_annotation_collection(parent_genome)
+        r = obj.query_by_position(start, end, coding_only, completely_within, expand_location_to_children=True)
+        assert min(x.chromosome_location.start for x in r) == expanded_start
+        assert max(x.chromosome_location.end for x in r) == expanded_end
+        # without expansion the children are all sliced
+        r2 = obj.query_by_position(start, end, coding_only, completely_within, expand_location_to_children=False)
+        assert min(x.chromosome_location.start for x in r2) == start
+        assert max(x.chromosome_location.end for x in r2) == end
+
+    def test_position_queries_expanded_range_exception(self):
+        """If expand range is true, then an exception is thrown on sequence chunks if they expand beyond the chunk"""
+        obj = self.annot_no_range.to_annotation_collection(parent_genome)
+        # first query by range to produce a chunk-relative collection
+        obj2 = obj.query_by_position(12, 20, completely_within=False)
+        with pytest.raises(InvalidQueryError):
+            _ = obj2.query_by_position(15, 20, expand_location_to_children=True, completely_within=False)
+        # this is fine without range expansion
+        _ = obj2.query_by_position(15, 20, completely_within=False)
+
+        # this is fine without sequence info as well
         obj = self.annot_no_range.to_annotation_collection()
-        r = obj.query_by_position(start, end, coding_only, completely_within)
-        assert min(x.start for x in r) == min_start
-        assert max(x.end for x in r) == max_end
+        obj2 = obj.query_by_position(12, 20, completely_within=False)
+        _ = obj2.query_by_position(15, 20, expand_location_to_children=True, completely_within=False)
 
     @pytest.mark.parametrize(
-        "start,end,coding_only,completely_within,expected_identifiers",
+        "start,end,expected_translations,expected_mrna",
+        [
+            (12, 13, {"tx1": "F", "tx2": "IL"}, {"tx1": "GTATTCTTGGACCTAA", "tx2": "GTATCTTACC"}),
+            (12, 20, {"tx1": "F", "tx2": "IL"}, {"tx1": "GTATTCTTGGACCTAA", "tx2": "GTATCTTACC"}),
+            (12, 25, {"tx1": "F", "tx2": "IL"}, {"tx1": "GTATTCTTGGACCTAA", "tx2": "GTATCTTACC"}),
+        ],
+    )
+    def test_position_queries_expanded_range_translation(
+        self,
+        start,
+        end,
+        expected_translations,
+        expected_mrna,
+    ):
+        """The span of the AnnotationCollection object is the original query, but the full range
+        of the child objects are larger, and so the translation does not change even when the query is supposed to
+        slice down the gene"""
+        obj = self.annot_no_range.to_annotation_collection(parent_genome)
+        r = obj.query_by_position(
+            start, end, coding_only=True, completely_within=False, expand_location_to_children=True
+        )
+        for gene in r.genes:
+            for tx in gene.transcripts:
+                assert expected_translations[tx.transcript_symbol] == str(tx.get_protein_sequence())
+                assert expected_mrna[tx.transcript_symbol] == str(tx.get_spliced_sequence())
+
+    @pytest.mark.parametrize(
+        "start,end,expected_translations,expected_mrna",
+        [
+            (12, 20, {"tx1": "F", "tx2": "I"}, {"tx1": "GTATTCTT", "tx2": "GTATCTT"}),
+            (12, 25, {"tx1": "F", "tx2": "IL"}, {"tx1": "GTATTCTTGGACC", "tx2": "GTATCTTACC"}),
+        ],
+    )
+    def test_position_queries_sliced_range_translation(
+        self,
+        start,
+        end,
+        expected_translations,
+        expected_mrna,
+    ):
+        """The span of the AnnotationCollection object is the original query, but the full range
+        of the child objects are larger, and so the translation does not change even when the query is supposed to
+        slice down the gene"""
+        obj = self.annot_no_range.to_annotation_collection(parent_genome)
+        r = obj.query_by_position(start, end, coding_only=True, completely_within=False)
+        for gene in r.genes:
+            for tx in gene.transcripts:
+                assert expected_translations[tx.transcript_symbol] == str(tx.get_protein_sequence())
+                assert expected_mrna[tx.transcript_symbol] == str(tx.get_spliced_sequence())
+
+    @pytest.mark.parametrize(
+        "start,end,coding_only,completely_within,expected_nonempty_identifiers",
         [
             # query removes everything due to completely_within=True
             (21, 22, False, True, set()),
-            # feat1 and feat3 lost due to no overlap with query
-            (21, 22, False, False, {"feat2", "tx1", "tx2"}),
+            # entirely intronic query makes non-overlapping isoforms tx2/feat2/feat1 empty
+            (21, 22, False, False, {"tx1"}),
             # tx1 hits 28, feat3 starts at 35, so nothing here
             (28, 35, False, False, set()),
             # moving to 36 now retains feat3
@@ -708,20 +878,36 @@ class TestAnnotationCollection:
             (24, 36, False, False, {"tx1", "tx2", "feat2", "feat3"}),
         ],
     )
-    def test_position_queries_lose_isoforms(
+    def test_position_queries_intronic_queries(
         self,
         start,
         end,
         completely_within,
         coding_only,
-        expected_identifiers,
+        expected_nonempty_identifiers,
     ):
-        obj = self.annot_no_range.to_annotation_collection()
-        r = obj.query_by_position(start, end, coding_only, completely_within)
-        if len(r) == 0:
-            assert expected_identifiers == set()
-        else:
-            assert set.union(*(y.identifiers for x in r for y in x)) == expected_identifiers
+        # test this with different parents to show that the parent doesn't change the outcome
+        for parent in [parent_genome, parent_genome_10_49]:
+            obj = self.annot_no_range.to_annotation_collection(parent)
+            r = obj.query_by_position(start, end, coding_only, completely_within)
+            if len(r) == 0:
+                assert expected_nonempty_identifiers == set()
+            else:
+                nonempty_identifiers = set()
+                for gene_or_feature in r:
+                    for child in gene_or_feature:
+                        if not child.chunk_relative_location.is_empty:
+                            nonempty_identifiers.update(child.identifiers)
+                assert nonempty_identifiers == expected_nonempty_identifiers
+
+    def test_position_queries_intronic(self):
+        obj = self.annot_no_range.to_annotation_collection(parent_genome)
+        r = obj.query_by_position(21, 22, completely_within=False)
+        for gene in r.genes:
+            for tx in gene.transcripts:
+                if tx.transcript_symbol in ["tx2", "feat2", "feat1"]:
+                    assert tx.chunk_relative_location.is_empty
+                    assert not tx.chromosome_location.is_empty
 
     def test_query_position_exceptions(self):
         obj = self.annot.to_annotation_collection()
@@ -799,6 +985,8 @@ class TestAnnotationCollection:
             item.sequence_name = "chr1"
             for subitem in item:
                 subitem.sequence_name = "chr1"
+                if hasattr(subitem, "cds"):
+                    subitem.cds.sequence_name = "chr1"
         with open(test_data_dir / "collection_gff3_export_chromosome_coordinates.gff") as fh:
             assert fh.read() == "\n".join(str(x) for x in obj.to_gff())
 
@@ -810,6 +998,8 @@ class TestAnnotationCollection:
             item.sequence_name = "chr1"
             for subitem in item:
                 subitem.sequence_name = "chr1"
+                if hasattr(subitem, "cds"):
+                    subitem.cds.sequence_name = "chr1"
         with open(test_data_dir / "collection_gff3_export_chunk_relative.gff") as fh:
             assert fh.read() == "\n".join(str(x) for x in obj.to_gff(chromosome_relative_coordinates=False))
 
@@ -882,3 +1072,380 @@ class TestAnnotationCollection:
             orig_tx_or_feat = next(orig_gene.iter_children())
             tx_or_feat = next(gene.iter_children())
             assert str(orig_tx_or_feat.get_spliced_sequence()) == str(tx_or_feat.get_spliced_sequence())
+
+    def test_query_by_identifiers_subset(self):
+        model = {
+            "feature_collections": [],
+            "genes": [
+                {
+                    "transcripts": [
+                        {
+                            "exon_starts": [2971596],
+                            "exon_ends": [2972637],
+                            "strand": "PLUS",
+                            "cds_starts": [2971596],
+                            "cds_ends": [2972637],
+                            "cds_frames": ["ZERO"],
+                            "qualifiers": {
+                                "gene": ["tas"],
+                                "locus_tag": ["b2834"],
+                                "gene_synonym": ["ECK2830; JW2802; ygdS"],
+                                "function": ["putative enzyme; Not classified"],
+                                "codon_start": ["1"],
+                                "transl_table": ["11"],
+                                "product": ["putative NADP(H)-dependent aldo-keto reductase"],
+                                "protein_id": ["NP_417311.1"],
+                                "db_xref": [
+                                    "ASAP:ABE-0009298",
+                                    "EcoGene:EG13093",
+                                    "GeneID:947306",
+                                    "UniProtKB/Swiss-Prot:P0A9T4",
+                                ],
+                                "translation": [
+                                    "MQYHRIPHSSLEVSTLGLGTMTFGEQNSEADAHAQLDYAVAQGINLIDVAEMYPVPPRPETQGLTETYVGNWLAKHGSREKLIIASKVSGPSRNNDKGIRPDQALDRKNIREALHDSLKRLQTDYLDLYQVHWPQRPTNCFGKLGYSWTDSAPAVSLLDTLDALAEYQRAGKIRYIGVSNETAFGVMRYLHLADKHDLPRIVTIQNPYSLLNRSFEVGLAEVSQYEGVELLAYSCLGFGTLTGKYLNGAKPAGARNTLFSRFTRYSGEQTQKAVAAYVDIARRHGLDPAQMALAFVRRQPFVASTLLGATTMDQLKTNIESLHLELSEDVLAEIEAVHQVYTYPAP"  # noqa: E501
+                                ],
+                            },
+                            "is_primary_tx": False,
+                            "transcript_id": None,
+                            "protein_id": "NP_417311.1",
+                            "product": "putative NADP(H)-dependent aldo-keto reductase",
+                            "transcript_symbol": "tas",
+                            "transcript_type": "protein_coding",
+                            "sequence_name": "NC_000913.3",
+                            "sequence_guid": None,
+                            "transcript_interval_guid": "cdbed83f-cc17-b945-53df-620890e7e867",
+                            "transcript_guid": None,
+                        }
+                    ],
+                    "gene_id": None,
+                    "gene_symbol": "tas",
+                    "gene_type": "protein_coding",
+                    "locus_tag": "b2834",
+                    "qualifiers": {
+                        "gene": ["tas"],
+                        "locus_tag": ["b2834"],
+                        "gene_synonym": ["ECK2830; JW2802; ygdS"],
+                        "db_xref": ["EcoGene:EG13093", "GeneID:947306"],
+                    },
+                    "sequence_name": "NC_000913.3",
+                    "sequence_guid": None,
+                    "gene_guid": "6b729a41-3316-6cc8-ad99-db1597e4c68a",
+                },
+                {
+                    "transcripts": [
+                        {
+                            "exon_starts": [2972668],
+                            "exon_ends": [2973862],
+                            "strand": "MINUS",
+                            "cds_starts": [2972668],
+                            "cds_ends": [2973862],
+                            "cds_frames": ["ZERO"],
+                            "qualifiers": {
+                                "gene": ["lplT"],
+                                "locus_tag": ["b2835"],
+                                "gene_synonym": ["ECK2831; JW2803; ygeD"],
+                                "function": ["orf; Drug/analog sensitivity"],
+                                "GO_process": ["GO:0042493 - response to drug"],
+                                "note": ["putative resistance proteins"],
+                                "codon_start": ["1"],
+                                "transl_table": ["11"],
+                                "product": ["lysophospholipid transporter"],
+                                "protein_id": ["NP_417312.1"],
+                                "db_xref": [
+                                    "ASAP:ABE-0009300",
+                                    "EcoGene:EG12455",
+                                    "GeneID:947317",
+                                    "UniProtKB/Swiss-Prot:P39196",
+                                ],
+                                "translation": [
+                                    "MSESVHTNTSLWSKGMKAVIVAQFLSAFGDNALLFATLALLKAQFYPEWSQPILQMVFVGAYILFAPFVGQVADSFAKGRVMMFANGLKLLGAASICFGINPFLGYTLVGVGAAAYSPAKYGILGELTTGSKLVKANGLMEASTIAAILLGSVAGGVLADWHVLVALAACALAYGGAVVANIYIPKLAAARPGQSWNLINMTRSFLNACTSLWRNGETRFSLVGTSLFWGAGVTLRFLLVLWVPVALGITDNATPTYLNAMVAIGIVVGAGAAAKLVTLETVSRCMPAGILIGVVVLIFSLQHELLPAYALLMLIGVMGGFFVVPLNALLQERGKKSVGAGNAIAVQNLGENSAMLLMLGIYSLAVMIGIPVVPIGIGFGALFALAITALWIWQRRH"  # noqa: E501
+                                ],
+                            },
+                            "is_primary_tx": False,
+                            "transcript_id": None,
+                            "protein_id": "NP_417312.1",
+                            "product": "lysophospholipid transporter",
+                            "transcript_symbol": "lplT",
+                            "transcript_type": "protein_coding",
+                            "sequence_name": "NC_000913.3",
+                            "sequence_guid": None,
+                            "transcript_interval_guid": "91e4286f-9757-2bb9-1b50-2a42a9c668f0",
+                            "transcript_guid": None,
+                        }
+                    ],
+                    "gene_id": None,
+                    "gene_symbol": "lplT",
+                    "gene_type": "protein_coding",
+                    "locus_tag": "b2835",
+                    "qualifiers": {
+                        "gene": ["lplT"],
+                        "locus_tag": ["b2835"],
+                        "gene_synonym": ["ECK2831; JW2803; ygeD"],
+                        "db_xref": ["EcoGene:EG12455", "GeneID:947317"],
+                    },
+                    "sequence_name": "NC_000913.3",
+                    "sequence_guid": None,
+                    "gene_guid": "52745f9e-9ee8-7a2b-78cf-aa60aec4312b",
+                },
+                {
+                    "transcripts": [
+                        {
+                            "exon_starts": [2973854],
+                            "exon_ends": [2976014],
+                            "strand": "MINUS",
+                            "cds_starts": [2973854],
+                            "cds_ends": [2976014],
+                            "cds_frames": ["ZERO"],
+                            "qualifiers": {
+                                "gene": ["aas"],
+                                "locus_tag": ["b2836"],
+                                "gene_synonym": ["ECK2832; JW2804"],
+                                "EC_number": ["2.3.1.40", "6.2.1.20"],
+                                "function": ["enzyme; Fatty acid and phosphatidic acid biosynthesis"],
+                                "GO_component": [
+                                    "GO:0009274 - peptidoglycan-based cell wall",
+                                    "GO:0019866 - organelle inner membrane",
+                                ],
+                                "GO_process": ["GO:0006464 - protein modification process"],
+                                "note": [
+                                    "2-acyl-glycerophospho-ethanolamine acyltransferase; acyl-acyl-carrier "
+                                    "protein synthetase"
+                                ],
+                                "codon_start": ["1"],
+                                "transl_table": ["11"],
+                                "product": [
+                                    "fused 2-acylglycerophospho-ethanolamine acyl transferase/acyl-acyl carrier "
+                                    "protein synthetase"
+                                ],
+                                "protein_id": ["NP_417313.1"],
+                                "db_xref": [
+                                    "ASAP:ABE-0009302",
+                                    "EcoGene:EG11679",
+                                    "GeneID:947315",
+                                    "UniProtKB/Swiss-Prot:P31119",
+                                ],
+                                "translation": [
+                                    "MLFSFFRNLCRVLYRVRVTGDTQALKGERVLITPNHVSFIDGILLGLFLPVRPVFAVYTSISQQWYMRWLKSFIDFVPLDPTQPMAIKHLVRLVEQGRPVVIFPEGRITTTGSLMKIYDGAGFVAAKSGATVIPVRIEGAELTHFSRLKGLVKRRLFPQITLHILPPTQVAMPDAPRARDRRKIAGEMLHQIMMEARMAVRPRETLYESLLSAMYRFGAGKKCVEDVNFTPDSYRKLLTKTLFVGRILEKYSVEGERIGLMLPNAGISAAVIFGAIARRRMPAMMNYTAGVKGLTSAITAAEIKTIFTSRQFLDKGKLWHLPEQLTQVRWVYLEDLKADVTTADKVWIFAHLLMPRLAQVKQQPEEEALILFTSGSEGHPKGVVHSHKSILANVEQIKTIADFTTNDRFMSALPLFHSFGLTVGLFTPLLTGAEVFLYPSPLHYRIVPELVYDRSCTVLFGTSTFLGHYARFANPYDFYRLRYVVAGAEKLQESTKQLWQDKFGLRILEGYGVTECAPVVSINVPMAAKPGTVGRILPGMDARLLSVPGIEEGGRLQLKGPNIMNGYLRVEKPGVLEVPTAENVRGEMERGWYDTGDIVRFDEQGFVQIQGRAKRFAKIAGEMVSLEMVEQLALGVSPDKVHATAIKSDASKGEALVLFTTDNELTRDKLQQYAREHGVPELAVPRDIRYLKQMPLLGSGKPDFVTLKSWVDEAEQHDE"  # noqa: E501
+                                ],
+                            },
+                            "is_primary_tx": False,
+                            "transcript_id": None,
+                            "protein_id": "NP_417313.1",
+                            "product": "fused 2-acylglycerophospho-ethanolamine acyl transferase/acyl-acyl carrier"
+                            " protein synthetase",
+                            "transcript_symbol": "aas",
+                            "transcript_type": "protein_coding",
+                            "sequence_name": "NC_000913.3",
+                            "sequence_guid": None,
+                            "transcript_interval_guid": "e3189127-52ef-21aa-44c2-25e3ebd7834b",
+                            "transcript_guid": None,
+                        }
+                    ],
+                    "gene_id": None,
+                    "gene_symbol": "aas",
+                    "gene_type": "protein_coding",
+                    "locus_tag": "b2836",
+                    "qualifiers": {
+                        "gene": ["aas"],
+                        "locus_tag": ["b2836"],
+                        "gene_synonym": ["ECK2832; JW2804"],
+                        "db_xref": ["EcoGene:EG11679", "GeneID:947315"],
+                    },
+                    "sequence_name": "NC_000913.3",
+                    "sequence_guid": None,
+                    "gene_guid": "32710663-a671-5b98-b2e5-4d476811a91f",
+                },
+            ],
+            "name": "NC_000913.3",
+            "id": None,
+            "sequence_name": "NC_000913.3",
+            "sequence_guid": None,
+            "sequence_path": None,
+            "qualifiers": {
+                "organism": ["Escherichia coli str. K-12 substr. MG1655"],
+                "mol_type": ["genomic DNA"],
+                "strain": ["K-12"],
+                "sub_strain": ["MG1655"],
+                "db_xref": ["taxon:511145"],
+            },
+            "start": 2972468,
+            "end": 2974062,
+            "completely_within": False,
+        }
+        chunk = seq_chunk_to_parent(
+            "CAAAGGCGAGGCACTGGTGCTTTTCACCACAGATAACGAACTGACGCGCGATAAGTTGCAACAGTATGCCCGCGAGCACGGCGTGCCGGAGCTTGCTGTACC"
+            "GCGCGATATTCGCTATCTGAAACAGATGCCATTACTTGGCAGCGGCAAACCTGACTTTGTCACGTTGAAAAGCTGGGTAGACGAAGCGGAACAACACGATGA"
+            "GTGAGTCAGTGCACACTAACACTTCGTTGTGGTCGAAGGGGATGAAAGCGGTTATCGTGGCGCAGTTTCTCTCTGCGTTTGGCGATAATGCCCTACTGTTTG"
+            "CCACTCTGGCGTTACTGAAAGCGCAGTTCTATCCGGAGTGGAGCCAGCCCATCCTGCAAATGGTGTTTGTAGGTGCTTACATTCTTTTTGCGCCGTTTGTCG"
+            "GGCAGGTGGCGGATAGCTTCGCCAAAGGCCGGGTGATGATGTTTGCCAACGGCCTGAAGCTGCTGGGCGCAGCCAGTATCTGCTTTGGTATCAATCCGTTTC"
+            "TCGGCTATACGCTGGTGGGTGTTGGTGCTGCAGCCTATTCACCGGCGAAATACGGTATTCTCGGCGAATTAACCACGGGTAGTAAGTTAGTGAAAGCTAACG"
+            "GTTTAATGGAAGCTTCTACCATAGCGGCGATTTTGCTCGGTTCCGTAGCCGGTGGTGTGCTGGCTGACTGGCATGTCCTCGTCGCCCTGGCCGCATGCGCAC"
+            "TGGCCTACGGTGGTGCGGTCGTTGCCAATATCTACATTCCCAAACTGGCGGCGGCGCGTCCGGGGCAGTCCTGGAATCTCATCAACATGACCCGCAGTTTCC"
+            "TGAATGCCTGCACCTCGCTATGGCGCAATGGTGAAACGCGTTTTTCGCTGGTGGGCACCAGTTTATTCTGGGGAGCGGGTGTCACGCTGCGTTTCCTGTTGG"
+            "TGCTGTGGGTACCGGTGGCGCTGGGCATTACCGATAACGCTACGCCCACCTATCTCAACGCGATGGTAGCGATTGGTATCGTGGTTGGCGCAGGTGCGGCAG"
+            "CGAAGTTAGTTACGCTGGAAACCGTGTCACGCTGTATGCCAGCCGGGATTTTGATTGGCGTGGTGGTACTGATTTTTTCCCTGCAACACGAGCTGCTGCCAG"
+            "CCTATGCCTTGTTGATGCTGATTGGCGTGATGGGGGGCTTTTTTGTCGTTCCGCTCAATGCGTTGCTACAGGAGCGGGGTAAAAAAAGCGTCGGGGCGGGGA"
+            "ATGCGATTGCAGTACAAAACCTTGGCGAAAACAGCGCCATGTTGTTGATGCTGGGCATTTACTCGCTGGCGGTAATGATAGGCATCCCGGTCGTGCCCATTG"
+            "GCATTGGCTTCGGTGCGCTGTTTGCGCTGGCAATAACGGCGCTGTGGATCTGGCAGCGCCGTCATTAATATTTAACGCCGGTTTTAACCGGCGTTAATCTTA"
+            "TGGTGCCGGATAAGTATAAACCTGATGCACCGCTTCAATTTCAGCTAATACGTCTTCGCTTAACTCCAGATGCAAACTTTCGATGTTAGTTTTCAGCTGATC"
+            "CATCGTGGTTGCGCCCAGCAGAGTGCTGGCAACAAACGGTTGACGGCGTACAAACGCGAGCGCC",
+            strand=Strand.MINUS,
+            sequence_name="'NC_000913.3'",
+            start=2972468,
+            end=2974062,
+            alphabet=Alphabet.NT_EXTENDED,
+        )
+        a = AnnotationCollectionModel.Schema().load(model)
+        aa = a.to_annotation_collection(chunk)
+        assert not aa.query_by_feature_identifiers("lplT").genes[0].transcripts[0].has_in_frame_stop
+
+
+class TestNegative:
+    tx1 = dict(
+        exon_starts=[12],
+        exon_ends=[28],
+        strand=Strand.PLUS.name,
+        cds_starts=[15],
+        cds_ends=[19],
+        cds_frames=[CDSFrame.ZERO.name],
+        transcript_symbol="tx1",
+    )
+    tx2 = dict(
+        exon_starts=[12, 17, 22],
+        exon_ends=[16, 20, 25],
+        strand=Strand.PLUS.name,
+        cds_starts=[14, 17, 22],
+        cds_ends=[16, 20, 23],
+        cds_frames=[CDSFrame.ZERO.name, CDSFrame.TWO.name, CDSFrame.TWO.name],
+        transcript_symbol="tx2",
+    )
+
+    annot = AnnotationCollectionModel.Schema().load(
+        dict(
+            genes=[dict(transcripts=[tx1, tx2], gene_id="gene1")],
+        )
+    )
+
+    tx1_minus = dict(
+        exon_starts=[12],
+        exon_ends=[28],
+        strand=Strand.MINUS.name,
+        cds_starts=[15],
+        cds_ends=[19],
+        cds_frames=[CDSFrame.ZERO.name],
+        transcript_symbol="tx1",
+    )
+    tx2_minus = dict(
+        exon_starts=[12, 17, 22],
+        exon_ends=[16, 20, 25],
+        strand=Strand.MINUS.name,
+        cds_starts=[14, 17, 22],
+        cds_ends=[16, 20, 23],
+        cds_frames=[CDSFrame.ZERO.name, CDSFrame.TWO.name, CDSFrame.TWO.name],
+        transcript_symbol="tx2",
+    )
+
+    annot_minus = AnnotationCollectionModel.Schema().load(
+        dict(
+            genes=[dict(transcripts=[tx1_minus, tx2_minus], gene_id="gene1")],
+        )
+    )
+
+    def test_translate(self):
+        a = self.annot.to_annotation_collection(parent_genome)
+        a_neg = self.annot.to_annotation_collection(parent_genome_rev)
+        assert str(a.genes[0].get_reference_sequence()) == str(a_neg.genes[0].get_reference_sequence())
+        assert str(a.genes[0].get_primary_transcript().get_spliced_sequence()) == str(
+            a_neg.genes[0].get_primary_transcript().get_spliced_sequence()
+        )
+
+    def test_translate_chunk(self):
+        a = self.annot.to_annotation_collection(parent_genome_10_49)
+        a_neg = self.annot.to_annotation_collection(parent_genome_rev_5_44)
+        assert str(a.genes[0].get_reference_sequence()) == str(a_neg.genes[0].get_reference_sequence())
+        assert str(a.genes[0].get_primary_transcript().get_spliced_sequence()) == str(
+            a_neg.genes[0].get_primary_transcript().get_spliced_sequence()
+        )
+
+    def test_translate_neg(self):
+        a = self.annot_minus.to_annotation_collection(parent_genome)
+        a_neg = self.annot_minus.to_annotation_collection(parent_genome_rev)
+        assert str(a.genes[0].get_reference_sequence()) == str(a_neg.genes[0].get_reference_sequence())
+        assert str(a.genes[0].get_primary_transcript().get_spliced_sequence()) == str(
+            a_neg.genes[0].get_primary_transcript().get_spliced_sequence()
+        )
+
+    def test_translate_neg_chunk(self):
+        a = self.annot_minus.to_annotation_collection(parent_genome_10_49)
+        a_neg = self.annot_minus.to_annotation_collection(parent_genome_rev_5_44)
+        assert str(a.genes[0].get_reference_sequence()) == str(a_neg.genes[0].get_reference_sequence())
+        assert str(a.genes[0].get_primary_transcript().get_spliced_sequence()) == str(
+            a_neg.genes[0].get_primary_transcript().get_spliced_sequence()
+        )
+
+    def test_subquery_neg_chunk(self):
+        """Querying by interval still produces valid transcripts"""
+        a_neg = self.annot_minus.to_annotation_collection(parent_genome_rev_5_44)
+        a_neg_subquery = a_neg.query_by_position(12, 28)
+        assert str(a_neg_subquery.genes[0].get_reference_sequence()) == str(a_neg.genes[0].get_reference_sequence())
+        assert str(a_neg.genes[0].get_primary_transcript().get_spliced_sequence()) == str(
+            a_neg_subquery.genes[0].get_primary_transcript().get_spliced_sequence()
+        )
+
+    def test_nested_parents(self):
+        """Querying by interval should be robust to arbitrarily nested parents."""
+        nested_parent = Parent(
+            id="testseq:10-49",
+            sequence_type=SequenceType.SEQUENCE_CHUNK,
+            strand=Strand.PLUS,
+            location=SingleInterval(10, 49, Strand.PLUS),
+            sequence=Sequence(
+                genome,
+                type=SequenceType.SEQUENCE_CHUNK,
+                id="testseq:10-49",
+                alphabet=Alphabet.NT_EXTENDED,
+                parent=Parent(
+                    id="testseq",
+                    sequence_type=SequenceType.CHROMOSOME,
+                    location=SingleInterval(
+                        0,
+                        54,
+                        Strand.PLUS,
+                        parent=Parent(
+                            id="testseq",
+                            sequence_type=SequenceType.CHROMOSOME,
+                            location=SingleInterval(
+                                0,
+                                54,
+                                Strand.PLUS,
+                                parent=Parent(
+                                    id="testseq",
+                                    sequence_type=SequenceType.CHROMOSOME,
+                                    location=SingleInterval(0, 54, Strand.PLUS),
+                                ),
+                            ),
+                        ),
+                    ),
+                ),
+            ),
+        )
+
+        obj = self.annot.to_annotation_collection(nested_parent)
+        assert obj.chromosome_location.parent.id == "testseq"
+
+        ref_obj = self.annot.to_annotation_collection(parent_genome)
+        assert str(obj.genes[0].get_reference_sequence()) == str(ref_obj.genes[0].get_reference_sequence())
+        assert str(obj.genes[0].get_primary_transcript().get_spliced_sequence()) == str(
+            ref_obj.genes[0].get_primary_transcript().get_spliced_sequence()
+        )
+
+        # the below test used to fail before `AnnotationCollection._subset_parent()` understood to look
+        # for the sequence ID on the first chromosome ancestor type.
+        subquery = obj.query_by_position(10, 28, completely_within=False)
+        assert subquery.chromosome_location.parent.id == "testseq"
+
+    def test_equality_different_parents(self):
+        obj1 = self.annot.to_annotation_collection(parent_genome_10_49)
+        obj2 = self.annot.to_annotation_collection(parent_genome_rev_5_44)
+        assert obj1 != obj2
+        assert hash(obj1) != hash(obj2)

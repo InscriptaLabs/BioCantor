@@ -208,16 +208,15 @@ class SingleInterval(Location):
             parent=new_parent,
         )
 
-    def has_overlap(self, other: Location, match_strand: bool = False, full_span: bool = False) -> bool:
+    def has_overlap(
+        self, other: Location, match_strand: bool = False, full_span: bool = False, strict_parent_compare: bool = False
+    ) -> bool:
         """Compares the overlap of this interval to another interval. If ``full_span`` is ``True``,
         then this interval is compared to the full span of the other interval, regardless of type of
         the other interval.
-
-        # Todo: Should this always be 'False'?  If our intervals are on different chromosomes, they can't overlap
-        #   (chr1:100-200 doesn't overlap chr2:150-250) but just because they have different parents doesn't mean
-        #   they can't overlap...
         """
-
+        if strict_parent_compare:
+            ObjectValidation.require_parents_equal_except_location(self.parent, other.parent)
         if self.parent_id != other.parent_id:
             return False
         if self.parent or other.parent:
@@ -264,6 +263,7 @@ class SingleInterval(Location):
         return SingleInterval(self.start + shift, self.end + shift, self.strand, self.parent)
 
     def distance_to(self, other: Location, distance_type: DistanceType = DistanceType.INNER) -> int:
+        ObjectValidation.require_parents_equal_except_location(self.parent, other.parent)
         if distance_type == DistanceType.STARTS:
             return abs(self.start - other.start)
         if distance_type == DistanceType.ENDS:
@@ -284,7 +284,9 @@ class SingleInterval(Location):
             return max(distances)
         raise NotImplementedError(f"Distance type not implemented: {distance_type.value}")
 
-    def intersection(self, other: Location, match_strand: bool = True, full_span: bool = False) -> Location:
+    def intersection(
+        self, other: Location, match_strand: bool = True, full_span: bool = False, strict_parent_compare: bool = False
+    ) -> Location:
         """Intersects this SingleInterval with another Location.
 
         Args:
@@ -294,6 +296,8 @@ class SingleInterval(Location):
                 but relevant if ``other`` is a CompoundInterval.
 
         """
+        if strict_parent_compare:
+            ObjectValidation.require_parents_equal_except_location(self.parent, other.parent)
         if not self.has_overlap(other, match_strand=match_strand, full_span=full_span):
             return EmptyLocation()
         if type(other) is SingleInterval:
@@ -338,7 +342,9 @@ class SingleInterval(Location):
     def union_preserve_overlaps(self, other: "Location") -> "Location":
         return _union_preserve_overlaps(self, other)
 
-    def minus(self, other: Location, match_strand: bool = True) -> Location:
+    def minus(self, other: Location, match_strand: bool = True, strict_parent_compare: bool = False) -> Location:
+        if strict_parent_compare:
+            ObjectValidation.require_parents_equal_except_location(self.parent, other.parent)
         if not self.has_overlap(other, match_strand=match_strand):
             return self
         result_starts = []
@@ -378,8 +384,12 @@ class SingleInterval(Location):
         else:
             return self.extend_absolute(extend_downstream, extend_upstream)
 
-    def _location_relative_to(self, other: Location) -> Location:
-        intersection = other.intersection(self, match_strand=False)
+    def _location_relative_to(
+        self, other: Location, strict_parent_compare: bool = False, optimize_blocks: bool = True
+    ) -> Location:
+        """``optimize_blocks`` is not used here, but is still a keyword argument to ensure a unified
+        API between SingleInterval and CompoundInterval."""
+        intersection = other.intersection(self, match_strand=False, strict_parent_compare=strict_parent_compare)
         rel_pos_1 = other.parent_to_relative_pos(intersection.start)
         rel_pos_2 = other.parent_to_relative_pos(intersection.end - 1)
         rel_start, rel_end = min(rel_pos_1, rel_pos_2), max(rel_pos_1, rel_pos_2) + 1
@@ -638,10 +648,14 @@ class CompoundInterval(Location):
         )
         return intersect_same_strand.reset_strand(relative_strand.relative_to(self.strand))
 
-    def has_overlap(self, other: Location, match_strand: bool = False, full_span: bool = False) -> bool:
+    def has_overlap(
+        self, other: Location, match_strand: bool = False, full_span: bool = False, strict_parent_compare: bool = False
+    ) -> bool:
         """If full_span is ``True``, then the full span of both this location *and* the ``other`` location
         are used for the comparison.
         """
+        if strict_parent_compare:
+            ObjectValidation.require_parents_equal_except_location(self.parent, other.parent)
         if full_span:
             return self._full_span_interval.has_overlap(other, match_strand, full_span=True)
         return any((interval.has_overlap(other, match_strand, full_span=False) for interval in self._single_intervals))
@@ -747,6 +761,7 @@ class CompoundInterval(Location):
         return CompoundInterval(starts, ends, self.strand, self.parent)
 
     def distance_to(self, other: Location, distance_type: DistanceType = DistanceType.INNER) -> int:
+        ObjectValidation.require_parents_equal_except_location(self.parent, other.parent)
         if distance_type == DistanceType.STARTS:
             return abs(self.start - other.start)
         elif distance_type == DistanceType.ENDS:
@@ -765,7 +780,9 @@ class CompoundInterval(Location):
         else:
             raise NotImplementedError(f"Unknown distance type {distance_type.value}")
 
-    def intersection(self, other: Location, match_strand: bool = True, full_span: bool = False) -> Location:
+    def intersection(
+        self, other: Location, match_strand: bool = True, full_span: bool = False, strict_parent_compare: bool = False
+    ) -> Location:
         """Intersects this CompoundInterval with another Location.
 
         Args:
@@ -775,6 +792,8 @@ class CompoundInterval(Location):
                 is performed on the full span.
 
         """
+        if strict_parent_compare:
+            ObjectValidation.require_parents_equal_except_location(self.parent, other.parent)
         if not self.has_overlap(other, match_strand=match_strand, full_span=full_span):
             return EmptyLocation()
         if type(other) is SingleInterval:
@@ -866,7 +885,9 @@ class CompoundInterval(Location):
     def union_preserve_overlaps(self, other: "Location") -> "Location":
         return _union_preserve_overlaps(self, other)
 
-    def minus(self, other: Location, match_strand: bool = True) -> Location:
+    def minus(self, other: Location, match_strand: bool = True, strict_parent_compare: bool = False) -> Location:
+        if strict_parent_compare:
+            ObjectValidation.require_parents_equal_except_location(self.parent, other.parent)
         if not self.has_overlap(other, match_strand=match_strand):
             return self.optimize_blocks()
         result_blocks = []
@@ -899,7 +920,7 @@ class CompoundInterval(Location):
         else:
             return self.extend_absolute(extend_downstream, extend_upstream)
 
-    def _location_relative_to(self, other: Location) -> Location:
+    def _location_relative_to(self, other: Location, optimize_blocks: bool = True) -> Location:
         rel_loc_each_single_interval = [
             other.parent_to_relative_location(block) for block in self.blocks if other.has_overlap(block)
         ]
@@ -910,7 +931,10 @@ class CompoundInterval(Location):
         rel_strand = rel_loc_each_single_interval[0].strand
         rel_parent = rel_loc_each_single_interval[0].parent
         parent = rel_parent.strip_location_info() if rel_parent else None
-        return CompoundInterval(rel_starts, rel_ends, rel_strand, parent).optimize_blocks()
+        if optimize_blocks:
+            return CompoundInterval(rel_starts, rel_ends, rel_strand, parent).optimize_blocks()
+        else:
+            return CompoundInterval(rel_starts, rel_ends, rel_strand, parent)
 
     def merge_overlapping(self) -> Location:
         """If this compound interval is overlapping, merge the overlaps"""
@@ -1016,7 +1040,11 @@ class _EmptyLocation(Location):
     ) -> Location:
         raise EmptyLocationException
 
-    def has_overlap(self, other: Location, match_strand: bool = False, full_span: bool = False) -> bool:
+    def has_overlap(
+        self, other: Location, match_strand: bool = False, full_span: bool = False, strict_parent_compare: bool = False
+    ) -> bool:
+        if strict_parent_compare:
+            ObjectValidation.require_parents_equal_except_location(self.parent, other.parent)
         return False
 
     def reverse(self) -> Location:
@@ -1034,16 +1062,20 @@ class _EmptyLocation(Location):
     def shift_position(self, shift: int) -> Location:
         raise EmptyLocationException
 
-    def location_relative_to(self, other: Location) -> Location:
+    def location_relative_to(self, other: Location, optimize_blocks: bool = True) -> Location:
         return self
 
-    def _location_relative_to(self, other: Location) -> Location:
+    def _location_relative_to(self, other: Location, optimize_blocks: bool = True) -> Location:
         return self
 
     def distance_to(self, other: Location, distance_type: DistanceType = DistanceType.INNER) -> int:
         raise EmptyLocationException
 
-    def intersection(self, other: Location, match_strand: bool = True, full_span: bool = False) -> Location:
+    def intersection(
+        self, other: Location, match_strand: bool = True, full_span: bool = False, strict_parent_compare: bool = False
+    ) -> Location:
+        if strict_parent_compare:
+            ObjectValidation.require_parents_equal_except_location(self.parent, other.parent)
         return self
 
     def union(self, other: Location) -> Location:
@@ -1052,7 +1084,9 @@ class _EmptyLocation(Location):
     def union_preserve_overlaps(self, other: Location) -> Location:
         raise EmptyLocationException
 
-    def minus(self, other: Location, match_strand: bool = True) -> Location:
+    def minus(self, other: Location, match_strand: bool = True, strict_parent_compare: bool = False) -> Location:
+        if strict_parent_compare:
+            ObjectValidation.require_parents_equal_except_location(self.parent, other.parent)
         return self
 
     def extend_absolute(self, extend_start: int, extend_end: int) -> Location:

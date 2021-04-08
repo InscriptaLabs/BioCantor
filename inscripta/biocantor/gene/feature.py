@@ -51,6 +51,8 @@ class FeatureInterval(AbstractFeatureInterval):
         self._genomic_ends = interval_ends
         self.start = self.genomic_start = interval_starts[0]
         self.end = self.genomic_end = interval_ends[-1]
+        self._strand = strand
+        self._parent_or_seq_chunk_parent = parent_or_seq_chunk_parent
         self.sequence_guid = sequence_guid
         self.sequence_name = sequence_name
         self.feature_types = set(feature_types) if feature_types else set()  # stored as a set of types

@@ -1,6 +1,8 @@
 """
 Prove that we can handle -1 frameshifts properly when modeled in the input data.
 """
+import pytest
+from inscripta.biocantor.exc import MismatchedFrameException
 from inscripta.biocantor.io.gff3.parser import parse_gff3_embedded_fasta
 from inscripta.biocantor.io.genbank.parser import parse_genbank
 from inscripta.biocantor.io.parser import ParsedAnnotationRecord
@@ -30,19 +32,15 @@ class TestParseFrameshifts:
         )
 
     def test_broken_frameshift(self, test_data_dir):
-        """If I merge the transcript, things go bad"""
+        """If I merge the transcript, the frames list no longer matches the location and an exception is raised."""
         gbk = test_data_dir / "insO_frameshift.gbk"
         with open(gbk, "r") as fh:
             gbk_rec = list(ParsedAnnotationRecord.parsed_annotation_records_to_model(parse_genbank(fh)))[0]
 
         cds = gbk_rec.genes[0].get_primary_transcript().cds
         cds._location = cds._location.merge_overlapping()
-        assert str(cds.translate()) == (
-            "MKKRNFSAEFKRESAQLVVDQKYTVADAAKAMDVGLSTMTRWVKQLRDERQGKTPKASPITPEQIEIRKLRKKLQRIEMENEILKKNRPEKPDGRRAVLR"
-            "SQVLELHGISHGSAGARSIATMATRRGYQMGRWLAGRLMKELGLVSCQQPTHRYKRGGHEHVAIPNYLERQFAVTEPNQVWCGDVTYIWTGKRWAYLAVV"
-            "LDLFARKPVGWAMSFSPDSRLTMKALEMAWETRGKPVGVMFQAIKAVIIRAGSSGSYCGDTGSGRV*VGVETAGITAQWSASSGV*RTNGCQRRAM*ASAM"
-            "QLTQ*RTISLDITAH*DRTNIMVGYHQTNQKTDTGKTLTRRPVLV"
-        )
+        with pytest.raises(MismatchedFrameException):
+            _ = cds.translate()
 
     def test_parse_peg10(self, test_data_dir):
         """PEG10 is a human gene with a -1 frameshift"""

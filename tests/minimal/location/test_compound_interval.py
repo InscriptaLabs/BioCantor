@@ -459,6 +459,31 @@ class TestCompoundInterval:
     @pytest.mark.parametrize(
         "location,parent_location,expected",
         [
+            # overlapping
+            (
+                CompoundInterval([0, 5], [3, 10], Strand.PLUS, parent="parent"),
+                SingleInterval(5, 7, Strand.MINUS, parent="parent"),
+                SingleInterval(3, 5, Strand.MINUS),
+            ),
+            # adjacent
+            (
+                CompoundInterval([0, 5], [5, 10], Strand.PLUS, parent="parent"),
+                SingleInterval(5, 7, Strand.MINUS, parent="parent"),
+                SingleInterval(5, 7, Strand.MINUS),
+            ),
+        ],
+    )
+    def test_parent_to_relative_location_single_interval_no_optimize(self, location, parent_location, expected):
+        """Since this is a SingleInterval, optimize_blocks does nothing here"""
+        assert (
+            location.parent_to_relative_location(parent_location, optimize_blocks=False)
+            == location.parent_to_relative_location(parent_location)
+            == expected
+        )
+
+    @pytest.mark.parametrize(
+        "location,parent_location,expected",
+        [
             # Both have parent
             (
                 CompoundInterval([0, 10], [5, 15], Strand.PLUS, parent="parent"),
@@ -493,6 +518,38 @@ class TestCompoundInterval:
     )
     def test_parent_to_relative_location_compound_interval(self, location, parent_location, expected):
         assert location.parent_to_relative_location(parent_location) == expected
+
+    @pytest.mark.parametrize(
+        "location,parent_location,expected",
+        [
+            # location overlaps
+            (
+                CompoundInterval([0, 5], [10, 20], Strand.PLUS),
+                CompoundInterval([5, 20], [12, 30], Strand.PLUS),
+                CompoundInterval([5], [17], Strand.PLUS),
+            ),
+            # parent location overlaps
+            (
+                CompoundInterval([5, 20], [12, 30], Strand.PLUS),
+                CompoundInterval([0, 5], [10, 20], Strand.PLUS),
+                CompoundInterval([0, 0], [5, 7], Strand.PLUS),
+            ),
+            # parent location has adjacent block
+            (
+                CompoundInterval([0, 10], [5, 20], Strand.PLUS),
+                CompoundInterval([0, 10], [10, 20], Strand.PLUS),
+                CompoundInterval([0, 5], [5, 15], Strand.PLUS),
+            ),
+            # location has adjacent block
+            (
+                CompoundInterval([0, 10], [10, 20], Strand.PLUS),
+                CompoundInterval([0, 10], [5, 20], Strand.PLUS),
+                CompoundInterval([0, 10], [5, 20], Strand.PLUS),
+            ),
+        ],
+    )
+    def test_parent_to_relative_location_compound_interval_no_optimize(self, location, parent_location, expected):
+        assert location.parent_to_relative_location(parent_location, optimize_blocks=False) == expected
 
     @pytest.mark.parametrize(
         "location,parent_location,expected_exception",
@@ -884,6 +941,12 @@ class TestCompoundInterval:
     def test_has_overlap(self, location, other, match_strand, expected):
         assert location.has_overlap(other, match_strand) is expected
         assert other.has_overlap(location, match_strand) is expected
+
+    def test_has_overlap_error(self):
+        with pytest.raises(MismatchedParentException):
+            CompoundInterval([0], [1], Strand.PLUS, parent="seq1").has_overlap(
+                SingleInterval(0, 1, Strand.PLUS, parent="seq2"), strict_parent_compare=True
+            )
 
     @pytest.mark.parametrize(
         "location,expected",
@@ -2395,6 +2458,12 @@ class TestCompoundInterval:
     def test_intersection_single_interval(self, location1, location2, match_strand, expected):
         assert location1.intersection(location2, match_strand) == expected
 
+    def test_intersection_error(self):
+        with pytest.raises(MismatchedParentException):
+            CompoundInterval([0], [1], Strand.PLUS, parent="seq1").intersection(
+                SingleInterval(0, 1, Strand.PLUS, parent="seq2"), strict_parent_compare=True
+            )
+
     @pytest.mark.parametrize(
         "location1,location2,match_strand,expected",
         [
@@ -2613,6 +2682,12 @@ class TestCompoundInterval:
     )
     def test_minus_compound_interval(self, location1, location2, match_strand, expected):
         assert location1.minus(location2, match_strand) == expected
+
+    def test_minus_error(self):
+        with pytest.raises(MismatchedParentException):
+            CompoundInterval([0], [1], Strand.PLUS, parent="seq1").minus(
+                SingleInterval(0, 1, Strand.PLUS, parent="seq2"), strict_parent_compare=True
+            )
 
     @pytest.mark.parametrize(
         "location,extend_left,extend_right,expected",
@@ -2839,6 +2914,12 @@ class TestCompoundInterval:
     )
     def test_contains_compound_interval(self, location1, location2, match_strand, expected):
         assert location1.contains(location2, match_strand) is expected
+
+    def test_contains_error(self):
+        with pytest.raises(MismatchedParentException):
+            CompoundInterval([0], [1], Strand.PLUS, parent="seq1").contains(
+                SingleInterval(0, 1, Strand.PLUS, parent="seq2"), strict_parent_compare=True
+            )
 
     @pytest.mark.parametrize(
         "single_interval,compound_interval,expected",

@@ -1,10 +1,15 @@
-from itertools import count
+from itertools import count, zip_longest
 from typing import Iterator, List, Union, Optional, Dict, Hashable, Any, Iterable, Set
 from uuid import UUID
 
 from methodtools import lru_cache
 
-from inscripta.biocantor.exc import InvalidCDSIntervalError
+from inscripta.biocantor.exc import (
+    InvalidCDSIntervalError,
+    NoSuchAncestorException,
+    LocationOverlapException,
+    MismatchedFrameException,
+)
 from inscripta.biocantor.gene.cds_frame import CDSPhase, CDSFrame
 from inscripta.biocantor.gene.codon import Codon, TranslationTable
 from inscripta.biocantor.gene.interval import AbstractFeatureInterval, QualifierValue
@@ -13,7 +18,7 @@ from inscripta.biocantor.io.gff3.constants import GFF_SOURCE, NULL_COLUMN, BioCa
 from inscripta.biocantor.io.gff3.rows import GFFAttributes, GFFRow
 from inscripta.biocantor.location.location import Location, Strand
 from inscripta.biocantor.location.location_impl import SingleInterval, CompoundInterval
-from inscripta.biocantor.parent.parent import Parent
+from inscripta.biocantor.parent.parent import Parent, SequenceType
 from inscripta.biocantor.sequence import Sequence
 from inscripta.biocantor.sequence.alphabet import Alphabet
 from inscripta.biocantor.util.hashing import digest_object
@@ -26,6 +31,7 @@ class CDSInterval(AbstractFeatureInterval):
     information to a Location object, and adds an understanding of codons, codon iteration, and translation.
     """
 
+    frames = []
     _identifiers = ["protein_id", "product"]
 
     def __init__(
@@ -48,25 +54,27 @@ class CDSInterval(AbstractFeatureInterval):
         self._genomic_ends = cds_ends
         self.start = cds_starts[0]
         self.end = cds_ends[-1]
+        self._strand = strand
+        self._parent_or_seq_chunk_parent = parent_or_seq_chunk_parent
         self.sequence_guid = sequence_guid
         self.sequence_name = sequence_name
         self.product = product
         self.protein_id = protein_id
         self._import_qualifiers_from_list(qualifiers)
 
-        if len(frames_or_phases) != self.num_blocks:
-            raise InvalidCDSIntervalError("Number of frame or phase entries must match number of exons")
+        if len(frames_or_phases) != len(self._genomic_starts):
+            raise MismatchedFrameException("Number of frame or phase entries must match number of exons")
 
-        if len(self._location) == 0:
+        if len(self.chromosome_location) == 0:
             raise InvalidCDSIntervalError("Cannot have an empty CDS interval")
 
         # only allow either all CDSFrame or all CDSPhase
         is_frame = isinstance(frames_or_phases[0], CDSFrame)
         for frame_or_phase in frames_or_phases[1:]:
             if is_frame and isinstance(frame_or_phase, CDSPhase):
-                raise InvalidCDSIntervalError("Cannot mix frame and phase")
+                raise MismatchedFrameException("Cannot mix frame and phase")
             elif not is_frame and isinstance(frame_or_phase, CDSFrame):
-                raise InvalidCDSIntervalError("Cannot mix frame and phase")
+                raise MismatchedFrameException("Cannot mix frame and phase")
 
         if is_frame:
             self.frames = frames_or_phases
@@ -103,6 +111,45 @@ class CDSInterval(AbstractFeatureInterval):
     def name(self) -> str:
         return self.product
 
+    @lru_cache(maxsize=1)
+    @property
+    def chunk_relative_frames(self) -> List[CDSFrame]:
+        """
+        It may be the case that the chunk relative location of this CDSInterval object is a subset
+        of the full chromosomal location. In this case, the frames list needs to be appropriately
+        subsetted to the correct set of frame entries.
+
+        Returns:
+            A list of CDSFrame entries that overlap the chunk relative location.
+        """
+        frames = []
+        for genomic_start, genomic_end, frame in zip(self._genomic_starts, self._genomic_ends, self.frames):
+            genomic_exon = SingleInterval(
+                genomic_start, genomic_end, Strand.PLUS, parent=self.chromosome_location.parent
+            )
+            # chromosome location has overlapping blocks merged, so that the intersection always has one block
+            # this is OK to do here since the original genomic intervals retain the overlapping information
+            if isinstance(self.chromosome_location, SingleInterval):
+                chrom_loc = self.chromosome_location
+            elif isinstance(self.chromosome_location, CompoundInterval):
+                chrom_loc = self.chromosome_location.optimize_and_combine_blocks()
+            else:
+                return frames
+            intersection = genomic_exon.intersection(chrom_loc, match_strand=False)
+
+            if intersection.is_empty:
+                continue
+            elif intersection.num_blocks != 1:
+                raise LocationOverlapException("Found overlapping blocks after block optimization")
+            elif len(intersection) == len(genomic_exon):
+                frames.append(frame)
+            else:
+                # shift frame forwards by the amount the exon was sliced from the left
+                shift = intersection.start - genomic_exon.start
+                new_frame = frame.shift(-shift)
+                frames.append(new_frame)
+        return frames
+
     def to_dict(self, chromosome_relative_coordinates: bool = True) -> Dict[str, Any]:
         """
         Convert this CDS to a dictionary representation. Note that the dictionary representation can only
@@ -110,18 +157,17 @@ class CDSInterval(AbstractFeatureInterval):
         Args:
             chromosome_relative_coordinates: Optional flag to export the interval in chromosome relative
                 or chunk-relative coordinates.
-                TODO: This cannot be set to False until the ability to subset the CDSFrames list is implemented.
 
         Returns:
              A dictionary representation that can be passed to :meth:`CDSInterval.from_dict()`
         """
-        cds_frames = [f.name for f in self.frames]
-
         if chromosome_relative_coordinates:
             cds_starts = self._genomic_starts
             cds_ends = self._genomic_ends
+            cds_frames = [f.name for f in self.frames]
         else:
-            raise NotImplementedError
+            cds_starts, cds_ends = list(zip(*([x.start, x.end] for x in self.chunk_relative_blocks)))
+            cds_frames = [f.name for f in self.chunk_relative_frames]
 
         return dict(
             cds_starts=cds_starts,
@@ -155,6 +201,7 @@ class CDSInterval(AbstractFeatureInterval):
             sequence_guid=vals["sequence_guid"],
             protein_id=vals["protein_id"],
             product=vals["product"],
+            parent_or_seq_chunk_parent=parent_or_seq_chunk_parent,
         )
 
     @staticmethod
@@ -170,6 +217,11 @@ class CDSInterval(AbstractFeatureInterval):
     ) -> "CDSInterval":
         """A convenience function that allows for construction of a :class:`CDSInterval` from a location object,
         a list of CDSFrames or CDSPhase, and optional metadata."""
+        if location.has_ancestor_of_type(SequenceType.SEQUENCE_CHUNK):
+            raise NoSuchAncestorException(
+                "Cannot call from_location with a chunk-relative location. Use from_chunk_relative_location()."
+            )
+
         return CDSInterval(
             cds_starts=[x.start for x in location.blocks],
             cds_ends=[x.end for x in location.blocks],
@@ -215,11 +267,14 @@ class CDSInterval(AbstractFeatureInterval):
             loc.lift_over_to_first_ancestor_of_type("chromosome")
 
         """
-        chromosome_location = location.lift_over_to_first_ancestor_of_type("chromosome")
+        if not location.has_ancestor_of_type(SequenceType.SEQUENCE_CHUNK):
+            raise NoSuchAncestorException("Must have a sequence chunk in the parent hierarchy.")
+
+        chromosome_location = location.lift_over_to_first_ancestor_of_type(SequenceType.CHROMOSOME)
         return CDSInterval(
             cds_starts=[x.start for x in chromosome_location.blocks],
             cds_ends=[x.end for x in chromosome_location.blocks],
-            strand=location.strand,
+            strand=chromosome_location.strand,
             frames_or_phases=cds_frames,
             sequence_guid=sequence_guid,
             sequence_name=sequence_name,
@@ -253,16 +308,23 @@ class CDSInterval(AbstractFeatureInterval):
         chromosome_relative_coordinates: bool = True,
     ) -> Iterable[GFFRow]:
 
+        if not chromosome_relative_coordinates and not self.has_ancestor_of_type(SequenceType.SEQUENCE_CHUNK):
+            raise NoSuchAncestorException(
+                "Cannot export GFF in relative coordinates without a sequence_chunk ancestor."
+            )
+
         qualifiers = self.export_qualifiers(parent_qualifiers)
 
         cds_guid = str(self.guid)
 
         if chromosome_relative_coordinates:
             cds_blocks = zip(self._genomic_starts, self._genomic_ends)
+            frames = self.frames
         else:
             cds_blocks = [[x.start, x.end] for x in self.chunk_relative_blocks]
+            frames = self.chunk_relative_frames
 
-        for i, block, frame in zip(count(1), cds_blocks, self.frames):
+        for i, block, frame in zip(count(1), cds_blocks, frames):
             start, end = block
             attributes = GFFAttributes(
                 id=f"{cds_guid}-{i}",
@@ -305,15 +367,21 @@ class CDSInterval(AbstractFeatureInterval):
         c = Codon(seq[-3:].sequence.upper())
         return c.is_stop_codon
 
-    def frame_iter(self) -> Iterator[CDSFrame]:
-        """Iterate over frames taking strand into account"""
+    def frame_iter(self, chunk_relative_frames: bool = True) -> Iterator[CDSFrame]:
+        """Iterate over frames taking strand into account.
+
+        If ``chunk_relative_frames`` is ``True``, then this iterator will only iterate over frames that
+        overlap the relative chunk. These frames will potentially be reduced in quantity, and also shifted to handle
+        exons that are now partial exons.
+        """
+        frames = self.frames if chunk_relative_frames is False else self.chunk_relative_frames
         if (
             self.chunk_relative_location.strand == Strand.PLUS
             or self.chunk_relative_location.strand == Strand.UNSTRANDED
         ):
-            yield from self.frames
+            yield from frames
         else:
-            yield from reversed(self.frames)
+            yield from reversed(frames)
 
     def exon_iter(self) -> Iterator[SingleInterval]:
         """Iterate over exons in transcription direction"""
@@ -390,7 +458,12 @@ class CDSInterval(AbstractFeatureInterval):
         next_frame = CDSFrame.ZERO
         cleaned_rel_starts = []
         cleaned_rel_ends = []
-        for exon, frame in zip(self.exon_iter(), self.frame_iter()):
+        # zip_longest is used here to ensure that the two iterators are always actually in sync
+        for exon, frame in zip_longest(self.exon_iter(), self.frame_iter()):
+
+            if not exon or not frame:
+                raise MismatchedFrameException("Frame iterator is not in sync with exon iterator")
+
             start_to_rel = self._location.parent_to_relative_pos(exon.start)
             end_to_rel_inclusive = self._location.parent_to_relative_pos(exon.end - 1)
             rel_start = min(start_to_rel, end_to_rel_inclusive)
@@ -430,7 +503,7 @@ class CDSInterval(AbstractFeatureInterval):
         Returns amino acid sequence of this CDS. If truncate_at_in_frame_stop is ``True``,
         this will stop at the first in-frame stop.
         """
-        aa_seq_str = "".join([codon.translate() for codon in self.scan_codons(truncate_at_in_frame_stop)])
+        aa_seq_str = "".join((codon.translate() for codon in self.scan_codons(truncate_at_in_frame_stop)))
         return Sequence(aa_seq_str, Alphabet.AA)
 
     @lru_cache(maxsize=1)

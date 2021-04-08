@@ -13,8 +13,9 @@ from inscripta.biocantor.exc import (
     LocationOverlapException,
     NoncodingTranscriptError,
     InvalidCDSIntervalError,
+    NoSuchAncestorException,
 )
-from inscripta.biocantor.gene.biotype import Biotype
+from inscripta.biocantor.gene.biotype import Biotype, UNKNOWN_BIOTYPE
 from inscripta.biocantor.gene.cds import CDSInterval
 from inscripta.biocantor.gene.cds_frame import CDSPhase, CDSFrame
 from inscripta.biocantor.gene.interval import AbstractFeatureInterval, QualifierValue
@@ -25,11 +26,10 @@ from inscripta.biocantor.io.gff3.rows import GFFAttributes, GFFRow
 from inscripta.biocantor.location.location import Location
 from inscripta.biocantor.location.location_impl import SingleInterval, EmptyLocation
 from inscripta.biocantor.location.strand import Strand
-from inscripta.biocantor.parent.parent import Parent
+from inscripta.biocantor.parent.parent import Parent, SequenceType
 from inscripta.biocantor.sequence.sequence import Sequence
 from inscripta.biocantor.util.bins import bins
 from inscripta.biocantor.util.hashing import digest_object
-from inscripta.biocantor.util.object_validation import ObjectValidation
 
 
 class TranscriptInterval(AbstractFeatureInterval):
@@ -112,13 +112,10 @@ class TranscriptInterval(AbstractFeatureInterval):
         else:
             self.cds = self._cds_frames = self._cds_start = self._cds_end = None
 
-        if self._location.parent and self.cds:
-            ObjectValidation.require_locations_have_same_nonempty_parent(
-                self._location, self.cds.chunk_relative_location
-            )
-
         self._genomic_starts = exon_starts
         self._genomic_ends = exon_ends
+        self._strand = strand
+        self._parent_or_seq_chunk_parent = parent_or_seq_chunk_parent
         self.start = self.genomic_start = exon_starts[0]
         self.end = self.genomic_end = exon_ends[-1]
 
@@ -304,9 +301,10 @@ class TranscriptInterval(AbstractFeatureInterval):
             if chromosome_relative_coordinates:
                 cds_starts = self.cds._genomic_starts
                 cds_ends = self.cds._genomic_ends
+                cds_frames = [f.name for f in self.cds.frames]
             else:
                 cds_starts, cds_ends = list(zip(*([x.start, x.end] for x in self.chunk_relative_cds_blocks)))
-            cds_frames = [f.name for f in self.cds.frames]
+                cds_frames = [f.name for f in self.cds.chunk_relative_frames]
         else:
             cds_starts = None
             cds_ends = None
@@ -372,6 +370,11 @@ class TranscriptInterval(AbstractFeatureInterval):
         guid: Optional[UUID] = None,
         transcript_guid: Optional[UUID] = None,
     ) -> "TranscriptInterval":
+        if location.has_ancestor_of_type(SequenceType.SEQUENCE_CHUNK):
+            raise NoSuchAncestorException(
+                "Cannot call from_location with a chunk-relative location. Use from_chunk_relative_location()."
+            )
+
         return TranscriptInterval(
             exon_starts=[x.start for x in location.blocks],
             exon_ends=[x.end for x in location.blocks],
@@ -429,14 +432,20 @@ class TranscriptInterval(AbstractFeatureInterval):
             loc.lift_over_to_first_ancestor_of_type("chromosome")
 
         """
+        if not location.has_ancestor_of_type(SequenceType.SEQUENCE_CHUNK):
+            raise NoSuchAncestorException("Must have a sequence chunk in the parent hierarchy.")
 
         chromosome_location = location.lift_over_to_first_ancestor_of_type("chromosome")
+
         if cds:
+            if not cds.chunk_relative_location.has_ancestor_of_type(SequenceType.SEQUENCE_CHUNK):
+                raise NoSuchAncestorException("Must have a sequence chunk in the parent hierarchy.")
             cds_chromosome_location = cds.chunk_relative_location.lift_over_to_first_ancestor_of_type("chromosome")
+
         return TranscriptInterval(
             exon_starts=[x.start for x in chromosome_location.blocks],
             exon_ends=[x.end for x in chromosome_location.blocks],
-            strand=location.strand,
+            strand=chromosome_location.strand,
             cds_starts=[x.start for x in cds_chromosome_location.blocks] if cds else None,
             cds_ends=[x.end for x in cds_chromosome_location.blocks] if cds else None,
             cds_frames=cds.frames if cds else None,
@@ -645,7 +654,10 @@ class TranscriptInterval(AbstractFeatureInterval):
         for key, val in [
             [BioCantorQualifiers.TRANSCRIPT_ID.value, self.transcript_id],
             [BioCantorQualifiers.TRANSCRIPT_NAME.value, self.transcript_symbol],
-            [BioCantorQualifiers.TRANSCRIPT_TYPE.value, self.transcript_type.name if self.transcript_type else None],
+            [
+                BioCantorQualifiers.TRANSCRIPT_TYPE.value,
+                self.transcript_type.name if self.transcript_type else UNKNOWN_BIOTYPE,
+            ],
             [BioCantorQualifiers.PROTEIN_ID.value, self.protein_id],
         ]:
             if not val:
@@ -683,6 +695,11 @@ class TranscriptInterval(AbstractFeatureInterval):
 
         if not self.sequence_name:
             raise GFF3MissingSequenceNameError("Must have sequence names to export to GFF3.")
+
+        if not chromosome_relative_coordinates and not self.has_ancestor_of_type(SequenceType.SEQUENCE_CHUNK):
+            raise NoSuchAncestorException(
+                "Cannot export GFF in relative coordinates without a sequence_chunk ancestor."
+            )
 
         qualifiers = self.export_qualifiers(parent_qualifiers)
 

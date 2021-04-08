@@ -8,11 +8,16 @@ from uuid import UUID
 
 from methodtools import lru_cache
 
-from inscripta.biocantor.exc import ValidationException, NullSequenceException, NoSuchAncestorException
+from inscripta.biocantor.exc import (
+    ValidationException,
+    NullSequenceException,
+    NoSuchAncestorException,
+    LocationOverlapException,
+)
 from inscripta.biocantor.io.bed import RGB, BED12
 from inscripta.biocantor.io.gff3.rows import GFFRow
 from inscripta.biocantor.location import Location, Strand
-from inscripta.biocantor.location.location_impl import SingleInterval, CompoundInterval
+from inscripta.biocantor.location.location_impl import SingleInterval, CompoundInterval, EmptyLocation
 from inscripta.biocantor.parent import Parent, SequenceType
 from inscripta.biocantor.sequence import Sequence
 from inscripta.biocantor.util.object_validation import ObjectValidation
@@ -48,11 +53,14 @@ class AbstractInterval(ABC):
     def __eq__(self, other):
         if not isinstance(other, self.__class__):
             return False
-        return self.to_dict() == other.to_dict()
+        elif not self.to_dict() == other.to_dict():
+            return False
+        else:
+            return self.chunk_relative_location == other.chunk_relative_location
 
     def __hash__(self):
         """Produces a hash, which is the GUID."""
-        return hash(self.guid)
+        return hash((self.guid, self.chunk_relative_location))
 
     @abstractmethod
     def to_dict(self, chromosome_relative_coordinates: bool = True) -> Dict[str, Any]:
@@ -155,6 +163,11 @@ class AbstractInterval(ABC):
 
     @property
     def strand(self) -> Strand:
+        """Returns strand of location."""
+        return self.chromosome_location.strand
+
+    @property
+    def chunk_relative_strand(self) -> Strand:
         """Returns strand of location."""
         return self.chunk_relative_location.strand
 
@@ -269,14 +282,27 @@ class AbstractInterval(ABC):
             )
 
         if parent_or_seq_chunk_parent.has_ancestor_of_type(SequenceType.SEQUENCE_CHUNK):
+            if not parent_or_seq_chunk_parent.has_ancestor_of_type(SequenceType.CHROMOSOME):
+                raise NoSuchAncestorException(
+                    "Must have a chromosome in the hierarchy if a sequence chunk is provided."
+                )
 
             chunk_parent = parent_or_seq_chunk_parent.first_ancestor_of_type(SequenceType.SEQUENCE_CHUNK)
             if not chunk_parent.sequence:
-                raise NullSequenceException("Must have a sequence if a sequence-chunk parent is provided.")
+                raise NullSequenceException("Must have a sequence if a sequence chunk parent is provided.")
 
             location = location.reset_parent(chunk_parent.parent)
             sequence_chunk = chunk_parent.sequence
-            interval_location_rel_to_chunk = sequence_chunk.location_on_parent.parent_to_relative_location(location)
+            # do not optimize blocks here -- this retains adjacent CDS intervals
+            try:
+                interval_location_rel_to_chunk = sequence_chunk.location_on_parent.parent_to_relative_location(
+                    location, optimize_blocks=False
+                )
+            except LocationOverlapException:
+                # the positions associated with this Location do not overlap the sequence chunk. However,
+                # the chromosome location information can still be retained, but there is inherently no sequence
+                # information.
+                return EmptyLocation()
             interval_rel_to_chunk = interval_location_rel_to_chunk.reset_parent(parent_or_seq_chunk_parent)
             return interval_rel_to_chunk
 
@@ -403,10 +429,38 @@ class AbstractFeatureInterval(AbstractInterval, ABC):
 
     _genomic_ends: List[int]
     _genomic_starts: List[int]
+    _strand: Strand
     _is_primary_feature: Optional[bool] = None
+    _parent_or_seq_chunk_parent: Optional[Parent] = None
 
     def __len__(self):
         return sum((end - start) for end, start in zip(self._genomic_ends, self._genomic_starts))
+
+    @lru_cache(maxsize=1)
+    @property
+    def chromosome_location(self) -> Location:
+        """Returns the Location of this in *chromosome coordinates*.
+
+        This overrides the implementation in the base AbstractInterval class and handles the case
+        where the chunk-relative location is empty due to this interval not overlapping with the chunk.
+
+        If the coordinate system is unknown, this will return the same coordinate system as
+        ``chunk_relative_location``, that is the true underlying ``_location`` member.
+
+        NOTE: If this Interval is built over a sequence chunk, using this accessor method
+        will return a location without sequence information. Please be careful using the location member
+        directly!
+        """
+        if self.chunk_relative_location.is_empty:
+            loc = CompoundInterval(self._genomic_starts, self._genomic_ends, self._strand)
+            if self._parent_or_seq_chunk_parent.has_ancestor_of_type(SequenceType.CHROMOSOME):
+                parent = self._parent_or_seq_chunk_parent.first_ancestor_of_type(SequenceType.CHROMOSOME)
+                return loc.reset_parent(parent)
+            else:
+                return loc
+        elif self.chunk_relative_location.has_ancestor_of_type(SequenceType.CHROMOSOME):
+            return self.lift_over_to_first_ancestor_of_type(SequenceType.CHROMOSOME)
+        return self.chunk_relative_location
 
     @abstractmethod
     def export_qualifiers(

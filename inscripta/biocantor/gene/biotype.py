@@ -43,5 +43,13 @@ Biotype = HasMemberMixin(
         ["D_segment", 27],
         ["RNase_P_RNA", 28],
         ["transcribed_pseudogene", 29],
+        ["ncRNA_pseudogene", 30],
+        ["C_region_pseudogene", 31],
+        ["J_segment_pseudogene", 32],
+        ["V_segment_pseudogene", 33],
+        ["guide_RNA", 34],
     ],
 )
+
+
+UNKNOWN_BIOTYPE = "unspecified"
