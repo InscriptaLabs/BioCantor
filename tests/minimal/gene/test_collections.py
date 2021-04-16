@@ -247,9 +247,8 @@ class TestGene:
         # query by all
         obj = self.gene.to_gene_interval(parent_or_seq_chunk_parent=parent_genome)
         assert obj.query_by_guids(list(obj.guid_map.keys())) == obj
-        # query by none produces invalid gene
-        with pytest.raises(InvalidAnnotationError):
-            _ = obj.query_by_guids([])
+        # query by none produces None
+        assert obj.query_by_guids([]) is None
         # query one
         guids = list(obj.guid_map.keys())[:1]
         assert {x.guid for x in obj.query_by_guids(guids)} == set(guids)
@@ -324,9 +323,8 @@ class TestFeatureIntervalCollection:
         # query by all
         obj = self.collection1.to_feature_collection()
         assert obj.query_by_guids(list(obj.guid_map.keys())) == obj
-        # query by none produces invalid gene
-        with pytest.raises(InvalidAnnotationError):
-            _ = obj.query_by_guids([])
+        # query by none produces None
+        assert obj.query_by_guids([]) is None
         # query one
         guids = list(obj.guid_map.keys())[:1]
         assert {x.guid for x in obj.query_by_guids(guids)} == set(guids)
@@ -967,6 +965,25 @@ class TestAnnotationCollection:
             },
             UUID("ab3404f4-63a3-be08-362c-28ea7ed56edb"): {UUID("f5c3cdbc-ee03-7bf9-b726-606b28778299")},
         }
+
+    def test_query_by_interval_guids(self):
+        obj = self.annot.to_annotation_collection()
+        # only one isoform of gene1
+        a = obj.query_by_interval_guids(UUID("6fc905fb-4221-0283-adbe-d37981818699"))
+        assert len(a.genes) == 1 and a.genes[0].identifiers == {"gene1"} and len(a.genes[0].transcripts) == 1
+
+        # both isoforms of gene1
+        b = obj.query_by_interval_guids(
+            [UUID("6fc905fb-4221-0283-adbe-d37981818699"), UUID("d102e6e0-4f81-df14-1e07-4a09a2a6fa60")]
+        )
+        assert len(b.genes) == 1 and b.genes[0].identifiers == {"gene1"} and len(b.genes[0].transcripts) == 2
+
+        # one isoform of gene1 and one isoform of featgrp2
+        c = obj.query_by_interval_guids(
+            [UUID("6fc905fb-4221-0283-adbe-d37981818699"), UUID("f5c3cdbc-ee03-7bf9-b726-606b28778299")]
+        )
+        assert len(c.genes) == 1 and c.genes[0].identifiers == {"gene1"} and len(c.genes[0].transcripts) == 1
+        assert len(c.feature_collections) == 1 and c.feature_collections[0].identifiers == {"featgrp2"}
 
     def test_interval_guids_to_collections(self):
         obj = self.annot.to_annotation_collection()
