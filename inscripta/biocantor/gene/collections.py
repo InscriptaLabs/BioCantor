@@ -222,7 +222,11 @@ class GeneInterval(AbstractFeatureIntervalCollection):
         else:
             self.guid = guid
 
-        self.guid_map = {x.guid: x for x in self.transcripts}
+        self.guid_map = {}
+        for tx in self.transcripts:
+            if tx.guid in self.guid_map:
+                raise InvalidAnnotationError(f"Guid {tx.guid} found more than once in this GeneInterval")
+            self.guid_map[tx.guid] = tx
 
     def __repr__(self):
         return (
@@ -510,7 +514,11 @@ class FeatureIntervalCollection(AbstractFeatureIntervalCollection):
         else:
             self.guid = guid
 
-        self.guid_map = {x.guid: x for x in self.feature_intervals}
+        self.guid_map = {}
+        for feat in self.feature_intervals:
+            if feat.guid in self.guid_map:
+                raise InvalidAnnotationError(f"Guid {feat.guid} found more than once in this FeatureIntervalCollection")
+            self.guid_map[feat.guid] = feat
 
     def __repr__(self):
         return (
@@ -803,6 +811,8 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
         """Returns children GUIDs in their hierarchical structure."""
         retval = {}
         for child in self.iter_children():
+            if child.guid in retval:
+                raise InvalidAnnotationError(f"Found multiple interval collections with the same GUID: {child.guid}")
             retval[child.guid] = child.children_guids
         return retval
 
@@ -827,6 +837,8 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
         retval = {}
         for child in self.iter_children():
             for interval in child.iter_children():
+                if interval.guid in retval:
+                    raise InvalidAnnotationError(f"Found multiple child intervals with the same GUID: {interval.guid}")
                 retval[interval.guid] = child
         return retval
 
@@ -837,7 +849,7 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
 
     @property
     def name(self) -> str:
-        """Returns the name of this collecttion. Provides a shared API across genes/transcripts and features."""
+        """Returns the name of this collection. Provides a shared API across genes/transcripts and features."""
         return self._name
 
     def iter_children(self) -> Iterator[Union[GeneInterval, FeatureIntervalCollection]]:
@@ -1127,6 +1139,9 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
         Args:
             ids: List of GUIDs, or unique IDs.
 
+        NOTE: If the children of this collection have GUID collisions, either across genes or features or
+        within genes and features, this function will return all members with the matching GUID.
+
         Returns:
            :class:`AnnotationCollection` that may be empty.
         """
@@ -1147,6 +1162,9 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
 
         This function wraps the ``query_by_guid`` function of child GeneInterval/FeatureIntervalCollection
         objects.
+
+        NOTE: If the children of this collection have GUID collisions, either across genes or features or
+        within genes and features, this function will return all members with the matching GUID.
 
         Args:
             id_or_ids: List of GUIDs, or unique IDs. Can also be a single ID.
@@ -1170,6 +1188,62 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
             # otherwise this is None, which means we do not have a match.
 
         return self._return_collection_for_id_queries(genes_to_keep, features_collections_to_keep)
+
+    def query_by_transcript_interval_guids(self, id_or_ids: Union[UUID, List[UUID]]) -> "AnnotationCollection":
+        """Filter this annotation collection object by a list of unique *TranscriptInterval* IDs.
+
+        This function wraps the ``query_by_guid`` function of child GeneInterval objects.
+
+        NOTE: If the children of this collection have GUID collisions, either across genes or features or
+        within genes and features, this function will return all members with the matching GUID.
+
+        Args:
+            id_or_ids: List of GUIDs, or unique IDs. Can also be a single ID.
+
+        Returns:
+           :class:`AnnotationCollection` that may be empty.
+        """
+        if isinstance(id_or_ids, UUID):
+            ids = [id_or_ids]
+        else:
+            ids = id_or_ids
+
+        genes_to_keep = []
+        for child in self.iter_children():
+            gene_or_feature_collection = child.query_by_guids(ids)
+            if isinstance(gene_or_feature_collection, GeneInterval):
+                genes_to_keep.append(gene_or_feature_collection)
+            # otherwise this is None, which means we do not have a match.
+
+        return self._return_collection_for_id_queries(genes_to_keep, [])
+
+    def query_by_feature_interval_guids(self, id_or_ids: Union[UUID, List[UUID]]) -> "AnnotationCollection":
+        """Filter this annotation collection object by a list of unique *interval* IDs.
+
+        This function wraps the ``query_by_guid`` function of child FeatureIntervalCollection objects.
+
+        NOTE: If the children of this collection have GUID collisions, either across genes or features or
+        within genes and features, this function will return all members with the matching GUID.
+
+        Args:
+            id_or_ids: List of GUIDs, or unique IDs. Can also be a single ID.
+
+        Returns:
+           :class:`AnnotationCollection` that may be empty.
+        """
+        if isinstance(id_or_ids, UUID):
+            ids = [id_or_ids]
+        else:
+            ids = id_or_ids
+
+        features_collections_to_keep = []
+        for child in self.iter_children():
+            gene_or_feature_collection = child.query_by_guids(ids)
+            if isinstance(gene_or_feature_collection, FeatureIntervalCollection):
+                features_collections_to_keep.append(gene_or_feature_collection)
+            # otherwise this is None, which means we do not have a match.
+
+        return self._return_collection_for_id_queries([], features_collections_to_keep)
 
     def query_by_feature_identifiers(self, id_or_ids: Union[str, List[str]]) -> "AnnotationCollection":
         """Filter this annotation collection object by a list of identifiers, or a single identifier.
