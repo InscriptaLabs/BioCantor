@@ -45,7 +45,7 @@ from inscripta.biocantor.io.genbank.constants import (
     KnownQualifiers,
     GENBANK_GENE_FEATURES,
 )
-from inscripta.biocantor.io.genbank.exc import GenBankParserError, EmptyGenBankError, GenBankLocusTagError
+from inscripta.biocantor.io.genbank.exc import GenBankParserError, EmptyGenBankError, GenBankLocusTagError, GenBankLocationException
 from inscripta.biocantor.io.models import (
     GeneIntervalModel,
     AnnotationCollectionModel,
@@ -71,6 +71,10 @@ class Feature(ABC):
     def __init__(self, feature: SeqFeature, record: SeqRecord):
         if feature.type not in self.types:
             raise GenBankParserError(f"Invalid feature type {feature.type}")
+        if not feature.location:
+            raise GenBankLocationException(f"Feature {feature} did not have parseable coordinates.")
+        if not feature.strand:
+            raise GenBankParserError(f"Feature {feature} is unstranded or has multiple strands.")
         self.feature = feature
         self.record = record
         self.children = []
@@ -109,6 +113,10 @@ class FeatureIntervalGenBankCollection:
                 could not be interpreted as a gene.
             record: The ``SeqRecord`` these features were found on.
         """
+        for feature in features:
+            if not feature.location:
+                raise GenBankLocationException(f"Feature {feature} did not have parseable coordinates.")
+
         self.types = {feature.type for feature in features}
         self.record = record
         self.features = features
@@ -134,7 +142,7 @@ class FeatureIntervalGenBankCollection:
         for feature in cls.features:
             interval_starts = []
             interval_ends = []
-            for loc in feature.location.parts:
+            for loc in sorted(feature.location.parts, key=lambda p: p.start):
                 interval_starts.append(loc.nofuzzy_start)
                 interval_ends.append(loc.nofuzzy_end)
             strand = Strand.from_int(feature.location.strand)

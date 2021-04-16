@@ -27,3 +27,10 @@ class GenBankExportError(BioCantorIOException):
     """
 
     pass
+
+
+class GenBankLocationException(GenBankParserError):
+    """
+    Raised when there is an issue with locations (usually BioPython makes them None)
+    """
+    pass
