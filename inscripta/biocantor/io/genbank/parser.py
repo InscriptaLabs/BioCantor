@@ -45,7 +45,12 @@ from inscripta.biocantor.io.genbank.constants import (
     KnownQualifiers,
     GENBANK_GENE_FEATURES,
 )
-from inscripta.biocantor.io.genbank.exc import GenBankParserError, EmptyGenBankError, GenBankLocusTagError, GenBankLocationException
+from inscripta.biocantor.io.genbank.exc import (
+    GenBankParserError,
+    EmptyGenBankError,
+    GenBankLocusTagError,
+    GenBankLocationException,
+)
 from inscripta.biocantor.io.models import (
     GeneIntervalModel,
     AnnotationCollectionModel,

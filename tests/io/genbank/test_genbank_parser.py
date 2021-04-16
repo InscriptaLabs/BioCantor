@@ -459,13 +459,15 @@ class TestGenBankErrors:
             )[0]
             assert rec.genes[0].locus_tag == rec.genes[1].locus_tag
 
-    @pytest.mark.parametrize("gbk",
-                             [
-                                 # broken feature
-                                 "broken_coordinates_1.gbk",
-                                 # broken gene
-                                 "broken_coordinates_2.gbk",
-                             ])
+    @pytest.mark.parametrize(
+        "gbk",
+        [
+            # broken feature
+            "broken_coordinates_1.gbk",
+            # broken gene
+            "broken_coordinates_2.gbk",
+        ],
+    )
     def test_broken_coordinates(self, test_data_dir, gbk):
         gbk = test_data_dir / gbk
         with pytest.raises(GenBankLocationException):
