@@ -14,6 +14,7 @@ Each object is capable of exporting itself to BED and GFF3.
 """
 import itertools
 from abc import ABC, abstractmethod
+from methodtools import lru_cache
 from functools import reduce
 from typing import List, Iterable, Any, Dict, Set, Hashable, Optional, Union, Iterator
 from uuid import UUID
@@ -792,12 +793,37 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
     def children_guids(self) -> set:
         return {x.guid for x in self.iter_children()}
 
+    @lru_cache(maxsize=1)
     @property
     def hierarchical_children_guids(self) -> Dict[UUID, Set[UUID]]:
         """Returns children GUIDs in their hierarchical structure."""
         retval = {}
         for child in self.iter_children():
             retval[child.guid] = child.children_guids
+        return retval
+
+    @lru_cache(maxsize=1)
+    @property
+    def interval_guids_to_collections(self) -> Dict[UUID, Union[GeneInterval, FeatureIntervalCollection]]:
+        """
+        For example, if this collection had a gene with two transcripts with GUID ABC and 123, and the gene
+        had GUID XYZ, this would return:
+
+        .. code-block::
+
+            {
+              "ABC": GeneInterval(guid=XYZ),
+              "123": GeneInterval(guid=XYZ)
+            }
+
+
+        Returns:
+            A map of sub-feature GUIDs to their containing elements.
+        """
+        retval = {}
+        for child in self.iter_children():
+            for interval in child.iter_children():
+                retval[interval.guid] = child
         return retval
 
     @property
