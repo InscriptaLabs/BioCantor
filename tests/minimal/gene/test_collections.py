@@ -1,4 +1,5 @@
 from copy import deepcopy
+from uuid import UUID
 
 import pytest
 from inscripta.biocantor.exc import (
@@ -17,12 +18,12 @@ from inscripta.biocantor.io.models import (
     FeatureIntervalCollectionModel,
     TranscriptIntervalModel,
 )
+from inscripta.biocantor.io.parser import seq_chunk_to_parent
 from inscripta.biocantor.location.location_impl import SingleInterval
 from inscripta.biocantor.location.strand import Strand
 from inscripta.biocantor.parent.parent import Parent, SequenceType
 from inscripta.biocantor.sequence.alphabet import Alphabet
 from inscripta.biocantor.sequence.sequence import Sequence
-from inscripta.biocantor.io.parser import seq_chunk_to_parent
 
 genome = "TTTTTTTTTTAAGTATTCTTGGACCTAATTAAAAAAAAAAAAAAAAAAACCCCC"
 parent_genome = Parent(
@@ -246,9 +247,8 @@ class TestGene:
         # query by all
         obj = self.gene.to_gene_interval(parent_or_seq_chunk_parent=parent_genome)
         assert obj.query_by_guids(list(obj.guid_map.keys())) == obj
-        # query by none produces invalid gene
-        with pytest.raises(InvalidAnnotationError):
-            _ = obj.query_by_guids([])
+        # query by none produces None
+        assert obj.query_by_guids([]) is None
         # query one
         guids = list(obj.guid_map.keys())[:1]
         assert {x.guid for x in obj.query_by_guids(guids)} == set(guids)
@@ -323,9 +323,8 @@ class TestFeatureIntervalCollection:
         # query by all
         obj = self.collection1.to_feature_collection()
         assert obj.query_by_guids(list(obj.guid_map.keys())) == obj
-        # query by none produces invalid gene
-        with pytest.raises(InvalidAnnotationError):
-            _ = obj.query_by_guids([])
+        # query by none produces None
+        assert obj.query_by_guids([]) is None
         # query one
         guids = list(obj.guid_map.keys())[:1]
         assert {x.guid for x in obj.query_by_guids(guids)} == set(guids)
@@ -952,6 +951,252 @@ class TestAnnotationCollection:
         obj = self.annot.to_annotation_collection()
         r = obj.query_by_feature_identifiers(["gene1", "abc"])
         assert len(r.genes) == 1 and r.genes[0].gene_id == "gene1"
+
+    def test_hierarchical_children_guids(self):
+        obj = self.annot.to_annotation_collection()
+        assert obj.hierarchical_children_guids == {
+            UUID("c0596ed0-9583-d323-13b1-593e0b674414"): {
+                UUID("6fc905fb-4221-0283-adbe-d37981818699"),
+                UUID("d102e6e0-4f81-df14-1e07-4a09a2a6fa60"),
+            },
+            UUID("cb4d2cd9-25b6-f7c5-8eb5-9faf58e64bd0"): {
+                UUID("88ffa8c0-1761-5b2a-8468-69a7ecfa1265"),
+                UUID("f0a1f091-8e54-3f2a-812d-029481ae22fc"),
+            },
+            UUID("ab3404f4-63a3-be08-362c-28ea7ed56edb"): {UUID("f5c3cdbc-ee03-7bf9-b726-606b28778299")},
+        }
+
+    def test_query_by_interval_guids(self):
+        obj = self.annot.to_annotation_collection()
+        # only one isoform of gene1
+        a = obj.query_by_interval_guids(UUID("6fc905fb-4221-0283-adbe-d37981818699"))
+        assert len(a.genes) == 1 and a.genes[0].identifiers == {"gene1"} and len(a.genes[0].transcripts) == 1
+
+        # both isoforms of gene1
+        b = obj.query_by_interval_guids(
+            [UUID("6fc905fb-4221-0283-adbe-d37981818699"), UUID("d102e6e0-4f81-df14-1e07-4a09a2a6fa60")]
+        )
+        assert len(b.genes) == 1 and b.genes[0].identifiers == {"gene1"} and len(b.genes[0].transcripts) == 2
+
+        # one isoform of gene1 and one isoform of featgrp2
+        c = obj.query_by_interval_guids(
+            [UUID("6fc905fb-4221-0283-adbe-d37981818699"), UUID("f5c3cdbc-ee03-7bf9-b726-606b28778299")]
+        )
+        assert len(c.genes) == 1 and c.genes[0].identifiers == {"gene1"} and len(c.genes[0].transcripts) == 1
+        assert len(c.feature_collections) == 1 and c.feature_collections[0].identifiers == {"featgrp2"}
+
+    def test_interval_guids_to_collections(self):
+        obj = self.annot.to_annotation_collection()
+        m = obj.interval_guids_to_collections
+        m = {key: val.to_dict() for key, val in m.items()}
+        assert m == {
+            UUID("6fc905fb-4221-0283-adbe-d37981818699"): {
+                "transcripts": [
+                    {
+                        "exon_starts": [12],
+                        "exon_ends": [28],
+                        "strand": "PLUS",
+                        "cds_starts": [15],
+                        "cds_ends": [19],
+                        "cds_frames": ["ZERO"],
+                        "qualifiers": None,
+                        "is_primary_tx": None,
+                        "transcript_id": None,
+                        "transcript_symbol": "tx1",
+                        "transcript_type": None,
+                        "sequence_name": None,
+                        "sequence_guid": None,
+                        "protein_id": None,
+                        "product": None,
+                        "transcript_guid": None,
+                        "transcript_interval_guid": UUID("6fc905fb-4221-0283-adbe-d37981818699"),
+                    },
+                    {
+                        "exon_starts": [12, 17, 22],
+                        "exon_ends": [16, 20, 25],
+                        "strand": "PLUS",
+                        "cds_starts": [14, 17, 22],
+                        "cds_ends": [16, 20, 23],
+                        "cds_frames": ["ZERO", "TWO", "TWO"],
+                        "qualifiers": None,
+                        "is_primary_tx": None,
+                        "transcript_id": None,
+                        "transcript_symbol": "tx2",
+                        "transcript_type": None,
+                        "sequence_name": None,
+                        "sequence_guid": None,
+                        "protein_id": None,
+                        "product": None,
+                        "transcript_guid": None,
+                        "transcript_interval_guid": UUID("d102e6e0-4f81-df14-1e07-4a09a2a6fa60"),
+                    },
+                ],
+                "gene_id": "gene1",
+                "gene_symbol": None,
+                "gene_type": None,
+                "locus_tag": None,
+                "qualifiers": None,
+                "sequence_name": None,
+                "sequence_guid": None,
+                "gene_guid": UUID("c0596ed0-9583-d323-13b1-593e0b674414"),
+            },
+            UUID("d102e6e0-4f81-df14-1e07-4a09a2a6fa60"): {
+                "transcripts": [
+                    {
+                        "exon_starts": [12],
+                        "exon_ends": [28],
+                        "strand": "PLUS",
+                        "cds_starts": [15],
+                        "cds_ends": [19],
+                        "cds_frames": ["ZERO"],
+                        "qualifiers": None,
+                        "is_primary_tx": None,
+                        "transcript_id": None,
+                        "transcript_symbol": "tx1",
+                        "transcript_type": None,
+                        "sequence_name": None,
+                        "sequence_guid": None,
+                        "protein_id": None,
+                        "product": None,
+                        "transcript_guid": None,
+                        "transcript_interval_guid": UUID("6fc905fb-4221-0283-adbe-d37981818699"),
+                    },
+                    {
+                        "exon_starts": [12, 17, 22],
+                        "exon_ends": [16, 20, 25],
+                        "strand": "PLUS",
+                        "cds_starts": [14, 17, 22],
+                        "cds_ends": [16, 20, 23],
+                        "cds_frames": ["ZERO", "TWO", "TWO"],
+                        "qualifiers": None,
+                        "is_primary_tx": None,
+                        "transcript_id": None,
+                        "transcript_symbol": "tx2",
+                        "transcript_type": None,
+                        "sequence_name": None,
+                        "sequence_guid": None,
+                        "protein_id": None,
+                        "product": None,
+                        "transcript_guid": None,
+                        "transcript_interval_guid": UUID("d102e6e0-4f81-df14-1e07-4a09a2a6fa60"),
+                    },
+                ],
+                "gene_id": "gene1",
+                "gene_symbol": None,
+                "gene_type": None,
+                "locus_tag": None,
+                "qualifiers": None,
+                "sequence_name": None,
+                "sequence_guid": None,
+                "gene_guid": UUID("c0596ed0-9583-d323-13b1-593e0b674414"),
+            },
+            UUID("88ffa8c0-1761-5b2a-8468-69a7ecfa1265"): {
+                "feature_intervals": [
+                    {
+                        "interval_starts": [12],
+                        "interval_ends": [15],
+                        "strand": "PLUS",
+                        "qualifiers": None,
+                        "feature_id": None,
+                        "feature_name": "feat1",
+                        "feature_types": ["a", "b"],
+                        "sequence_name": None,
+                        "sequence_guid": None,
+                        "feature_interval_guid": UUID("88ffa8c0-1761-5b2a-8468-69a7ecfa1265"),
+                        "feature_guid": None,
+                        "is_primary_feature": None,
+                    },
+                    {
+                        "interval_starts": [12, 17, 22],
+                        "interval_ends": [16, 20, 25],
+                        "strand": "PLUS",
+                        "qualifiers": None,
+                        "feature_id": None,
+                        "feature_name": "feat2",
+                        "feature_types": ["b"],
+                        "sequence_name": None,
+                        "sequence_guid": None,
+                        "feature_interval_guid": UUID("f0a1f091-8e54-3f2a-812d-029481ae22fc"),
+                        "feature_guid": None,
+                        "is_primary_feature": None,
+                    },
+                ],
+                "feature_collection_name": None,
+                "feature_collection_id": "featgrp1",
+                "feature_collection_type": None,
+                "locus_tag": None,
+                "qualifiers": None,
+                "sequence_name": None,
+                "sequence_guid": None,
+                "feature_collection_guid": UUID("cb4d2cd9-25b6-f7c5-8eb5-9faf58e64bd0"),
+            },
+            UUID("f0a1f091-8e54-3f2a-812d-029481ae22fc"): {
+                "feature_intervals": [
+                    {
+                        "interval_starts": [12],
+                        "interval_ends": [15],
+                        "strand": "PLUS",
+                        "qualifiers": None,
+                        "feature_id": None,
+                        "feature_name": "feat1",
+                        "feature_types": ["a", "b"],
+                        "sequence_name": None,
+                        "sequence_guid": None,
+                        "feature_interval_guid": UUID("88ffa8c0-1761-5b2a-8468-69a7ecfa1265"),
+                        "feature_guid": None,
+                        "is_primary_feature": None,
+                    },
+                    {
+                        "interval_starts": [12, 17, 22],
+                        "interval_ends": [16, 20, 25],
+                        "strand": "PLUS",
+                        "qualifiers": None,
+                        "feature_id": None,
+                        "feature_name": "feat2",
+                        "feature_types": ["b"],
+                        "sequence_name": None,
+                        "sequence_guid": None,
+                        "feature_interval_guid": UUID("f0a1f091-8e54-3f2a-812d-029481ae22fc"),
+                        "feature_guid": None,
+                        "is_primary_feature": None,
+                    },
+                ],
+                "feature_collection_name": None,
+                "feature_collection_id": "featgrp1",
+                "feature_collection_type": None,
+                "locus_tag": None,
+                "qualifiers": None,
+                "sequence_name": None,
+                "sequence_guid": None,
+                "feature_collection_guid": UUID("cb4d2cd9-25b6-f7c5-8eb5-9faf58e64bd0"),
+            },
+            UUID("f5c3cdbc-ee03-7bf9-b726-606b28778299"): {
+                "feature_intervals": [
+                    {
+                        "interval_starts": [35],
+                        "interval_ends": [40],
+                        "strand": "MINUS",
+                        "qualifiers": None,
+                        "feature_id": None,
+                        "feature_name": "feat3",
+                        "feature_types": ["a"],
+                        "sequence_name": None,
+                        "sequence_guid": None,
+                        "feature_interval_guid": UUID("f5c3cdbc-ee03-7bf9-b726-606b28778299"),
+                        "feature_guid": None,
+                        "is_primary_feature": None,
+                    }
+                ],
+                "feature_collection_name": None,
+                "feature_collection_id": "featgrp2",
+                "feature_collection_type": None,
+                "locus_tag": None,
+                "qualifiers": None,
+                "sequence_name": None,
+                "sequence_guid": None,
+                "feature_collection_guid": UUID("ab3404f4-63a3-be08-362c-28ea7ed56edb"),
+            },
+        }
 
     def test_extract_sequence(self):
         obj = self.annot.to_annotation_collection(parent_or_seq_chunk_parent=parent_genome)
