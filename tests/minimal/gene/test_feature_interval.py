@@ -1,5 +1,5 @@
 import pytest
-
+from uuid import UUID
 from inscripta.biocantor.exc import (
     ValidationException,
     EmptyLocationException,
@@ -627,3 +627,50 @@ class TestOverlappingInterval:
         strand = Strand.PLUS
         i = FeatureInterval.initialize_location(exon_starts, exon_ends, strand, parent_genome2_1_15)
         assert i.num_blocks == 2
+
+
+@pytest.mark.parametrize(
+    "data,expected_exception",
+    [
+        # must be a dictionary
+        (
+            {
+                "interval_starts": [0],
+                "interval_ends": [18],
+                "strand": "PLUS",
+                "qualifiers": "abc",
+                "feature_id": None,
+                "feature_name": None,
+                "feature_types": None,
+                "sequence_name": None,
+                "sequence_guid": None,
+                "feature_interval_guid": UUID("6940c467-070a-3524-2dcb-a478a6fa0388"),
+                "feature_guid": None,
+                "is_primary_feature": None,
+            },
+            ValidationException,
+        ),
+        # must be a dictionary of lists
+        (
+            {
+                "interval_starts": [0],
+                "interval_ends": [18],
+                "strand": "PLUS",
+                "qualifiers": {"abc": [123], "xyz": 123},
+                "feature_id": None,
+                "feature_name": None,
+                "feature_types": None,
+                "sequence_name": None,
+                "sequence_guid": None,
+                "feature_interval_guid": UUID("6940c467-070a-3524-2dcb-a478a6fa0388"),
+                "feature_guid": None,
+                "is_primary_feature": None,
+            },
+            ValidationException,
+        ),
+    ],
+)
+def test_qualifiers_exceptions(data, expected_exception):
+    """Qualifiers must be dictionaries of lists"""
+    with pytest.raises(expected_exception):
+        _ = FeatureInterval.from_dict(data)
