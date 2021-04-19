@@ -1,0 +1,57 @@
+LOCUS       CM021111               50040 bp    DNA     linear   CON 10-FEB-2020
+DEFINITION  Saccharomyces cerevisiae strain INSC1006 chromosome I, whole genome
+            shotgun sequence.
+ACCESSION   CM021111
+VERSION     CM021111.1
+DBLINK      BioProject: PRJNA588095
+            BioSample: SAMN13226781
+KEYWORDS    WGS.
+SOURCE      Saccharomyces cerevisiae (baker's yeast)
+  ORGANISM  Saccharomyces cerevisiae
+            Eukaryota; Fungi; Dikarya; Ascomycota; Saccharomycotina;
+            Saccharomycetes; Saccharomycetales; Saccharomycetaceae;
+            Saccharomyces.
+REFERENCE   1  (bases 1 to 225727)
+  AUTHORS   Fiddes,I.T. and Church,D.M.
+  TITLE     Inscripta technologies
+  JOURNAL   Unpublished
+REFERENCE   2  (bases 1 to 225727)
+  AUTHORS   Fiddes,I.T. and Church,D.M.
+  TITLE     Direct Submission
+  JOURNAL   Submitted (24-JAN-2020) Content and Curation, Inscripta, 5500
+            Central Ave, Boulder, CO 80301, USA
+COMMENT     ##Genome-Assembly-Data-START##
+            Assembly Method :: canu v. Canu snapshot v1.7 +242 changes (r8934)
+            Genome Representation  :: Full
+            Expected Final Version :: Yes
+            Genome Coverage        :: 191x
+            Sequencing Technology  :: PacBio Sequel
+            ##Genome-Assembly-Data-END##
+FEATURES             Location/Qualifiers
+     gene            complement(100.1000)
+                     /locus_tag="GI526_G0000001"
+     ncRNA           complement(100..1000)
+                     /ncRNA_class="other"
+                     /locus_tag="GI526_G0000001"
+                     /product="CAT novel prediction: IsoSeq"
+                     /note="negative strand non-coding gene"
+ORIGIN
+        1 actctctcta tctcatccac ctttactcgc gctgtcacac cttacccggc tttctgaccg
+       61 aaattaaaaa aatgaaaata aatcctcttc tttagcccta caacactttt acatagccct
+      121 aagtagccct aagtagccct catttacgtc tcctccaagc cctattgact cttacccgga
+      181 tcttcagcca aaagctatac ttactacctt tattttatgt ttacttttta tagactgtct
+      241 ttttatccca cttcttcgca cttgtctctc gctactgccg tgcaacaaac actaaatcaa
+      301 aacagtgaaa tactacatca aaacacatat tccctagaaa aaaaatttct tacaatatac
+      361 tatactacac aatacataat cagtgacttt cgtaacaaca atttccttca ctctccaact
+      421 tctctgctcg aatccctaca taataatata tcaaatctac cgtctggaac atcatcgcta
+      481 tccagctctt tgtgaaccgc taccatcagc atgtacagtg gtaccttcgt gttatctgca
+      541 gcgagaactt caacgtttgc caaatcaagc caatgtggta acaaccacac ctccgaaatc
+      601 tgctccaaaa gatactccag tttctgccga aatgttttat tgtagaacac ccctatcagc
+      661 atcgagagga atgccgtcca atgcggcact ttagatgggg taactcccag cgcaatctga
+      721 tctcgcaagt gcattcctag acttaattca tatctgctcc tcaactgtcg atgatgcctg
+      781 ctaaactgca gcttgacgta ctgcggaccc tgcagtccag cgctcgtcat ggaacgcaaa
+      841 cgctgaaaaa ctccaccttt ctcgagcgct tccacaacaa ccgtattgtc ttttgcctcc
+      901 cattcttcct ggcacttttt ttcgtcccag ttcaaaagta ctgcagcacc tctgtcttcg
+      961 attcacgcaa gttgctccat actttaaaat acaactcttt gatctgcctt ccagacatgc
+     1021 ggaaaacttg gctcccttgc ttgcctcttg tcgaatccaa tacactaatt gtttctcttc
+//
