@@ -30,7 +30,7 @@ from inscripta.biocantor.gene.biotype import Biotype, UNKNOWN_BIOTYPE
 from inscripta.biocantor.gene.cds import CDSInterval
 from inscripta.biocantor.gene.cds_frame import CDSPhase
 from inscripta.biocantor.gene.feature import FeatureInterval
-from inscripta.biocantor.gene.interval import AbstractInterval, QualifierValue
+from inscripta.biocantor.gene.interval import AbstractInterval, QualifierValue, IntervalType
 from inscripta.biocantor.gene.transcript import TranscriptInterval
 from inscripta.biocantor.io.gff3.constants import GFF_SOURCE, NULL_COLUMN, BioCantorQualifiers, BioCantorFeatureTypes
 from inscripta.biocantor.io.gff3.exc import GFF3MissingSequenceNameError
@@ -172,6 +172,7 @@ class GeneInterval(AbstractFeatureIntervalCollection):
     longest isoform.
     """
 
+    interval_type = IntervalType.TRANSCRIPT
     _identifiers = ["gene_id", "gene_symbol", "locus_tag"]
 
     def __init__(
@@ -458,6 +459,7 @@ class FeatureIntervalCollection(AbstractFeatureIntervalCollection):
     This cannot be empty; it must have at least one feature interval.
     """
 
+    interval_type = IntervalType.FEATURE
     _identifiers = ["feature_collection_id", "feature_collection_name", "locus_tag"]
 
     def __init__(
@@ -1090,7 +1092,7 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
 
             # regardless of completely_within flag, first just look for overlaps on the gene/feature collection level
             elif coordinate_fn(gene_or_feature_collection.chromosome_location, match_strand=False, full_span=True):
-                if isinstance(gene_or_feature_collection, FeatureIntervalCollection):
+                if gene_or_feature_collection.interval_type == IntervalType.FEATURE:
                     features_collections_to_keep.append(gene_or_feature_collection)
                 else:
                     genes_to_keep.append(gene_or_feature_collection)
@@ -1149,11 +1151,12 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
         features_collections_to_keep = []
         for i in ids:
             gene_or_feature_collection = self.guid_map.get(i)
-            if isinstance(gene_or_feature_collection, FeatureIntervalCollection):
+            if not gene_or_feature_collection:
+                continue
+            elif gene_or_feature_collection.interval_type == IntervalType.FEATURE:
                 features_collections_to_keep.append(gene_or_feature_collection)
-            elif isinstance(gene_or_feature_collection, GeneInterval):
+            else:
                 genes_to_keep.append(gene_or_feature_collection)
-            # otherwise this is None, which means we do not have a match.
 
         return self._return_collection_for_id_queries(genes_to_keep, features_collections_to_keep)
 
@@ -1181,11 +1184,12 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
         features_collections_to_keep = []
         for child in self.iter_children():
             gene_or_feature_collection = child.query_by_guids(ids)
-            if isinstance(gene_or_feature_collection, FeatureIntervalCollection):
+            if not gene_or_feature_collection:
+                continue
+            elif gene_or_feature_collection.interval_type == IntervalType.FEATURE:
                 features_collections_to_keep.append(gene_or_feature_collection)
-            elif isinstance(gene_or_feature_collection, GeneInterval):
+            else:
                 genes_to_keep.append(gene_or_feature_collection)
-            # otherwise this is None, which means we do not have a match.
 
         return self._return_collection_for_id_queries(genes_to_keep, features_collections_to_keep)
 
@@ -1211,9 +1215,10 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
         genes_to_keep = []
         for child in self.iter_children():
             gene_or_feature_collection = child.query_by_guids(ids)
-            if isinstance(gene_or_feature_collection, GeneInterval):
+            if not gene_or_feature_collection:
+                continue
+            elif gene_or_feature_collection.interval_type == IntervalType.TRANSCRIPT:
                 genes_to_keep.append(gene_or_feature_collection)
-            # otherwise this is None, which means we do not have a match.
 
         return self._return_collection_for_id_queries(genes_to_keep, [])
 
@@ -1239,9 +1244,10 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
         features_collections_to_keep = []
         for child in self.iter_children():
             gene_or_feature_collection = child.query_by_guids(ids)
-            if isinstance(gene_or_feature_collection, FeatureIntervalCollection):
+            if not gene_or_feature_collection:
+                continue
+            elif gene_or_feature_collection.interval_type == IntervalType.FEATURE:
                 features_collections_to_keep.append(gene_or_feature_collection)
-            # otherwise this is None, which means we do not have a match.
 
         return self._return_collection_for_id_queries([], features_collections_to_keep)
 
@@ -1275,6 +1281,14 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
                     genes_to_keep.append(gene_or_feature)
 
         return self._return_collection_for_id_queries(genes_to_keep, features_collections_to_keep)
+
+    def get_children_by_type(self, child_type: str) -> Union[List[GeneInterval], List[FeatureIntervalCollection]]:
+        if child_type.lower() == IntervalType.FEATURE:
+            return self.feature_collections
+        elif child_type.lower() == IntervalType.TRANSCRIPT:
+            return self.genes
+        else:
+            raise InvalidQueryError(f"Cannot get children of type {child_type}")
 
     def _unsorted_gff_iter(self, chromosome_relative_coordinates: bool = True) -> Iterable[GFFRow]:
         """Produces iterable of :class:`~biocantor.io.gff3.rows.GFFRow` for this annotation collection and its

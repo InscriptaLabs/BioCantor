@@ -1,7 +1,7 @@
 """
 This module contains abstract base classes for interval types and interval collection types.
 """
-
+from enum import Enum
 from abc import ABC, abstractmethod
 from typing import List, Union, Dict, Hashable, Set, Optional, Any, Iterable, TypeVar
 from uuid import UUID
@@ -24,6 +24,13 @@ from inscripta.biocantor.util.object_validation import ObjectValidation
 
 # primitive data types possible as values of the list in a qualifiers dictionary
 QualifierValue = TypeVar("QualifierValue", str, int, bool, float)
+
+
+class IntervalType(str, Enum):
+    """This enum differentiates the two main types of Intervals -- Features and Transcripts"""
+
+    FEATURE = "feature"
+    TRANSCRIPT = "transcript"
 
 
 class AbstractInterval(ABC):

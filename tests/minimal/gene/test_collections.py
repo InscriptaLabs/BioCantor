@@ -1544,6 +1544,17 @@ class TestAnnotationCollection:
         aa = a.to_annotation_collection(chunk)
         assert not aa.query_by_feature_identifiers("lplT").genes[0].transcripts[0].has_in_frame_stop
 
+    def test_get_children_by_type(self):
+        obj = self.annot.to_annotation_collection()
+        assert obj.get_children_by_type("transcript") == obj.genes
+        assert obj.get_children_by_type("feature") == obj.feature_collections
+        assert obj.get_children_by_type("Transcript") == obj.genes
+        assert obj.get_children_by_type("Feature") == obj.feature_collections
+        assert obj.get_children_by_type("TRANSCRIPT") == obj.genes
+        assert obj.get_children_by_type("FEATURE") == obj.feature_collections
+        with pytest.raises(InvalidQueryError):
+            _ = obj.get_children_by_type("gene")
+
 
 class TestNegative:
     tx1 = dict(

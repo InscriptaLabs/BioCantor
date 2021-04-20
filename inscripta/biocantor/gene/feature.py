@@ -11,7 +11,7 @@ from inscripta.biocantor.exc import (
     NoSuchAncestorException,
 )
 from inscripta.biocantor.gene.cds_frame import CDSPhase
-from inscripta.biocantor.gene.interval import AbstractFeatureInterval, QualifierValue
+from inscripta.biocantor.gene.interval import AbstractFeatureInterval, QualifierValue, IntervalType
 from inscripta.biocantor.io.bed import BED12, RGB
 from inscripta.biocantor.io.gff3.constants import GFF_SOURCE, NULL_COLUMN, BioCantorFeatureTypes, BioCantorQualifiers
 from inscripta.biocantor.io.gff3.exc import GFF3MissingSequenceNameError
@@ -28,6 +28,7 @@ class FeatureInterval(AbstractFeatureInterval):
     open chromatin sites, etc.
     """
 
+    interval_type = IntervalType.FEATURE
     _identifiers = ["feature_name", "feature_id"]
 
     def __init__(
