@@ -28,7 +28,7 @@
                     "is_primary_feature": false
                 }
             ],
-            "feature_collection_name": null,
+            "feature_collection_name": "featgrp1",
             "feature_collection_id": "4cd9e7a7-623b-4446-a313-7ae90b15df83",
             "locus_tag": null,
             "feature_collection_type": "biological_region",

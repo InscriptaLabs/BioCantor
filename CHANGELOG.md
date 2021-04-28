@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Handle genbank files with broken intervals gracefully.
 - Fix interval parsing for negative strand features.
 
+### Changed
+- The tag `Name` can now be used to identify a feature interval in a GFF3/GenBank file.
+
 
 ## [0.4.3]
 ### Fixed
