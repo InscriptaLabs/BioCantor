@@ -22,11 +22,12 @@ class FeatureIntervalNameQualifiers(IntEnum):
     In order to be future proofed, the values of this enum are separated by 10, so that up to 9 new items can be
     inserted at every level without changing the values.
 
-    NOTE: If names are added to or changd in this enum, you must also change FEATURE_INTERVAL_NAME_QUALIFIERS.
+    NOTE: If names are added to or changed in this enum, you must also change FEATURE_INTERVAL_NAME_QUALIFIERS.
     """
 
     FEATURE_NAME = 0
     STANDARD_NAME = 10
+    NAME = 15
     GENE = 20
     GENE_NAME = 30
     LABEL = 40
@@ -49,7 +50,7 @@ class FeatureIntervalIDQualifiers(IntEnum):
     ID = 255
 
 
-FEATURE_INTERVAL_NAME_QUALIFIERS = {"feature_name", "standard_name", "gene", "gene_name", "label", "operon"}
+FEATURE_INTERVAL_NAME_QUALIFIERS = {"feature_name", "name", "standard_name", "gene", "gene_name", "label", "operon"}
 FEATURE_INTERVAL_NAME_QUALIFIERS_REGEX = re.compile(
     r"({})".format("|".join(f"^{k}$" for k in FEATURE_INTERVAL_NAME_QUALIFIERS)), re.IGNORECASE
 )

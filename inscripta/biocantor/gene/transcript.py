@@ -18,7 +18,7 @@ from inscripta.biocantor.exc import (
 from inscripta.biocantor.gene.biotype import Biotype, UNKNOWN_BIOTYPE
 from inscripta.biocantor.gene.cds import CDSInterval
 from inscripta.biocantor.gene.cds_frame import CDSPhase, CDSFrame
-from inscripta.biocantor.gene.interval import AbstractFeatureInterval, QualifierValue
+from inscripta.biocantor.gene.interval import AbstractFeatureInterval, QualifierValue, IntervalType
 from inscripta.biocantor.io.bed import BED12, RGB
 from inscripta.biocantor.io.gff3.constants import GFF_SOURCE, NULL_COLUMN, BioCantorQualifiers, BioCantorFeatureTypes
 from inscripta.biocantor.io.gff3.exc import GFF3MissingSequenceNameError
@@ -44,6 +44,7 @@ class TranscriptInterval(AbstractFeatureInterval):
     of sequence.
     """
 
+    interval_type = IntervalType.TRANSCRIPT
     _identifiers = ["transcript_id", "transcript_symbol", "protein_id"]
 
     def __init__(

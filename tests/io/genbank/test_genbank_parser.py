@@ -1,10 +1,10 @@
 import json
+from collections import OrderedDict
 
 import pytest
-
 from inscripta.biocantor.gene.biotype import Biotype
 from inscripta.biocantor.gene.cds_frame import CDSFrame
-from inscripta.biocantor.io.genbank.exc import GenBankLocusTagError
+from inscripta.biocantor.io.genbank.exc import GenBankLocusTagError, GenBankLocationException
 from inscripta.biocantor.io.genbank.parser import parse_genbank, GenBankParserType
 from inscripta.biocantor.io.models import AnnotationCollectionModel
 from inscripta.biocantor.io.parser import ParsedAnnotationRecord
@@ -459,10 +459,26 @@ class TestGenBankErrors:
             )[0]
             assert rec.genes[0].locus_tag == rec.genes[1].locus_tag
 
+    @pytest.mark.parametrize(
+        "gbk",
+        [
+            # broken feature
+            "broken_coordinates_1.gbk",
+            # broken gene
+            "broken_coordinates_2.gbk",
+        ],
+    )
+    def test_broken_coordinates(self, test_data_dir, gbk):
+        gbk = test_data_dir / gbk
+        with pytest.raises(GenBankLocationException):
+            with open(gbk, "r") as fh:
+                _ = list(parse_genbank(fh))
+
 
 class TestGenBankFeatures:
-    @pytest.mark.parametrize("genbank,json_file", [("feature_test_2.gbk", "feature_test_2_gbk.json")])
-    def test_parse_feature_tests(self, test_data_dir, genbank, json_file):
+    def test_parse_feature_test_2(self, test_data_dir):
+        genbank = "feature_test_2.gbk"
+        json_file = "feature_test_2_gbk.json"
         recs = list(parse_genbank(test_data_dir / genbank))
         c = recs[0].annotation
         assert len(c.feature_collections) == 2
@@ -472,3 +488,239 @@ class TestGenBankFeatures:
 
         with open(test_data_dir / json_file) as fh:
             assert AnnotationCollectionModel.Schema().load(json.load(fh)) == c
+
+    def test_parse_feature_test_3(self, test_data_dir):
+        genbank = "feature_test_3.gbk"
+        recs = list(parse_genbank(test_data_dir / genbank))
+        c = recs[0].annotation
+        assert len(c.feature_collections) == 4
+        assert len(c.genes) == 1
+        assert AnnotationCollectionModel.Schema().dump(c) == OrderedDict(
+            [
+                (
+                    "feature_collections",
+                    [
+                        OrderedDict(
+                            [
+                                (
+                                    "feature_intervals",
+                                    [
+                                        OrderedDict(
+                                            [
+                                                ("interval_starts", [17999]),
+                                                ("interval_ends", [19000]),
+                                                ("strand", "PLUS"),
+                                                (
+                                                    "qualifiers",
+                                                    {
+                                                        "name": ["overlapping_ncrna_opposite_strand"],
+                                                        "note": ["not a joined interval"],
+                                                    },
+                                                ),
+                                                ("sequence_name", "CM021111.1"),
+                                                ("sequence_guid", None),
+                                                ("feature_interval_guid", "dad6ee93-38c2-bf22-5111-d7c0fc0a5863"),
+                                                ("feature_guid", None),
+                                                ("feature_types", ["feature"]),
+                                                ("feature_name", "overlapping_ncrna_opposite_strand"),
+                                                ("feature_id", None),
+                                                ("is_primary_feature", False),
+                                            ]
+                                        )
+                                    ],
+                                ),
+                                ("feature_collection_name", "overlapping_ncrna_opposite_strand"),
+                                ("feature_collection_id", None),
+                                ("locus_tag", None),
+                                ("feature_collection_type", None),
+                                ("sequence_name", "CM021111.1"),
+                                ("sequence_guid", None),
+                                ("feature_collection_guid", "cc74d80d-d815-7b93-f105-8801c81cb164"),
+                                (
+                                    "qualifiers",
+                                    {"name": ["overlapping_ncrna_opposite_strand"], "note": ["not a joined interval"]},
+                                ),
+                            ]
+                        ),
+                        OrderedDict(
+                            [
+                                (
+                                    "feature_intervals",
+                                    [
+                                        OrderedDict(
+                                            [
+                                                ("interval_starts", [20000, 20500]),
+                                                ("interval_ends", [20250, 20600]),
+                                                ("strand", "PLUS"),
+                                                ("qualifiers", {"name": ["joined_feature_plus_strand"]}),
+                                                ("sequence_name", "CM021111.1"),
+                                                ("sequence_guid", None),
+                                                ("feature_interval_guid", "b048fa8c-e5e9-b903-42f4-ae7275a79506"),
+                                                ("feature_guid", None),
+                                                ("feature_types", ["feature"]),
+                                                ("feature_name", "joined_feature_plus_strand"),
+                                                ("feature_id", None),
+                                                ("is_primary_feature", False),
+                                            ]
+                                        )
+                                    ],
+                                ),
+                                ("feature_collection_name", "joined_feature_plus_strand"),
+                                ("feature_collection_id", None),
+                                ("locus_tag", None),
+                                ("feature_collection_type", None),
+                                ("sequence_name", "CM021111.1"),
+                                ("sequence_guid", None),
+                                ("feature_collection_guid", "e986d20b-2e0e-8e11-76d1-bd49796ef25c"),
+                                ("qualifiers", {"name": ["joined_feature_plus_strand"]}),
+                            ]
+                        ),
+                        OrderedDict(
+                            [
+                                (
+                                    "feature_intervals",
+                                    [
+                                        OrderedDict(
+                                            [
+                                                ("interval_starts", [20550, 20749]),
+                                                ("interval_ends", [20700, 21000]),
+                                                ("strand", "MINUS"),
+                                                (
+                                                    "qualifiers",
+                                                    {
+                                                        "name": ["joined_feature_minus_strand"],
+                                                        "note": ["overlaps last feature"],
+                                                    },
+                                                ),
+                                                ("sequence_name", "CM021111.1"),
+                                                ("sequence_guid", None),
+                                                ("feature_interval_guid", "da172494-6af0-688e-5ff2-9bc583fec47d"),
+                                                ("feature_guid", None),
+                                                ("feature_types", ["feature"]),
+                                                ("feature_name", "joined_feature_minus_strand"),
+                                                ("feature_id", None),
+                                                ("is_primary_feature", False),
+                                            ]
+                                        )
+                                    ],
+                                ),
+                                ("feature_collection_name", "joined_feature_minus_strand"),
+                                ("feature_collection_id", None),
+                                ("locus_tag", None),
+                                ("feature_collection_type", None),
+                                ("sequence_name", "CM021111.1"),
+                                ("sequence_guid", None),
+                                ("feature_collection_guid", "46d4dd7a-6c99-0264-4def-6180624f84c5"),
+                                (
+                                    "qualifiers",
+                                    {"name": ["joined_feature_minus_strand"], "note": ["overlaps last feature"]},
+                                ),
+                            ]
+                        ),
+                        OrderedDict(
+                            [
+                                (
+                                    "feature_intervals",
+                                    [
+                                        OrderedDict(
+                                            [
+                                                ("interval_starts", [24999]),
+                                                ("interval_ends", [26000]),
+                                                ("strand", "MINUS"),
+                                                ("qualifiers", {"name": ["unjoined_minus_strand"]}),
+                                                ("sequence_name", "CM021111.1"),
+                                                ("sequence_guid", None),
+                                                ("feature_interval_guid", "a853506f-377f-8093-6f01-342c2c61be69"),
+                                                ("feature_guid", None),
+                                                ("feature_types", ["feature"]),
+                                                ("feature_name", "unjoined_minus_strand"),
+                                                ("feature_id", None),
+                                                ("is_primary_feature", False),
+                                            ]
+                                        )
+                                    ],
+                                ),
+                                ("feature_collection_name", "unjoined_minus_strand"),
+                                ("feature_collection_id", None),
+                                ("locus_tag", None),
+                                ("feature_collection_type", None),
+                                ("sequence_name", "CM021111.1"),
+                                ("sequence_guid", None),
+                                ("feature_collection_guid", "6332c330-1268-5088-fd99-fc18bc37a9a2"),
+                                ("qualifiers", {"name": ["unjoined_minus_strand"]}),
+                            ]
+                        ),
+                    ],
+                ),
+                (
+                    "genes",
+                    [
+                        OrderedDict(
+                            [
+                                (
+                                    "transcripts",
+                                    [
+                                        OrderedDict(
+                                            [
+                                                ("exon_starts", [16174]),
+                                                ("exon_ends", [18079]),
+                                                ("strand", "MINUS"),
+                                                ("cds_starts", None),
+                                                ("cds_ends", None),
+                                                ("cds_frames", None),
+                                                (
+                                                    "qualifiers",
+                                                    {
+                                                        "ncRNA_class": ["other"],
+                                                        "locus_tag": ["GI526_G0000001"],
+                                                        "product": ["CAT novel prediction: IsoSeq"],
+                                                        "note": ["negative strand non-coding gene"],
+                                                    },
+                                                ),
+                                                ("is_primary_tx", False),
+                                                ("transcript_id", None),
+                                                ("protein_id", None),
+                                                ("product", "CAT novel prediction: IsoSeq"),
+                                                ("transcript_symbol", None),
+                                                ("transcript_type", "ncRNA"),
+                                                ("sequence_name", "CM021111.1"),
+                                                ("sequence_guid", None),
+                                                ("transcript_interval_guid", "7cf2db76-c9db-96e8-c85f-74daf603d9cf"),
+                                                ("transcript_guid", None),
+                                            ]
+                                        )
+                                    ],
+                                ),
+                                ("gene_id", None),
+                                ("gene_symbol", None),
+                                ("gene_type", "ncRNA"),
+                                ("locus_tag", "GI526_G0000001"),
+                                ("qualifiers", {"locus_tag": ["GI526_G0000001"]}),
+                                ("sequence_name", "CM021111.1"),
+                                ("sequence_guid", None),
+                                ("gene_guid", "6cb70a2b-c2aa-542d-f382-0a10980cb00a"),
+                            ]
+                        )
+                    ],
+                ),
+                ("name", "CM021111.1"),
+                ("id", None),
+                ("sequence_name", "CM021111.1"),
+                ("sequence_guid", None),
+                ("sequence_path", None),
+                (
+                    "qualifiers",
+                    {
+                        "organism": ["Saccharomyces cerevisiae"],
+                        "mol_type": ["genomic DNA"],
+                        "strain": ["INSC1006"],
+                        "db_xref": ["taxon:4932"],
+                        "chromosome": ["I"],
+                        "country": ["USA: Boulder, CO"],
+                    },
+                ),
+                ("start", 0),
+                ("end", 50040),
+                ("completely_within", None),
+            ]
+        )

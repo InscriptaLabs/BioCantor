@@ -1,7 +1,7 @@
 """
 This module contains abstract base classes for interval types and interval collection types.
 """
-
+from enum import Enum
 from abc import ABC, abstractmethod
 from typing import List, Union, Dict, Hashable, Set, Optional, Any, Iterable, TypeVar
 from uuid import UUID
@@ -24,6 +24,13 @@ from inscripta.biocantor.util.object_validation import ObjectValidation
 
 # primitive data types possible as values of the list in a qualifiers dictionary
 QualifierValue = TypeVar("QualifierValue", str, int, bool, float)
+
+
+class IntervalType(str, Enum):
+    """This enum differentiates the two main types of Intervals -- Features and Transcripts"""
+
+    FEATURE = "feature"
+    TRANSCRIPT = "transcript"
 
 
 class AbstractInterval(ABC):
@@ -410,10 +417,14 @@ class AbstractInterval(ABC):
 
     def _import_qualifiers_from_list(self, qualifiers: Optional[Dict[Hashable, List[Hashable]]] = None):
         """Import input qualifiers to sets and store."""
+        self.qualifiers = {}
         if qualifiers:
-            self.qualifiers = {key: {str(x) for x in vals} for key, vals in qualifiers.items()}
-        else:
-            self.qualifiers = {}
+            if not isinstance(qualifiers, dict):
+                raise ValidationException("Qualifiers must be a dictionary")
+            for key, vals in qualifiers.items():
+                if not isinstance(vals, list):
+                    raise ValidationException("Qualifier values must be lists")
+                self.qualifiers[key] = {str(x) for x in vals}
 
     def _export_qualifiers_to_list(self) -> Optional[Dict[Hashable, List[str]]]:
         """Export qualifiers back to lists. This is used when exporting to dictionary / converting back to marshmallow
