@@ -74,9 +74,7 @@ dependent on available resources.
 
 ## Contributing
 
-Contributors implicitly agree to the terms in [Inscripta_Contributor_License_Agreement.pdf](https://github.com/InscriptaLabs/biocantor/blob/master/Inscripta_Contributor_License_Agreement.pdf).
-
-Users are invited to submit pull requests. Maintainers reserve the right 
+Users are invited to submit pull requests. Maintainers reserve the right
 to close PRs if the requested change is deemed inappropriate for the 
 library or if resources are not available to sufficiently review the PR.
 
