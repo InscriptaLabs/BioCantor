@@ -137,7 +137,7 @@ class AbstractFeatureIntervalCollection(AbstractInterval, ABC):
         if primary_feature is None:
             interval_sizes = sorted(
                 (
-                    [interval.cds_size if hasattr(interval, "cds_size") else 0, len(interval), i]
+                    [interval.cds_size if interval.interval_type == IntervalType.TRANSCRIPT else 0, len(interval), i]
                     for i, interval in enumerate(intervals)
                 ),
                 key=lambda x: (-x[0], -x[1]),
