@@ -343,14 +343,14 @@ class GeneInterval(AbstractFeatureIntervalCollection):
         )
 
     def get_merged_feature(self) -> FeatureInterval:
-        """Generate a single :class:`~biocantor.gene.feature.FeatureInterval` that merges all exons together.
+        """Generate a single :class:`~biocantor.gene.feature.FeatureInterval` that merges all child features together.
 
         This inherently has no translation and so is returned as a generic feature, not a transcript.
         """
         return self.get_merged_transcript()
 
     def get_merged_transcript(self) -> FeatureInterval:
-        """Generate a single :class:`~biocantor.gene.feature.FeatureInterval` that merges all exons together.
+        """Generate a single :class:`~biocantor.gene.feature.FeatureInterval` that merges all child features together.
 
         This inherently has no translation and so is returned as a generic feature, not a transcript.
         """
