@@ -81,7 +81,7 @@ def collection_to_genbank(
         if seqrecord_annotations:
             seqrecord.annotations = seqrecord_annotations[i]
 
-        if not seqrecord.annotations["molecule_type"]:
+        if "molecule_type" not in seqrecord.annotations or not seqrecord.annotations["molecule_type"]:
             seqrecord.annotations["molecule_type"] = "DNA"
         if source:
             seqrecord.annotations["source"] = source
