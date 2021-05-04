@@ -11,12 +11,14 @@ pairs where you have ``gene`` followed by ``[CDS, tRNA, rRNA, ...]``.
 ``[mRNA, tRNA, ...]`` and if the case where the child is ``mRNA``, then there are ``CDS`` features.
 """
 import warnings
-from typing import Iterable, List, Optional, TextIO, Dict, Hashable, Union
+from pathlib import Path
+from typing import Iterable, List, Optional, TextIO, Hashable, Union, Dict, Any
 
 from Bio import SeqIO
 from Bio.Seq import Seq
 from Bio.SeqFeature import SeqFeature
 from Bio.SeqRecord import SeqRecord
+
 from inscripta.biocantor.gene.collections import AnnotationCollection, GeneInterval, FeatureIntervalCollection
 from inscripta.biocantor.gene.feature import FeatureInterval
 from inscripta.biocantor.gene.transcript import TranscriptInterval
@@ -34,12 +36,13 @@ from inscripta.biocantor.location.strand import Strand
 
 
 def collection_to_genbank(
-    collections: Iterable[AnnotationCollection],
-    genbank_file_handle_or_path: Union[TextIO, str],
+    collections: List[AnnotationCollection],
+    genbank_file_handle_or_path: Union[TextIO, str, Path],
     genbank_type: Optional[GenbankFlavor] = GenbankFlavor.PROKARYOTIC,
     force_strand: Optional[bool] = True,
     organism: Optional[str] = None,
     source: Optional[str] = None,
+    seqrecord_annotations: Optional[List[Dict[str, Any]]] = None,
 ):
     """
     Take an instantiated :class:`~biocantor.gene.collections.AnnotationCollection` and produce a GenBank file.
@@ -52,13 +55,19 @@ def collection_to_genbank(
             strands are instead skipped.
         organism: What string to put in the ORGANISM field? If not set, will be a period.
         source: What string to put in the SOURCE field? If not set, will be the basename of the GenBank path.
+        seqrecord_annotations: An arbitrary dictionary of annotations to include.
+            If ``organism`` or ``source`` are set both in this function call and in this dictionary, they will be
+            over-written. Must be a list of the same length as the collections.
     """
+
+    if seqrecord_annotations and len(seqrecord_annotations) != len(collections):
+        raise GenBankExportError("Annotations must be the same length as collections.")
 
     if organism is None:
         organism = "."
 
     seqrecords = []
-    for collection in collections:
+    for i, collection in enumerate(collections):
 
         if collection.sequence is None:
             raise GenBankExportError("Cannot export GenBank if collections do not have sequence information")
@@ -69,9 +78,15 @@ def collection_to_genbank(
             id=collection.sequence_guid if collection.sequence_guid else collection.sequence_name,
             description="GenBank produced by BioCantor",
         )
-        seqrecord.annotations["molecule_type"] = "DNA"
-        seqrecord.annotations["source"] = source
-        seqrecord.annotations["organism"] = organism
+        if seqrecord_annotations:
+            seqrecord.annotations = seqrecord_annotations[i]
+
+        if not seqrecord.annotations["molecule_type"]:
+            seqrecord.annotations["molecule_type"] = "DNA"
+        if source:
+            seqrecord.annotations["source"] = source
+        if organism:
+            seqrecord.annotations["organism"] = organism
 
         for gene_or_feature in collection:
             seqrecord.features.extend(gene_to_feature(gene_or_feature, genbank_type, force_strand))
