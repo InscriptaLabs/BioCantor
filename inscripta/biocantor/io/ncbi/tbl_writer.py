@@ -46,6 +46,7 @@ class TblFeature(ABC):
     to show an example:
 
     .. code-block::
+
         >Feature gb|CM021127.1|
         <14406  14026   gene
                                 gene    TDA8
