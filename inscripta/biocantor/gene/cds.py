@@ -560,6 +560,7 @@ class CDSInterval(AbstractFeatureInterval):
 
 
             .. code-block::
+
                 Index:      0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21
                 Sequence:   A A A C A A A A G G G  T  A  C  C  C  A  A  A  A  A  A
                 Exons:      A A A C A     A G G G     A  C  C  C  A  A
@@ -573,6 +574,7 @@ class CDSInterval(AbstractFeatureInterval):
             So, for this test case we expect the frames to be:
 
             .. code-block::
+
                 Zero Frame: [1, 0, 0]
                 One Frame:  [0, 2, 1]
                 Two Frame:  [2, 1, 2]
