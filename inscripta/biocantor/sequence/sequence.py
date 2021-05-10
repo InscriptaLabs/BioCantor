@@ -106,7 +106,7 @@ class Sequence:
         else:
             new_parent = self.parent
 
-        return Sequence(subseq, self.alphabet, type=self.sequence_type, parent=new_parent)
+        return Sequence(subseq, self.alphabet, type=self.sequence_type, parent=new_parent, validate_alphabet=False)
 
     def __repr__(self):
         return "<{}>".format(self.summary())
