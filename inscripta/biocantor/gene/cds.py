@@ -525,6 +525,10 @@ class CDSInterval(AbstractFeatureInterval):
         """
         Returns amino acid sequence of this CDS. If truncate_at_in_frame_stop is ``True``,
         this will stop at the first in-frame stop.
+
+        Currently the ``translation_table`` field only controls the start codon. Using non-standard
+        translation tables will change the set of start codons that code for Methionine,
+        and will not change any other codons.
         """
         aa_seq_str = "".join(self._translate_iter(truncate_at_in_frame_stop, translation_table))
         return Sequence(aa_seq_str, Alphabet.AA, validate_alphabet=False)
