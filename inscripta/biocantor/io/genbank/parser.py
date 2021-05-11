@@ -216,6 +216,15 @@ class GeneFeature(Feature):
     def __str__(self):
         return self.feature.__repr__()
 
+    @staticmethod
+    def from_transcript_feature(feature: SeqFeature, seqrecord: SeqRecord) -> "GeneFeature":
+        old_type = feature.type
+        feature.type = "gene"
+        gene = GeneFeature(feature, seqrecord)
+        feature.type = old_type
+        gene.add_child(feature)
+        return gene
+
     def add_child(self, feature: SeqFeature):
         """Add a new feature as a child. Infer Transcripts if this child is a CDS or exon feature."""
         if feature.type in TranscriptFeature.types:
@@ -467,7 +476,15 @@ def group_gene_records_from_sorted_genbank(
                     genes.append(gene)
                 gene = GeneFeature(feature, seqrecord)
             elif feature.type in TranscriptFeature.types:
-                gene.add_child(feature)
+                # if the current gene is non-empty, and the feature is not a mRNA, then this is a isolated ncRNA
+                # finish this gene and start a new one
+                if feature.type != TranscriptFeatures.CODING_TRANSCRIPT and gene.has_children:
+                    gene.finalize()
+                    gene = parse_func(gene)
+                    genes.append(gene)
+                    gene = GeneFeature.from_transcript_feature(feature, seqrecord)
+                else:
+                    gene.add_child(feature)
             elif feature.type in IntervalFeature.types:
                 if len(gene.children) == 0:
                     gene.add_child(feature)

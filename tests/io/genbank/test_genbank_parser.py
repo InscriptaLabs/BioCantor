@@ -724,3 +724,14 @@ class TestGenBankFeatures:
                 ("completely_within", None),
             ]
         )
+
+
+class TestSortedParser:
+    """Test edge cases for sorted parser"""
+
+    def test_missing_gene(self, test_data_dir):
+        genbank = "INSC1003_missing_gene.gbk"
+        recs = list(parse_genbank(test_data_dir / genbank, gbk_type=GenBankParserType.SORTED))
+        c = recs[0].annotation
+        assert len(c.genes) == 8
+        assert len([x for x in c.genes if x.gene_type == Biotype.protein_coding]) == 6
