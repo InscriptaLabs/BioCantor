@@ -25,6 +25,15 @@ class TestAlphabet:
         assert not Alphabet.GENERIC.is_nucleotide_alphabet()
 
 
+def test_wtf():
+    p = Parent(
+        id="parent",
+        sequence_type="seqtype_2",
+        location=SingleInterval(5, 9, Strand.MINUS, parent="parent"),
+    )
+    assert p.strand
+
+
 class TestSequence:
     def test_init(self):
         sequence = Sequence(
