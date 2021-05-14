@@ -6,10 +6,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [0.5.0]
 ### Changed
-- Additional properties added to `FeatureInterval`.
-- Added ability to create `GeneFeature` object from `SeqFeature` and `SeqRecord` pair.
-- Added ability to accept annotations when converting collections to genbank.
-- Added suppport for custom translation tables.
+- Added ability to parse non-transcribed features from GenBank records without a parent /gene record in the position-sorted parser.
+- Added ability to export `SeqRecord` annotations when writing to GenBank.
+- Added methods to `FeatureInterval` that mirror `TranscriptInterval`.
+- Added support for translating with non-standard codon tables.
 
 ## [0.4.5]
 ### Changed
