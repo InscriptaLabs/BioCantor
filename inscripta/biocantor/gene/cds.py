@@ -408,7 +408,7 @@ class CDSInterval(AbstractFeatureInterval):
         codons = [str(codon_location.extract_sequence()) for codon_location in self.scan_codon_locations()]
         seq = "".join(codons)
         assert len(seq) % 3 == 0
-        return Sequence(seq, Alphabet.NT_EXTENDED)
+        return Sequence(seq, Alphabet.NT_EXTENDED, validate_alphabet=False)
 
     @property
     def num_codons(self) -> int:
@@ -497,14 +497,41 @@ class CDSInterval(AbstractFeatureInterval):
     def _total_block_len(starts: List[int], ends: List[int]) -> int:
         return sum([coords[1] - coords[0] for coords in zip(starts, ends)])
 
+    @lru_cache(maxsize=1)
+    def _translate_iter(
+        self,
+        truncate_at_in_frame_stop: Optional[bool] = False,
+        translation_table: Optional[TranslationTable] = TranslationTable.DEFAULT,
+    ) -> Iterator[str]:
+        """
+        Iterator that handles alternative translation tables for the start codon.
+        """
+
+        for i, codon in enumerate(self.scan_codons(truncate_at_in_frame_stop)):
+            if i == 0:
+                if codon.is_start_codon_in_specific_translation_table(translation_table):
+                    yield Codon.ATG.translate()
+                else:
+                    yield codon.translate()
+            else:
+                yield codon.translate()
+
     @lru_cache(maxsize=2)
-    def translate(self, truncate_at_in_frame_stop: Optional[bool] = False) -> Sequence:
+    def translate(
+        self,
+        truncate_at_in_frame_stop: Optional[bool] = False,
+        translation_table: Optional[TranslationTable] = TranslationTable.DEFAULT,
+    ) -> Sequence:
         """
         Returns amino acid sequence of this CDS. If truncate_at_in_frame_stop is ``True``,
         this will stop at the first in-frame stop.
+
+        Currently the ``translation_table`` field only controls the start codon. Using non-standard
+        translation tables will change the set of start codons that code for Methionine,
+        and will not change any other codons.
         """
-        aa_seq_str = "".join((codon.translate() for codon in self.scan_codons(truncate_at_in_frame_stop)))
-        return Sequence(aa_seq_str, Alphabet.AA)
+        aa_seq_str = "".join(self._translate_iter(truncate_at_in_frame_stop, translation_table))
+        return Sequence(aa_seq_str, Alphabet.AA, validate_alphabet=False)
 
     @lru_cache(maxsize=1)
     @property
@@ -560,6 +587,7 @@ class CDSInterval(AbstractFeatureInterval):
 
 
             .. code-block::
+
                 Index:      0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21
                 Sequence:   A A A C A A A A G G G  T  A  C  C  C  A  A  A  A  A  A
                 Exons:      A A A C A     A G G G     A  C  C  C  A  A
@@ -573,6 +601,7 @@ class CDSInterval(AbstractFeatureInterval):
             So, for this test case we expect the frames to be:
 
             .. code-block::
+
                 Zero Frame: [1, 0, 0]
                 One Frame:  [0, 2, 1]
                 Two Frame:  [2, 1, 2]

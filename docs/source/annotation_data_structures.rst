@@ -9,12 +9,11 @@ The core data structure is :class:`biocantor.gene.feature.AbstractFeatureInterva
 1. :class:`biocantor.gene.transcript.TranscriptInterval`.
 2. :class:`biocantor.gene.feature.FeatureInterval`.
 
-`TranscriptInterval`s are used to model *transcribed features*. They can be coding or non-coding.
-In contrast, `FeatureInterval`s are intended to be generic intervals, which may be transcribed or non-transcribed.
+:class:`biocantor.gene.transcript.TranscriptInterval` are used to model *transcribed features*. They can be coding or non-coding.
+In contrast, :class:`biocantor.gene.feature.FeatureInterval` are intended to be generic intervals, which may be transcribed or non-transcribed.
 Both of these intervals implement a variety of methods that allow for operations such as:
 
-1. Coordinate translations between genomic, CDS and transcript coordinate systems. These operations can be performed
-    as either points or as intervals.
+1. Coordinate translations between genomic, CDS and transcript coordinate systems. These operations can be performed as either points or as intervals.
 2. Sequence extraction in all possible coordinate systems.
 3. Export to GFF3, BED and JSON.
 
@@ -46,9 +45,10 @@ Genes
 
 BioCantor models the concept of *genes* as a three layer hierarchy:
 
-```
-GeneInterval -> TranscriptInterval -> CDSInterval (optional)
-```
+.. code-block::
+
+    GeneInterval -> TranscriptInterval -> CDSInterval (optional)
+
 
 Under this model, a gene can be considered to be any sort of transcribed interval. This is different from the
 Sequence Ontology model, where transcribed intervals as well as non-transcribed intervals are direct children
@@ -65,9 +65,10 @@ Non-transcribed intervals (Features)
 
 BioCantor models the concept of generic intervals as a two layer hierarchy:
 
-```
-FeatureIntervalCollection -> FeatureInterval
-```
+.. code-block::
+
+    FeatureIntervalCollection -> FeatureInterval
+
 
 This is intended to allow for grouping of non-transcribed features. An example of this could be a promoter region,
 with multple known transcription factor binding sites. In this example, the promoter could be built as a
@@ -81,7 +82,7 @@ Unlike genes, :class:`~biocantor.gene.feature.FeatureInterval` do not have a res
 they can have multiple types, stored as the value `feature_types`. When a
 :class:`~biocantor.gene.collections.FeatureIntervalCollection` is constructed, it adopts the union of all types
 of its children :class:`~biocantor.gene.feature.FeatureInterval`. This allows for set operations to occur - as in
-the above example, there could be three intervals with types `["tfA", "tfB", "tfC"]` respectively, and thus the
+the above example, there could be three intervals with types ``["tfA", "tfB", "tfC"]`` respectively, and thus the
 collection containing them will have all three of those types associated with it.
 :class:`~biocantor.gene.collections.FeatureIntervalCollection` also can have one type of its own, which in the above
-example could be `promoter`.
+example could be ``promoter``.
