@@ -137,7 +137,7 @@ class AbstractFeatureIntervalCollection(AbstractInterval, ABC):
         if primary_feature is None:
             interval_sizes = sorted(
                 (
-                    [interval.cds_size if hasattr(interval, "cds_size") else 0, len(interval), i]
+                    [interval.cds_size if interval.interval_type == IntervalType.TRANSCRIPT else 0, len(interval), i]
                     for i, interval in enumerate(intervals)
                 ),
                 key=lambda x: (-x[0], -x[1]),
@@ -342,8 +342,15 @@ class GeneInterval(AbstractFeatureIntervalCollection):
             parent_or_seq_chunk_parent=self.chunk_relative_location.parent,
         )
 
+    def get_merged_feature(self) -> FeatureInterval:
+        """Generate a single :class:`~biocantor.gene.feature.FeatureInterval` that merges all child features together.
+
+        This inherently has no translation and so is returned as a generic feature, not a transcript.
+        """
+        return self.get_merged_transcript()
+
     def get_merged_transcript(self) -> FeatureInterval:
-        """Generate a single :class:`~biocantor.gene.feature.FeatureInterval` that merges all exons together.
+        """Generate a single :class:`~biocantor.gene.feature.FeatureInterval` that merges all child features together.
 
         This inherently has no translation and so is returned as a generic feature, not a transcript.
         """
@@ -560,6 +567,30 @@ class FeatureIntervalCollection(AbstractFeatureIntervalCollection):
         """Convenience function that provides shared API between features and transcripts"""
         if self.get_primary_feature() is not None:
             return self.get_primary_feature().get_spliced_sequence()
+
+    def get_merged_feature(self) -> FeatureInterval:
+        """Generate a single :class:`~biocantor.gene.feature.FeatureInterval` that merges all intervals together."""
+        intervals = []
+        for tx in self.feature_intervals:
+            for i in tx.chromosome_location.blocks:
+                intervals.append(i)
+        merged = reduce(lambda x, y: x.union(y), intervals)
+        interval_starts = [x.start for x in merged.blocks]
+        interval_ends = [x.end for x in merged.blocks]
+
+        return FeatureInterval(
+            interval_starts=interval_starts,
+            interval_ends=interval_ends,
+            strand=self.chunk_relative_location.strand,
+            qualifiers=self._export_qualifiers_to_list(),
+            sequence_guid=self.sequence_guid,
+            sequence_name=self.sequence_name,
+            feature_types=list(self.feature_types),
+            feature_name=self.feature_collection_name,
+            feature_id=self.feature_collection_id,
+            guid=self.guid,
+            parent_or_seq_chunk_parent=self.chunk_relative_location.parent,
+        )
 
     def to_dict(self, chromosome_relative_coordinates: bool = True) -> Dict[str, Any]:
         """Convert to a dict usable by :class:`~biocantor.io.models.FeatureIntervalCollectionModel`."""

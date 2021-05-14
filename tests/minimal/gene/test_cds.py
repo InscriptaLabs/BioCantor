@@ -1599,3 +1599,23 @@ class TestCDSInterval:
         )
         assert cds1 != cds2  # Location equality comparison does compare sequence
         assert hash(cds1) == hash(cds2)  # Location hash comparison does not compare sequence
+
+
+@pytest.mark.parametrize(
+    "sequence,translation_table,expected",
+    [
+        # normal translation
+        ("ATGCATATTTGGAAACCAA", TranslationTable.DEFAULT, "MHIWKP"),
+        # CTG start codon
+        ("CTGCATATTTGGAAACCAA", TranslationTable.STANDARD, "MHIWKP"),
+        # GTG start codon (note that in-frame ATT does not change to M)
+        ("CTGCATATTTGGAAACCAA", TranslationTable.STANDARD, "MHIWKP"),
+        # invalid start codon is still translated
+        ("AAGCATATTTGGAAACCAA", TranslationTable.PROKARYOTE, "KHIWKP"),
+    ],
+)
+def test_translation_tables(sequence, translation_table, expected):
+    s = Sequence(sequence, Alphabet.NT_EXTENDED)
+    i = SingleInterval(0, len(sequence), Strand.PLUS, parent=s)
+    cds = CDSInterval.from_location(i, cds_frames=[CDSFrame.ZERO])
+    assert str(cds.translate(translation_table=translation_table)) == expected

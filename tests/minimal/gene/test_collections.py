@@ -191,7 +191,9 @@ class TestGene:
 
     def test_merged_interval(self):
         obj = self.gene.to_gene_interval()
-        assert str(obj.get_merged_transcript()) == "FeatureInterval((12-28:+), name=None)"
+        assert (
+            str(obj.get_merged_transcript()) == str(obj.get_merged_feature()) == "FeatureInterval((12-28:+), name=None)"
+        )
         assert str(obj.get_merged_cds()) == "FeatureInterval((14-20:+, 22-23:+), name=None)"
 
     def test_failed_merge_interval(self):
@@ -318,6 +320,10 @@ class TestFeatureIntervalCollection:
     def test_iter(self):
         obj = self.collection1.to_feature_collection()
         assert list(obj) == obj.feature_intervals
+
+    def test_merged_interval(self):
+        obj = self.collection1.to_feature_collection()
+        assert str(obj.get_merged_feature()) == "FeatureInterval((12-16:+, 17-20:+, 22-25:+), name=featgrp1)"
 
     def test_query_by_guid(self):
         # query by all

@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [0.5.0]
+### Changed
+- Added ability to parse non-transcribed features from GenBank records without a parent /gene record in the position-sorted parser.
+- Added ability to export `SeqRecord` annotations when writing to GenBank.
+- Added methods to `FeatureInterval` that mirror `TranscriptInterval`.
+- Added support for translating with non-standard codon tables.
+
 ## [0.4.5]
 ### Changed
 - Remove contributor license agreement, which is superseded by the MIT license.
