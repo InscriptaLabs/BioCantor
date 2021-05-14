@@ -6,8 +6,6 @@ Each object is capable of exporting itself to BED and GFF3.
 from typing import Optional, Any, Dict, Iterable, Hashable, Set, List
 from uuid import UUID
 
-from methodtools import lru_cache
-
 from inscripta.biocantor.exc import (
     EmptyLocationException,
     LocationOverlapException,
@@ -18,6 +16,7 @@ from inscripta.biocantor.exc import (
 from inscripta.biocantor.gene.biotype import Biotype, UNKNOWN_BIOTYPE
 from inscripta.biocantor.gene.cds import CDSInterval
 from inscripta.biocantor.gene.cds_frame import CDSPhase, CDSFrame
+from inscripta.biocantor.gene.codon import TranslationTable
 from inscripta.biocantor.gene.interval import AbstractFeatureInterval, QualifierValue, IntervalType
 from inscripta.biocantor.io.bed import BED12, RGB
 from inscripta.biocantor.io.gff3.constants import GFF_SOURCE, NULL_COLUMN, BioCantorQualifiers, BioCantorFeatureTypes
@@ -30,6 +29,7 @@ from inscripta.biocantor.parent.parent import Parent, SequenceType
 from inscripta.biocantor.sequence.sequence import Sequence
 from inscripta.biocantor.util.bins import bins
 from inscripta.biocantor.util.hashing import digest_object
+from methodtools import lru_cache
 
 
 class TranscriptInterval(AbstractFeatureInterval):
@@ -641,11 +641,17 @@ class TranscriptInterval(AbstractFeatureInterval):
         return self.cds.extract_sequence()
 
     @lru_cache(maxsize=2)
-    def get_protein_sequence(self, truncate_at_in_frame_stop: Optional[bool] = False) -> Sequence:
+    def get_protein_sequence(
+        self,
+        truncate_at_in_frame_stop: Optional[bool] = False,
+        translation_table: Optional[TranslationTable] = TranslationTable.DEFAULT,
+    ) -> Sequence:
         """Return the translation of this transcript, if possible."""
         if not self.is_coding:
             raise NoncodingTranscriptError("No translation on non-coding transcript")
-        return self.cds.translate(truncate_at_in_frame_stop)
+        return self.cds.translate(
+            truncate_at_in_frame_stop=truncate_at_in_frame_stop, translation_table=translation_table
+        )
 
     def export_qualifiers(
         self, parent_qualifiers: Optional[Dict[Hashable, Set[str]]] = None

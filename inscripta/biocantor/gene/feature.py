@@ -9,6 +9,7 @@ from uuid import UUID
 from inscripta.biocantor.exc import (
     EmptyLocationException,
     NoSuchAncestorException,
+    NoncodingTranscriptError,
 )
 from inscripta.biocantor.gene.cds_frame import CDSPhase
 from inscripta.biocantor.gene.interval import AbstractFeatureInterval, QualifierValue, IntervalType
@@ -94,6 +95,50 @@ class FeatureInterval(AbstractFeatureInterval):
     def name(self) -> str:
         """Returns the name of this feature. Provides a shared API across genes/transcripts and features."""
         return self.feature_name
+
+    @property
+    def cds_start(self) -> int:
+        raise NoncodingTranscriptError("No CDS start for non-transcribed features")
+
+    @property
+    def cds_end(self) -> int:
+        raise NoncodingTranscriptError("No CDS end for non-transcribed features")
+
+    @property
+    def chunk_relative_cds_start(self) -> int:
+        raise NoncodingTranscriptError("No CDS start for non-transcribed features")
+
+    @property
+    def chunk_relative_cds_end(self) -> int:
+        raise NoncodingTranscriptError("No CDS end for non-transcribed features")
+
+    @property
+    def cds_location(self) -> Location:
+        """Returns the Location of the CDS in *chromosome coordinates*"""
+        raise NoncodingTranscriptError("No location on a non-transcribed feature")
+
+    @property
+    def cds_chunk_relative_location(self) -> Location:
+        """Returns the Location of the CDS in *chunk relative coordinates*"""
+        raise NoncodingTranscriptError("No location on a non-transcribed feature")
+
+    @property
+    def is_coding(self) -> bool:
+        raise NoncodingTranscriptError("Non-transcribed features cannot be coding")
+
+    @property
+    def has_in_frame_stop(self) -> bool:
+        raise NoncodingTranscriptError("Cannot have frameshifts on non-transcribed features")
+
+    @property
+    def cds_size(self) -> int:
+        """CDS size, regardless of chunk relativity (does not shrink)"""
+        raise NoncodingTranscriptError("No cds size on a non-transcribed feature")
+
+    @property
+    def chunk_relative_cds_size(self) -> int:
+        """Chunk relative CDS size (can shrink if the Location is a slice of the full transcript)"""
+        raise NoncodingTranscriptError("No chunk-relative CDS size on a non-transcribed feature")
 
     def to_dict(self, chromosome_relative_coordinates: bool = True) -> Dict[str, Any]:
         """Convert to a dict usable by :class:`biocantor.io.models.FeatureIntervalModel`."""

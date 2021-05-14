@@ -6,6 +6,7 @@ from inscripta.biocantor.exc import (
     NoSuchAncestorException,
     NullSequenceException,
     MismatchedParentException,
+    NoncodingTranscriptError,
 )
 from inscripta.biocantor.gene.feature import FeatureInterval
 from inscripta.biocantor.io.gff3.exc import GFF3MissingSequenceNameError
@@ -674,3 +675,24 @@ def test_qualifiers_exceptions(data, expected_exception):
     """Qualifiers must be dictionaries of lists"""
     with pytest.raises(expected_exception):
         _ = FeatureInterval.from_dict(data)
+
+
+@pytest.mark.parametrize(
+    "property,expected_exception",
+    [
+        ("cds_start", NoncodingTranscriptError),
+        ("cds_end", NoncodingTranscriptError),
+        ("chunk_relative_cds_start", NoncodingTranscriptError),
+        ("chunk_relative_cds_end", NoncodingTranscriptError),
+        ("cds_location", NoncodingTranscriptError),
+        ("cds_chunk_relative_location", NoncodingTranscriptError),
+        ("is_coding", NoncodingTranscriptError),
+        ("has_in_frame_stop", NoncodingTranscriptError),
+        ("cds_size", NoncodingTranscriptError),
+        ("chunk_relative_cds_size", NoncodingTranscriptError),
+    ],
+)
+def test_property_exceptions(property, expected_exception):
+    obj = e3_spliced.to_feature_interval()
+    with pytest.raises(expected_exception):
+        getattr(obj, property)
