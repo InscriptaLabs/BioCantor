@@ -266,6 +266,7 @@ class FeatureInterval(AbstractFeatureInterval):
         parent: Optional[str] = None,
         parent_qualifiers: Optional[Dict[Hashable, Set[str]]] = None,
         chromosome_relative_coordinates: bool = True,
+        raise_on_reserved_attributes: Optional[bool] = True,
     ) -> Iterable[GFFRow]:
         """Writes a GFF format list of lists for this feature.
 
@@ -277,6 +278,8 @@ class FeatureInterval(AbstractFeatureInterval):
             parent_qualifiers: Directly pull qualifiers in from this dictionary.
             chromosome_relative_coordinates: Output GFF in chromosome-relative coordinates? Will raise an exception
                 if there is not a ``sequence_chunk`` ancestor type.
+            raise_on_reserved_attributes: If ``True``, then GFF3 reserved attributes such as ``ID`` and ``Name`` present
+                in the qualifiers will lead to an exception and not a warning.
 
         Yields:
             :class:`~biocantor.io.gff3.rows.GFFRow`
@@ -299,7 +302,13 @@ class FeatureInterval(AbstractFeatureInterval):
 
         feature_id = str(self.guid)
 
-        attributes = GFFAttributes(id=feature_id, qualifiers=qualifiers, name=self.feature_name, parent=parent)
+        attributes = GFFAttributes(
+            id=feature_id,
+            qualifiers=qualifiers,
+            name=self.feature_name,
+            parent=parent,
+            raise_on_reserved_attributes=raise_on_reserved_attributes,
+        )
 
         # "transcript" (feature interval) feature
         row = GFFRow(
@@ -325,7 +334,11 @@ class FeatureInterval(AbstractFeatureInterval):
         for i, (start, end) in enumerate(blocks, 1):
 
             attributes = GFFAttributes(
-                id=f"feature-{feature_id}-{i}", qualifiers=qualifiers, name=self.feature_name, parent=feature_id
+                id=f"feature-{feature_id}-{i}",
+                qualifiers=qualifiers,
+                name=self.feature_name,
+                parent=feature_id,
+                raise_on_reserved_attributes=raise_on_reserved_attributes,
             )
             row = GFFRow(
                 self.sequence_name,
