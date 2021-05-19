@@ -2,7 +2,6 @@
 Test writing GFF3 files.
 """
 import pytest
-import warnings
 
 from inscripta.biocantor.io.genbank.parser import parse_genbank
 from inscripta.biocantor.io.gff3.parser import parse_standard_gff3
