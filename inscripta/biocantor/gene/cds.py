@@ -306,7 +306,29 @@ class CDSInterval(AbstractFeatureInterval):
         parent: Optional[str] = None,
         parent_qualifiers: Optional[Dict[Hashable, Set[str]]] = None,
         chromosome_relative_coordinates: bool = True,
+        raise_on_reserved_attributes: Optional[bool] = True,
     ) -> Iterable[GFFRow]:
+        """Writes a GFF format list of lists for this CDS.
+
+        The additional qualifiers are used when writing a hierarchical relationship back to files. GFF files
+        are easier to work with if the children features have the qualifiers of their parents.
+
+        Args:
+            parent: ID of the Parent of this transcript.
+            parent_qualifiers: Directly pull qualifiers in from this dictionary.
+            chromosome_relative_coordinates: Output GFF in chromosome-relative coordinates? Will raise an exception
+                if there is not a ``sequence_chunk`` ancestor type.
+            raise_on_reserved_attributes: If ``True``, then GFF3 reserved attributes such as ``ID`` and ``Name`` present
+                in the qualifiers will lead to an exception and not a warning.
+
+        Yields:
+            :class:`~biocantor.io.gff3.rows.GFFRow`
+
+        Raises:
+            NoSuchAncestorException: If ``chromosome_relative_coordinates`` is ``False`` but there is no
+            ``sequence_chunk`` ancestor type.
+            GFF3MissingSequenceNameError: If there are no sequence names associated with this transcript.
+        """
 
         if not chromosome_relative_coordinates and not self.has_ancestor_of_type(SequenceType.SEQUENCE_CHUNK):
             raise NoSuchAncestorException(
@@ -331,6 +353,7 @@ class CDSInterval(AbstractFeatureInterval):
                 qualifiers=qualifiers,
                 name=self.protein_id,
                 parent=parent,
+                raise_on_reserved_attributes=raise_on_reserved_attributes,
             )
             row = GFFRow(
                 self.sequence_name,

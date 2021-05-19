@@ -679,6 +679,7 @@ class TranscriptInterval(AbstractFeatureInterval):
         parent: Optional[str] = None,
         parent_qualifiers: Optional[Dict[Hashable, Set[str]]] = None,
         chromosome_relative_coordinates: bool = True,
+        raise_on_reserved_attributes: Optional[bool] = True,
     ) -> Iterable[GFFRow]:
         """Writes a GFF format list of lists for this transcript.
 
@@ -690,6 +691,8 @@ class TranscriptInterval(AbstractFeatureInterval):
             parent_qualifiers: Directly pull qualifiers in from this dictionary.
             chromosome_relative_coordinates: Output GFF in chromosome-relative coordinates? Will raise an exception
                 if there is not a ``sequence_chunk`` ancestor type.
+            raise_on_reserved_attributes: If ``True``, then GFF3 reserved attributes such as ``ID`` and ``Name`` present
+                in the qualifiers will lead to an exception and not a warning.
 
         Yields:
             :class:`~biocantor.io.gff3.rows.GFFRow`
@@ -712,7 +715,13 @@ class TranscriptInterval(AbstractFeatureInterval):
 
         tx_guid = str(self.guid)
 
-        attributes = GFFAttributes(id=tx_guid, qualifiers=qualifiers, name=self.transcript_symbol, parent=parent)
+        attributes = GFFAttributes(
+            id=tx_guid,
+            qualifiers=qualifiers,
+            name=self.transcript_symbol,
+            parent=parent,
+            raise_on_reserved_attributes=raise_on_reserved_attributes,
+        )
 
         # transcript feature
         row = GFFRow(
@@ -737,7 +746,11 @@ class TranscriptInterval(AbstractFeatureInterval):
 
         for i, (start, end) in enumerate(blocks, 1):
             attributes = GFFAttributes(
-                id=f"exon-{tx_guid}-{i}", qualifiers=qualifiers, name=self.transcript_symbol, parent=tx_guid
+                id=f"exon-{tx_guid}-{i}",
+                qualifiers=qualifiers,
+                name=self.transcript_symbol,
+                parent=tx_guid,
+                raise_on_reserved_attributes=raise_on_reserved_attributes,
             )
             row = GFFRow(
                 self.sequence_name,
@@ -757,6 +770,7 @@ class TranscriptInterval(AbstractFeatureInterval):
                 chromosome_relative_coordinates=chromosome_relative_coordinates,
                 parent_qualifiers=qualifiers,
                 parent=tx_guid,
+                raise_on_reserved_attributes=raise_on_reserved_attributes,
             )
 
     def to_bed12(

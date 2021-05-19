@@ -2,11 +2,13 @@
 Test writing GFF3 files.
 """
 import pytest
+import warnings
 
 from inscripta.biocantor.io.genbank.parser import parse_genbank
 from inscripta.biocantor.io.gff3.parser import parse_standard_gff3
 from inscripta.biocantor.io.gff3.writer import collection_to_gff3
 from inscripta.biocantor.io.parser import ParsedAnnotationRecord
+from inscripta.biocantor.io.gff3.exc import GFF3ExportException, ReservedKeyWarning
 
 
 class TestGff3Writer:
@@ -46,3 +48,15 @@ class TestGff3Writer:
 
         for c1, c2 in zip(a, a2):
             assert c1.to_dict() == c2.to_dict()
+
+    def test_reserved_attributes(self, test_data_dir, tmp_path):
+        gb = test_data_dir / "INSC1020_subset_gff3.gb"
+        parsed = list(parse_genbank(gb))
+        a = [x.to_annotation_collection() for x in parsed]
+        tmp_gff = tmp_path / "tmp.gff"
+        with pytest.warns(ReservedKeyWarning):
+            with open(tmp_gff, "w") as fh:
+                collection_to_gff3(a, fh, raise_on_reserved_attributes=False)
+        with pytest.raises(GFF3ExportException):
+            with open(tmp_gff, "w") as fh:
+                collection_to_gff3(a, fh, raise_on_reserved_attributes=True)

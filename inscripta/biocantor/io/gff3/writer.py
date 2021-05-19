@@ -15,6 +15,7 @@ def collection_to_gff3(
     add_sequences: Optional[bool] = False,
     ordered: Optional[bool] = True,
     chromosome_relative_coordinates: Optional[bool] = True,
+    raise_on_reserved_attributes: Optional[bool] = True,
 ):
     """
     Take an instantiated :class:`~biocantor.gene.collections.AnnotationCollection` and produce a GFF3 file. Has the
@@ -29,6 +30,14 @@ def collection_to_gff3(
         ordered: If set to ``True``, the output GFF3 will be sequence then position sorted.
         chromosome_relative_coordinates: Output GFF in chromosome-relative coordinates? If ``add_sequences`` is
             ``True``, will raise an exception because the full chromosome sequence is not known.
+        raise_on_reserved_attributes: If ``True``, then GFF3 reserved attributes such as ``ID`` and ``Name`` present
+            in the qualifiers will lead to an exception and not a warning.
+
+    Raises:
+        GFF3ExportException: If ``chromosome_relative_coordinates`` and ``add_sequences`` are ``True``, but one or
+            more of the collections are in chunk-relative coordinates.
+        GFF3ExportException: If ``add_sequences`` is ``True`` but no sequences are associated with one or more
+            collections.
     """
     # if we are in chromosome relative coordinates and we are exporting sequences, we need to verify that
     # none of the collections are chunk-relative
@@ -59,7 +68,10 @@ def collection_to_gff3(
             )
 
     for collection in collections:
-        for item in collection.to_gff(chromosome_relative_coordinates=chromosome_relative_coordinates):
+        for item in collection.to_gff(
+            chromosome_relative_coordinates=chromosome_relative_coordinates,
+            raise_on_reserved_attributes=raise_on_reserved_attributes,
+        ):
             print(item, file=gff3_handle)
 
     if add_sequences:
