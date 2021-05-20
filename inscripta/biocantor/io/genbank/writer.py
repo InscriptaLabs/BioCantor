@@ -154,7 +154,9 @@ def gene_to_feature(
 
         feature_type = FeatureCollectionFeatures.FEATURE_COLLECTION.value
 
-    qualifiers[feature_type] = [symbol]
+    if symbol:
+        qualifiers[feature_type] = [symbol]
+
     feature = SeqFeature(location, type=feature_type, strand=strand.value)
     feature.qualifiers = qualifiers
 
@@ -165,8 +167,8 @@ def gene_to_feature(
             gene_or_feature.transcripts,
             strand,
             genbank_type,
-            translation_table,
             force_strand,
+            translation_table,
             symbol,
             gene_or_feature.locus_tag,
         )
