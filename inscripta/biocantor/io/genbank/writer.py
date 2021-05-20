@@ -157,7 +157,7 @@ def gene_to_feature(
     if symbol:
         qualifiers[feature_type] = [symbol]
 
-    feature = SeqFeature(location, type=feature_type, strand=strand.to_int())
+    feature = SeqFeature(location, type=feature_type, strand=strand.value)
     feature.qualifiers = qualifiers
 
     yield feature
