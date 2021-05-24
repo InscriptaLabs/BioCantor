@@ -251,7 +251,7 @@ def _parse_child_features_to_feature_interval(
 ) -> Dict[str, Any]:
     """
     Extract values from a list of child features and produce a dictionary to build a
-    :class:`~inscripta.biocantor.io.models.FeatureIntervalModel` from.
+    :class:`~biocantor.io.models.FeatureIntervalModel` from.
 
     Can also be provided a ``locus_tag`` value from a parent, if applicable.
 
@@ -379,8 +379,8 @@ def _parse_features(chrom: str, db: FeatureDB, feature_types: List[str]) -> List
 
 
 def _find_non_gene_feature_types(db: FeatureDB, feature_types_to_ignore: Optional[Set[str]] = None) -> List[str]:
-    """Non-gene feature types are those that are not either a member of :class:`~inscripta.biocantor.gene.biotype.Biotype`
-    or :class:`~inscripta.biocantor.io.gff3.constants.GFF3GeneFeatureTypes`. This combination of filters prevents genes being
+    """Non-gene feature types are those that are not either a member of :class:`~biocantor.gene.biotype.Biotype`
+    or :class:`~biocantor.io.gff3.constants.GFF3GeneFeatureTypes`. This combination of filters prevents genes being
     inadvertently pulled in from either of the two main styles of representing them.
 
     NCBI Style: {gene,pseudogene} -> {mRNA, tRNA, etc} -> {exon, cds}
@@ -428,7 +428,7 @@ def default_parse_func(db: FeatureDB, chroms: List[str]) -> Iterable[AnnotationC
         chroms: List of sequence names to iterate over.
 
     Yields:
-        :class:`~inscripta.biocantor.io.models.AnnotationCollectionModel`
+        :class:`~biocantor.io.models.AnnotationCollectionModel`
     """
     non_gene_feature_types = _find_non_gene_feature_types(db)
 
