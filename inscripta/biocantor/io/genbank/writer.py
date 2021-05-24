@@ -219,7 +219,7 @@ def transcripts_to_feature(
         ``SeqFeature``s, one for each transcript and then one for each CDS of the transcript, if it exists.
     """
     for transcript in transcripts:
-        location = transcript._location.to_biopython()
+        location = transcript.chunk_relative_location.to_biopython()
 
         transcript_qualifiers = {key: list(vals) for key, vals in transcript.export_qualifiers().items()}
         if gene_symbol is not None:

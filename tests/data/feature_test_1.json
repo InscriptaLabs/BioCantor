@@ -430,8 +430,8 @@
                     "transcript_guid": null
                 }
             ],
-            "gene_id": null,
-            "gene_symbol": null,
+            "gene_id": "gene-LINC02246",
+            "gene_symbol": "LINC02246",
             "gene_type": "lncRNA",
             "locus_tag": null,
             "qualifiers": {
@@ -488,7 +488,7 @@
                         ]
                     },
                     "is_primary_tx": null,
-                    "transcript_id": null,
+                    "transcript_id": "gene-LINC02246",
                     "protein_id": null,
                     "product": null,
                     "transcript_symbol": null,
@@ -499,8 +499,8 @@
                     "transcript_guid": null
                 }
             ],
-            "gene_id": null,
-            "gene_symbol": null,
+            "gene_id": "gene-LINC02246",
+            "gene_symbol": "LINC02246",
             "gene_type": null,
             "locus_tag": null,
             "qualifiers": {
@@ -562,8 +562,8 @@
                     "transcript_guid": null
                 }
             ],
-            "gene_id": null,
-            "gene_symbol": null,
+            "gene_id": "gene-POLR2CP1",
+            "gene_symbol": "POLR2CP1",
             "gene_type": "pseudogene",
             "locus_tag": null,
             "qualifiers": {
@@ -629,7 +629,7 @@
                         ]
                     },
                     "is_primary_tx": null,
-                    "transcript_id": null,
+                    "transcript_id": "gene-GAPDHP16",
                     "protein_id": null,
                     "product": null,
                     "transcript_symbol": null,
@@ -640,8 +640,8 @@
                     "transcript_guid": null
                 }
             ],
-            "gene_id": null,
-            "gene_symbol": null,
+            "gene_id": "gene-GAPDHP16",
+            "gene_symbol": "GAPDHP16",
             "gene_type": "pseudogene",
             "locus_tag": null,
             "qualifiers": {

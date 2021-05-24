@@ -22,8 +22,8 @@ from Bio import SeqIO
 from Bio.SeqRecord import SeqRecord
 from gffutils.feature import Feature
 from gffutils.interface import FeatureDB
-from inscripta.biocantor.gene.biotype import Biotype
-from inscripta.biocantor.gene.cds_frame import CDSPhase
+from inscripta.biocantor.gene import CDSInterval, CDSPhase, Biotype
+from inscripta.biocantor.location import CompoundInterval
 from inscripta.biocantor.io.gff3.constants import (
     GFF3Headers,
     BioCantorGFF3ReservedQualifiers,
@@ -77,11 +77,23 @@ def _parse_genes(chrom: str, db: FeatureDB) -> List[Dict]:
     for gene in db.region(
         seqid=chrom, featuretype=[GFF3GeneFeatureTypes.GENE.value, GFF3GeneFeatureTypes.PSEUDOGENE.value]
     ):
-        gene_id = gene.attributes.get("gene_id", [None])[0]
         locus_tag = gene.attributes.get("locus_tag", [None])[0]
-        gene_symbol = gene.attributes.get("gene_name", [gene.attributes.get("gene_symbol", None)])[0]
-        gene_biotype = gene.attributes.get("gene_biotype", [gene.attributes.get("gene_type", None)])[0]
         gene_qualifiers = {x: y for x, y in gene.attributes.items() if not BioCantorGFF3ReservedQualifiers.has_value(x)}
+
+        for key in ["gene_name", "gene_symbol", "gene", "Name"]:
+            gene_symbol = gene.attributes.get(key, [None])[0]
+            if gene_symbol:
+                break
+
+        for key in ["gene_biotype", "gene_type"]:
+            gene_biotype = gene.attributes.get(key, [None])[0]
+            if gene_biotype:
+                break
+
+        for key in ["gene_id", "ID"]:
+            gene_id = gene.attributes.get(key, [None])[0]
+            if gene_id:
+                break
 
         if Biotype.has_name(gene_biotype):
             gene_biotype = Biotype[gene_biotype]
@@ -159,7 +171,12 @@ def _parse_genes(chrom: str, db: FeatureDB) -> List[Dict]:
                 cds = sorted(cds, key=lambda c: (c.start, c.end))
                 cds_starts = [x.start - 1 for x in cds]
                 cds_ends = [x.end for x in cds]
-                cds_frames = [CDSPhase.from_int(int(f.frame)).to_frame().name for f in cds]
+                try:
+                    cds_frames = [CDSPhase.from_int(int(f.frame)).to_frame().name for f in cds]
+                except ValueError:
+                    # infer frames
+                    loc = CompoundInterval(cds_starts, cds_ends, strand)
+                    cds_frames = CDSInterval.construct_frames_from_location(loc)
                 # NCBI encodes protein IDs and products on the CDS feature
                 protein_id = cds[0].attributes.get("protein_id", [None])[0]
                 product = cds[0].attributes.get("product", [None])[0]
@@ -234,7 +251,7 @@ def _parse_child_features_to_feature_interval(
 ) -> Dict[str, Any]:
     """
     Extract values from a list of child features and produce a dictionary to build a
-    :class:`~biocantor.io.models.FeatureIntervalModel` from.
+    :class:`~inscripta.biocantor.io.models.FeatureIntervalModel` from.
 
     Can also be provided a ``locus_tag`` value from a parent, if applicable.
 
@@ -362,8 +379,8 @@ def _parse_features(chrom: str, db: FeatureDB, feature_types: List[str]) -> List
 
 
 def _find_non_gene_feature_types(db: FeatureDB, feature_types_to_ignore: Optional[Set[str]] = None) -> List[str]:
-    """Non-gene feature types are those that are not either a member of :class:`~biocantor.gene.biotype.Biotype`
-    or :class:`~biocantor.io.gff3.constants.GFF3GeneFeatureTypes`. This combination of filters prevents genes being
+    """Non-gene feature types are those that are not either a member of :class:`~inscripta.biocantor.gene.biotype.Biotype`
+    or :class:`~inscripta.biocantor.io.gff3.constants.GFF3GeneFeatureTypes`. This combination of filters prevents genes being
     inadvertently pulled in from either of the two main styles of representing them.
 
     NCBI Style: {gene,pseudogene} -> {mRNA, tRNA, etc} -> {exon, cds}
@@ -411,7 +428,7 @@ def default_parse_func(db: FeatureDB, chroms: List[str]) -> Iterable[AnnotationC
         chroms: List of sequence names to iterate over.
 
     Yields:
-        :class:`~biocantor.io.models.AnnotationCollectionModel`
+        :class:`~inscripta.biocantor.io.models.AnnotationCollectionModel`
     """
     non_gene_feature_types = _find_non_gene_feature_types(db)
 

@@ -286,8 +286,8 @@
                     "transcript_guid": null
                 }
             ],
-            "gene_id": null,
-            "gene_symbol": null,
+            "gene_id": "gene-PEG10",
+            "gene_symbol": "PEG10",
             "gene_type": "protein_coding",
             "locus_tag": null,
             "qualifiers": {
