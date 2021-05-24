@@ -176,7 +176,7 @@ def _parse_genes(chrom: str, db: FeatureDB) -> List[Dict]:
                 except ValueError:
                     # infer frames
                     loc = CompoundInterval(cds_starts, cds_ends, strand)
-                    cds_frames = CDSInterval.construct_frames_from_location(loc)
+                    cds_frames = [x.name for x in CDSInterval.construct_frames_from_location(loc)]
                 # NCBI encodes protein IDs and products on the CDS feature
                 protein_id = cds[0].attributes.get("protein_id", [None])[0]
                 product = cds[0].attributes.get("product", [None])[0]
