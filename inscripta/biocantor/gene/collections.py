@@ -35,10 +35,8 @@ from inscripta.biocantor.gene.transcript import TranscriptInterval
 from inscripta.biocantor.io.gff3.constants import GFF_SOURCE, NULL_COLUMN, BioCantorQualifiers, BioCantorFeatureTypes
 from inscripta.biocantor.io.gff3.exc import GFF3MissingSequenceNameError
 from inscripta.biocantor.io.gff3.rows import GFFRow, GFFAttributes
-from inscripta.biocantor.location import Location
-from inscripta.biocantor.location.location_impl import SingleInterval, EmptyLocation
-from inscripta.biocantor.location.strand import Strand
-from inscripta.biocantor.parent.parent import Parent, SequenceType
+from inscripta.biocantor.location import Location, SingleInterval, EmptyLocation, Strand
+from inscripta.biocantor.parent import Parent, SequenceType
 from inscripta.biocantor.sequence import Sequence
 from inscripta.biocantor.util.bins import bins
 from inscripta.biocantor.util.hashing import digest_object

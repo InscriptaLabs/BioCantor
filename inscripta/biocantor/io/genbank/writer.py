@@ -18,10 +18,14 @@ from Bio import SeqIO
 from Bio.Seq import Seq
 from Bio.SeqFeature import SeqFeature
 from Bio.SeqRecord import SeqRecord
-from inscripta.biocantor.gene.codon import TranslationTable
-from inscripta.biocantor.gene.collections import AnnotationCollection, GeneInterval, FeatureIntervalCollection
-from inscripta.biocantor.gene.feature import FeatureInterval
-from inscripta.biocantor.gene.transcript import TranscriptInterval
+from inscripta.biocantor.gene import (
+    TranslationTable,
+    AnnotationCollection,
+    GeneInterval,
+    FeatureIntervalCollection,
+    FeatureInterval,
+    TranscriptInterval,
+)
 from inscripta.biocantor.io.exc import StrandViolationWarning
 from inscripta.biocantor.io.genbank.constants import (
     GeneFeatures,

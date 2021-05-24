@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [Unreleased]
 ### Changed
 - Added `raise_on_reserved_attributes` flag to GFF3 export that controls whether reserved attributes lead to warnings or exceptions.
+- Added more top-level imports to simplify imports
 
 
 ## [0.5.0]
