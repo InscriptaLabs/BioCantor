@@ -10,17 +10,14 @@ from inscripta.biocantor.exc import (
     LocationOverlapException,
     MismatchedFrameException,
 )
-from inscripta.biocantor.gene.cds_frame import CDSPhase, CDSFrame
-from inscripta.biocantor.gene.codon import Codon, TranslationTable
+from inscripta.biocantor.gene import CDSPhase, CDSFrame, Codon, TranslationTable
 from inscripta.biocantor.gene.interval import AbstractFeatureInterval, QualifierValue
 from inscripta.biocantor.io.bed import RGB, BED12
 from inscripta.biocantor.io.gff3.constants import GFF_SOURCE, NULL_COLUMN, BioCantorFeatureTypes, BioCantorQualifiers
 from inscripta.biocantor.io.gff3.rows import GFFAttributes, GFFRow
-from inscripta.biocantor.location.location import Location, Strand
-from inscripta.biocantor.location.location_impl import SingleInterval, CompoundInterval
-from inscripta.biocantor.parent.parent import Parent, SequenceType
-from inscripta.biocantor.sequence import Sequence
-from inscripta.biocantor.sequence.alphabet import Alphabet
+from inscripta.biocantor.location import Location, Strand, SingleInterval, CompoundInterval
+from inscripta.biocantor.parent import Parent, SequenceType
+from inscripta.biocantor.sequence import Sequence, Alphabet
 from inscripta.biocantor.util.hashing import digest_object
 
 
