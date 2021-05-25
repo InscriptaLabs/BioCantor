@@ -2020,8 +2020,8 @@
                     "transcript_guid": null
                 }
             ],
-            "gene_id": null,
-            "gene_symbol": null,
+            "gene_id": "gene-SGCE",
+            "gene_symbol": "SGCE",
             "gene_type": "protein_coding",
             "locus_tag": null,
             "qualifiers": {

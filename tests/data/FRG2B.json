@@ -64,8 +64,8 @@
                     "transcript_guid": null
                 }
             ],
-            "gene_id": null,
-            "gene_symbol": null,
+            "gene_id": "gene-FRG2B",
+            "gene_symbol": "FRG2B",
             "gene_type": "protein_coding",
             "locus_tag": null,
             "qualifiers": {
