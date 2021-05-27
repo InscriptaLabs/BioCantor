@@ -18,10 +18,14 @@ from Bio import SeqIO
 from Bio.Seq import Seq
 from Bio.SeqFeature import SeqFeature
 from Bio.SeqRecord import SeqRecord
-from inscripta.biocantor.gene.codon import TranslationTable
-from inscripta.biocantor.gene.collections import AnnotationCollection, GeneInterval, FeatureIntervalCollection
-from inscripta.biocantor.gene.feature import FeatureInterval
-from inscripta.biocantor.gene.transcript import TranscriptInterval
+from inscripta.biocantor.gene import (
+    TranslationTable,
+    AnnotationCollection,
+    GeneInterval,
+    FeatureIntervalCollection,
+    FeatureInterval,
+    TranscriptInterval,
+)
 from inscripta.biocantor.io.exc import StrandViolationWarning
 from inscripta.biocantor.io.genbank.constants import (
     GeneFeatures,
@@ -154,7 +158,9 @@ def gene_to_feature(
 
         feature_type = FeatureCollectionFeatures.FEATURE_COLLECTION.value
 
-    qualifiers[feature_type] = [symbol]
+    if symbol:
+        qualifiers[feature_type] = [symbol]
+
     feature = SeqFeature(location, type=feature_type, strand=strand.value)
     feature.qualifiers = qualifiers
 
@@ -165,8 +171,8 @@ def gene_to_feature(
             gene_or_feature.transcripts,
             strand,
             genbank_type,
-            translation_table,
             force_strand,
+            translation_table,
             symbol,
             gene_or_feature.locus_tag,
         )
@@ -213,7 +219,7 @@ def transcripts_to_feature(
         ``SeqFeature``s, one for each transcript and then one for each CDS of the transcript, if it exists.
     """
     for transcript in transcripts:
-        location = transcript._location.to_biopython()
+        location = transcript.chunk_relative_location.to_biopython()
 
         transcript_qualifiers = {key: list(vals) for key, vals in transcript.export_qualifiers().items()}
         if gene_symbol is not None:

@@ -32,9 +32,7 @@ from Bio import SeqIO
 from Bio.SeqFeature import SeqFeature
 from Bio.SeqRecord import SeqRecord
 
-from inscripta.biocantor.gene.biotype import Biotype
-from inscripta.biocantor.gene.cds import CDSInterval
-from inscripta.biocantor.gene.cds_frame import CDSFrame
+from inscripta.biocantor.gene import Biotype, CDSInterval, CDSFrame
 from inscripta.biocantor.io.features import extract_feature_types, extract_feature_name_id, merge_qualifiers
 from inscripta.biocantor.io.genbank.constants import (
     GeneFeatures,
@@ -57,13 +55,13 @@ from inscripta.biocantor.io.models import (
     FeatureIntervalCollectionModel,
 )
 from inscripta.biocantor.io.parser import ParsedAnnotationRecord
-from inscripta.biocantor.location import Location
-from inscripta.biocantor.location.location_impl import (
+from inscripta.biocantor.location import (
+    Location,
+    Strand,
     SingleInterval,
     CompoundInterval,
     EmptyLocation,
 )
-from inscripta.biocantor.location.strand import Strand
 
 logger = logging.getLogger(__name__)
 

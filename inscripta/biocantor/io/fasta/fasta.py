@@ -5,11 +5,11 @@ from typing import Optional, Dict, TextIO, Iterable
 
 from Bio import SeqIO
 
-from inscripta.biocantor.gene.collections import AnnotationCollection
+from inscripta.biocantor.gene import AnnotationCollection
 from inscripta.biocantor.io.fasta.exc import FastaExportError
 from inscripta.biocantor.io.parser import seq_to_parent
 from inscripta.biocantor.parent import Parent
-from inscripta.biocantor.sequence.alphabet import Alphabet
+from inscripta.biocantor.sequence import Alphabet
 
 
 def fasta_to_parents(

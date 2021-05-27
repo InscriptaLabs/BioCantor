@@ -84,11 +84,13 @@ class GFFAttributes:
         *,
         name: Optional[str] = None,
         parent: Optional[str] = None,
+        raise_on_reserved_attributes: Optional[bool] = True,
     ):
         self.id = id
         self.name = name
         self.parent = parent
         self.attributes = qualifiers
+        self.raise_on_reserved_attributes = raise_on_reserved_attributes
 
         for val in self.attributes.values():
             if not isinstance(val, set):
@@ -125,7 +127,17 @@ class GFFAttributes:
             if not value_set:
                 continue
             if BioCantorGFF3ReservedQualifiers.has_value(key):
-                raise GFF3ExportException(f"Found {key} in an attributes dictionary; this is reserved for internal use")
+                if self.raise_on_reserved_attributes:
+                    raise GFF3ExportException(
+                        f"Found {key} in an attributes dictionary; this is reserved for internal use"
+                    )
+                else:
+                    warn(
+                        f"Found {key} in an attributes dictionary; "
+                        f"this is reserved for internal use. {key} will be deleted",
+                        ReservedKeyWarning,
+                    )
+                continue
             elif GFF3ReservedQualifiers.has_value(key):
                 warn(f"Attribute {key} was seen in the qualifiers, which is a reserved GFF3 key.", ReservedKeyWarning)
                 escaped_key = GFFAttributes.escape_key(str(key), lower=False)

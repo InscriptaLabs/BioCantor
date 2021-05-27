@@ -8,6 +8,7 @@ a :class:`Parent` object, situating it within a potentially arbitrary hierarchy 
 from inscripta.biocantor.location.location import Location
 from inscripta.biocantor.location.strand import Strand
 from inscripta.biocantor.parent import make_parent, Parent
+from inscripta.biocantor.location.location_impl import SingleInterval, CompoundInterval, EmptyLocation  # noqa F401
 
 
 @make_parent.register(Location)

@@ -35,10 +35,8 @@ from inscripta.biocantor.gene.transcript import TranscriptInterval
 from inscripta.biocantor.io.gff3.constants import GFF_SOURCE, NULL_COLUMN, BioCantorQualifiers, BioCantorFeatureTypes
 from inscripta.biocantor.io.gff3.exc import GFF3MissingSequenceNameError
 from inscripta.biocantor.io.gff3.rows import GFFRow, GFFAttributes
-from inscripta.biocantor.location import Location
-from inscripta.biocantor.location.location_impl import SingleInterval, EmptyLocation
-from inscripta.biocantor.location.strand import Strand
-from inscripta.biocantor.parent.parent import Parent, SequenceType
+from inscripta.biocantor.location import Location, SingleInterval, EmptyLocation, Strand
+from inscripta.biocantor.parent import Parent, SequenceType
 from inscripta.biocantor.sequence import Sequence
 from inscripta.biocantor.util.bins import bins
 from inscripta.biocantor.util.hashing import digest_object
@@ -411,12 +409,18 @@ class GeneInterval(AbstractFeatureIntervalCollection):
                 parent_or_seq_chunk_parent=self.chunk_relative_location.parent,
             )
 
-    def to_gff(self, chromosome_relative_coordinates: bool = True) -> Iterable[GFFRow]:
+    def to_gff(
+        self,
+        chromosome_relative_coordinates: bool = True,
+        raise_on_reserved_attributes: Optional[bool] = True,
+    ) -> Iterable[GFFRow]:
         """Produces iterable of :class:`~biocantor.io.gff3.rows.GFFRow` for this gene and its children.
 
         Args:
             chromosome_relative_coordinates: Output GFF in chromosome-relative coordinates? Will raise an exception
                 if there is not a ``sequence_chunk`` ancestor type.
+            raise_on_reserved_attributes: If ``True``, then GFF3 reserved attributes such as ``ID`` and ``Name`` present
+                in the qualifiers will lead to an exception and not a warning.
 
         Yields:
             :class:`~biocantor.io.gff3.rows.GFFRow`
@@ -437,7 +441,13 @@ class GeneInterval(AbstractFeatureIntervalCollection):
 
         gene_guid = str(self.guid)
 
-        attributes = GFFAttributes(id=gene_guid, qualifiers=qualifiers, name=self.gene_symbol, parent=None)
+        attributes = GFFAttributes(
+            id=gene_guid,
+            qualifiers=qualifiers,
+            name=self.gene_symbol,
+            parent=None,
+            raise_on_reserved_attributes=raise_on_reserved_attributes,
+        )
         row = GFFRow(
             self.sequence_name,
             GFF_SOURCE,
@@ -451,7 +461,12 @@ class GeneInterval(AbstractFeatureIntervalCollection):
         )
         yield row
         for tx in self.transcripts:
-            yield from tx.to_gff(gene_guid, qualifiers, chromosome_relative_coordinates=chromosome_relative_coordinates)
+            yield from tx.to_gff(
+                gene_guid,
+                qualifiers,
+                chromosome_relative_coordinates=chromosome_relative_coordinates,
+                raise_on_reserved_attributes=raise_on_reserved_attributes,
+            )
 
 
 class FeatureIntervalCollection(AbstractFeatureIntervalCollection):
@@ -668,13 +683,19 @@ class FeatureIntervalCollection(AbstractFeatureIntervalCollection):
                 parent_or_seq_chunk_parent=self.chunk_relative_location.parent,
             )
 
-    def to_gff(self, chromosome_relative_coordinates: bool = True) -> Iterable[GFFRow]:
+    def to_gff(
+        self,
+        chromosome_relative_coordinates: bool = True,
+        raise_on_reserved_attributes: Optional[bool] = True,
+    ) -> Iterable[GFFRow]:
         """Produces iterable of :class:`~biocantor.io.gff3.rows.GFFRow` for this feature collection and its
         children.
 
         Args:
             chromosome_relative_coordinates: Output GFF in chromosome-relative coordinates? Will raise an exception
                 if there is not a ``sequence_chunk`` ancestor type.
+            raise_on_reserved_attributes: If ``True``, then GFF3 reserved attributes such as ``ID`` and ``Name`` present
+                in the qualifiers will lead to an exception and not a warning.
 
         Yields:
             :class:`~biocantor.io.gff3.rows.GFFRow`
@@ -696,7 +717,11 @@ class FeatureIntervalCollection(AbstractFeatureIntervalCollection):
         feat_group_id = str(self.guid)
 
         attributes = GFFAttributes(
-            id=feat_group_id, qualifiers=qualifiers, name=self.feature_collection_name, parent=None
+            id=feat_group_id,
+            qualifiers=qualifiers,
+            name=self.feature_collection_name,
+            parent=None,
+            raise_on_reserved_attributes=raise_on_reserved_attributes,
         )
 
         row = GFFRow(
@@ -714,7 +739,10 @@ class FeatureIntervalCollection(AbstractFeatureIntervalCollection):
 
         for feature in self.feature_intervals:
             yield from feature.to_gff(
-                feat_group_id, qualifiers, chromosome_relative_coordinates=chromosome_relative_coordinates
+                feat_group_id,
+                qualifiers,
+                chromosome_relative_coordinates=chromosome_relative_coordinates,
+                raise_on_reserved_attributes=raise_on_reserved_attributes,
             )
 
 
@@ -1321,7 +1349,9 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
         else:
             raise InvalidQueryError(f"Cannot get children of type {child_type}")
 
-    def _unsorted_gff_iter(self, chromosome_relative_coordinates: bool = True) -> Iterable[GFFRow]:
+    def _unsorted_gff_iter(
+        self, chromosome_relative_coordinates: bool = True, raise_on_reserved_attributes: bool = True
+    ) -> Iterable[GFFRow]:
         """Produces iterable of :class:`~biocantor.io.gff3.rows.GFFRow` for this annotation collection and its
         children.
 
@@ -1332,20 +1362,29 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
         Args:
             chromosome_relative_coordinates: Output GFF in chromosome-relative coordinates? Will raise an exception
                 if there is not a ``sequence_chunk`` ancestor type.
+            raise_on_reserved_attributes: If ``True``, then GFF3 reserved attributes such as ``ID`` and ``Name`` present
+                in the qualifiers will lead to an exception and not a warning.
 
         Yields:
             :class:`~biocantor.io.gff3.rows.GFFRow`
         """
         for item in self.iter_children():
-            yield from item.to_gff(chromosome_relative_coordinates=chromosome_relative_coordinates)
+            yield from item.to_gff(
+                chromosome_relative_coordinates=chromosome_relative_coordinates,
+                raise_on_reserved_attributes=raise_on_reserved_attributes,
+            )
 
-    def to_gff(self, chromosome_relative_coordinates: bool = True) -> Iterable[GFFRow]:
+    def to_gff(
+        self, chromosome_relative_coordinates: bool = True, raise_on_reserved_attributes: Optional[bool] = True
+    ) -> Iterable[GFFRow]:
         """Produces iterable of :class:`~biocantor.io.gff3.rows.GFFRow` for this annotation collection and its
         children.
 
         Args:
             chromosome_relative_coordinates: Output GFF in chromosome-relative coordinates? Will raise an exception
                 if there is not a ``sequence_chunk`` ancestor type.
+            raise_on_reserved_attributes: If ``True``, then GFF3 reserved attributes such as ``ID`` and ``Name`` present
+                in the qualifiers will lead to an exception and not a warning.
 
         Yields:
             :class:`~biocantor.io.gff3.rows.GFFRow`
@@ -1354,4 +1393,7 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
             NoSuchAncestorException: If ``chromosome_relative_coordinates`` is ``False`` but there is no
             ``sequence_chunk`` ancestor type.
         """
-        yield from sorted(self._unsorted_gff_iter(chromosome_relative_coordinates), key=lambda x: x.start)
+        yield from sorted(
+            self._unsorted_gff_iter(chromosome_relative_coordinates, raise_on_reserved_attributes),
+            key=lambda x: x.start,
+        )

@@ -34,7 +34,7 @@
                     "transcript_guid": null
                 }
             ],
-            "gene_id": null,
+            "gene_id": "cad65870-b6d7-a0c1-90ed-9285f838942f",
             "gene_symbol": null,
             "gene_type": "ncRNA",
             "locus_tag": "GI526_G0000001",
@@ -82,7 +82,7 @@
                     "transcript_guid": null
                 }
             ],
-            "gene_id": null,
+            "gene_id": "bc2688c9-db1f-42eb-b69c-353548e54174",
             "gene_symbol": "GDH3",
             "gene_type": "protein_coding",
             "locus_tag": "GI526_G0000002",
@@ -137,7 +137,7 @@
                     "transcript_guid": null
                 }
             ],
-            "gene_id": null,
+            "gene_id": "61c85a0a-4849-56d5-523b-66118918d059",
             "gene_symbol": "BDH2",
             "gene_type": "protein_coding",
             "locus_tag": "GI526_G0000003",
@@ -183,7 +183,7 @@
                     "transcript_guid": null
                 }
             ],
-            "gene_id": null,
+            "gene_id": "6ab47aca-2431-9161-5415-48464f77fde6",
             "gene_symbol": "BDH1",
             "gene_type": "protein_coding",
             "locus_tag": "GI526_G0000004",
