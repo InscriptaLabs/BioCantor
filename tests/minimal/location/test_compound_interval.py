@@ -11,7 +11,7 @@ from inscripta.biocantor.exc import (
     NullSequenceException,
     LocationException,
 )
-from inscripta.biocantor.location.distance import DistanceType
+from inscripta.biocantor import DistanceType
 from inscripta.biocantor.location.location_impl import (
     SingleInterval,
     CompoundInterval,

@@ -1,127 +1,16 @@
-from abc import ABC, abstractmethod
-from typing import Iterator, List, Union
+from abc import ABC
+from typing import Iterator, Union
 
-from Bio.SeqFeature import FeatureLocation, CompoundLocation
-
+from inscripta.biocantor import AbstractLocation
 from inscripta.biocantor.exc import NoSuchAncestorException, NullParentException
-from inscripta.biocantor.location.distance import DistanceType
 from inscripta.biocantor.location.strand import Strand
 from inscripta.biocantor.parent import Parent, SequenceType
 from inscripta.biocantor.sequence import Sequence
 from inscripta.biocantor.util.object_validation import ObjectValidation
 
 
-class Location(ABC):
+class Location(AbstractLocation, ABC):
     """Abstract location with respect to a coordinate system"""
-
-    def __len__(self):
-        """Returns the length (number of positions) of this Location. For subclasses representing discontiguous
-        locations, regions between blocks are not considered."""
-        return self.length
-
-    @abstractmethod
-    def __str__(self):
-        """Returns a human readable string representation of this Location"""
-
-    @abstractmethod
-    def __eq__(self, other):
-        """Returns True iff this Location is equal to other object"""
-
-    @abstractmethod
-    def __hash__(self):
-        """Returns a hash code satisfying location1 == location2 => hash(location1) == hash(location2)"""
-
-    @abstractmethod
-    def __repr__(self):
-        """Returns the 'official' string representation of this Location"""
-
-    # The 0-based start position of this Location on its parent
-    start: int
-
-    # The 0-based exclusive end position of this Location on its parent
-    end: int
-
-    # The strand of this Location with respect to its parent
-    strand: Strand
-
-    # The parent of this Location
-    parent: Parent
-
-    # The length (number of positions) of this Location. For subclasses representing discontiguous locations,
-    # regions between blocks are not considered
-    length: int
-
-    @property
-    def parent_id(self) -> str:
-        """Returns the parent ID"""
-        return self.parent.id if self.parent else None
-
-    @property
-    def parent_type(self) -> str:
-        """Returns the sequence type of the parent"""
-        return self.parent.sequence_type if self.parent else None
-
-    @property
-    @abstractmethod
-    def is_contiguous(self) -> bool:
-        """Returns True iff this Location is fully contiguous within its parent"""
-
-    @property
-    @abstractmethod
-    def is_empty(self) -> bool:
-        """Returns True iff this Location is empty"""
-
-    @property
-    @abstractmethod
-    def blocks(self) -> List["Location"]:
-        """Returns list of contiguous blocks comprising this Location"""
-
-    @property
-    @abstractmethod
-    def is_overlapping(self) -> bool:
-        """Returns True if this interval contains overlaps; always False for SingleInterval"""
-
-    @property
-    @abstractmethod
-    def _full_span_interval(self) -> "Location":
-        """Returns the full span of this interval; is trivial for a SingleInterval and EmptyLocation"""
-
-    @abstractmethod
-    def scan_blocks(self) -> Iterator["Location"]:
-        """Returns an iterator over blocks in order relative to strand of this Location"""
-
-    @property
-    @abstractmethod
-    def num_blocks(self) -> int:
-        """Returns number of contiguous blocks comprising this Location"""
-
-    @abstractmethod
-    def optimize_blocks(self) -> "Location":
-        """Returns a new Location covering the same positions but with blocks optimized.
-        For example, empty blocks may be removed or adjacent blocks may be combined if applicable."""
-
-    @abstractmethod
-    def gap_list(self) -> List["Location"]:
-        """Returns list of contiguous regions comprising the space between blocks of this Location. List is
-        ordered relative to strand of this Location."""
-
-    @abstractmethod
-    def gaps_location(self) -> "Location":
-        """Returns a Location representing the space between blocks of this Location."""
-
-    @abstractmethod
-    def extract_sequence(self) -> Sequence:
-        """Extracts the sequence of this Location from the parent.
-        Concrete implementations should raise ValueError if no parent exists."""
-
-    @abstractmethod
-    def parent_to_relative_pos(self, parent_pos: int) -> int:
-        """Converts a position on the parent to a position relative to this Location.
-        Concrete implementations should raise ValueError if the given position does not overlap this Location."""
-
-    @abstractmethod
-    def relative_to_parent_pos(self, relative_pos: int) -> int:
-        """Converts a position relative to this Location to a position on the parent"""
 
     def parent_to_relative_location(self, parent_location: "Location", optimize_blocks: bool = True) -> "Location":
         """Converts a Location on the parent to a Location relative to this Location.
@@ -160,32 +49,6 @@ class Location(ABC):
         ObjectValidation.require_locations_overlap(self, other)
         return self._location_relative_to(other, optimize_blocks=optimize_blocks)
 
-    @abstractmethod
-    def _location_relative_to(self, other: "Location", optimize_blocks: bool = True) -> "Location":
-        raise NotImplementedError
-
-    @abstractmethod
-    def relative_interval_to_parent_location(
-        self, relative_start: int, relative_end: int, relative_strand: Strand
-    ) -> "Location":
-        """Converts an interval relative to this Location to a Location on the parent
-
-        Parameters
-        ----------
-        relative_start
-            0-based start position of interval relative to this Location
-        relative_end
-            0-based exclusive end position of interval relative to this Location
-        relative_strand
-            Strand of interval relative to the strand of this Location. If the strand of interval is on the SAME
-            strand as the strand of this location, relative_strand is PLUS. If the strand interval is on the OPPOSITE
-            strand, relative_strand is MINUS.
-
-        Returns
-        -------
-        New Location on the parent with the parent as parent
-        """
-
     def scan_windows(self, window_size: int, step_size: int, start_pos: int = 0) -> Iterator["Location"]:
         """Returns an iterator over fixed size windows within this Location. Windows represent sub-regions
         of this Location and are with respect to the same parent as this Location. The final window returned
@@ -214,77 +77,6 @@ class Location(ABC):
         self.strand.assert_directional()
         for curr_start in range(start_pos, len(self) - window_size + 1, step_size):
             yield self.relative_interval_to_parent_location(curr_start, curr_start + window_size, Strand.PLUS)
-
-    @abstractmethod
-    def has_overlap(
-        self,
-        other: "Location",
-        match_strand: bool = False,
-        full_span: bool = False,
-        strict_parent_compare: bool = False,
-    ) -> bool:
-        """Returns True iff this Location shares at least one position with the given Location.
-        For subclasses representing discontiguous locations, regions between blocks are not considered.
-
-        Parameters
-        ----------
-        other
-            Other Location
-        match_strand
-            If set to True, automatically return False if given interval Strand does not match this Location's Strand
-        full_span
-            If set to True, compare the full span of this Location to the full span of the other Location.
-        strict_parent_compare
-            Raise MismatchedParentException if parents do not match
-
-        Returns
-        -------
-        True if there is any overlap, False otherwise
-        """
-
-    @abstractmethod
-    def reverse(self) -> "Location":
-        """Returns a new Location corresponding to this Location with the same start and stop, with
-        strand and structure reversed"""
-
-    @abstractmethod
-    def reverse_strand(self) -> "Location":
-        """Returns a new Location corresponding to this Location with the strand reversed"""
-
-    @abstractmethod
-    def reset_strand(self, new_strand: Strand) -> "Location":
-        """Returns a new Location corresponding to this Location with the given strand"""
-
-    @abstractmethod
-    def reset_parent(self, new_parent: Parent) -> "Location":
-        """Returns a new Location corresponding to this Location with positions unchanged and pointing
-        to a new parent"""
-
-    @abstractmethod
-    def shift_position(self, shift: int) -> "Location":
-        """Returns a new Location corresponding to this location shifted by the given distance"""
-
-    @abstractmethod
-    def distance_to(self, other: "Location", distance_type: DistanceType = DistanceType.INNER) -> int:
-        """Returns the distance from this location to another location with the same parent.
-        Return value is a non-negative integer and implementations must be commutative.
-
-        Parameters
-        ----------
-        other
-            Other location with same parent as this location
-        distance_type
-            Distance type
-        """
-
-    @abstractmethod
-    def merge_overlapping(self) -> "Location":
-        """Merges overlapping windows"""
-
-    @abstractmethod
-    def to_biopython(self) -> Union[FeatureLocation, CompoundLocation]:
-        """Returns a BioPython interval type; since they do not have a shared base class, we need a union"""
-        pass
 
     def first_ancestor_of_type(self, sequence_type: Union[str, SequenceType]) -> Parent:
         """Returns the Parent object representing the closest ancestor (parent, parent of parent, etc.)
@@ -335,82 +127,6 @@ class Location(ABC):
             return self
         lifted_to_grandparent = self.parent.lift_child_location_to_parent()
         return lifted_to_grandparent.lift_over_to_sequence(sequence)
-
-    @abstractmethod
-    def intersection(
-        self, other: "Location", match_strand: bool = True, full_span: bool = False, strict_parent_compare: bool = False
-    ) -> "Location":
-        """Returns a new Location representing the intersection of this Location with the other Location.
-        Returned Location, if nonempty, has the same Strand as this Location. This operation is commutative
-        if match_strand is True.
-
-        Parameters
-        ----------
-        other
-            Other location
-        match_strand
-            If set to True, automatically return EmptyLocation() if other Location has a different Strand than
-            this Location
-        full_span
-            If set to True, compare the full span of this Location to the full span of the other Location.
-        strict_parent_compare
-            Raise MismatchedParentException if parents do not match
-
-        """
-
-    @abstractmethod
-    def union(self, other: "Location") -> "Location":
-        """Returns a new Location representing the union of this Location with the other Location. This operation
-        is commutative. Raises exception if locations cannot be combined."""
-
-    @abstractmethod
-    def union_preserve_overlaps(self, other: "Location") -> "Location":
-        """Returns a new Location representing the union of this Location with the other Location, retaining
-        overlapping blocks where applicable. This operation is commutative. Raises exception if locations cannot
-        be combined."""
-
-    @abstractmethod
-    def minus(self, other: "Location", match_strand: bool = True, strict_parent_compare: bool = False) -> "Location":
-        """Returns a new Location representing this Location minus its intersection with the other Location.
-        Returned Location has the same Strand as this Location. If there is no intersection, returns this Location.
-        This operation is not commutative.
-
-        Parameters
-        ----------
-        other
-            Other location
-        match_strand
-            If set to True, automatically return this Location if other Location has a different Strand than this
-            Location
-        strict_parent_compare
-            Raise MismatchedParentException if parents do not match
-
-        """
-
-    @abstractmethod
-    def extend_absolute(self, extend_start: int, extend_end: int) -> "Location":
-        """Returns a new Location representing this Location with start and end positions extended by the given
-        values, ignoring Strand. Returned Location has same Strand as this Location.
-
-        Parameters
-        ----------
-        extend_start
-            Non-negative integer: amount to extend start
-        extend_end
-            Non-negative integer: amount to extend end
-        """
-
-    @abstractmethod
-    def extend_relative(self, extend_upstream: int, extend_downstream: int) -> "Location":
-        """Returns a new Location extended upstream and downstream relative to this Location's Strand.
-
-        Parameters
-        ----------
-        extend_upstream
-            Non-negative integer: amount to extend upstream relative to Strand
-        extend_downstream
-            Non-negative integer: amount to extend downstream relative to Strand
-        """
 
     def contains(
         self,
