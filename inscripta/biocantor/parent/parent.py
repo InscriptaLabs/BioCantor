@@ -48,8 +48,9 @@ class Parent:
         id: Optional[str] = None,
         sequence_type: Optional[Union[SequenceType, str]] = None,
         strand: Optional[Strand] = None,
-        location: Optional["Location"] = None,
-        sequence: Optional["Sequence"] = None,
+        # these cannot be imported due to circular import issues; I am not sure what to do about this
+        location: Optional["Location"] = None,  #noqa: F821
+        sequence: Optional["Sequence"] = None,  #noqa: F821
         parent: Optional[ParentInputType] = None,
     ):
         """
