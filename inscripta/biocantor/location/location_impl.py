@@ -433,7 +433,7 @@ class CompoundInterval(Location):
             cannot be performed. If parent has a location attribute, it is ignored and reset to this location.
         """
         if not len(starts) == len(ends) > 0:
-            raise LocationException("Lists of start end end positions must be nonempty and have same length")
+            raise LocationException("Lists of start and end positions must be nonempty and have same length")
         parent_obj = make_parent(parent) if parent else None
         if parent_obj:
             if parent_obj.location:
@@ -453,8 +453,8 @@ class CompoundInterval(Location):
         self._single_intervals = sorted(
             SingleInterval(starts[i], ends[i], self.strand, single_interval_parent) for i in range(len(starts))
         )
-        self._starts = tuple([interval.start for interval in self._single_intervals])
-        self._ends = tuple([interval.end for interval in self._single_intervals])
+        self._starts = tuple(interval.start for interval in self._single_intervals)
+        self._ends = tuple(interval.end for interval in self._single_intervals)
         self.start = self._single_intervals[0].start
         self.end = self._single_intervals[-1].end
         self.length = sum(end - start for start, end in zip(starts, ends))
@@ -465,11 +465,9 @@ class CompoundInterval(Location):
         errors = []
         if not intervals:
             errors.append("List of intervals must be nonempty")
-        if len(set([interval.strand for interval in intervals])) > 1:
+        if len({interval.strand for interval in intervals}) > 1:
             errors.append(f"Intervals must all have same strand: {set([interval.strand for interval in intervals])}")
-        interval_parents = set(
-            [interval.parent.strip_location_info() if interval.parent else None for interval in intervals]
-        )
+        interval_parents = {interval.parent.strip_location_info() if interval.parent else None for interval in intervals}
         if len(interval_parents) > 1:
             errors.append(f"Intervals must all have same parent: {set([interval.parent.id for interval in intervals])}")
         if errors:
@@ -666,7 +664,7 @@ class CompoundInterval(Location):
         - Combines adjacent blocks, preserving strictly overlapping blocks
         - Converts to SingleInterval if has only one block
         """
-        return self._combine_blocks(preserve_overlappers=True)._remove_empty_blocks()._to_single_interval_if_one_block()
+        return self._combine_blocks(preserve_overlappers=True)._to_single_interval_if_one_block()
 
     def optimize_and_combine_blocks(self) -> Location:
         """
@@ -675,7 +673,7 @@ class CompoundInterval(Location):
         - Converts to SingleInterval if has only one block
         """
         return (
-            self._combine_blocks(preserve_overlappers=False)._remove_empty_blocks()._to_single_interval_if_one_block()
+            self._combine_blocks(preserve_overlappers=False)._to_single_interval_if_one_block()
         )
 
     def gap_list(self) -> List[SingleInterval]:
@@ -712,27 +710,39 @@ class CompoundInterval(Location):
         preserve_overlappers
             Do not combine strictly overlapping blocks
         """
-        first_block = self._single_intervals[0]
-        curr_start = first_block.start
-        curr_end = first_block.end
         new_starts = []
         new_ends = []
-        i = 1
-        while i < self.num_blocks:
-            next_block = self._single_intervals[i]
-            next_start = next_block.start
-            next_end = next_block.end
-            combine = (curr_end == next_start) if preserve_overlappers else (curr_end >= next_start)
-            if combine:
-                curr_end = next_end
-            else:
+        curr_start = curr_end = None
+        # keeps track on whether there is actually any work to be done here
+        needs_combining = False
+        for block in self.blocks:
+            # don't include empty blocks
+            if len(block) == 0:
+                needs_combining = True
+                continue
+            # base case
+            elif curr_start is None:
+                curr_start = block.start
+                curr_end = block.end
                 new_starts.append(curr_start)
                 new_ends.append(curr_end)
-                curr_start = next_start
-                curr_end = next_end
-            i += 1
-        new_starts.append(curr_start)
-        new_ends.append(curr_end)
+                continue
+            else:
+                next_start = block.start
+                next_end = block.end
+                combine = (curr_end == next_start) if preserve_overlappers else (curr_end >= next_start)
+                if combine:
+                    new_ends[-1] = next_end
+                    curr_end = next_end
+                    needs_combining = True
+                else:
+                    new_starts.append(block.start)
+                    new_ends.append(block.end)
+                    curr_start = block.start
+                    curr_end = block.end
+        # do not build a new CompoundInterval if we don't actually need to
+        if needs_combining is False:
+            return self
         new_parent = self.parent.strip_location_info() if self.parent else None
         return CompoundInterval(new_starts, new_ends, self.strand, new_parent)
 

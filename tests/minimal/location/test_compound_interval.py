@@ -2161,7 +2161,7 @@ class TestCompoundInterval:
             (
                 CompoundInterval([5], [5], Strand.PLUS),
                 SingleInterval(10, 10, Strand.PLUS),
-                IndexError,
+                LocationException,
             ),
             # Opposite strands
             (
