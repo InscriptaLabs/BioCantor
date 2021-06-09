@@ -86,7 +86,12 @@ class Parent:
                 )
 
         parent_obj = inscripta.biocantor.parent.make_parent(parent) if parent else None
-        if sequence is not None and parent_obj and parent_obj.sequence is not None and len(sequence) > len(parent_obj.sequence):
+        if (
+            sequence is not None
+            and parent_obj
+            and parent_obj.sequence is not None
+            and len(sequence) > len(parent_obj.sequence)
+        ):
             raise LocationException(
                 "Parent ({}) is longer than parent of parent ({})".format(len(sequence), len(parent_obj.sequence))
             )
@@ -119,9 +124,9 @@ class Parent:
             return False
         if self.sequence_type != other.sequence_type:
             return False
-        if require_same_sequence and self.sequence != other.sequence:
-            return False
         if self.parent and other.parent and self.parent != other.parent:
+            return False
+        if require_same_sequence and self.sequence != other.sequence:
             return False
         return True
 

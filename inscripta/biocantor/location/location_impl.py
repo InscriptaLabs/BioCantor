@@ -1,10 +1,9 @@
 from functools import total_ordering, reduce
-from typing import Optional, List, Iterator, Union
+from itertools import chain
+from typing import Optional, List, Iterator, Union, Tuple
 
 from Bio.SeqFeature import FeatureLocation, CompoundLocation
 
-from inscripta.biocantor.util.ordering import RelativeOrder
-from inscripta.biocantor.util.types import ParentInputType
 from inscripta.biocantor.exc import (
     InvalidStrandException,
     InvalidPositionException,
@@ -18,6 +17,8 @@ from inscripta.biocantor.location.strand import Strand
 from inscripta.biocantor.parent import Parent, make_parent, SequenceType
 from inscripta.biocantor.sequence import Sequence
 from inscripta.biocantor.util.object_validation import ObjectValidation
+from inscripta.biocantor.util.ordering import RelativeOrder
+from inscripta.biocantor.util.types import ParentInputType
 
 
 @total_ordering
@@ -57,7 +58,7 @@ class SingleInterval(Location):
 
         if parent:
             parent_obj = make_parent(parent)
-            if parent_obj.sequence and end > len(parent_obj.sequence):
+            if parent_obj.sequence is not None and end > len(parent_obj.sequence):
                 raise InvalidPositionException(
                     f"End position ({end}) must be <= parent length ({len(parent_obj.sequence)})"
                 )
@@ -413,8 +414,8 @@ class CompoundInterval(Location):
 
     def __init__(
         self,
-        starts: List[int],
-        ends: List[int],
+        starts: Union[Tuple[int], List[int]],
+        ends: Union[Tuple[int], List[int]],
         strand: Strand,
         parent: Optional[ParentInputType] = None,
     ):
@@ -448,17 +449,24 @@ class CompoundInterval(Location):
             self.parent = single_interval_parent.reset_location(CompoundInterval(starts, ends, strand))
         else:
             self.parent = None
-            single_interval_parent = None
         self.strand = strand
-        self._single_intervals = sorted(
-            SingleInterval(starts[i], ends[i], self.strand, single_interval_parent) for i in range(len(starts))
-        )
-        self._starts = tuple(interval.start for interval in self._single_intervals)
-        self._ends = tuple(interval.end for interval in self._single_intervals)
+        # this will be lazily evaluated only if needed and self._single_intervals is called
+        self.__single_intervals = None
+        self._starts = tuple(sorted(starts))
+        self._ends = tuple(sorted(ends))
         self.start = self._single_intervals[0].start
         self.end = self._single_intervals[-1].end
-        self.length = sum(end - start for start, end in zip(starts, ends))
+        self.length = sum(end - start for start, end in zip(self._starts, self._ends))
         self._is_overlapping = None
+
+    @property
+    def _single_intervals(self):
+        """Lazy evaluation; cached result"""
+        if not self.__single_intervals:
+            self.__single_intervals = sorted(
+                SingleInterval(self._starts[i], self._ends[i], self.strand, self.parent) for i in range(self.num_blocks)
+            )
+        return self.__single_intervals
 
     @classmethod
     def from_single_intervals(cls, intervals: List[SingleInterval]) -> "CompoundInterval":
@@ -467,7 +475,9 @@ class CompoundInterval(Location):
             errors.append("List of intervals must be nonempty")
         if len({interval.strand for interval in intervals}) > 1:
             errors.append(f"Intervals must all have same strand: {set([interval.strand for interval in intervals])}")
-        interval_parents = {interval.parent.strip_location_info() if interval.parent else None for interval in intervals}
+        interval_parents = {
+            interval.parent.strip_location_info() if interval.parent else None for interval in intervals
+        }
         if len(interval_parents) > 1:
             errors.append(f"Intervals must all have same parent: {set([interval.parent.id for interval in intervals])}")
         if errors:
@@ -476,8 +486,8 @@ class CompoundInterval(Location):
 
     @classmethod
     def _from_single_intervals_no_validation(cls, intervals: List[SingleInterval]) -> "CompoundInterval":
-        starts = [interval.start for interval in intervals]
-        ends = [interval.end for interval in intervals]
+        starts = tuple(interval.start for interval in intervals)
+        ends = tuple(interval.end for interval in intervals)
         strand = intervals[0].strand
         parent = intervals[0].parent.strip_location_info() if intervals[0].parent else None
         return cls(starts, ends, strand, parent)
@@ -500,21 +510,17 @@ class CompoundInterval(Location):
 
     @property
     def num_blocks(self):
-        return len(self._single_intervals)
+        return len(self._starts)
 
     @property
     def is_contiguous(self) -> bool:
-        return all(
-            self._single_intervals[i + 1].start == self._single_intervals[i].end for i in range(self.num_blocks - 1)
-        )
+        return all(next_start == end for next_start, end in zip(self._starts[1:], self._ends))
 
     @property
     def is_overlapping(self) -> bool:
         """Does this interval have overlaps?"""
         if self._is_overlapping is None:
-            self._is_overlapping = any(
-                self._single_intervals[i].end > self._single_intervals[i + 1].start for i in range(self.num_blocks - 1)
-            )
+            self._is_overlapping = any(end > next_start for next_start, end in zip(self._starts[1:], self._ends))
         return self._is_overlapping
 
     @property
@@ -540,11 +546,12 @@ class CompoundInterval(Location):
 
     def extract_sequence(self) -> Sequence:
         self.strand.assert_directional()
-        block_seqs = [interval.extract_sequence() for interval in self._single_intervals]
         if self.strand == Strand.PLUS:
+            block_seqs = (interval.extract_sequence() for interval in self._single_intervals)
             return reduce(lambda seq1, seq2: seq1.append(seq2), block_seqs)
         else:
-            return reduce(lambda seq1, seq2: seq1.append(seq2), reversed(block_seqs))
+            reverse_block_seqs = (interval.extract_sequence() for interval in reversed(self._single_intervals))
+            return reduce(lambda seq1, seq2: seq1.append(seq2), reverse_block_seqs)
 
     def parent_to_relative_pos(self, parent_pos: int) -> int:
         rel_pos = 0
@@ -672,9 +679,7 @@ class CompoundInterval(Location):
         - Combines adjacent and overlapping blocks
         - Converts to SingleInterval if has only one block
         """
-        return (
-            self._combine_blocks(preserve_overlappers=False)._to_single_interval_if_one_block()
-        )
+        return self._combine_blocks(preserve_overlappers=False)._to_single_interval_if_one_block()
 
     def gap_list(self) -> List[SingleInterval]:
         optimized = self.optimize_and_combine_blocks()
@@ -703,7 +708,7 @@ class CompoundInterval(Location):
         return self if self.num_blocks > 1 else self._single_intervals[0]
 
     def _combine_blocks(self, preserve_overlappers: bool) -> "CompoundInterval":
-        """Combine adjacent and (optionally) overlapping blocks
+        """Combine adjacent and (optionally) overlapping blocks. Also strips out empty blocks.
 
         Parameters
         ----------
@@ -715,31 +720,32 @@ class CompoundInterval(Location):
         curr_start = curr_end = None
         # keeps track on whether there is actually any work to be done here
         needs_combining = False
-        for block in self.blocks:
+        # iterate over combined iterator of starts/ends to avoid instantiating self._blocks
+        for block_start, block_end in zip(self._starts, self._ends):
             # don't include empty blocks
-            if len(block) == 0:
+            if block_end - block_start == 0:
                 needs_combining = True
                 continue
             # base case
             elif curr_start is None:
-                curr_start = block.start
-                curr_end = block.end
+                curr_start = block_start
+                curr_end = block_end
                 new_starts.append(curr_start)
                 new_ends.append(curr_end)
                 continue
             else:
-                next_start = block.start
-                next_end = block.end
+                next_start = block_start
+                next_end = block_end
                 combine = (curr_end == next_start) if preserve_overlappers else (curr_end >= next_start)
                 if combine:
                     new_ends[-1] = next_end
                     curr_end = next_end
                     needs_combining = True
                 else:
-                    new_starts.append(block.start)
-                    new_ends.append(block.end)
-                    curr_start = block.start
-                    curr_end = block.end
+                    new_starts.append(block_start)
+                    new_ends.append(block_end)
+                    curr_start = block_start
+                    curr_end = block_end
         # do not build a new CompoundInterval if we don't actually need to
         if needs_combining is False:
             return self
@@ -889,7 +895,7 @@ class CompoundInterval(Location):
 
     def _union_compound_interval(self, other: Location):
         ObjectValidation.require_object_has_type(other, CompoundInterval)
-        blocks = sorted(self.blocks + other.blocks)
+        blocks = sorted(chain(self.blocks, other.blocks))
         return self._merge_compound_blocks(blocks)
 
     def union_preserve_overlaps(self, other: "Location") -> "Location":
