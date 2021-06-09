@@ -450,19 +450,16 @@ class CompoundInterval(Location):
         else:
             self.parent = None
         self.strand = strand
-        # this will be lazily evaluated only if needed and self._single_intervals is called
-        self.__single_intervals = None
         self._starts = tuple(sorted(starts))
         self._ends = tuple(sorted(ends))
         self.start = self._single_intervals[0].start
         self.end = self._single_intervals[-1].end
         self.length = sum(end - start for start, end in zip(self._starts, self._ends))
-        self._is_overlapping = None
 
     @property
     def _single_intervals(self):
         """Lazy evaluation; cached result"""
-        if not self.__single_intervals:
+        if not hasattr(self, "__single_intervals"):
             self.__single_intervals = sorted(
                 SingleInterval(self._starts[i], self._ends[i], self.strand, self.parent) for i in range(self.num_blocks)
             )
@@ -519,7 +516,7 @@ class CompoundInterval(Location):
     @property
     def is_overlapping(self) -> bool:
         """Does this interval have overlaps?"""
-        if self._is_overlapping is None:
+        if not hasattr(self, "_is_overlapping"):
             self._is_overlapping = any(end > next_start for next_start, end in zip(self._starts[1:], self._ends))
         return self._is_overlapping
 
@@ -747,7 +744,7 @@ class CompoundInterval(Location):
                     curr_start = block_start
                     curr_end = block_end
         # do not build a new CompoundInterval if we don't actually need to
-        if needs_combining is False:
+        if not needs_combining:
             return self
         new_parent = self.parent.strip_location_info() if self.parent else None
         return CompoundInterval(new_starts, new_ends, self.strand, new_parent)

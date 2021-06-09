@@ -16,13 +16,18 @@ from inscripta.biocantor.util.object_validation import ObjectValidation
 Parent = TypeVar("Parent")
 ParentInputType = TypeVar("ParentInputType")
 
+# 5000 seems reasonable for Parent caches
+# When parsing annotation files, the number of Parent objects built will likely be the # of chromosomes in the genome
+# When sequence chunks are used, the number of Parents will equal the number of distinct chunks built
+PARENT_CACHE_SIZE = 5000
+
 
 class SequenceType(str, Enum):
     CHROMOSOME = "chromosome"
     SEQUENCE_CHUNK = "sequence_chunk"
 
 
-@lru_cache(maxsize=1000)
+@lru_cache(maxsize=PARENT_CACHE_SIZE)
 def _unique_value_or_none(values: Iterable[Optional[str]]) -> Optional[str]:
     """Checks if a set of values contains more than one distinct non-null value. If so, raises ValueError.
     Otherwise, returns the single unique non-null value (if there is one) or None if all values are None."""
@@ -35,7 +40,7 @@ def _unique_value_or_none(values: Iterable[Optional[str]]) -> Optional[str]:
         raise ParentException(f"Multiple distinct non-null values were provided: {values}")
 
 
-@lru_cache(maxsize=1000)
+@lru_cache(maxsize=PARENT_CACHE_SIZE)
 class Parent:
     """
     Holds information about a parent of some object. Typically the child object should hold
