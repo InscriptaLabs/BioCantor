@@ -1,5 +1,5 @@
-from functools import reduce
-from typing import TypeVar, Optional, Union
+from functools import reduce, lru_cache
+from typing import TypeVar, Optional, Union, Iterable
 from enum import Enum
 
 import inscripta.biocantor
@@ -22,6 +22,20 @@ class SequenceType(str, Enum):
     SEQUENCE_CHUNK = "sequence_chunk"
 
 
+@lru_cache(maxsize=1000)
+def _unique_value_or_none(values: Iterable[Optional[str]]) -> Optional[str]:
+    """Checks if a set of values contains more than one distinct non-null value. If so, raises ValueError.
+    Otherwise, returns the single unique non-null value (if there is one) or None if all values are None."""
+    values = {x for x in values if x is not None}
+    if len(values) == 1:
+        return values.pop()
+    elif len(values) == 0:
+        return None
+    else:
+        raise ParentException(f"Multiple distinct non-null values were provided: {values}")
+
+
+@lru_cache(maxsize=1000)
 class Parent:
     """
     Holds information about a parent of some object. Typically the child object should hold
@@ -34,8 +48,8 @@ class Parent:
         id: Optional[str] = None,
         sequence_type: Optional[Union[SequenceType, str]] = None,
         strand: Optional[Strand] = None,
-        location: Optional = None,
-        sequence: Optional = None,
+        location: Optional["Location"] = None,
+        sequence: Optional["Sequence"] = None,
         parent: Optional[ParentInputType] = None,
     ):
         """
@@ -55,29 +69,29 @@ class Parent:
             Parent of this parent
         """
 
-        location_parent_id = location.parent_id if location else None
-        sequence_id = sequence.id if sequence else None
-        parent_id = self._unique_value_or_none([id, location_parent_id, sequence_id])
+        location_parent_id = location.parent_id if location is not None else None
+        sequence_id = sequence.id if sequence is not None else None
+        parent_id = _unique_value_or_none((id, location_parent_id, sequence_id))
 
-        location_parent_type = location.parent_type if location else None
-        sequence_seqtype = sequence.sequence_type if sequence else None
-        seq_type = self._unique_value_or_none([sequence_type, location_parent_type, sequence_seqtype])
+        location_parent_type = location.parent_type if location is not None else None
+        sequence_seqtype = sequence.sequence_type if sequence is not None else None
+        seq_type = _unique_value_or_none((sequence_type, location_parent_type, sequence_seqtype))
 
-        if location:
+        if location is not None:
             if strand and location.strand and strand is not location.strand:
                 raise InvalidStrandException("Strand does not match location: {} != {}".format(strand, location.strand))
-            if sequence and location.end > len(sequence):
+            if sequence is not None and location.end > len(sequence):
                 raise InvalidPositionException(
                     "Location end ({}) is greater than sequence length ({})".format(location.end, len(sequence))
                 )
 
         parent_obj = inscripta.biocantor.parent.make_parent(parent) if parent else None
-        if sequence and parent_obj and parent_obj.sequence and len(sequence) > len(parent_obj.sequence):
+        if sequence is not None and parent_obj and parent_obj.sequence is not None and len(sequence) > len(parent_obj.sequence):
             raise LocationException(
                 "Parent ({}) is longer than parent of parent ({})".format(len(sequence), len(parent_obj.sequence))
             )
 
-        if sequence and sequence.parent:
+        if sequence is not None and sequence.parent is not None:
             if parent_obj:
                 ObjectValidation.require_parents_equal_except_location(parent_obj, sequence.parent)
                 self.parent = parent_obj
@@ -92,26 +106,14 @@ class Parent:
         self.location = location
         self.sequence = sequence
 
-    @staticmethod
-    def _unique_value_or_none(values) -> Optional[str]:
-        """Checks if a set of values contains more than one distinct non-null value. If so, raises ValueError.
-        Otherwise, returns the single unique non-null value (if there is one) or None if all values are None."""
-        rtrn = None
-        for x in values:
-            if x is not None and rtrn is None:
-                rtrn = x
-                continue
-            if x is not None and x != rtrn:
-                raise ParentException(f"Multiple distinct non-null values were provided: {values}")
-        return rtrn
-
     def __eq__(self, other):
         if not self.equals_except_location(other):
             return False
         return self.location == other.location and self.strand is other.strand
 
     def equals_except_location(self, other, require_same_sequence: bool = True):
-        if type(other) is not Parent:
+        # this checks the object under the lru_cache hood
+        if type(other) is not Parent.__wrapped__:
             return False
         if self.id != other.id:
             return False

@@ -970,6 +970,9 @@ class _EmptyLocation(Location):
     def __repr__(self):
         return "EmptyLocation"
 
+    def __hash__(self):
+        return hash(str(self))
+
     @property
     def parent(self) -> Parent:
         return None
