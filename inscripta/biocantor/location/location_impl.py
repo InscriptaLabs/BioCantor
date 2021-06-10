@@ -304,7 +304,10 @@ class SingleInterval(Location):
         if type(other) is SingleInterval:
             return self._intersection_single_interval(other)
         intersect_other_strand = other.intersection(self, match_strand=match_strand, full_span=full_span)
-        return intersect_other_strand.reset_strand(self.strand)
+        if intersect_other_strand.strand != self.strand:
+            return intersect_other_strand.reset_strand(self.strand)
+        else:
+            return intersect_other_strand
 
     def _intersection_single_interval(self, other: Location) -> Location:
         ObjectValidation.require_object_has_type(other, SingleInterval)
@@ -452,8 +455,12 @@ class CompoundInterval(Location):
         self.strand = strand
         self._starts = tuple(sorted(starts))
         self._ends = tuple(sorted(ends))
-        self.start = self._single_intervals[0].start
-        self.end = self._single_intervals[-1].end
+
+        if any(start > end for start, end in zip(self._starts, self._ends)):
+            raise InvalidPositionException("Block starts must be less than block ends")
+
+        self.start = self._starts[0]
+        self.end = self._ends[-1]
         self.length = sum(end - start for start, end in zip(self._starts, self._ends))
 
     @property
@@ -535,11 +542,9 @@ class CompoundInterval(Location):
     def scan_blocks(self) -> Iterator[SingleInterval]:
         self.strand.assert_directional()
         if self.strand == Strand.PLUS:
-            for block in self.blocks:
-                yield block
+            yield from self.blocks
         if self.strand == Strand.MINUS:
-            for i in range(self.num_blocks):
-                yield self.blocks[self.num_blocks - i - 1]
+            yield from reversed(self.blocks)
 
     def extract_sequence(self) -> Sequence:
         self.strand.assert_directional()
@@ -569,16 +574,16 @@ class CompoundInterval(Location):
                 f"Invalid relative position {relative_pos} for location of length {len(self)}"
             )
 
-        def do_work(rel_pos: int, blocks: List[SingleInterval]):
+        def do_work(rel_pos: int, starts: Tuple[int], ends: Tuple[int]):
             plus_strand = self.strand == Strand.PLUS
-            block0 = blocks[0] if plus_strand else blocks[-1]
-            block0_len = len(block0)
+            start, end = (starts[0], ends[0]) if plus_strand else (starts[-1], ends[-1])
+            block0_len = end - start
             if rel_pos < block0_len:
-                return block0.start + rel_pos if plus_strand else block0.end - 1 - rel_pos
-            blocks_tail = blocks[1:] if plus_strand else blocks[:-1]
-            return do_work(rel_pos - block0_len, blocks_tail)
+                return start + rel_pos if plus_strand else end - 1 - rel_pos
+            starts_tail, ends_tail = (starts[1:], ends[1:]) if plus_strand else (starts[:-1], ends[:-1])
+            return do_work(rel_pos - block0_len, starts_tail, ends_tail)
 
-        return do_work(relative_pos, self._single_intervals)
+        return do_work(relative_pos, self._starts, self._ends)
 
     def relative_interval_to_parent_location(
         self, relative_start: int, relative_end: int, relative_strand: Strand
@@ -769,9 +774,12 @@ class CompoundInterval(Location):
         return CompoundInterval(self._starts, self._ends, self.strand, new_parent)
 
     def shift_position(self, shift: int) -> Location:
-        starts = [interval.start + shift for interval in self._single_intervals]
-        ends = [interval.end + shift for interval in self._single_intervals]
-        return CompoundInterval(starts, ends, self.strand, self.parent)
+        starts = tuple(interval.start + shift for interval in self._single_intervals)
+        ends = tuple(interval.end + shift for interval in self._single_intervals)
+        r = CompoundInterval(starts, ends, self.strand, self.parent)
+        # force evaluation of _single_intervals to do bounds checks
+        _ = r._single_intervals
+        return r
 
     def distance_to(self, other: Location, distance_type: DistanceType = DistanceType.INNER) -> int:
         ObjectValidation.require_parents_equal_except_location(self.parent, other.parent)
