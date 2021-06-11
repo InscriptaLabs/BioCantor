@@ -341,7 +341,7 @@ class SingleInterval(Location):
             )
         if self.strand != other.strand:
             raise ValueError("Intervals must all have same strand")
-        return CompoundInterval([self.start, other.start], [self.end, other.end], self.strand, new_parent)
+        return CompoundInterval(tuple((self.start, other.start)), tuple((self.end, other.end)), self.strand, new_parent)
 
     def union_preserve_overlaps(self, other: "Location") -> "Location":
         return _union_preserve_overlaps(self, other)
@@ -417,8 +417,8 @@ class CompoundInterval(Location):
 
     def __init__(
         self,
-        starts: Union[Tuple[int], List[int]],
-        ends: Union[Tuple[int], List[int]],
+        starts: Union[Tuple[int, ...], List[int]],
+        ends: Union[Tuple[int, ...], List[int]],
         strand: Strand,
         parent: Optional[ParentInputType] = None,
     ):
@@ -446,10 +446,11 @@ class CompoundInterval(Location):
                     sequence_type=parent_obj.sequence_type,
                     sequence=parent_obj.sequence,
                     parent=parent_obj.parent,
+                    location=CompoundInterval(starts, ends, strand)
                 )
             else:
-                single_interval_parent = parent_obj
-            self.parent = single_interval_parent.reset_location(CompoundInterval(starts, ends, strand))
+                single_interval_parent = parent_obj.reset_location(CompoundInterval(starts, ends, strand))
+            self.parent = single_interval_parent
         else:
             self.parent = None
         self.strand = strand
@@ -653,7 +654,11 @@ class CompoundInterval(Location):
                 parent=self.parent.strip_location_info() if self.parent else None,
             )
         )
-        return intersect_same_strand.reset_strand(relative_strand.relative_to(self.strand))
+        new_strand = relative_strand.relative_to(self.strand)
+        if new_strand != intersect_same_strand.strand:
+            return intersect_same_strand.reset_strand(new_strand)
+        else:
+            return intersect_same_strand
 
     def has_overlap(
         self, other: Location, match_strand: bool = False, full_span: bool = False, strict_parent_compare: bool = False
@@ -811,6 +816,8 @@ class CompoundInterval(Location):
             match_strand: Match strand or ignore strand?
             full_span: Perform comparison on the full span of the other interval? In all cases, the comparison
                 is performed on the full span.
+            strict_parent_compare: If True, parents will be compared and an exception raised if they are not equal.
+                If False, mismatched parents will result in an EmptyLocation return.
 
         """
         if strict_parent_compare:

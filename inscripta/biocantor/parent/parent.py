@@ -16,10 +16,11 @@ from inscripta.biocantor.util.object_validation import ObjectValidation
 Parent = TypeVar("Parent")
 ParentInputType = TypeVar("ParentInputType")
 
-# 5000 seems reasonable for Parent caches
+# 1000 seems reasonable for Parent caches
 # When parsing annotation files, the number of Parent objects built will likely be the # of chromosomes in the genome
 # When sequence chunks are used, the number of Parents will equal the number of distinct chunks built
-PARENT_CACHE_SIZE = 5000
+# In testing, a cache size of 1000 was more performant than 5000
+PARENT_CACHE_SIZE = 1000
 
 
 class SequenceType(str, Enum):
