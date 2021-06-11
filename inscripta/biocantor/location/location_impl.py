@@ -446,7 +446,7 @@ class CompoundInterval(Location):
                     sequence_type=parent_obj.sequence_type,
                     sequence=parent_obj.sequence,
                     parent=parent_obj.parent,
-                    location=CompoundInterval(starts, ends, strand)
+                    location=CompoundInterval(starts, ends, strand),
                 )
             else:
                 single_interval_parent = parent_obj.reset_location(CompoundInterval(starts, ends, strand))
@@ -468,9 +468,9 @@ class CompoundInterval(Location):
     def _single_intervals(self):
         """Lazy evaluation; cached result"""
         if not hasattr(self, "__single_intervals"):
-            self.__single_intervals = sorted(
+            self.__single_intervals = [
                 SingleInterval(self._starts[i], self._ends[i], self.strand, self.parent) for i in range(self.num_blocks)
-            )
+            ]
         return self.__single_intervals
 
     @classmethod
@@ -705,11 +705,6 @@ class CompoundInterval(Location):
         if gap_list:
             return CompoundInterval.from_single_intervals(gap_list)
         return EmptyLocation()
-
-    def _remove_empty_blocks(self) -> "CompoundInterval":
-        return CompoundInterval._from_single_intervals_no_validation(
-            [block for block in self._single_intervals if len(block) > 0]
-        )
 
     def _to_single_interval_if_one_block(self) -> Location:
         return self if self.num_blocks > 1 else self._single_intervals[0]

@@ -225,10 +225,10 @@ class Parent:
         """
         ObjectValidation.require_parent_has_location(self)
         ObjectValidation.require_parent_has_parent_with_location(self)
-        lifted_blocks = [
+        lifted_blocks = (
             self.parent.location.relative_interval_to_parent_location(block.start, block.end, block.strand)
             for block in self.location.blocks
-        ]
+        )
         lifted_blocks_union = reduce(
             lambda location1, location2: location1.union_preserve_overlaps(location2), lifted_blocks
         )

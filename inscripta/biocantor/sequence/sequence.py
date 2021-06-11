@@ -173,7 +173,7 @@ class Sequence:
         strand = self.parent_strand.reverse() if self.parent_strand else None
         rc_map = ALPHABET_TO_NUCLEOTIDE_COMPLEMENT[self.alphabet]
         try:
-            seq_data = "".join([rc_map[c] for c in str(self)[::-1]])
+            seq_data = "".join((rc_map[c] for c in reversed(str(self))))
         except KeyError as e:
             raise AlphabetError("Character {} not found for alphabet {}".format(str(e), self.alphabet))
         rc_parent = Parent(strand=strand, location=location) if strand or location else None
@@ -224,7 +224,7 @@ class Sequence:
                 new_location = self.parent.location.union(other.parent.location)
             else:
                 new_location = None
-            new_parent = self.parent.strip_location_info().reset_location(new_location)
+            new_parent = self.parent.reset_location(new_location)
         else:
             new_parent = None
         return Sequence(
