@@ -12,6 +12,8 @@ from inscripta.biocantor.util.object_validation import ObjectValidation
 class Location(AbstractLocation, ABC):
     """Abstract location with respect to a coordinate system"""
 
+    __slots__ = []
+
     def parent_to_relative_location(self, parent_location: "Location", optimize_blocks: bool = True) -> "Location":
         """Converts a Location on the parent to a Location relative to this Location.
 

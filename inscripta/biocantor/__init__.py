@@ -25,6 +25,8 @@ class DistanceType(Enum):
 class AbstractLocation(ABC):
     """Shared AbstractLocation base class simplifies imports for type checking"""
 
+    __slots__ = ["start", "end", "strand", "parent", "length", "_sequence"]
+
     # The 0-based start position of this Location on its parent
     start: int
 
@@ -411,6 +413,8 @@ class AbstractLocation(ABC):
 class AbstractSequence(ABC):
     """Shared AbstractSequence base class simplifies imports for type checking"""
 
+    __slots__ = ["sequence", "alphabet", "id", "sequence_type", "parent", "_len"]
+
     sequence_type: SequenceType
     _len: int
     sequence: str
@@ -424,6 +428,8 @@ class AbstractSequence(ABC):
 
 class AbstractParent(ABC):
     """Shared AbstractParent base class simplifies imports for type checking"""
+
+    __slots__ = ["parent", "id", "sequence_type", "_strand", "location", "sequence"]
 
     id: Optional[str]
     sequence_type: Optional[SequenceType]

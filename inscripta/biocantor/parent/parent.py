@@ -45,8 +45,7 @@ class Parent(AbstractParent):
     Holds information about a parent of some object. Typically the child object should hold
     a reference to this parent.
     """
-
-    __slots__ = ["parent", "id", "sequence_type", "_strand", "location", "sequence"]
+    __slots__ = []
 
     def __init__(
         self,

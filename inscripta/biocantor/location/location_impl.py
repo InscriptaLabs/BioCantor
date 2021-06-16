@@ -25,8 +25,6 @@ from inscripta.biocantor.util.types import ParentInputType
 class SingleInterval(Location):
     """A single contiguous interval within a sequence"""
 
-    __slots__ = ["start", "end", "strand", "parent", "length", "_sequence"]
-
     def __init__(
         self,
         start: int,
@@ -417,8 +415,7 @@ class SingleInterval(Location):
 class CompoundInterval(Location):
     """A location consisting of multiple intervals"""
 
-    __slots__ = ["start", "end", "strand", "parent", "length", "_sequence", "__single_intervals", "_is_overlapping",
-                 "_starts", "_ends"]
+    __slots__ = ["__single_intervals", "_is_overlapping", "_starts", "_ends"]
 
     def __init__(
         self,

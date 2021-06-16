@@ -24,7 +24,7 @@ ParentInputType = TypeVar("ParentInputType")
 class Sequence(AbstractSequence):
     """A sequence with an alphabet"""
 
-    __slots__ = ["sequence", "alphabet", "id", "sequence_type", "parent", "_len"]
+    __slots__ = []
 
     def __init__(
         self,
