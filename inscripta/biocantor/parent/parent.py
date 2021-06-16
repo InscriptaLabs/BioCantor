@@ -48,6 +48,8 @@ class Parent:
     a reference to this parent.
     """
 
+    __slots__ = ["parent", "id", "sequence_type", "_strand", "location", "sequence"]
+
     def __init__(
         self,
         *,

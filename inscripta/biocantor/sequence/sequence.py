@@ -23,7 +23,7 @@ ParentInputType = TypeVar("ParentInputType")
 class Sequence:
     """A sequence with an alphabet"""
 
-    sequence: Seq
+    __slots__ = ["sequence", "alphabet", "id", "sequence_type", "parent", "_len"]
 
     def __init__(
         self,
