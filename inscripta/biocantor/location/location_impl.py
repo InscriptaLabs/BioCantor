@@ -4,6 +4,7 @@ from typing import Optional, List, Iterator, Union, Tuple
 
 from Bio.SeqFeature import FeatureLocation, CompoundLocation
 
+from inscripta.biocantor import DistanceType
 from inscripta.biocantor.exc import (
     InvalidStrandException,
     InvalidPositionException,
@@ -11,7 +12,6 @@ from inscripta.biocantor.exc import (
     EmptyLocationException,
     LocationException,
 )
-from inscripta.biocantor.location.distance import DistanceType
 from inscripta.biocantor.location.location import Location
 from inscripta.biocantor.location.strand import Strand
 from inscripta.biocantor.parent import Parent, make_parent, SequenceType

@@ -1,8 +1,11 @@
 from functools import reduce, lru_cache
 from typing import TypeVar, Optional, Union, Iterable
-from enum import Enum
 
+# this base import is required in order to avoid a circular import; this module needs make_parent()
+# it is not possible to put make_parent() within this module, because it references Parent, and so it becomes an
+# internally circular reference
 import inscripta.biocantor
+from inscripta.biocantor import AbstractParent, AbstractLocation, AbstractSequence, SequenceType
 from inscripta.biocantor.exc import (
     NoSuchAncestorException,
     LocationException,
@@ -23,11 +26,6 @@ ParentInputType = TypeVar("ParentInputType")
 PARENT_CACHE_SIZE = 1000
 
 
-class SequenceType(str, Enum):
-    CHROMOSOME = "chromosome"
-    SEQUENCE_CHUNK = "sequence_chunk"
-
-
 @lru_cache(maxsize=PARENT_CACHE_SIZE)
 def _unique_value_or_none(values: Iterable[Optional[str]]) -> Optional[str]:
     """Checks if a set of values contains more than one distinct non-null value. If so, raises ValueError.
@@ -42,7 +40,7 @@ def _unique_value_or_none(values: Iterable[Optional[str]]) -> Optional[str]:
 
 
 @lru_cache(maxsize=PARENT_CACHE_SIZE)
-class Parent:
+class Parent(AbstractParent):
     """
     Holds information about a parent of some object. Typically the child object should hold
     a reference to this parent.
@@ -56,9 +54,8 @@ class Parent:
         id: Optional[str] = None,
         sequence_type: Optional[Union[SequenceType, str]] = None,
         strand: Optional[Strand] = None,
-        # these cannot be imported due to circular import issues; I am not sure what to do about this
-        location: Optional["Location"] = None,  # noqa: F821
-        sequence: Optional["Sequence"] = None,  # noqa: F821
+        location: Optional[AbstractLocation] = None,
+        sequence: Optional[AbstractSequence] = None,
         parent: Optional[ParentInputType] = None,
     ):
         """
@@ -126,6 +123,10 @@ class Parent:
         return self.location == other.location and self.strand is other.strand
 
     def equals_except_location(self, other, require_same_sequence: bool = True):
+        """Checks that this Parent is equal to another Parent, ignoring the associated Location members.
+
+        By default also checks that any associated Sequence objects also match, but this can be toggled off.
+        """
         # this checks the object under the lru_cache hood
         if type(other) is not Parent.__wrapped__:
             return False
@@ -162,7 +163,9 @@ class Parent:
         )
 
     @property
-    def strand(self):
+    def strand(self) -> Optional[Strand]:
+        """Returns the Strand of this Parent. If this Parent has no explicit Strand, but has a Location,
+        that Location's Strand is returned."""
         if self._strand:
             return self._strand
         if self.location:

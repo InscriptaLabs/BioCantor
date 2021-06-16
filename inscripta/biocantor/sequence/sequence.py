@@ -14,13 +14,14 @@ from inscripta.biocantor.sequence.alphabet import (
     Alphabet,
     ALPHABET_TO_NUCLEOTIDE_COMPLEMENT,
 )
+from inscripta.biocantor import AbstractSequence
 
 Location = TypeVar("Location")
 Sequence = TypeVar("Sequence")
 ParentInputType = TypeVar("ParentInputType")
 
 
-class Sequence:
+class Sequence(AbstractSequence):
     """A sequence with an alphabet"""
 
     __slots__ = ["sequence", "alphabet", "id", "sequence_type", "parent", "_len"]
@@ -84,9 +85,6 @@ class Sequence:
     def __str__(self):
         """Returns the sequence data as a string"""
         return str(self.sequence)
-
-    def __len__(self):
-        return self._len
 
     def __getitem__(self, key: Union[int, slice]) -> Sequence:
         """Returns a slice of the current Sequence as a new Sequence object"""
