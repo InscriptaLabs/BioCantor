@@ -729,12 +729,14 @@ class TestGenBankFeatures:
 class TestSortedParser:
     """Test edge cases for sorted parser"""
 
-    @pytest.mark.parametrize("genbank",
-                             [
-                                 "INSC1003_missing_gene.gbk",
-                                 "INSC1003_no_genes.gbk",
-                                 "INSC1003_no_genes_misordered.gbk",
-                             ])
+    @pytest.mark.parametrize(
+        "genbank",
+        [
+            "INSC1003_missing_gene.gbk",
+            "INSC1003_no_genes.gbk",
+            "INSC1003_no_genes_misordered.gbk",
+        ],
+    )
     def test_missing_gene(self, test_data_dir, genbank):
         recs = list(parse_genbank(test_data_dir / genbank, gbk_type=GenBankParserType.SORTED))
         c = recs[0].annotation
