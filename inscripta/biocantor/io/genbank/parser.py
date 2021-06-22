@@ -514,14 +514,6 @@ def group_gene_records_from_sorted_genbank(
             else:
                 feature_features.append(feature)
 
-            # if a gene was derived from an isolated CDS, then it must be immediately added to the list
-            # and the gene object reset
-            # if gene is not None and gene.type == "CDS":
-            #    gene.finalize()
-            #    gene = parse_func(gene)
-            #    genes.append(gene)
-            #    gene = None
-
         # gene could be None if this record has no annotations
         if gene is not None and gene.has_children:
             gene.finalize()
