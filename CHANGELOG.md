@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+### Changed
+- GenBank position-sorted parser can now handle CDS records that are not directly following a gene record.
+
+
 ## [0.6.0]
 ### Changed
 - Added `raise_on_reserved_attributes` flag to GFF3 export that controls whether reserved attributes lead to warnings or exceptions.
