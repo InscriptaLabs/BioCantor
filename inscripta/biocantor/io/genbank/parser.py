@@ -586,7 +586,8 @@ def group_gene_records_by_locus_tag(
         for locus_tag, gene_features in itertools.groupby(
             sorted_gene_filtered_features, key=lambda f: f.qualifiers["locus_tag"][0]
         ):
-            gene_features = list(gene_features)
+            # sort the features for this locus tag to bubble the "gene" feature to the top, if it exists
+            gene_features = sorted(gene_features, key=lambda f: f.type != "gene")
             gene = gene_features[0]
 
             if gene.type not in GeneFeature.types:

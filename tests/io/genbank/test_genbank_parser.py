@@ -742,3 +742,9 @@ class TestSortedParser:
         c = recs[0].annotation
         assert len(c.genes) == 8
         assert len([x for x in c.genes if x.gene_type == Biotype.protein_coding]) == 6
+
+    def test_mrna_before_gene(self, test_data_dir):
+        genbank = test_data_dir / "INSC1006_chrI_mrna_before_gene.gb"
+        recs = list(parse_genbank(test_data_dir / genbank, gbk_type=GenBankParserType.SORTED))
+        c = recs[0].annotation
+        assert len(c.genes) == 4
