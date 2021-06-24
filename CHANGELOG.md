@@ -8,6 +8,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Changed
 - GenBank position-sorted parser can now handle CDS records that are not directly following a gene record.
 
+### Fixed
+- GenBank parser was not properly handling 0bp intervals, which can be sometimes seen as a way to represent insertions.
+
 
 ## [0.6.0]
 ### Changed
