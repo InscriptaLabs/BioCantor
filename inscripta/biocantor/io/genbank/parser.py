@@ -74,7 +74,7 @@ class Feature(ABC):
     def __init__(self, feature: SeqFeature, record: SeqRecord):
         if feature.type not in self.types:
             raise GenBankParserError(f"Invalid feature type {feature.type}")
-        if not feature.location:
+        if feature.location is None:
             raise GenBankLocationException(f"Feature {feature} did not have parseable coordinates.")
         if not feature.strand:
             raise GenBankParserError(f"Feature {feature} is unstranded or has multiple strands.")
@@ -117,7 +117,7 @@ class FeatureIntervalGenBankCollection:
             record: The ``SeqRecord`` these features were found on.
         """
         for feature in features:
-            if not feature.location:
+            if feature.location is None:
                 raise GenBankLocationException(f"Feature {feature} did not have parseable coordinates.")
 
         self.types = {feature.type for feature in features}
