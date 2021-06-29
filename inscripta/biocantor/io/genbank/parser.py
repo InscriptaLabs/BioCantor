@@ -74,7 +74,7 @@ class Feature(ABC):
     def __init__(self, feature: SeqFeature, record: SeqRecord):
         if feature.type not in self.types:
             raise GenBankParserError(f"Invalid feature type {feature.type}")
-        if not feature.location:
+        if feature.location is None:
             raise GenBankLocationException(f"Feature {feature} did not have parseable coordinates.")
         if not feature.strand:
             raise GenBankParserError(f"Feature {feature} is unstranded or has multiple strands.")
@@ -117,7 +117,7 @@ class FeatureIntervalGenBankCollection:
             record: The ``SeqRecord`` these features were found on.
         """
         for feature in features:
-            if not feature.location:
+            if feature.location is None:
                 raise GenBankLocationException(f"Feature {feature} did not have parseable coordinates.")
 
         self.types = {feature.type for feature in features}
@@ -215,7 +215,10 @@ class GeneFeature(Feature):
         return self.feature.__repr__()
 
     @staticmethod
-    def from_transcript_feature(feature: SeqFeature, seqrecord: SeqRecord) -> "GeneFeature":
+    def from_transcript_or_cds_feature(feature: SeqFeature, seqrecord: SeqRecord) -> "GeneFeature":
+        """Some GenBank files lack a gene-level feature, but have transcript-level features or CDS-level features only.
+
+        Construct a GeneFeature from such records."""
         old_type = feature.type
         feature.type = "gene"
         gene = GeneFeature(feature, seqrecord)
@@ -441,6 +444,16 @@ def group_gene_records_from_sorted_genbank(
 ) -> Iterable[ParsedAnnotationRecord]:
     """Model 1: position sorted GenBank.
 
+    This function looks for canonical gene records:
+        gene -> Optional(mRNA) -> CDS records
+    It also looks for canonical non-coding records:
+        gene -> {misc_RNA,tRNA,rRNA,etc)
+
+    It also will infer non-canonical record types, including non-coding transcripts and coding genes
+    from isolated CDS/non-coding features (those without a gene feature before them in the sort order).
+
+    Any features that do not fit the above bins are interpreted as generic features.
+
     Args:
         record_iter: Iterable of SeqRecord objects.
         parse_func: Optional parse function implementation.
@@ -465,9 +478,19 @@ def group_gene_records_from_sorted_genbank(
             elif gene is None:
                 if feature.type in GeneFeature.types:
                     gene = GeneFeature(feature, seqrecord)
+                # base case for starting with a isolated ncRNA or CDS feature; immediately add them
+                # and reset the gene to None
+                elif feature.type in TranscriptFeature.types or feature.type in IntervalFeature.types:
+                    gene = GeneFeature.from_transcript_or_cds_feature(feature, seqrecord)
+                    gene.finalize()
+                    gene = parse_func(gene)
+                    genes.append(gene)
+                    gene = None
+                # this must be a generic feature
                 else:
-                    continue
-            elif feature.type in GeneFeature.types:  # next gene
+                    feature_features.append(feature)
+            # next gene; re-set the gene object and report out the collection
+            elif feature.type in GeneFeature.types:
                 if gene.has_children:
                     gene.finalize()
                     gene = parse_func(gene)
@@ -480,11 +503,11 @@ def group_gene_records_from_sorted_genbank(
                     gene.finalize()
                     gene = parse_func(gene)
                     genes.append(gene)
-                    gene = GeneFeature.from_transcript_feature(feature, seqrecord)
+                    gene = GeneFeature.from_transcript_or_cds_feature(feature, seqrecord)
                 else:
                     gene.add_child(feature)
             elif feature.type in IntervalFeature.types:
-                if len(gene.children) == 0:
+                if not gene.has_children:
                     gene.add_child(feature)
                 else:
                     gene.children[-1].add_child(feature)
@@ -563,7 +586,8 @@ def group_gene_records_by_locus_tag(
         for locus_tag, gene_features in itertools.groupby(
             sorted_gene_filtered_features, key=lambda f: f.qualifiers["locus_tag"][0]
         ):
-            gene_features = list(gene_features)
+            # sort the features for this locus tag to bubble the "gene" feature to the top, if it exists
+            gene_features = sorted(gene_features, key=lambda f: f.type != "gene")
             gene = gene_features[0]
 
             if gene.type not in GeneFeature.types:
