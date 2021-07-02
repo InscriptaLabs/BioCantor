@@ -6,8 +6,19 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 ### Changed
+- GenBank position-sorted parser can now handle CDS records that are not directly following a gene record.
+
+### Fixed
+- GenBank parser was not properly handling 0bp intervals, which can be sometimes seen as a way to represent insertions.
+
+
+## [0.6.0]
+### Changed
 - Added `raise_on_reserved_attributes` flag to GFF3 export that controls whether reserved attributes lead to warnings or exceptions.
 - Added more top-level imports to simplify imports
+- Try more common identifiers when parsing gene symbols from GFF3 files
+- Attempt to infer frame from GFF3 files with null Phase columns on CDS records
+- Update Tox tests to have a separate formatting case
 
 
 ## [0.5.0]
