@@ -37,7 +37,7 @@ class AbstractLocation(ABC):
     strand: Strand
 
     # The parent of this Location
-    parent: "AbstractParent"
+    parent: Optional["AbstractParent"]
 
     # The length (number of positions) of this Location. For subclasses representing discontiguous locations,
     # regions between blocks are not considered

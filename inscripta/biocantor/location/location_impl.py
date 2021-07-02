@@ -1,5 +1,5 @@
 from functools import total_ordering, reduce
-from itertools import chain
+from itertools import chain, islice
 from typing import Optional, List, Iterator, Union, Tuple
 
 from Bio.SeqFeature import FeatureLocation, CompoundLocation
@@ -341,7 +341,7 @@ class SingleInterval(Location):
             )
         if self.strand != other.strand:
             raise ValueError("Intervals must all have same strand")
-        return CompoundInterval(tuple((self.start, other.start)), tuple((self.end, other.end)), self.strand, new_parent)
+        return CompoundInterval((self.start, other.start), (self.end, other.end), self.strand, new_parent)
 
     def union_preserve_overlaps(self, other: "Location") -> "Location":
         return _union_preserve_overlaps(self, other)
@@ -521,13 +521,15 @@ class CompoundInterval(Location):
 
     @property
     def is_contiguous(self) -> bool:
-        return all(next_start == end for next_start, end in zip(self._starts[1:], self._ends))
+        return all(next_start == end for next_start, end in zip(islice(self._starts, 1, None), self._ends))
 
     @property
     def is_overlapping(self) -> bool:
         """Does this interval have overlaps?"""
         if not hasattr(self, "_is_overlapping"):
-            self._is_overlapping = any(end > next_start for next_start, end in zip(self._starts[1:], self._ends))
+            self._is_overlapping = any(
+                end > next_start for next_start, end in zip(islice(self._starts, 1, None), self._ends)
+            )
         return self._is_overlapping
 
     @property
@@ -577,16 +579,23 @@ class CompoundInterval(Location):
                 f"Invalid relative position {relative_pos} for location of length {len(self)}"
             )
 
-        def do_work(rel_pos: int, starts: Tuple[int], ends: Tuple[int]):
-            plus_strand = self.strand == Strand.PLUS
-            start, end = (starts[0], ends[0]) if plus_strand else (starts[-1], ends[-1])
+        if self.strand == Strand.MINUS:
+            starts = reversed(self._starts)
+            ends = reversed(self._ends)
+            plus_strand = False
+        else:
+            starts = iter(self._starts)
+            ends = iter(self._ends)
+            plus_strand = True
+
+        def do_work(rel_pos: int, _starts: Iterator[int], _ends: Iterator[int]):
+            start, end = (next(_starts), next(_ends))
             block0_len = end - start
             if rel_pos < block0_len:
                 return start + rel_pos if plus_strand else end - 1 - rel_pos
-            starts_tail, ends_tail = (starts[1:], ends[1:]) if plus_strand else (starts[:-1], ends[:-1])
-            return do_work(rel_pos - block0_len, starts_tail, ends_tail)
+            return do_work(rel_pos - block0_len, _starts, _ends)
 
-        return do_work(relative_pos, self._starts, self._ends)
+        return do_work(relative_pos, starts, ends)
 
     def relative_interval_to_parent_location(
         self, relative_start: int, relative_end: int, relative_strand: Strand
@@ -636,7 +645,7 @@ class CompoundInterval(Location):
                 0, remaining_len_till_end - len(sub_block), remaining_blocks[1:], existing_blocks + [sub_block]
             )
 
-        blocks = compile_blocks(relative_start, relative_end - relative_start, list(self.scan_blocks()), [])
+        blocks = compile_blocks(relative_start, relative_end - relative_start, self.scan_blocks(), tuple())
         new_strand = relative_strand.relative_to(self.strand)
         return CompoundInterval.from_single_intervals(blocks).reset_strand(new_strand).optimize_blocks()
 
@@ -951,8 +960,8 @@ class CompoundInterval(Location):
         ]
         if not rel_loc_each_single_interval:
             return EmptyLocation()
-        rel_starts = [block.start for loc in rel_loc_each_single_interval for block in loc.blocks]
-        rel_ends = [block.end for loc in rel_loc_each_single_interval for block in loc.blocks]
+        rel_starts = tuple(block.start for loc in rel_loc_each_single_interval for block in loc.blocks)
+        rel_ends = tuple(block.end for loc in rel_loc_each_single_interval for block in loc.blocks)
         rel_strand = rel_loc_each_single_interval[0].strand
         rel_parent = rel_loc_each_single_interval[0].parent
         parent = rel_parent.strip_location_info() if rel_parent else None
