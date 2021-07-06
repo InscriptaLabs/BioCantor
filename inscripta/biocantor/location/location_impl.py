@@ -645,7 +645,7 @@ class CompoundInterval(Location):
                 0, remaining_len_till_end - len(sub_block), remaining_blocks[1:], existing_blocks + [sub_block]
             )
 
-        blocks = compile_blocks(relative_start, relative_end - relative_start, self.scan_blocks(), tuple())
+        blocks = compile_blocks(relative_start, relative_end - relative_start, list(self.scan_blocks()), [])
         new_strand = relative_strand.relative_to(self.strand)
         return CompoundInterval.from_single_intervals(blocks).reset_strand(new_strand).optimize_blocks()
 
