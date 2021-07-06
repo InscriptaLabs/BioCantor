@@ -99,8 +99,9 @@ def collection_to_genbank(
             seqrecord.annotations["organism"] = organism
 
         for gene_or_feature in collection:
-            seqrecord.features.extend(gene_to_feature(gene_or_feature, genbank_type, force_strand, translation_table,
-                                                      update_translations))
+            seqrecord.features.extend(
+                gene_to_feature(gene_or_feature, genbank_type, force_strand, translation_table, update_translations)
+            )
 
         seqrecords.append(seqrecord)
 
@@ -299,7 +300,9 @@ def add_cds_feature(
     if update_translations:
         # if the sequence has N's, we cannot translate
         try:
-            feature.qualifiers["translation"] = [str(transcript.get_protein_sequence(translation_table=translation_table))]
+            feature.qualifiers["translation"] = [
+                str(transcript.get_protein_sequence(translation_table=translation_table))
+            ]
         except ValueError:
             pass
 
