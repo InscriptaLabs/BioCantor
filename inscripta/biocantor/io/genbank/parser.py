@@ -302,7 +302,7 @@ class GeneFeature(Feature):
                 cds_starts=cds_starts,
                 cds_ends=cds_ends,
                 cds_frames=cds_frames,
-                qualifiers=tx.feature.qualifiers,
+                qualifiers=tx.merge_cds_qualifiers_to_transcript(),
                 is_primary_tx=False,
                 transcript_id=tx.get_qualifier_from_tx_or_cds_features("transcript_id"),
                 protein_id=tx.get_qualifier_from_tx_or_cds_features("protein_id"),
@@ -398,6 +398,21 @@ class TranscriptFeature(Feature):
             Strand.from_int(self.feature.strand),
         )
         return exon_interval.intersection(cds_i)
+
+    def merge_cds_qualifiers_to_transcript(self) -> Dict[str, List[str]]:
+        """
+        If there were distinct transcript-level features, the qualifiers on the CDS feature will be lost
+        when converting to the BioCantor data model unless those qualifiers are rolled into the qualifiers on
+        the transcript feature.
+        """
+        qualifiers = {key: set(vals) for key, vals in self.feature.qualifiers.items()}
+        for cds_feature in self.cds_features:
+            for key, vals in cds_feature.feature.qualifiers.items():
+                if key not in qualifiers:
+                    qualifiers[key] = set(vals)
+                else:
+                    qualifiers[key].update(vals)
+        return {key: list(vals) for key, vals in qualifiers.items()}
 
 
 class IntervalFeature(Feature):

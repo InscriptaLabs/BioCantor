@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Fixed
 - GenBank parser was not properly handling 0bp intervals, which can be sometimes seen as a way to represent insertions.
+- GenBank parser was not capturing CDS qualifiers when parsing eukaryotic style GenBank files that have mRNA level features
 
 
 ## [0.6.0]

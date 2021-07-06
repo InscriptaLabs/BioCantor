@@ -63,11 +63,17 @@
                         "ZERO"
                     ],
                     "qualifiers": {
+                        "codon_start": [
+                            "1"
+                        ],
                         "gene": [
                             "GDH3"
                         ],
                         "note": [
                             "CAT transcript id: T0000002; CAT alignment id: NM_001178204.1-0; CAT source transcript id: NM_001178204.1; CAT source transcript biotype: protein_coding"
+                        ],
+                        "translation": [
+                            "MTSEPEFQQAYDEIVSSVEDSKIFEKFPQYKKVLPIVSVPERIIQFRVTWENDNGEQEVAQGYRVQFNSAKGPYKGGLRFHPSVNLSILKFLGFEQIFKNALTGLDMGGGKGGLCVDLKGKSDNEIRRICYAFMRELSRHIGKDTDVPAGDIGVGGREIGYLFGAYRSYKNSWEGVLTGKGLNWGGSLIRPEATGFGLVYYTQAMIDYATNGKESFEGKRVTISGSGNVAQYAALKVIELGGIVVSLSDSKGCIISETGITSEQIHDIASAKIRFKSLEEIVDEYSTFSESKMKYVAGARPWTHVSNVDIALPCATQNEVSGDEAKALVASGVKFVAEGANMGSTPEAISVFETARSTATNAKDAVWFGPPKAANLGGVAVSGLEMAQNSQKVTWTAERVDQELKKIMINCFNDCIQAAQEYSTEKNTNTLPSLVKGANIASFVMVADAMLDQGDVF"
                         ]
                     },
                     "is_primary_tx": false,
@@ -82,7 +88,7 @@
                     "transcript_guid": null
                 }
             ],
-            "gene_id": "bc2688c9-db1f-42eb-b69c-353548e54174",
+            "gene_id": "1a493d41-afd7-9ecb-9d71-234afa435b53",
             "gene_symbol": "GDH3",
             "gene_type": "protein_coding",
             "locus_tag": "GI526_G0000002",
