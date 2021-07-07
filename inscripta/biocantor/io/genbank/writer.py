@@ -47,7 +47,7 @@ def collection_to_genbank(
     organism: Optional[str] = None,
     source: Optional[str] = None,
     seqrecord_annotations: Optional[List[Dict[str, Any]]] = None,
-    update_translations: Optional[bool] = False,
+    update_translations: bool = False,
 ):
     """
     Take an instantiated :class:`~biocantor.gene.collections.AnnotationCollection` and produce a GenBank file.
@@ -199,7 +199,7 @@ def transcripts_to_feature(
     translation_table: TranslationTable,
     gene_symbol: Optional[str] = None,
     locus_tag: Optional[str] = None,
-    update_translations: Optional[bool] = False,
+    update_translations: bool = False,
 ) -> Iterable[SeqFeature]:
     """Converts a :class:`~biocantor.gene.transcripts.TranscriptInterval` to a :class:`Bio.SeqFeature.SeqFeature`.
 
