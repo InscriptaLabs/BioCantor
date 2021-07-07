@@ -47,6 +47,7 @@ def collection_to_genbank(
     organism: Optional[str] = None,
     source: Optional[str] = None,
     seqrecord_annotations: Optional[List[Dict[str, Any]]] = None,
+    update_translations: bool = False,
 ):
     """
     Take an instantiated :class:`~biocantor.gene.collections.AnnotationCollection` and produce a GenBank file.
@@ -62,6 +63,8 @@ def collection_to_genbank(
         seqrecord_annotations: An arbitrary dictionary of annotations to include.
             If ``organism`` or ``source`` are set both in this function call and in this dictionary, they will be
             over-written. Must be a list of the same length as the collections.
+        update_translations: Should the /translation tag be calculated or re-calculated?
+            This is a time consuming process.
     """
 
     if seqrecord_annotations and len(seqrecord_annotations) != len(collections):
@@ -97,7 +100,9 @@ def collection_to_genbank(
             seqrecord.annotations["organism"] = organism
 
         for gene_or_feature in collection:
-            seqrecord.features.extend(gene_to_feature(gene_or_feature, genbank_type, force_strand, translation_table))
+            seqrecord.features.extend(
+                gene_to_feature(gene_or_feature, genbank_type, force_strand, translation_table, update_translations)
+            )
 
         seqrecords.append(seqrecord)
 
@@ -109,6 +114,7 @@ def gene_to_feature(
     genbank_type: GenbankFlavor,
     force_strand: bool,
     translation_table: TranslationTable,
+    update_translations: bool,
 ) -> Iterable[SeqFeature]:
     """Converts either a :class:`~biocantor.gene.collections.GeneInterval` or a
     :class:`~biocantor.gene.collections.FeatureIntervalCollection` to a :class:`Bio.SeqFeature.SeqFeature`.
@@ -128,6 +134,8 @@ def gene_to_feature(
         force_strand: Boolean flag; if ``True``, then strand on children is forced, if ``False``, then improper
             strands are instead skipped.
         translation_table: Translation table to use.
+        update_translations: Should the /translation tag be calculated or re-calculated?
+            This is a time consuming process.
 
     Yields:
         ``SeqFeature``s, one for the gene, one for each child transcript, and one for each transcript's CDS if it
@@ -175,6 +183,7 @@ def gene_to_feature(
             translation_table,
             symbol,
             gene_or_feature.locus_tag,
+            update_translations,
         )
     else:
         yield from feature_intervals_to_features(
@@ -190,6 +199,7 @@ def transcripts_to_feature(
     translation_table: TranslationTable,
     gene_symbol: Optional[str] = None,
     locus_tag: Optional[str] = None,
+    update_translations: bool = False,
 ) -> Iterable[SeqFeature]:
     """Converts a :class:`~biocantor.gene.transcripts.TranscriptInterval` to a :class:`Bio.SeqFeature.SeqFeature`.
 
@@ -214,6 +224,8 @@ def transcripts_to_feature(
         gene_symbol: An optional gene symbol.
         locus_tag: An optional locus tag.
         translation_table: Translation table to use.
+        update_translations: Should the /translation tag be calculated or re-calculated?
+            This is a time consuming process.
 
     Yields:
         ``SeqFeature``s, one for each transcript and then one for each CDS of the transcript, if it exists.
@@ -247,7 +259,7 @@ def transcripts_to_feature(
 
         if feat_type == TranscriptFeatures.CODING_TRANSCRIPT and genbank_type == GenbankFlavor.PROKARYOTIC:
             # this is a coding gene in prokaryotic mode; skip straight to CDS
-            yield add_cds_feature(transcript, transcript_qualifiers, strand, translation_table)
+            yield add_cds_feature(transcript, transcript_qualifiers, strand, translation_table, update_translations)
         else:
             # build this feature; it could be a mRNA for eukaryotic, or non-coding for either prokaryotic or eukaryotic
             feature = SeqFeature(location, type=feat_type.value, strand=strand.value)
@@ -260,7 +272,7 @@ def transcripts_to_feature(
             yield feature
             # only in eukaryotic mode for coding genes do we add a third layer
             if genbank_type == GenbankFlavor.EUKARYOTIC and feat_type == TranscriptFeatures.CODING_TRANSCRIPT:
-                yield add_cds_feature(transcript, transcript_qualifiers, strand, translation_table)
+                yield add_cds_feature(transcript, transcript_qualifiers, strand, translation_table, update_translations)
 
 
 def add_cds_feature(
@@ -268,6 +280,7 @@ def add_cds_feature(
     transcript_qualifiers: Dict[Hashable, List[Hashable]],
     strand: Strand,
     translation_table: TranslationTable,
+    update_translations: bool,
 ) -> SeqFeature:
     """
     Converts a :class:`~biocantor.gene.transcript.TranscriptInterval` that has a CDS to a
@@ -278,6 +291,8 @@ def add_cds_feature(
         strand: ``Strand`` that this transcript lives on.
         transcript_qualifiers: Qualifiers dictionary from the transcript level feature.
         translation_table: Translation table to use.
+        update_translations: Should the /translation tag be calculated or re-calculated?
+            This is a time consuming process.
 
     Returns:
         ``SeqFeature`` for the CDS of this transcript.
@@ -286,11 +301,14 @@ def add_cds_feature(
     feature = SeqFeature(location, type=GeneIntervalFeatures.CDS.value, strand=strand.value)
     feature.qualifiers = transcript_qualifiers
 
-    # if the sequence has N's, we cannot translate
-    try:
-        feature.qualifiers["translation"] = [str(transcript.get_protein_sequence(translation_table=translation_table))]
-    except ValueError:
-        pass
+    if update_translations:
+        # if the sequence has N's, we cannot translate
+        try:
+            feature.qualifiers["translation"] = [
+                str(transcript.get_protein_sequence(translation_table=translation_table))
+            ]
+        except ValueError:
+            pass
 
     return feature
 
