@@ -19,6 +19,6 @@ def _(obj) -> Parent:
     return Parent(id=obj)
 
 
-@make_parent.register(Parent)
+@make_parent.register(Parent.__wrapped__)
 def _(obj) -> Parent:
     return obj

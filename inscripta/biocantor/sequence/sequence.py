@@ -14,16 +14,17 @@ from inscripta.biocantor.sequence.alphabet import (
     Alphabet,
     ALPHABET_TO_NUCLEOTIDE_COMPLEMENT,
 )
+from inscripta.biocantor import AbstractSequence
 
 Location = TypeVar("Location")
 Sequence = TypeVar("Sequence")
 ParentInputType = TypeVar("ParentInputType")
 
 
-class Sequence:
+class Sequence(AbstractSequence):
     """A sequence with an alphabet"""
 
-    sequence: Seq
+    __slots__ = []
 
     def __init__(
         self,
@@ -84,9 +85,6 @@ class Sequence:
     def __str__(self):
         """Returns the sequence data as a string"""
         return str(self.sequence)
-
-    def __len__(self):
-        return self._len
 
     def __getitem__(self, key: Union[int, slice]) -> Sequence:
         """Returns a slice of the current Sequence as a new Sequence object"""
@@ -173,7 +171,7 @@ class Sequence:
         strand = self.parent_strand.reverse() if self.parent_strand else None
         rc_map = ALPHABET_TO_NUCLEOTIDE_COMPLEMENT[self.alphabet]
         try:
-            seq_data = "".join([rc_map[c] for c in str(self)[::-1]])
+            seq_data = "".join((rc_map[c] for c in reversed(str(self))))
         except KeyError as e:
             raise AlphabetError("Character {} not found for alphabet {}".format(str(e), self.alphabet))
         rc_parent = Parent(strand=strand, location=location) if strand or location else None
@@ -224,7 +222,7 @@ class Sequence:
                 new_location = self.parent.location.union(other.parent.location)
             else:
                 new_location = None
-            new_parent = self.parent.strip_location_info().reset_location(new_location)
+            new_parent = self.parent.reset_location(new_location)
         else:
             new_parent = None
         return Sequence(

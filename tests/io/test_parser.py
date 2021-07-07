@@ -58,3 +58,5 @@ def test_seq_chunk_to_parent(strand):
             ),
         ),
     )
+    assert obs.has_ancestor_of_type(SequenceType.CHROMOSOME)
+    assert obs.has_ancestor_of_type(SequenceType.SEQUENCE_CHUNK)
