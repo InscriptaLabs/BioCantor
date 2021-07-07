@@ -63,7 +63,8 @@ def collection_to_genbank(
         seqrecord_annotations: An arbitrary dictionary of annotations to include.
             If ``organism`` or ``source`` are set both in this function call and in this dictionary, they will be
             over-written. Must be a list of the same length as the collections.
-        update_translations: Should the /translation tag be re-calculated? This is a time consuming process.
+        update_translations: Should the /translation tag be calculated or re-calculated?
+            This is a time consuming process.
     """
 
     if seqrecord_annotations and len(seqrecord_annotations) != len(collections):
@@ -133,7 +134,8 @@ def gene_to_feature(
         force_strand: Boolean flag; if ``True``, then strand on children is forced, if ``False``, then improper
             strands are instead skipped.
         translation_table: Translation table to use.
-        update_translations: Should the /translation tag be re-calculated? This is a time consuming process.
+        update_translations: Should the /translation tag be calculated or re-calculated?
+            This is a time consuming process.
 
     Yields:
         ``SeqFeature``s, one for the gene, one for each child transcript, and one for each transcript's CDS if it
@@ -222,7 +224,8 @@ def transcripts_to_feature(
         gene_symbol: An optional gene symbol.
         locus_tag: An optional locus tag.
         translation_table: Translation table to use.
-        update_translations: Should the /translation tag be re-calculated? This is a time consuming process.
+        update_translations: Should the /translation tag be calculated or re-calculated?
+            This is a time consuming process.
 
     Yields:
         ``SeqFeature``s, one for each transcript and then one for each CDS of the transcript, if it exists.
@@ -288,7 +291,8 @@ def add_cds_feature(
         strand: ``Strand`` that this transcript lives on.
         transcript_qualifiers: Qualifiers dictionary from the transcript level feature.
         translation_table: Translation table to use.
-        update_translations: Should the /translation tag be re-calculated? This is a time consuming process.
+        update_translations: Should the /translation tag be calculated or re-calculated?
+            This is a time consuming process.
 
     Returns:
         ``SeqFeature`` for the CDS of this transcript.
