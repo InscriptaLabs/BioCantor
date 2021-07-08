@@ -4,6 +4,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [0.7.0]
+### Changed
+- GenBank position-sorted parser can now handle CDS records that are not directly following a gene record.
+- Refactor `Location`, `Parent` and `Sequence` to have base classes `AbstractLocation`, `AbstractParent` and `AbstractSequence` that are in the base of the `inscripta.biocantor.location` module. This greatly helps with resolving circular imports.
+- Optimized checking `sequence` and `location` members to explicitly check for `None`. This avoids a call to `__len__`.
+- `CompoundInterval._single_intervals` is now lazily evaluated, because it is expensive to generate many `SingleInterval` objects.
+- `CompoundInterval` now stores the positions as two sorted integer lists.
+- `CompoundInterval` constructor accepts tuples in addition to lists of integer values to avoid list construction overhead.
+- `CompoundInterval.is_overlapping` and `CompoundInterval.is_contiguous` are lazily evaluated.
+- `CompoundInterval._combine_blocks` now always removes empty blocks. The new implementation also avoids producing a new interval if the result is identical to the start.
+- `unique_value_or_none` was pulled out of `Parent` into its own separate function with an associated cache. This function was optimized to use sets.
+- Added `__slots__` to all child classes of `AbstractLocation`, `AbstractSequence` and `AbstractParent`.
+- Removed unnecessary call to `strip_location_info()` in `Sequence` constructor.
+- Removed all unnecessary instances of constructing lists, replacing them with iterators and tuples.
+- GenBank export now defaults to not updating `/translation` tag in order to save execution time. The original behavior can be restored by setting `update_translations=True`.
+
+### Fixed
+- GenBank parser was not properly handling 0bp intervals, which can be sometimes seen as a way to represent insertions.
+- GenBank parser was not capturing CDS qualifiers when parsing eukaryotic style GenBank files that have mRNA level features
+
+
 ## [0.6.0]
 ### Changed
 - Added `raise_on_reserved_attributes` flag to GFF3 export that controls whether reserved attributes lead to warnings or exceptions.

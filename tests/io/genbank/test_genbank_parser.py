@@ -4,7 +4,11 @@ from collections import OrderedDict
 import pytest
 from inscripta.biocantor.gene.biotype import Biotype
 from inscripta.biocantor.gene.cds_frame import CDSFrame
-from inscripta.biocantor.io.genbank.exc import GenBankLocusTagError, GenBankLocationException
+from inscripta.biocantor.io.genbank.exc import (
+    GenBankLocusTagError,
+    GenBankLocationException,
+    GenBankParserError,
+)
 from inscripta.biocantor.io.genbank.parser import parse_genbank, GenBankParserType
 from inscripta.biocantor.io.models import AnnotationCollectionModel
 from inscripta.biocantor.io.parser import ParsedAnnotationRecord
@@ -459,21 +463,6 @@ class TestGenBankErrors:
             )[0]
             assert rec.genes[0].locus_tag == rec.genes[1].locus_tag
 
-    @pytest.mark.parametrize(
-        "gbk",
-        [
-            # broken feature
-            "broken_coordinates_1.gbk",
-            # broken gene
-            "broken_coordinates_2.gbk",
-        ],
-    )
-    def test_broken_coordinates(self, test_data_dir, gbk):
-        gbk = test_data_dir / gbk
-        with pytest.raises(GenBankLocationException):
-            with open(gbk, "r") as fh:
-                _ = list(parse_genbank(fh))
-
 
 class TestGenBankFeatures:
     def test_parse_feature_test_2(self, test_data_dir):
@@ -725,13 +714,58 @@ class TestGenBankFeatures:
             ]
         )
 
+    def test_caret_coordinates(self, test_data_dir):
+        """Handle caret-containing coordinates just fine"""
+        genbank = test_data_dir / "caret_coordinates.gbk"
+        recs = list(parse_genbank(test_data_dir / genbank))
+        c = recs[0].annotation
+        assert len(c.genes) == 0
+        assert len(c.feature_collections) == 2
+
 
 class TestSortedParser:
     """Test edge cases for sorted parser"""
 
-    def test_missing_gene(self, test_data_dir):
-        genbank = "INSC1003_missing_gene.gbk"
+    @pytest.mark.parametrize(
+        "genbank",
+        [
+            "INSC1003_missing_gene.gbk",
+            "INSC1003_no_genes.gbk",
+            "INSC1003_no_genes_misordered.gbk",
+        ],
+    )
+    def test_missing_gene(self, test_data_dir, genbank):
         recs = list(parse_genbank(test_data_dir / genbank, gbk_type=GenBankParserType.SORTED))
         c = recs[0].annotation
         assert len(c.genes) == 8
         assert len([x for x in c.genes if x.gene_type == Biotype.protein_coding]) == 6
+
+    def test_mrna_before_gene(self, test_data_dir):
+        genbank = test_data_dir / "INSC1006_chrI_mrna_before_gene.gb"
+        recs = list(parse_genbank(test_data_dir / genbank, gbk_type=GenBankParserType.SORTED))
+        c = recs[0].annotation
+        assert len(c.genes) == 4
+
+
+class TestExceptionsWarnings:
+    def test_ambiguous_strand(self, test_data_dir):
+        genbank = test_data_dir / "INSC1003_ambiguous_strand.gbk"
+        with pytest.raises(GenBankParserError):
+            _ = list(parse_genbank(test_data_dir / genbank, gbk_type=GenBankParserType.SORTED))
+        with pytest.raises(GenBankParserError):
+            _ = list(parse_genbank(test_data_dir / genbank))
+
+    @pytest.mark.parametrize(
+        "gbk",
+        [
+            # broken feature
+            "broken_coordinates_1.gbk",
+            # broken gene
+            "broken_coordinates_2.gbk",
+        ],
+    )
+    def test_broken_coordinates(self, test_data_dir, gbk):
+        gbk = test_data_dir / gbk
+        with pytest.raises(GenBankLocationException):
+            with open(gbk, "r") as fh:
+                _ = list(parse_genbank(fh))

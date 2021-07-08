@@ -1,8 +1,11 @@
-from functools import reduce
-from typing import TypeVar, Optional, Union
-from enum import Enum
+from functools import reduce, lru_cache
+from typing import TypeVar, Optional, Union, Iterable
 
+# this base import is required in order to avoid a circular import; this module needs make_parent()
+# it is not possible to put make_parent() within this module, because it references Parent, and so it becomes an
+# internally circular reference
 import inscripta.biocantor
+from inscripta.biocantor import AbstractParent, AbstractLocation, AbstractSequence, SequenceType
 from inscripta.biocantor.exc import (
     NoSuchAncestorException,
     LocationException,
@@ -16,17 +19,34 @@ from inscripta.biocantor.util.object_validation import ObjectValidation
 Parent = TypeVar("Parent")
 ParentInputType = TypeVar("ParentInputType")
 
+# 1000 seems reasonable for Parent caches
+# When parsing annotation files, the number of Parent objects built will likely be the # of chromosomes in the genome
+# When sequence chunks are used, the number of Parents will equal the number of distinct chunks built
+# In testing, a cache size of 1000 was more performant than 5000
+PARENT_CACHE_SIZE = 1000
 
-class SequenceType(str, Enum):
-    CHROMOSOME = "chromosome"
-    SEQUENCE_CHUNK = "sequence_chunk"
+
+@lru_cache(maxsize=PARENT_CACHE_SIZE)
+def _unique_value_or_none(values: Iterable[Optional[str]]) -> Optional[str]:
+    """Checks if a set of values contains more than one distinct non-null value. If so, raises ValueError.
+    Otherwise, returns the single unique non-null value (if there is one) or None if all values are None."""
+    values = {x for x in values if x is not None}
+    if len(values) == 1:
+        return values.pop()
+    elif len(values) == 0:
+        return None
+    else:
+        raise ParentException(f"Multiple distinct non-null values were provided: {values}")
 
 
-class Parent:
+@lru_cache(maxsize=PARENT_CACHE_SIZE)
+class Parent(AbstractParent):
     """
     Holds information about a parent of some object. Typically the child object should hold
     a reference to this parent.
     """
+
+    __slots__ = []
 
     def __init__(
         self,
@@ -34,8 +54,8 @@ class Parent:
         id: Optional[str] = None,
         sequence_type: Optional[Union[SequenceType, str]] = None,
         strand: Optional[Strand] = None,
-        location: Optional = None,
-        sequence: Optional = None,
+        location: Optional[AbstractLocation] = None,
+        sequence: Optional[AbstractSequence] = None,
         parent: Optional[ParentInputType] = None,
     ):
         """
@@ -55,29 +75,34 @@ class Parent:
             Parent of this parent
         """
 
-        location_parent_id = location.parent_id if location else None
-        sequence_id = sequence.id if sequence else None
-        parent_id = self._unique_value_or_none([id, location_parent_id, sequence_id])
+        location_parent_id = location.parent_id if location is not None else None
+        sequence_id = sequence.id if sequence is not None else None
+        parent_id = _unique_value_or_none((id, location_parent_id, sequence_id))
 
-        location_parent_type = location.parent_type if location else None
-        sequence_seqtype = sequence.sequence_type if sequence else None
-        seq_type = self._unique_value_or_none([sequence_type, location_parent_type, sequence_seqtype])
+        location_parent_type = location.parent_type if location is not None else None
+        sequence_seqtype = sequence.sequence_type if sequence is not None else None
+        seq_type = _unique_value_or_none((sequence_type, location_parent_type, sequence_seqtype))
 
-        if location:
+        if location is not None:
             if strand and location.strand and strand is not location.strand:
                 raise InvalidStrandException("Strand does not match location: {} != {}".format(strand, location.strand))
-            if sequence and location.end > len(sequence):
+            if sequence is not None and location.end > len(sequence):
                 raise InvalidPositionException(
                     "Location end ({}) is greater than sequence length ({})".format(location.end, len(sequence))
                 )
 
         parent_obj = inscripta.biocantor.parent.make_parent(parent) if parent else None
-        if sequence and parent_obj and parent_obj.sequence and len(sequence) > len(parent_obj.sequence):
+        if (
+            sequence is not None
+            and parent_obj
+            and parent_obj.sequence is not None
+            and len(sequence) > len(parent_obj.sequence)
+        ):
             raise LocationException(
                 "Parent ({}) is longer than parent of parent ({})".format(len(sequence), len(parent_obj.sequence))
             )
 
-        if sequence and sequence.parent:
+        if sequence is not None and sequence.parent is not None:
             if parent_obj:
                 ObjectValidation.require_parents_equal_except_location(parent_obj, sequence.parent)
                 self.parent = parent_obj
@@ -92,34 +117,26 @@ class Parent:
         self.location = location
         self.sequence = sequence
 
-    @staticmethod
-    def _unique_value_or_none(values) -> Optional[str]:
-        """Checks if a set of values contains more than one distinct non-null value. If so, raises ValueError.
-        Otherwise, returns the single unique non-null value (if there is one) or None if all values are None."""
-        rtrn = None
-        for x in values:
-            if x is not None and rtrn is None:
-                rtrn = x
-                continue
-            if x is not None and x != rtrn:
-                raise ParentException(f"Multiple distinct non-null values were provided: {values}")
-        return rtrn
-
     def __eq__(self, other):
         if not self.equals_except_location(other):
             return False
         return self.location == other.location and self.strand is other.strand
 
     def equals_except_location(self, other, require_same_sequence: bool = True):
-        if type(other) is not Parent:
+        """Checks that this Parent is equal to another Parent, ignoring the associated Location members.
+
+        By default also checks that any associated Sequence objects also match, but this can be toggled off.
+        """
+        # this checks the object under the lru_cache hood
+        if type(other) is not Parent.__wrapped__:
             return False
         if self.id != other.id:
             return False
         if self.sequence_type != other.sequence_type:
             return False
-        if require_same_sequence and self.sequence != other.sequence:
-            return False
         if self.parent and other.parent and self.parent != other.parent:
+            return False
+        if require_same_sequence and self.sequence != other.sequence:
             return False
         return True
 
@@ -146,7 +163,9 @@ class Parent:
         )
 
     @property
-    def strand(self):
+    def strand(self) -> Optional[Strand]:
+        """Returns the Strand of this Parent. If this Parent has no explicit Strand, but has a Location,
+        that Location's Strand is returned."""
         if self._strand:
             return self._strand
         if self.location:
@@ -211,10 +230,10 @@ class Parent:
         """
         ObjectValidation.require_parent_has_location(self)
         ObjectValidation.require_parent_has_parent_with_location(self)
-        lifted_blocks = [
+        lifted_blocks = (
             self.parent.location.relative_interval_to_parent_location(block.start, block.end, block.strand)
             for block in self.location.blocks
-        ]
+        )
         lifted_blocks_union = reduce(
             lambda location1, location2: location1.union_preserve_overlaps(location2), lifted_blocks
         )

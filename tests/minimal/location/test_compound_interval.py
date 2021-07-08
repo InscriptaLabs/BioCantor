@@ -11,7 +11,7 @@ from inscripta.biocantor.exc import (
     NullSequenceException,
     LocationException,
 )
-from inscripta.biocantor.location.distance import DistanceType
+from inscripta.biocantor import DistanceType
 from inscripta.biocantor.location.location_impl import (
     SingleInterval,
     CompoundInterval,
@@ -2161,7 +2161,7 @@ class TestCompoundInterval:
             (
                 CompoundInterval([5], [5], Strand.PLUS),
                 SingleInterval(10, 10, Strand.PLUS),
-                IndexError,
+                LocationException,
             ),
             # Opposite strands
             (
