@@ -272,6 +272,9 @@
                         ],
                         "locus_tag": [
                             "gene1"
+                        ],
+                        "translation": [
+                            "F"
                         ]
                     },
                     "is_primary_tx": false,
@@ -282,7 +285,7 @@
                     "transcript_type": "protein_coding",
                     "sequence_name": "chr1",
                     "sequence_guid": null,
-                    "transcript_interval_guid": "63706b65-5c25-df0f-166d-35c5da060ca5",
+                    "transcript_interval_guid": "77844107-1643-2967-5185-9dfaeb3c9a1d",
                     "transcript_guid": null
                 },
                 {
@@ -318,6 +321,9 @@
                         ],
                         "locus_tag": [
                             "gene1"
+                        ],
+                        "translation": [
+                            "IL"
                         ]
                     },
                     "is_primary_tx": false,
@@ -328,7 +334,7 @@
                     "transcript_type": "protein_coding",
                     "sequence_name": "chr1",
                     "sequence_guid": null,
-                    "transcript_interval_guid": "c4c941c6-beba-b523-e2a2-46a42ee5ef60",
+                    "transcript_interval_guid": "c05837c0-ca4d-7fad-db62-94771a5954fb",
                     "transcript_guid": null
                 }
             ],
@@ -352,7 +358,7 @@
             },
             "sequence_name": "chr1",
             "sequence_guid": null,
-            "gene_guid": "540a9f3e-de58-cdc8-e629-7e1de6665826"
+            "gene_guid": "a2630dbc-f229-af84-5499-26a58f347488"
         }
     ],
     "name": "chr1",
