@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.7.0]
 ### Changed
 - GenBank position-sorted parser can now handle CDS records that are not directly following a gene record.
 - Refactor `Location`, `Parent` and `Sequence` to have base classes `AbstractLocation`, `AbstractParent` and `AbstractSequence` that are in the base of the `inscripta.biocantor.location` module. This greatly helps with resolving circular imports.
@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Added `__slots__` to all child classes of `AbstractLocation`, `AbstractSequence` and `AbstractParent`.
 - Removed unnecessary call to `strip_location_info()` in `Sequence` constructor.
 - Removed all unnecessary instances of constructing lists, replacing them with iterators and tuples.
+- GenBank export now defaults to not updating `/translation` tag in order to save execution time. The original behavior can be restored by setting `update_translations=True`.
 
 ### Fixed
 - GenBank parser was not properly handling 0bp intervals, which can be sometimes seen as a way to represent insertions.
