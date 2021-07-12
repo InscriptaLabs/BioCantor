@@ -22,6 +22,7 @@ extra_dependencies = {
         "ipykernel",
         "pandoc",
         "recommonmark",
+        "biopython",
     ],
     "optional": ["tornado>=5.1"],
 }
