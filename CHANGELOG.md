@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+### Fixed
+- Do not trust feature type annotations to define coding vs. non-coding when parsing GenBank files; only rely on the presence/absence of CDS intervals associated with the transcript.
+
 ## [0.7.0]
 ### Changed
 - GenBank position-sorted parser can now handle CDS records that are not directly following a gene record.
