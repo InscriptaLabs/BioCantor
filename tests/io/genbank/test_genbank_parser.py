@@ -746,6 +746,16 @@ class TestSortedParser:
         c = recs[0].annotation
         assert len(c.genes) == 4
 
+    def test_wrong_biotype(self, test_data_dir):
+        genbank = test_data_dir / "INSC1006_wrong_feature_type.gbk"
+        recs = list(parse_genbank(test_data_dir / genbank, gbk_type=GenBankParserType.SORTED))
+        c = recs[0].annotation
+        assert len(c.genes) == 1
+        gene = c.genes[0]
+        assert gene.gene_type == Biotype.ncRNA
+        tx = gene.transcripts[0].to_transcript_interval()
+        assert tx.is_coding
+
 
 class TestExceptionsWarnings:
     def test_ambiguous_strand(self, test_data_dir):
