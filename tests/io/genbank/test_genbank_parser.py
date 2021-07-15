@@ -751,6 +751,10 @@ class TestSortedParser:
         recs = list(parse_genbank(test_data_dir / genbank, gbk_type=GenBankParserType.SORTED))
         c = recs[0].annotation
         assert len(c.genes) == 1
+        gene = c.genes[0]
+        assert gene.gene_type == Biotype.ncRNA
+        tx = gene.transcripts[0].to_transcript_interval()
+        assert tx.is_coding
 
 
 class TestExceptionsWarnings:
