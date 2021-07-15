@@ -354,8 +354,6 @@ class TranscriptFeature(Feature):
 
     def construct_frames(self, cds_interval: Location) -> List[str]:
         """We need to build frames. Since GenBank lacks this info, do our best"""
-        if self.feature.type != TranscriptFeatures.CODING_TRANSCRIPT.value:
-            return []
         # make 0 based offset, if possible, otherwise assume always in frame
         frame = int(self.children[0].feature.qualifiers.get("codon_start", [1])[0]) - 1
         frame = CDSFrame.from_int(frame)
