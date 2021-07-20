@@ -757,6 +757,17 @@ class TestSortedParser:
         assert tx.is_coding
 
 
+class TestHybridParser:
+    def test_hybrid_parser_insc1003(self, test_data_dir):
+        genbank = test_data_dir / "INSC1003_hybrid.gbk"
+        lt_recs = list(parse_genbank(test_data_dir / genbank, gbk_type=GenBankParserType.LOCUS_TAG))
+        hybrid_recs = list(parse_genbank(test_data_dir / genbank, gbk_type=GenBankParserType.HYBRID))
+        assert len(hybrid_recs[0].annotation.genes) == 7
+        assert len(lt_recs[0].annotation.genes) == 5
+        assert len(lt_recs[0].annotation.feature_collections) == 4
+        assert hybrid_recs[0].annotation.feature_collections is None
+
+
 class TestExceptionsWarnings:
     def test_ambiguous_strand(self, test_data_dir):
         genbank = test_data_dir / "INSC1003_ambiguous_strand.gbk"
