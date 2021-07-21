@@ -14,6 +14,7 @@ class GenBankParserType(IntEnum):
 
     SORTED = 1
     LOCUS_TAG = 2
+    HYBRID = 3
 
 
 class MetadataFeatures(str, HasMemberMixin):
