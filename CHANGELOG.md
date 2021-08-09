@@ -8,9 +8,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Fixed
 - Do not trust feature type annotations to define coding vs. non-coding when parsing GenBank files; only rely on the presence/absence of CDS intervals associated with the transcript.
 - Setup requirements, build tests, and sphinx config updated to allow building of documentation without installing the package.
+- GenBank parser was not handling `exon` features as direct descendants of `gene` correctly.
 
 ### Changed
+- `Sorted` parser now sorts features by position, then gene/mRNA/CDS/other. This helps deal with genbank files that are oddly ordered.
 - Introduced new `Hybrid` GenBank parser mode that does both `LocusTag` and `Sorted` parsing at the same time.
+
 
 ## [0.7.0]
 ### Changed

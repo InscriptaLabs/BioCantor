@@ -756,6 +756,182 @@ class TestSortedParser:
         tx = gene.transcripts[0].to_transcript_interval()
         assert tx.is_coding
 
+    def test_misordered(self, test_data_dir):
+        genbank = test_data_dir / "INSC1003_misordered.gbk"
+        recs = list(parse_genbank(test_data_dir / genbank, gbk_type=GenBankParserType.SORTED))
+        c = recs[0].annotation
+        assert AnnotationCollectionModel.Schema().dump(c) == OrderedDict(
+            [
+                ("feature_collections", None),
+                (
+                    "genes",
+                    [
+                        OrderedDict(
+                            [
+                                (
+                                    "transcripts",
+                                    [
+                                        OrderedDict(
+                                            [
+                                                ("exon_starts", [329]),
+                                                ("exon_ends", [2800]),
+                                                ("strand", "PLUS"),
+                                                ("cds_starts", [334]),
+                                                ("cds_ends", [2797]),
+                                                ("cds_frames", ["ZERO"]),
+                                                ("qualifiers", {"gene": ["thrA"]}),
+                                                ("is_primary_tx", False),
+                                                ("transcript_id", None),
+                                                ("protein_id", None),
+                                                ("product", None),
+                                                ("transcript_symbol", "thrA"),
+                                                ("transcript_type", "protein_coding"),
+                                                ("sequence_name", "FEPOIHMA_1"),
+                                                ("sequence_guid", None),
+                                                ("transcript_interval_guid", "4548a57b-41ec-dcc5-85ca-565412a1d59e"),
+                                                ("transcript_guid", None),
+                                            ]
+                                        )
+                                    ],
+                                ),
+                                ("gene_id", None),
+                                ("gene_symbol", "thrA"),
+                                ("gene_type", "protein_coding"),
+                                ("locus_tag", None),
+                                ("qualifiers", {"gene": ["thrA"]}),
+                                ("sequence_name", "FEPOIHMA_1"),
+                                ("sequence_guid", None),
+                                ("gene_guid", "bac88ae4-8de0-147c-a151-887bb370cd3c"),
+                            ]
+                        ),
+                        OrderedDict(
+                            [
+                                (
+                                    "transcripts",
+                                    [
+                                        OrderedDict(
+                                            [
+                                                ("exon_starts", [2798]),
+                                                ("exon_ends", [3731]),
+                                                ("strand", "PLUS"),
+                                                ("cds_starts", [2798]),
+                                                ("cds_ends", [3731]),
+                                                ("cds_frames", ["ZERO"]),
+                                                ("qualifiers", {"gene": ["thrB"]}),
+                                                ("is_primary_tx", False),
+                                                ("transcript_id", None),
+                                                ("protein_id", None),
+                                                ("product", None),
+                                                ("transcript_symbol", "thrB"),
+                                                ("transcript_type", "protein_coding"),
+                                                ("sequence_name", "FEPOIHMA_1"),
+                                                ("sequence_guid", None),
+                                                ("transcript_interval_guid", "8a837d19-5fdc-78e4-dd98-8b504d826d46"),
+                                                ("transcript_guid", None),
+                                            ]
+                                        )
+                                    ],
+                                ),
+                                ("gene_id", None),
+                                ("gene_symbol", "thrB"),
+                                ("gene_type", "protein_coding"),
+                                ("locus_tag", None),
+                                ("qualifiers", {"gene": ["thrB"]}),
+                                ("sequence_name", "FEPOIHMA_1"),
+                                ("sequence_guid", None),
+                                ("gene_guid", "b3254e70-1495-7b59-d944-b962dc7415eb"),
+                            ]
+                        ),
+                        OrderedDict(
+                            [
+                                (
+                                    "transcripts",
+                                    [
+                                        OrderedDict(
+                                            [
+                                                ("exon_starts", [6755]),
+                                                ("exon_ends", [6843]),
+                                                ("strand", "PLUS"),
+                                                ("cds_starts", None),
+                                                ("cds_ends", None),
+                                                ("cds_frames", None),
+                                                ("qualifiers", {"product": ["tRNA-Pro"]}),
+                                                ("is_primary_tx", False),
+                                                ("transcript_id", None),
+                                                ("protein_id", None),
+                                                ("product", "tRNA-Pro"),
+                                                ("transcript_symbol", None),
+                                                ("transcript_type", "tRNA"),
+                                                ("sequence_name", "FEPOIHMA_1"),
+                                                ("sequence_guid", None),
+                                                ("transcript_interval_guid", "54e26268-7e89-5cb1-d9b0-4e9d5944dae6"),
+                                                ("transcript_guid", None),
+                                            ]
+                                        )
+                                    ],
+                                ),
+                                ("gene_id", None),
+                                ("gene_symbol", None),
+                                ("gene_type", "tRNA"),
+                                ("locus_tag", "FEPOIHMA_02080"),
+                                ("qualifiers", {"locus_tag": ["FEPOIHMA_02080"]}),
+                                ("sequence_name", "FEPOIHMA_1"),
+                                ("sequence_guid", None),
+                                ("gene_guid", "841a7bc3-79bc-d9ca-9923-5d3f239a2dde"),
+                            ]
+                        ),
+                        OrderedDict(
+                            [
+                                (
+                                    "transcripts",
+                                    [
+                                        OrderedDict(
+                                            [
+                                                ("exon_starts", [6899]),
+                                                ("exon_ends", [6950]),
+                                                ("strand", "PLUS"),
+                                                ("cds_starts", None),
+                                                ("cds_ends", None),
+                                                ("cds_frames", None),
+                                                ("qualifiers", {"gene": ["fake"]}),
+                                                ("is_primary_tx", False),
+                                                ("transcript_id", None),
+                                                ("protein_id", None),
+                                                ("product", None),
+                                                ("transcript_symbol", "fake"),
+                                                ("transcript_type", "protein_coding"),
+                                                ("sequence_name", "FEPOIHMA_1"),
+                                                ("sequence_guid", None),
+                                                ("transcript_interval_guid", "f8fba432-72c3-1d17-d327-2f57e5956435"),
+                                                ("transcript_guid", None),
+                                            ]
+                                        )
+                                    ],
+                                ),
+                                ("gene_id", None),
+                                ("gene_symbol", "fake"),
+                                ("gene_type", "protein_coding"),
+                                ("locus_tag", None),
+                                ("qualifiers", {"gene": ["fake"]}),
+                                ("sequence_name", "FEPOIHMA_1"),
+                                ("sequence_guid", None),
+                                ("gene_guid", "014d29f5-58e8-b5c1-2b12-d66e7dabf849"),
+                            ]
+                        ),
+                    ],
+                ),
+                ("name", None),
+                ("id", None),
+                ("sequence_name", "FEPOIHMA_1"),
+                ("sequence_guid", None),
+                ("sequence_path", None),
+                ("qualifiers", None),
+                ("start", 0),
+                ("end", 7200),
+                ("completely_within", None),
+            ]
+        )
+
 
 class TestHybridParser:
     def test_hybrid_parser_insc1003(self, test_data_dir):
