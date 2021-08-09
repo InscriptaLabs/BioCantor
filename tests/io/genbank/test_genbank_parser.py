@@ -932,6 +932,150 @@ class TestSortedParser:
             ]
         )
 
+    def test_misordered_yeast(self, test_data_dir):
+        genbank = test_data_dir / "INSC1006_chrI_misordered.gb"
+        recs = list(parse_genbank(test_data_dir / genbank, gbk_type=GenBankParserType.SORTED))
+        c = recs[0].annotation
+        assert AnnotationCollectionModel.Schema().dump(c) == OrderedDict(
+            [
+                ("feature_collections", None),
+                (
+                    "genes",
+                    [
+                        OrderedDict(
+                            [
+                                (
+                                    "transcripts",
+                                    [
+                                        OrderedDict(
+                                            [
+                                                ("exon_starts", [16174]),
+                                                ("exon_ends", [18079]),
+                                                ("strand", "MINUS"),
+                                                ("cds_starts", None),
+                                                ("cds_ends", None),
+                                                ("cds_frames", None),
+                                                ("qualifiers", None),
+                                                ("is_primary_tx", False),
+                                                ("transcript_id", None),
+                                                ("protein_id", None),
+                                                ("product", None),
+                                                ("transcript_symbol", None),
+                                                ("transcript_type", "ncRNA"),
+                                                ("sequence_name", "CM021111.1"),
+                                                ("sequence_guid", None),
+                                                ("transcript_interval_guid", "071c9bc1-6eaf-0c54-d52a-586b1fa2c6a5"),
+                                                ("transcript_guid", None),
+                                            ]
+                                        )
+                                    ],
+                                ),
+                                ("gene_id", None),
+                                ("gene_symbol", None),
+                                ("gene_type", "ncRNA"),
+                                ("locus_tag", None),
+                                ("qualifiers", {"note": ["gene_after_ncrnA"]}),
+                                ("sequence_name", "CM021111.1"),
+                                ("sequence_guid", None),
+                                ("gene_guid", "e381e2b6-f541-69d2-f00d-0d5339d402a3"),
+                            ]
+                        ),
+                        OrderedDict(
+                            [
+                                (
+                                    "transcripts",
+                                    [
+                                        OrderedDict(
+                                            [
+                                                ("exon_starts", [37461]),
+                                                ("exon_ends", [39103]),
+                                                ("strand", "PLUS"),
+                                                ("cds_starts", [37637]),
+                                                ("cds_ends", [39011]),
+                                                ("cds_frames", ["ZERO"]),
+                                                (
+                                                    "qualifiers",
+                                                    {
+                                                        "gene": ["GDH3"],
+                                                        "note": ["cds_in_middle", "mrna_before_cds_gene"],
+                                                    },
+                                                ),
+                                                ("is_primary_tx", False),
+                                                ("transcript_id", None),
+                                                ("protein_id", None),
+                                                ("product", None),
+                                                ("transcript_symbol", "GDH3"),
+                                                ("transcript_type", "protein_coding"),
+                                                ("sequence_name", "CM021111.1"),
+                                                ("sequence_guid", None),
+                                                ("transcript_interval_guid", "76813021-961f-4eaa-e6d8-2ef87b0d90b5"),
+                                                ("transcript_guid", None),
+                                            ]
+                                        )
+                                    ],
+                                ),
+                                ("gene_id", None),
+                                ("gene_symbol", "GDH3"),
+                                ("gene_type", "protein_coding"),
+                                ("locus_tag", None),
+                                ("qualifiers", {"gene": ["GDH3"], "note": ["gene_at_end"]}),
+                                ("sequence_name", "CM021111.1"),
+                                ("sequence_guid", None),
+                                ("gene_guid", "151367c7-f12e-172f-f3f8-2ec9c7c0d1f1"),
+                            ]
+                        ),
+                        OrderedDict(
+                            [
+                                (
+                                    "transcripts",
+                                    [
+                                        OrderedDict(
+                                            [
+                                                ("exon_starts", [39518]),
+                                                ("exon_ends", [40772]),
+                                                ("strand", "PLUS"),
+                                                ("cds_starts", [39518]),
+                                                ("cds_ends", [40772]),
+                                                ("cds_frames", ["ZERO"]),
+                                                ("qualifiers", {"gene": ["BDH2"], "note": ["cds_in_middle"]}),
+                                                ("is_primary_tx", False),
+                                                ("transcript_id", None),
+                                                ("protein_id", None),
+                                                ("product", None),
+                                                ("transcript_symbol", "BDH2"),
+                                                ("transcript_type", "protein_coding"),
+                                                ("sequence_name", "CM021111.1"),
+                                                ("sequence_guid", None),
+                                                ("transcript_interval_guid", "b8331bbf-c851-ff60-eee4-8e2b6cbbad95"),
+                                                ("transcript_guid", None),
+                                            ]
+                                        )
+                                    ],
+                                ),
+                                ("gene_id", None),
+                                ("gene_symbol", "BDH2"),
+                                ("gene_type", "protein_coding"),
+                                ("locus_tag", None),
+                                ("qualifiers", {"gene": ["BDH2"]}),
+                                ("sequence_name", "CM021111.1"),
+                                ("sequence_guid", None),
+                                ("gene_guid", "0529c9ed-3ef4-9642-044c-5498a8e5f2d3"),
+                            ]
+                        ),
+                    ],
+                ),
+                ("name", None),
+                ("id", None),
+                ("sequence_name", "CM021111.1"),
+                ("sequence_guid", None),
+                ("sequence_path", None),
+                ("qualifiers", None),
+                ("start", 0),
+                ("end", 50040),
+                ("completely_within", None),
+            ]
+        )
+
 
 class TestHybridParser:
     def test_hybrid_parser_insc1003(self, test_data_dir):
