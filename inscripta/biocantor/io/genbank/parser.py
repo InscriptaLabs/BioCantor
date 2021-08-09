@@ -236,6 +236,9 @@ class GeneFeature(Feature):
             tx_feature = deepcopy(feature)
             if tx_feature.type == GeneIntervalFeatures.CDS.value:
                 tx_feature.type = TranscriptFeatures.CODING_TRANSCRIPT.value
+            # this means we have an exon as a direct child of a gene
+            elif tx_feature.type == GeneIntervalFeatures.EXON.value:
+                tx_feature.type = TranscriptFeatures.CODING_TRANSCRIPT.value
             else:
                 tx_feature.type = TranscriptFeatures[tx_feature.type].value
             tx = TranscriptFeature(tx_feature, self.record)
@@ -467,6 +470,15 @@ def group_gene_records_from_sorted_genbank(
 
     Any features that do not fit the above bins are interpreted as generic features.
 
+    Some GenBank files are improperly ordered, and will have things like the CDS feature first, or the mRNA feature
+    first. To try and capture this, the full set of records are sorted first by position, then in the order:
+
+    gene
+    mRNA
+    CDS
+    exon
+    anything else
+
     Args:
         record_iter: Iterator of SeqRecord objects.
         parse_func: Optional parse function implementation.
@@ -481,9 +493,21 @@ def group_gene_records_from_sorted_genbank(
         gene = None
         source = None
         genes = []
-        feature_features = []  # capture non-gene intervals downstream
-        for feature in seqrecord.features:
+        # capture non-gene intervals downstream
+        feature_features = []
 
+        # sort features to try to capture weirdly ordered genbank files
+        sorted_features = sorted(
+            seqrecord.features,
+            key=lambda x: (
+                x.location.nofuzzy_start,
+                x.type != GeneFeatures.GENE.value,
+                x.type != TranscriptFeatures.CODING_TRANSCRIPT.value,
+                x.type != GeneIntervalFeatures.CDS.value,
+                x.type != GeneIntervalFeatures.EXON.value,
+            ),
+        )
+        for feature in sorted_features:
             # try to capture the Source field, if it exists
             if feature.type == MetadataFeatures.SOURCE.value:
                 source = feature
