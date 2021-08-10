@@ -14,6 +14,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - `Sorted` parser now sorts features by position, then gene/mRNA/CDS/other. This helps deal with genbank files that are oddly ordered.
 - Introduced new `Hybrid` GenBank parser mode that does both `LocusTag` and `Sorted` parsing at the same time.
 
+### Added
+- `TranscriptInterval` and `FeatureInterval` now have accessor methods to get `Location` objects for their introns/gaps and full span.
 
 ## [0.7.0]
 ### Changed
