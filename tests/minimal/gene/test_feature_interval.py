@@ -1,5 +1,7 @@
-import pytest
 from uuid import UUID
+
+import pytest
+
 from inscripta.biocantor.exc import (
     ValidationException,
     EmptyLocationException,
@@ -11,11 +13,12 @@ from inscripta.biocantor.exc import (
 from inscripta.biocantor.gene.feature import FeatureInterval
 from inscripta.biocantor.io.gff3.exc import GFF3MissingSequenceNameError
 from inscripta.biocantor.io.models import FeatureIntervalModel
-from inscripta.biocantor.location.location_impl import SingleInterval, CompoundInterval
+from inscripta.biocantor.location.location_impl import SingleInterval, CompoundInterval, EmptyLocation
 from inscripta.biocantor.location.strand import Strand
 from inscripta.biocantor.parent.parent import Parent, SequenceType
 from inscripta.biocantor.sequence.alphabet import Alphabet
 from inscripta.biocantor.sequence.sequence import Sequence
+from inscripta.biocantor.util.object_validation import ObjectValidation
 
 # these features will be shared across all tests
 genome = "GTATTCTTGGACCTAATT"
@@ -385,6 +388,138 @@ class TestFeatureInterval:
             "myseq\tBioCantor\tsubregion\t12\t14\t.\t+\t.\tID=feature-c45e8d7b-cbd6-43b2-bb08-429d9cb7fe80-3;"
             "Parent=c45e8d7b-cbd6-43b2-bb08-429d9cb7fe80"
         )
+
+    @pytest.mark.parametrize(
+        "feature,parent,expected_span",
+        [
+            (e3_spliced, None, SingleInterval(2, 15, Strand.PLUS)),
+            (e3_spliced_minus, None, SingleInterval(2, 15, Strand.MINUS)),
+            (se_unspliced, None, SingleInterval(0, 18, Strand.PLUS)),
+            (se_unspliced, None, SingleInterval(0, 18, Strand.PLUS)),
+            (e3_spliced, parent_genome2, SingleInterval(2, 15, Strand.PLUS, parent=parent_genome2)),
+            (e3_spliced_minus, parent_genome2, SingleInterval(2, 15, Strand.MINUS, parent=parent_genome2)),
+            (se_unspliced, parent_genome2, SingleInterval(0, 18, Strand.PLUS, parent=parent_genome2)),
+            (se_unspliced, parent_genome2, SingleInterval(0, 18, Strand.PLUS, parent=parent_genome2)),
+            (
+                e3_spliced,
+                parent_genome2_1_15,
+                SingleInterval(
+                    2, 15, Strand.PLUS, parent=parent_genome2_1_15.first_ancestor_of_type(SequenceType.CHROMOSOME)
+                ),
+            ),
+            (
+                e3_spliced_minus,
+                parent_genome2_1_15,
+                SingleInterval(
+                    2, 15, Strand.MINUS, parent=parent_genome2_1_15.first_ancestor_of_type(SequenceType.CHROMOSOME)
+                ),
+            ),
+            (
+                e3_spliced,
+                parent_genome2_2_8,
+                SingleInterval(
+                    2, 8, Strand.PLUS, parent=parent_genome2_2_8.first_ancestor_of_type(SequenceType.CHROMOSOME)
+                ),
+            ),
+            (
+                e3_spliced_minus,
+                parent_genome2_2_8,
+                SingleInterval(
+                    2, 8, Strand.MINUS, parent=parent_genome2_2_8.first_ancestor_of_type(SequenceType.CHROMOSOME)
+                ),
+            ),
+        ],
+    )
+    def test_chromosome_span(self, feature, parent, expected_span):
+        feat = feature.to_feature_interval(parent)
+        assert feat.chromosome_span == expected_span
+
+    @pytest.mark.parametrize(
+        "feature,parent,expected_span",
+        [
+            (e3_spliced, parent_genome2_1_15, SingleInterval(2, 14, Strand.PLUS, parent=parent_genome2_1_15)),
+            (e3_spliced_minus, parent_genome2_1_15, SingleInterval(2, 14, Strand.MINUS, parent=parent_genome2_1_15)),
+            (e3_spliced, parent_genome2_2_8, SingleInterval(2, 6, Strand.PLUS, parent=parent_genome2_2_8)),
+            (e3_spliced_minus, parent_genome2_2_8, SingleInterval(2, 6, Strand.MINUS, parent=parent_genome2_2_8)),
+        ],
+    )
+    def test_chunk_relative_span(self, feature, parent, expected_span):
+        feat = feature.to_feature_interval(parent)
+        ObjectValidation.require_locations_have_same_nonempty_parent(expected_span, feat.chunk_relative_span)
+
+    @pytest.mark.parametrize(
+        "feature,parent,expected_gaps",
+        [
+            (e3_spliced, None, CompoundInterval([6, 10], [7, 12], Strand.PLUS)),
+            (e3_spliced_minus, None, CompoundInterval([6, 10], [7, 12], Strand.MINUS)),
+            (se_unspliced, None, EmptyLocation()),
+            (se_unspliced, None, EmptyLocation()),
+            (e3_spliced, parent_genome2, CompoundInterval([6, 10], [7, 12], Strand.PLUS, parent=parent_genome2)),
+            (e3_spliced_minus, parent_genome2, CompoundInterval([6, 10], [7, 12], Strand.MINUS, parent=parent_genome2)),
+            (se_unspliced, parent_genome2, EmptyLocation()),
+            (se_unspliced, parent_genome2, EmptyLocation()),
+            (
+                e3_spliced,
+                parent_genome2_1_15,
+                CompoundInterval(
+                    [6, 10],
+                    [7, 12],
+                    Strand.PLUS,
+                    parent=parent_genome2_1_15.first_ancestor_of_type(SequenceType.CHROMOSOME),
+                ),
+            ),
+            (
+                e3_spliced_minus,
+                parent_genome2_1_15,
+                CompoundInterval(
+                    [6, 10],
+                    [7, 12],
+                    Strand.MINUS,
+                    parent=parent_genome2_1_15.first_ancestor_of_type(SequenceType.CHROMOSOME),
+                ),
+            ),
+            (se_unspliced, parent_genome2_1_15, EmptyLocation()),
+            (se_unspliced, parent_genome2_1_15, EmptyLocation()),
+            (
+                e3_spliced,
+                parent_genome2_2_8,
+                SingleInterval(
+                    6, 7, Strand.PLUS, parent=parent_genome2_2_8.first_ancestor_of_type(SequenceType.CHROMOSOME)
+                ),
+            ),
+            (
+                e3_spliced_minus,
+                parent_genome2_2_8,
+                SingleInterval(
+                    6, 7, Strand.MINUS, parent=parent_genome2_2_8.first_ancestor_of_type(SequenceType.CHROMOSOME)
+                ),
+            ),
+        ],
+    )
+    def test_chromosome_gaps_location(self, feature, parent, expected_gaps):
+        feat = feature.to_feature_interval(parent)
+        assert feat.chromosome_gaps_location == expected_gaps
+
+    @pytest.mark.parametrize(
+        "feature,parent,expected_gaps",
+        [
+            (
+                e3_spliced,
+                parent_genome2_1_15,
+                CompoundInterval([5, 9], [6, 11], Strand.PLUS, parent=parent_genome2_1_15),
+            ),
+            (
+                e3_spliced_minus,
+                parent_genome2_1_15,
+                CompoundInterval([5, 9], [6, 11], Strand.MINUS, parent=parent_genome2_1_15),
+            ),
+            (e3_spliced, parent_genome2_2_8, SingleInterval(4, 5, Strand.PLUS, parent=parent_genome2_2_8)),
+            (e3_spliced_minus, parent_genome2_2_8, SingleInterval(4, 5, Strand.MINUS, parent=parent_genome2_2_8)),
+        ],
+    )
+    def test_chunk_relative_gaps_location(self, feature, parent, expected_gaps):
+        feat = feature.to_feature_interval(parent)
+        assert feat.chunk_relative_gaps_location == expected_gaps
 
 
 class TestFeatureIntervalSequenceSubset:

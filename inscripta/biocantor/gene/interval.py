@@ -473,6 +473,44 @@ class AbstractFeatureInterval(AbstractInterval, ABC):
             return self.lift_over_to_first_ancestor_of_type(SequenceType.CHROMOSOME)
         return self.chunk_relative_location
 
+    @lru_cache(maxsize=1)
+    @property
+    def chromosome_span(self) -> Location:
+        """
+        Returns the full span of this Interval in chromosome coordinates.
+        """
+        return self.chromosome_location._full_span_interval
+
+    @lru_cache(maxsize=1)
+    @property
+    def chromosome_gaps_location(self) -> Location:
+        """
+        Returns the Location of the *gaps* of this Interval in chromosome coordinates. This is analogous to returning
+        the intron coordinates.
+        """
+        chrom_loc = self.chromosome_location
+        span = self.chromosome_span
+        return span.minus(chrom_loc)
+
+    @lru_cache(maxsize=1)
+    @property
+    def chunk_relative_span(self) -> Location:
+        """
+        Returns the full span of this Interval in chunk-relative coordinates.
+        """
+        return self.chunk_relative_location._full_span_interval
+
+    @lru_cache(maxsize=1)
+    @property
+    def chunk_relative_gaps_location(self) -> Location:
+        """
+        Returns the Location of the *gaps* of this Interval in chunk-relative coordinates.
+        This is analogous to returning the intron coordinates.
+        """
+        chunk_loc = self.chunk_relative_location
+        span = self.chunk_relative_span
+        return span.minus(chunk_loc)
+
     @abstractmethod
     def export_qualifiers(
         self, parent_qualifiers: Optional[Dict[Hashable, Set[Hashable]]] = None
