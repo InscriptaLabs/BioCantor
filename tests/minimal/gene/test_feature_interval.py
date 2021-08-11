@@ -712,7 +712,7 @@ class TestFeatureIntervalSequenceSubset:
                     parent=parent_genome2_2_8.first_ancestor_of_type(SequenceType.CHROMOSOME),
                 ),
             ),
-                (
+            (
                 e3_spliced,
                 parent_genome2_1_15,
                 CompoundInterval(
@@ -721,7 +721,7 @@ class TestFeatureIntervalSequenceSubset:
                     Strand.PLUS,
                     parent=parent_genome2_1_15.first_ancestor_of_type(SequenceType.CHROMOSOME),
                 ),
-            )
+            ),
         ],
     )
     def test_chromosome_location(self, feature, parent, expected):
@@ -744,15 +744,15 @@ class TestFeatureIntervalSequenceSubset:
             ),
             # parent_genome2_1_15 does not slice off anything
             (
-                    e3_spliced,
-                    parent_genome2_1_15,
-                    CompoundInterval(
-                        [2, 7, 12],
-                        [6, 10, 15],
-                        Strand.PLUS,
-                        parent=parent_genome2_1_15.first_ancestor_of_type(SequenceType.CHROMOSOME),
-                    ),
-            )
+                e3_spliced,
+                parent_genome2_1_15,
+                CompoundInterval(
+                    [2, 7, 12],
+                    [6, 10, 15],
+                    Strand.PLUS,
+                    parent=parent_genome2_1_15.first_ancestor_of_type(SequenceType.CHROMOSOME),
+                ),
+            ),
         ],
     )
     def test__chunk_relative_bounded_chromosome_location(self, feature, parent, expected):
