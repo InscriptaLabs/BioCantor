@@ -795,10 +795,13 @@ class TestAnnotationCollection:
         r = obj.query_by_position(start, end, coding_only, completely_within, expand_location_to_children=True)
         assert min(x.chromosome_location.start for x in r) == expanded_start
         assert max(x.chromosome_location.end for x in r) == expanded_end
-        # without expansion the children are all sliced
+        # without expansion the children are all sliced; but this can only be noticed
+        # if you look at the hidden _chunk_relative_bounded_chromosome_location
         r2 = obj.query_by_position(start, end, coding_only, completely_within, expand_location_to_children=False)
-        assert min(x.chromosome_location.start for x in r2) == start
-        assert max(x.chromosome_location.end for x in r2) == end
+        assert min(x.chromosome_location.start for x in r2) == expanded_start
+        assert max(x.chromosome_location.end for x in r2) == expanded_end
+        assert min(x._chunk_relative_bounded_chromosome_location.start for x in r2) == start
+        assert max(x._chunk_relative_bounded_chromosome_location.end for x in r2) == end
 
     def test_position_queries_expanded_range_exception(self):
         """If expand range is true, then an exception is thrown on sequence chunks if they expand beyond the chunk"""
@@ -1307,8 +1310,11 @@ class TestAnnotationCollection:
 
         assert obj0.chromosome_location == obj0.chunk_relative_location
         assert obj1.chromosome_location == obj1.chunk_relative_location
-        assert obj2.chromosome_location == obj2.chunk_relative_location
-        assert obj3.chromosome_location == obj3.chunk_relative_location
+        # not the same because of the non-standard parent
+        assert obj2.chromosome_location != obj2.chunk_relative_location
+        assert obj2._chunk_relative_bounded_chromosome_location == obj2.chunk_relative_location
+        assert obj3.chromosome_location != obj3.chunk_relative_location
+        assert obj3._chunk_relative_bounded_chromosome_location == obj3.chunk_relative_location
         # OTOH, this is not the same
         obj4 = self.annot.to_annotation_collection(parent_genome_10_49)
         assert obj4.chromosome_location != obj4.chunk_relative_location

@@ -196,6 +196,7 @@ class GeneInterval(AbstractFeatureIntervalCollection):
         self.locus_tag = locus_tag
         self.sequence_name = sequence_name
         self.sequence_guid = sequence_guid
+        self._parent_or_seq_chunk_parent = parent_or_seq_chunk_parent
         # qualifiers come in as a List, convert to Set
         self._import_qualifiers_from_list(qualifiers)
         self.primary_transcript = AbstractFeatureIntervalCollection._find_primary_feature(self.transcripts)
@@ -506,6 +507,7 @@ class FeatureIntervalCollection(AbstractFeatureIntervalCollection):
         self.locus_tag = locus_tag
         self.sequence_name = sequence_name
         self.sequence_guid = sequence_guid
+        self._parent_or_seq_chunk_parent = parent_or_seq_chunk_parent
         # qualifiers come in as a List, convert to Set
         self._import_qualifiers_from_list(qualifiers)
         self.feature_collection_type = feature_collection_type
@@ -804,6 +806,7 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
         self.sequence_path = sequence_path
         self._name = name
         self._id = id
+        self._parent_or_seq_chunk_parent = parent_or_seq_chunk_parent
         # qualifiers come in as a List, convert to Set
         self._import_qualifiers_from_list(qualifiers)
 

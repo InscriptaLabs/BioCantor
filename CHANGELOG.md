@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Changed
 - `Sorted` parser now sorts features by position, then gene/mRNA/CDS/other. This helps deal with genbank files that are oddly ordered.
 - Introduced new `Hybrid` GenBank parser mode that does both `LocusTag` and `Sorted` parsing at the same time.
+- All `.chromosome_location` accessor of `Interval` objects always return the full length `Location`, even if the `Interval` itself is chunk relative such that the underlying `Location` object cannot represent the full length. As a result of this, the `.chromosome_location` of a chunk-relative location cannot have associated sequence information.
 
 ### Added
 - `TranscriptInterval` and `FeatureInterval` now have accessor methods to get `Location` objects for their introns/gaps and full span.

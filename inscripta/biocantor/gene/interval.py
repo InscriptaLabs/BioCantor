@@ -53,6 +53,7 @@ class AbstractInterval(ABC):
     bin: int
     start: int
     end: int
+    _parent_or_seq_chunk_parent: Optional[Parent] = None
 
     def __len__(self):
         return self.end - self.start
@@ -127,6 +128,7 @@ class AbstractInterval(ABC):
         """Returns chunk relative end position."""
         return self.chunk_relative_location.end
 
+    @lru_cache(maxsize=1)
     @property
     def chromosome_location(self) -> Location:
         """Returns the Location of this in *chromosome coordinates*.
@@ -134,9 +136,29 @@ class AbstractInterval(ABC):
         If the coordinate system is unknown, this will return the same coordinate system as
         ``chunk_relative_location``, that is the true underlying ``_location`` member.
 
-        NOTE: If this Interval is built over a sequence chunk, using this accessor method
-        will return a location without sequence information. Please be careful using the location member
-        directly!
+        This Location object will always have the full span of the Interval in chromosome coordinates,
+        even if this feature exists in chunk relative coordinates. As a result of this, if this
+        Interval was built on chunk relative coordinates, the sequence information will not be present.
+        """
+        if self._parent_or_seq_chunk_parent and self._parent_or_seq_chunk_parent.has_ancestor_of_type(
+            SequenceType.CHROMOSOME
+        ):
+            parent = self._parent_or_seq_chunk_parent.first_ancestor_of_type(SequenceType.CHROMOSOME)
+            return SingleInterval(self.start, self.end, Strand.PLUS, parent)
+        else:
+            return SingleInterval(self.start, self.end, Strand.PLUS)
+
+    @lru_cache(maxsize=1)
+    @property
+    def _chunk_relative_bounded_chromosome_location(self) -> Location:
+        """
+        Returns the Location of this in *chromosome coordinates*.
+
+        This function is different from ``chromosome_location`` in that it will return a Location bounded
+        by the chunk relative location of this Interval, if it exists.
+
+        This accessor is private because using it may lead to weird behavior. However, it is necessary
+        for things like slicing CDSFrames in a chunk relative CDSInterval.
         """
         if self.chunk_relative_location.has_ancestor_of_type(SequenceType.CHROMOSOME):
             return self.lift_over_to_first_ancestor_of_type(SequenceType.CHROMOSOME)
@@ -442,7 +464,6 @@ class AbstractFeatureInterval(AbstractInterval, ABC):
     _genomic_starts: List[int]
     _strand: Strand
     _is_primary_feature: Optional[bool] = None
-    _parent_or_seq_chunk_parent: Optional[Parent] = None
 
     def __len__(self):
         return sum((end - start) for end, start in zip(self._genomic_ends, self._genomic_starts))
@@ -452,15 +473,29 @@ class AbstractFeatureInterval(AbstractInterval, ABC):
     def chromosome_location(self) -> Location:
         """Returns the Location of this in *chromosome coordinates*.
 
-        This overrides the implementation in the base AbstractInterval class and handles the case
-        where the chunk-relative location is empty due to this interval not overlapping with the chunk.
-
         If the coordinate system is unknown, this will return the same coordinate system as
         ``chunk_relative_location``, that is the true underlying ``_location`` member.
 
-        NOTE: If this Interval is built over a sequence chunk, using this accessor method
-        will return a location without sequence information. Please be careful using the location member
-        directly!
+        This Location object will always have the full span of the Interval in chromosome coordinates,
+        even if this feature exists in chunk relative coordinates. As a result of this, if this
+        Interval was built on chunk relative coordinates, the sequence information will not be present.
+        """
+        if self._parent_or_seq_chunk_parent and self._parent_or_seq_chunk_parent.has_ancestor_of_type(
+            SequenceType.CHROMOSOME
+        ):
+            parent = self._parent_or_seq_chunk_parent.first_ancestor_of_type(SequenceType.CHROMOSOME)
+            return CompoundInterval(self._genomic_starts, self._genomic_ends, self._strand, parent)
+        else:
+            return CompoundInterval(self._genomic_starts, self._genomic_ends, self._strand)
+
+    @lru_cache(maxsize=1)
+    @property
+    def _chunk_relative_bounded_chromosome_location(self) -> Location:
+        """
+        Returns the Location of this in *chromosome coordinates*.
+
+        This function is different from ``chromosome_location`` in that it will return a Location bounded
+        by the chunk relative location of this Interval, if it exists.
         """
         if self.chunk_relative_location.is_empty:
             loc = CompoundInterval(self._genomic_starts, self._genomic_ends, self._strand)

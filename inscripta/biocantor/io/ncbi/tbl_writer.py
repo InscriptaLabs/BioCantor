@@ -263,7 +263,8 @@ class MRNATblFeature(TblFeature):
         cds_feature: "CDSTblFeature",
     ):
         super().__init__(
-            transcript.chromosome_location,
+            # must use _location here and not chromosome_location due to caching!
+            transcript._location,
             start_is_incomplete=cds_feature.start_is_incomplete,
             end_is_complete=cds_feature.end_is_complete,
             is_pseudo=cds_feature.is_pseudo,
@@ -480,6 +481,8 @@ class TblGene:
         # potentially overlapping representation was able to properly represent the ORF. This is an inherent limitation
         # of the TBL format (as well as the GenBank format).
         for tx in gene.transcripts:
+            # these hacks that over-write the _location member save execution time, but come issues due to caching
+            # the tx.chromosome_location member will still be the original version!
             if isinstance(tx._location, CompoundInterval):
                 tx._location = tx._location.optimize_and_combine_blocks()
             if gene.is_coding:

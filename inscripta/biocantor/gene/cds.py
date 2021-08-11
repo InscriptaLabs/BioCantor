@@ -122,14 +122,14 @@ class CDSInterval(AbstractFeatureInterval):
         frames = []
         for genomic_start, genomic_end, frame in zip(self._genomic_starts, self._genomic_ends, self.frames):
             genomic_exon = SingleInterval(
-                genomic_start, genomic_end, Strand.PLUS, parent=self.chromosome_location.parent
+                genomic_start, genomic_end, Strand.PLUS, parent=self._chunk_relative_bounded_chromosome_location.parent
             )
             # chromosome location has overlapping blocks merged, so that the intersection always has one block
             # this is OK to do here since the original genomic intervals retain the overlapping information
-            if isinstance(self.chromosome_location, SingleInterval):
-                chrom_loc = self.chromosome_location
-            elif isinstance(self.chromosome_location, CompoundInterval):
-                chrom_loc = self.chromosome_location.optimize_and_combine_blocks()
+            if isinstance(self._chunk_relative_bounded_chromosome_location, SingleInterval):
+                chrom_loc = self._chunk_relative_bounded_chromosome_location
+            elif isinstance(self._chunk_relative_bounded_chromosome_location, CompoundInterval):
+                chrom_loc = self._chunk_relative_bounded_chromosome_location.optimize_and_combine_blocks()
             else:
                 return frames
             intersection = genomic_exon.intersection(chrom_loc, match_strand=False)
@@ -678,7 +678,10 @@ class CDSInterval(AbstractFeatureInterval):
         Returns:
             A new :class:`CDSInterval` that has been merged.
         """
-        new_loc = self.chunk_relative_location.optimize_and_combine_blocks()
+        if isinstance(self.chunk_relative_location, CompoundInterval):
+            new_loc = self.chunk_relative_location.optimize_and_combine_blocks()
+        else:
+            new_loc = self.chunk_relative_location
         first_frame = next(self.frame_iter())
         frames = CDSInterval.construct_frames_from_location(new_loc, first_frame)
         return CDSInterval.from_location(new_loc, frames)
