@@ -523,9 +523,7 @@ class AbstractFeatureInterval(AbstractInterval, ABC):
         Returns the Location of the *gaps* of this Interval in chromosome coordinates. This is analogous to returning
         the intron coordinates.
         """
-        chrom_loc = self.chromosome_location
-        span = self.chromosome_span
-        return span.minus(chrom_loc)
+        return self.chromosome_location.gaps_location()
 
     @lru_cache(maxsize=1)
     @property
@@ -542,9 +540,7 @@ class AbstractFeatureInterval(AbstractInterval, ABC):
         Returns the Location of the *gaps* of this Interval in chunk-relative coordinates.
         This is analogous to returning the intron coordinates.
         """
-        chunk_loc = self.chunk_relative_location
-        span = self.chunk_relative_span
-        return span.minus(chunk_loc)
+        return self.chunk_relative_location.gaps_location()
 
     @abstractmethod
     def export_qualifiers(

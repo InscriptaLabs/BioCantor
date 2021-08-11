@@ -778,7 +778,7 @@ class TestFeatureIntervalSequenceSubset:
     )
     def test_chunk_relative_gaps_location(self, feature, parent, expected_gaps):
         feat = feature.to_feature_interval(parent)
-        assert feat.chunk_relative_gaps_location == expected_gaps
+        ObjectValidation.require_locations_have_same_nonempty_parent(feat.chunk_relative_gaps_location, expected_gaps)
 
     @pytest.mark.parametrize(
         "feature,parent,expected_span",
