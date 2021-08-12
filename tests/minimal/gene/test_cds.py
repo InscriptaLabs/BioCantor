@@ -1179,7 +1179,7 @@ class TestCDSInterval:
                     ),
                 ),
                 [CDSFrame.ZERO],
-                SingleInterval(222218, 222233, Strand.PLUS),
+                CompoundInterval([222218], [222233], Strand.PLUS),
             )
         ],
     )

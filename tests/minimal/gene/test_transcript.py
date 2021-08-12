@@ -969,7 +969,7 @@ class TestTranscriptWithoutModel:
                         ),
                     ),
                 ),
-                SingleInterval(222218, 222233, Strand.PLUS),
+                CompoundInterval([222218], [222233], Strand.PLUS),
             )
         ],
     )
@@ -1239,9 +1239,12 @@ class TestTranscriptIntervalSequenceSubset:
         assert seq == seq0
 
         assert tx0.chromosome_location == tx0.chunk_relative_location
-        assert tx1.chromosome_location == tx1.chunk_relative_location
+        # not the same because of non-standard parent
+        assert tx1.chromosome_location != tx1.chunk_relative_location
+        assert tx1._chunk_relative_bounded_chromosome_location == tx1.chunk_relative_location
         assert tx2.chromosome_location == tx2.chunk_relative_location
-        assert tx3.chromosome_location == tx3.chunk_relative_location
+        assert tx3.chromosome_location != tx3.chunk_relative_location
+        assert tx3._chunk_relative_bounded_chromosome_location == tx3.chunk_relative_location
         # OTOH, this is not the same
         tx4 = e3_spliced.to_transcript_interval(parent_genome2_1_15)
         assert tx4.chromosome_location != tx4.chunk_relative_location
