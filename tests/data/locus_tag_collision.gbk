@@ -20,13 +20,13 @@ FEATURES             Location/Qualifiers
                      /transcript_id="NM_001184012.1"
                      /db_xref="GeneID:855903"
                      /transcript_symbol="RPL7B"
-     gene            152..1702
+     gene            155..1702
                      /gene="RPL7B"
                      /locus_tag="YPL198W"
                      /db_xref="GeneID:855903"
                      /gene_symbol="RPL7B"
                      /gene_biotype="protein_coding"
-     CDS             join(152..162,572..665,1073..1702)
+     CDS             join(155..162,572..665,1073..1702)
                      /gene="RPL7B"
                      /locus_tag="YPL198W"
                      /product="ribosomal 60S subunit protein L7B"

@@ -200,3 +200,4 @@ todo_include_todos = True
 
 autoapi_type = "python"
 autoapi_dirs = [os.path.abspath("../../inscripta/biocantor/")]
+nbsphinx_allow_errors = True

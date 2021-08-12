@@ -34,6 +34,7 @@ from inscripta.biocantor.io.genbank.constants import (
     GenbankFlavor,
     FeatureCollectionFeatures,
     FeatureIntervalFeatures,
+    KnownQualifiers,
 )
 from inscripta.biocantor.io.genbank.exc import GenBankExportError
 from inscripta.biocantor.location.strand import Strand
@@ -168,6 +169,8 @@ def gene_to_feature(
 
     if symbol:
         qualifiers[feature_type] = [symbol]
+    if gene_or_feature.locus_tag:
+        qualifiers[KnownQualifiers.LOCUS_TAG.value] = gene_or_feature.locus_tag
 
     feature = SeqFeature(location, type=feature_type, strand=strand.value)
     feature.qualifiers = qualifiers
@@ -235,9 +238,9 @@ def transcripts_to_feature(
 
         transcript_qualifiers = {key: list(vals) for key, vals in transcript.export_qualifiers().items()}
         if gene_symbol is not None:
-            transcript_qualifiers["gene"] = [gene_symbol]
+            transcript_qualifiers[KnownQualifiers.GENE.value] = [gene_symbol]
         if locus_tag is not None:
-            transcript_qualifiers["locus_tag"] = [locus_tag]
+            transcript_qualifiers[KnownQualifiers.LOCUS_TAG.value] = [locus_tag]
 
         if location.strand != strand.value:
             warn_str = f"Found strand mismatch between gene and transcript on transcript {transcript}. "

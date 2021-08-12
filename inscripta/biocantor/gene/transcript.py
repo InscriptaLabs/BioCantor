@@ -6,6 +6,8 @@ Each object is capable of exporting itself to BED and GFF3.
 from typing import Optional, Any, Dict, Iterable, Hashable, Set, List
 from uuid import UUID
 
+from methodtools import lru_cache
+
 from inscripta.biocantor.exc import (
     EmptyLocationException,
     LocationOverlapException,
@@ -29,7 +31,6 @@ from inscripta.biocantor.parent.parent import Parent, SequenceType
 from inscripta.biocantor.sequence.sequence import Sequence
 from inscripta.biocantor.util.bins import bins
 from inscripta.biocantor.util.hashing import digest_object
-from methodtools import lru_cache
 
 
 class TranscriptInterval(AbstractFeatureInterval):
@@ -177,6 +178,16 @@ class TranscriptInterval(AbstractFeatureInterval):
         if not self.is_coding:
             raise NoncodingTranscriptError("No location on a non-coding transcript")
         return self.cds.chunk_relative_location
+
+    @property
+    def chromosome_intron_location(self):
+        """Returns the Location of the Introns of this Transcript in *chromosome coordinates*"""
+        return self.chromosome_gaps_location
+
+    @property
+    def chunk_relative_intron_location(self):
+        """Returns the Location of the Introns of this Transcript in *chunk relative coordinates*"""
+        return self.chunk_relative_gaps_location
 
     @property
     def is_coding(self) -> bool:

@@ -4,6 +4,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [0.8.0]
+### Fixed
+- Do not trust feature type annotations to define coding vs. non-coding when parsing GenBank files; only rely on the presence/absence of CDS intervals associated with the transcript.
+- Setup requirements, build tests, and sphinx config updated to allow building of documentation without installing the package.
+- GenBank parser was not handling `exon` features as direct descendants of `gene` correctly.
+
+### Changed
+- `Sorted` parser now sorts features by position, then gene/mRNA/CDS/other. This helps deal with genbank files that are oddly ordered.
+- Introduced new `Hybrid` GenBank parser mode that does both `LocusTag` and `Sorted` parsing at the same time.
+- All `.chromosome_location` accessor of `Interval` objects always return the full length `Location`, even if the `Interval` itself is chunk relative such that the underlying `Location` object cannot represent the full length. As a result of this, the `.chromosome_location` of a chunk-relative location cannot have associated sequence information.
+
+### Added
+- `TranscriptInterval` and `FeatureInterval` now have accessor methods to get `Location` objects for their introns/gaps and full span.
+
 ## [0.7.0]
 ### Changed
 - GenBank position-sorted parser can now handle CDS records that are not directly following a gene record.
