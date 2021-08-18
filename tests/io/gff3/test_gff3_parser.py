@@ -126,7 +126,7 @@ class TestGff3Parser:
 
     def test_direct_cds_exon(self, test_data_dir):
         recs = list(parse_standard_gff3(test_data_dir / "gene_cds_direct_child.gff3"))
-        c = recs[0].annotation.to_annotation_collection()
+        c = recs[0].annotation
         with open(test_data_dir / "gene_cds_direct_child.json") as fh:
             assert AnnotationCollectionModel.Schema().load(json.load(fh)) == c
 
