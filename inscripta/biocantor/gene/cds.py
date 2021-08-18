@@ -1,5 +1,5 @@
 from itertools import count, zip_longest
-from typing import Iterator, List, Union, Optional, Dict, Hashable, Any, Iterable, Set
+from typing import Iterator, List, Union, Optional, Dict, Hashable, Any, Iterable, Set, Tuple
 from uuid import UUID
 
 from methodtools import lru_cache
@@ -387,7 +387,7 @@ class CDSInterval(AbstractFeatureInterval):
         c = Codon(seq[-3:].sequence.upper())
         return c.is_stop_codon
 
-    def frame_iter(self, chunk_relative_frames: bool = True) -> Iterator[CDSFrame]:
+    def _frame_iter(self, chunk_relative_frames: bool = True) -> Iterator[CDSFrame]:
         """Iterate over frames taking strand into account.
 
         If ``chunk_relative_frames`` is ``True``, then this iterator will only iterate over frames that
@@ -403,15 +403,13 @@ class CDSInterval(AbstractFeatureInterval):
         else:
             yield from reversed(frames)
 
-    def exon_iter(self) -> Iterator[SingleInterval]:
+    def _exon_iter(self, chunk_relative_exon: bool = True) -> Iterator[SingleInterval]:
         """Iterate over exons in transcription direction"""
-        if (
-            self.chunk_relative_location.strand == Strand.PLUS
-            or self.chunk_relative_location.strand == Strand.UNSTRANDED
-        ):
-            yield from self._location.blocks
+        loc = self.chunk_relative_location if chunk_relative_exon else self.chromosome_location
+        if loc.strand == Strand.PLUS or loc.strand == Strand.UNSTRANDED:
+            yield from loc.blocks
         else:
-            yield from reversed(self.chunk_relative_location.blocks)
+            yield from reversed(loc.blocks)
 
     @lru_cache(maxsize=1)
     def extract_sequence(self) -> Sequence:
@@ -425,7 +423,7 @@ class CDSInterval(AbstractFeatureInterval):
         as annotated, to the expected value of the CDSFrame. This allows for an annotation
         to model things like programmed frameshifts and indels that may be assembly errors.
         """
-        codons = [str(codon_location.extract_sequence()) for codon_location in self.scan_codon_locations()]
+        codons = (str(codon_location.extract_sequence()) for codon_location in self.chunk_relative_codon_locations)
         seq = "".join(codons)
         assert len(seq) % 3 == 0
         return Sequence(seq, Alphabet.NT_EXTENDED, validate_alphabet=False)
@@ -433,12 +431,18 @@ class CDSInterval(AbstractFeatureInterval):
     @property
     def num_codons(self) -> int:
         """
+        Returns the total number of codons. This will reflect the true number of codons,
+        even if this CDSInterval is parented on a sequence chunk.
+        """
+        return len(self.chromosome_codon_locations)
+
+    @property
+    def num_chunk_relative_codons(self) -> int:
+        """
         Returns the number of codons.
 
         NOTE: If this CDS is a subset of the original sequence, this number will represent the subset,
         not the original size!
-
-        TODO: Make this more efficient.
 
         Any leading or trailing bases that are annotated as CDS but cannot form a full codon
         are excluded. Additionally, any internal codons that are incomplete are excluded.
@@ -447,7 +451,7 @@ class CDSInterval(AbstractFeatureInterval):
         as annotated, to the expected value of the CDSFrame. This allows for an annotation
         to model things like programmed frameshifts and indels that may be assembly errors.
         """
-        return len(list(self.scan_codon_locations()))
+        return len(self.chunk_relative_codon_locations)
 
     def scan_codons(self, truncate_at_in_frame_stop: Optional[bool] = False) -> Iterator[Codon]:
         """
@@ -461,12 +465,61 @@ class CDSInterval(AbstractFeatureInterval):
             if truncate_at_in_frame_stop and c.is_stop_codon:
                 break
 
-    def scan_codon_locations(self) -> Iterator[Location]:
+    @lru_cache(maxsize=1)
+    @property
+    def chunk_relative_codon_locations(self) -> Tuple[Location]:
+        """
+        Returns a tuple of codon locations in *chunk relative* coordinates.
+
+        This function calls ``scan_codon_locations`` and stores the full result as a cached
+        tuple.
+        """
+        return tuple(self.scan_chunk_relative_codon_locations())
+
+    @lru_cache(maxsize=1)
+    @property
+    def chromosome_codon_locations(self) -> Tuple[Location]:
+        """
+        Returns a tuple of codon locations in *chromosome* coordinates.
+
+        If this is a chunk-relative CDS, the returned locations will not have sequence information.
+
+        This function calls ``scan_codon_locations`` and stores the full result as a cached
+        tuple.
+        """
+        return tuple(self._scan_codon_locations(chunk_relative_coordinates=False))
+
+    def scan_chunk_relative_codon_locations(self) -> Iterator[Location]:
         """
         Returns an iterator over codon locations in *chunk relative* coordinates.
 
-        TODO: Allow chromosome relative codon scanning. This is an issue because lifting to chromosome coordinates
-            removes sequence information.
+        Any leading or trailing bases that are annotated as CDS but cannot form a full codon
+        are excluded. Additionally, any internal codons that are incomplete are excluded.
+
+        Incomplete internal codons are determined by comparing the CDSFrame of each exon
+        as annotated, to the expected value of the CDSFrame. This allows for an annotation
+        to model things like programmed frameshifts and indels that may be assembly errors.
+        """
+        yield from self._scan_codon_locations(chunk_relative_coordinates=True)
+
+    def scan_chromosome_codon_locations(self) -> Iterator[Location]:
+        """
+        Returns an iterator over codon locations in *chromosome* coordinates.
+
+        If this is a chunk-relative CDS, the returned locations will not have sequence information.
+
+        Any leading or trailing bases that are annotated as CDS but cannot form a full codon
+        are excluded. Additionally, any internal codons that are incomplete are excluded.
+
+        Incomplete internal codons are determined by comparing the CDSFrame of each exon
+        as annotated, to the expected value of the CDSFrame. This allows for an annotation
+        to model things like programmed frameshifts and indels that may be assembly errors.
+        """
+        yield from self._scan_codon_locations(chunk_relative_coordinates=False)
+
+    def _scan_codon_locations(self, chunk_relative_coordinates: bool = True) -> Iterator[Location]:
+        """
+        Returns an iterator over codon locations in *chunk relative* coordinates.
 
         Any leading or trailing bases that are annotated as CDS but cannot form a full codon
         are excluded. Additionally, any internal codons that are incomplete are excluded.
@@ -478,20 +531,23 @@ class CDSInterval(AbstractFeatureInterval):
         next_frame = CDSFrame.ZERO
         cleaned_rel_starts = []
         cleaned_rel_ends = []
+        loc = self.chunk_relative_location if chunk_relative_coordinates else self.chromosome_location
         # zip_longest is used here to ensure that the two iterators are always actually in sync
-        for exon, frame in zip_longest(self.exon_iter(), self.frame_iter()):
+        for exon, frame in zip_longest(
+            self._exon_iter(chunk_relative_coordinates), self._frame_iter(chunk_relative_coordinates)
+        ):
 
             if not exon or not frame:
                 raise MismatchedFrameException("Frame iterator is not in sync with exon iterator")
 
-            start_to_rel = self._location.parent_to_relative_pos(exon.start)
-            end_to_rel_inclusive = self._location.parent_to_relative_pos(exon.end - 1)
+            start_to_rel = loc.parent_to_relative_pos(exon.start)
+            end_to_rel_inclusive = loc.parent_to_relative_pos(exon.end - 1)
             rel_start = min(start_to_rel, end_to_rel_inclusive)
             rel_end = max(start_to_rel, end_to_rel_inclusive) + 1
             if next_frame != frame:
                 rel_start += frame.value
                 # remove trailing codon from previous block
-                shift = self._total_block_len(cleaned_rel_starts, cleaned_rel_ends) % 3
+                shift = sum((coords[1] - coords[0] for coords in zip(cleaned_rel_starts, cleaned_rel_ends))) % 3
                 if shift > 0:
                     cleaned_rel_ends[-1] = cleaned_rel_ends[-1] - shift
                 # we are now inherently in frame
@@ -505,17 +561,13 @@ class CDSInterval(AbstractFeatureInterval):
             # this is what we expect the next frame to be, if no frameshift occurred
             next_frame = next_frame.shift(rel_end - rel_start)
         cleaned_blocks = [
-            self._location.relative_interval_to_parent_location(cleaned_rel_starts[i], cleaned_rel_ends[i], Strand.PLUS)
+            loc.relative_interval_to_parent_location(cleaned_rel_starts[i], cleaned_rel_ends[i], Strand.PLUS)
             for i in range(len(cleaned_rel_starts))
         ]
         cleaned_location = CompoundInterval.from_single_intervals(cleaned_blocks)
         if len(cleaned_location) < 3:
             return
         yield from cleaned_location.scan_windows(3, 3, 0)
-
-    @staticmethod
-    def _total_block_len(starts: List[int], ends: List[int]) -> int:
-        return sum([coords[1] - coords[0] for coords in zip(starts, ends)])
 
     @lru_cache(maxsize=1)
     def _translate_iter(
@@ -664,7 +716,7 @@ class CDSInterval(AbstractFeatureInterval):
             A new :class:`CDSInterval` that has been merged.
         """
         new_loc = self.chunk_relative_location.optimize_blocks()
-        first_frame = next(self.frame_iter())
+        first_frame = next(self._frame_iter())
         frames = CDSInterval.construct_frames_from_location(new_loc, first_frame)
         return CDSInterval.from_location(new_loc, frames)
 
@@ -682,7 +734,7 @@ class CDSInterval(AbstractFeatureInterval):
             new_loc = self.chunk_relative_location.optimize_and_combine_blocks()
         else:
             new_loc = self.chunk_relative_location
-        first_frame = next(self.frame_iter())
+        first_frame = next(self._frame_iter())
         frames = CDSInterval.construct_frames_from_location(new_loc, first_frame)
         return CDSInterval.from_location(new_loc, frames)
 
