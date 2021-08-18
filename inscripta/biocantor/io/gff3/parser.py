@@ -62,6 +62,68 @@ def filter_and_sort_qualifiers(qualifiers: Dict[str, List[str]]) -> Optional[Dic
     return qualifiers if qualifiers else None
 
 
+def _convert_features_to_transcript(
+    exons: List[Feature],
+    cds: List[Feature],
+    strand: str,
+    chrom: str,
+    transcript_qualifiers: Dict[str, List[str]],
+    transcript_id: Optional[str],
+    transcript_biotype: Optional[Biotype],
+    transcript_symbol: Optional[str],
+):
+    """
+    Wrapper function for conversion of exon/CDS features into a Transcript object.
+    """
+    # handle the case that we found only CDS and no exons by treating CDS as exon
+    if not exons:
+        exons = cds
+
+    exons = sorted(exons, key=lambda e: e.start)
+    exon_starts = [x.start - 1 for x in exons]
+    exon_ends = [x.end for x in exons]
+    start = exon_starts[0]
+    end = exon_ends[-1]
+    assert start <= end
+    strand = Strand.from_symbol(strand)
+
+    if len(cds) == 0:
+        cds_starts = cds_ends = cds_frames = None
+        protein_id = product = None
+    else:
+        # sort by start and end in case two blocks start at the same position
+        cds = sorted(cds, key=lambda c: (c.start, c.end))
+        cds_starts = [x.start - 1 for x in cds]
+        cds_ends = [x.end for x in cds]
+        try:
+            cds_frames = [CDSPhase.from_int(int(f.frame)).to_frame().name for f in cds]
+        except ValueError:
+            # infer frames
+            loc = CompoundInterval(cds_starts, cds_ends, strand)
+            cds_frames = [x.name for x in CDSInterval.construct_frames_from_location(loc)]
+        # NCBI encodes protein IDs and products on the CDS feature
+        protein_id = cds[0].attributes.get("protein_id", [None])[0]
+        product = cds[0].attributes.get("product", [None])[0]
+
+    tx = dict(
+        exon_starts=exon_starts,
+        exon_ends=exon_ends,
+        strand=strand.name,
+        cds_starts=cds_starts,
+        cds_ends=cds_ends,
+        cds_frames=cds_frames,
+        qualifiers=filter_and_sort_qualifiers(transcript_qualifiers),
+        is_primary_tx=False,
+        transcript_id=transcript_id,
+        transcript_type=transcript_biotype.name if transcript_biotype else transcript_biotype,
+        transcript_symbol=transcript_symbol,
+        sequence_name=chrom,
+        protein_id=protein_id,
+        product=product,
+    )
+    return tx
+
+
 def _parse_genes(chrom: str, db: FeatureDB) -> List[Dict]:
     """
     Parse canonical genes from this database.
@@ -102,7 +164,24 @@ def _parse_genes(chrom: str, db: FeatureDB) -> List[Dict]:
             gene_biotype = None
 
         transcripts = []
-        for i, transcript in enumerate(db.children(gene, level=1)):
+        # keep track of CDS/exon features that are direct descendants of the gene
+        direct_exons = []
+        direct_cds = []
+
+        for i, putative_transcript in enumerate(db.children(gene, level=1)):
+
+            # direct CDS/exon descendants are allowed, but they will all become one transcript
+            if putative_transcript.featuretype == GFF3GeneFeatureTypes.CDS.value:
+                direct_cds.append(putative_transcript)
+                continue
+            elif putative_transcript.featuretype == GFF3GeneFeatureTypes.EXON.value:
+                direct_exons.append(putative_transcript)
+                continue
+            elif not Biotype.has_name(putative_transcript.featuretype):
+                logger.warning(f"Gene child feature has type {putative_transcript.featuretype}; skipping")
+                continue
+
+            transcript = putative_transcript
 
             transcript_id = transcript.attributes.get("transcript_id", [None])[0]
             transcript_symbol = transcript.attributes.get(
@@ -111,16 +190,16 @@ def _parse_genes(chrom: str, db: FeatureDB) -> List[Dict]:
             transcript_qualifiers = {
                 x: y for x, y in transcript.attributes.items() if not BioCantorGFF3ReservedQualifiers.has_value(x)
             }
-            provided_transcript_biotype = gene.attributes.get(
+            providedtranscript_biotype = gene.attributes.get(
                 "transcript_biotype", [gene.attributes.get("transcript_type", None)]
             )[0]
 
-            if Biotype.has_name(provided_transcript_biotype):
-                transcript_biotype = Biotype[provided_transcript_biotype]
+            if Biotype.has_name(providedtranscript_biotype):
+                transcript_biotype = Biotype[providedtranscript_biotype]
             else:
                 # keep track of what they gave us, that did not match the enum
-                if provided_transcript_biotype:
-                    transcript_qualifiers["provided_transcript_biotype"] = provided_transcript_biotype
+                if providedtranscript_biotype:
+                    transcript_qualifiers["providedtranscript_biotype"] = providedtranscript_biotype
                 # use the gene biotype
                 transcript_biotype = gene_biotype
 
@@ -140,76 +219,38 @@ def _parse_genes(chrom: str, db: FeatureDB) -> List[Dict]:
                 else:
                     logger.warning(f"Found non CDS/exon child of transcript in feature: {feature}")
 
-            # This gene has only a CDS/exon feature as its direct child
-            # therefore, we really have one interval here
-            if len(exons) == 0:
-                if transcript.featuretype not in [
-                    GFF3GeneFeatureTypes.CDS.value,
-                    GFF3GeneFeatureTypes.EXON.value,
-                ]:
-                    logger.warning(f"Gene child feature has type {transcript.featuretype}; skipping")
-                    continue
-                logger.info(f"gene {gene_id} had no transcript feature")
-                if transcript.featuretype == GFF3GeneFeatureTypes.CDS.value:
-                    exons = cds = [transcript]
-                else:
-                    exons = [transcript]
-
-            exons = sorted(exons, key=lambda e: e.start)
-            exon_starts = [x.start - 1 for x in exons]
-            exon_ends = [x.end for x in exons]
-            start = exon_starts[0]
-            end = exon_ends[-1]
-            assert start <= end
-            strand = Strand.from_symbol(transcript.strand)
-
-            if len(cds) == 0:
-                cds_starts = cds_ends = cds_frames = None
-                protein_id = product = None
-            else:
-                # sort by start and end in case two blocks start at the same position
-                cds = sorted(cds, key=lambda c: (c.start, c.end))
-                cds_starts = [x.start - 1 for x in cds]
-                cds_ends = [x.end for x in cds]
-                try:
-                    cds_frames = [CDSPhase.from_int(int(f.frame)).to_frame().name for f in cds]
-                except ValueError:
-                    # infer frames
-                    loc = CompoundInterval(cds_starts, cds_ends, strand)
-                    cds_frames = [x.name for x in CDSInterval.construct_frames_from_location(loc)]
-                # NCBI encodes protein IDs and products on the CDS feature
-                protein_id = cds[0].attributes.get("protein_id", [None])[0]
-                product = cds[0].attributes.get("product", [None])[0]
-
-            tx = dict(
-                exon_starts=exon_starts,
-                exon_ends=exon_ends,
-                strand=strand.name,
-                cds_starts=cds_starts,
-                cds_ends=cds_ends,
-                cds_frames=cds_frames,
-                qualifiers=filter_and_sort_qualifiers(transcript_qualifiers),
-                is_primary_tx=False,
-                transcript_id=transcript_id,
-                transcript_type=transcript_biotype.name if transcript_biotype else transcript_biotype,
-                transcript_symbol=transcript_symbol,
-                sequence_name=chrom,
-                protein_id=protein_id,
-                product=product,
+            tx = _convert_features_to_transcript(
+                exons,
+                cds,
+                transcript.strand,
+                chrom,
+                transcript_qualifiers,
+                transcript_id,
+                transcript_biotype,
+                transcript_symbol,
             )
             transcripts.append(tx)
 
+        if direct_cds or direct_exons:
+            # construct a transcript directly from CDS/exon features
+            tx = _convert_features_to_transcript(
+                direct_exons, direct_cds, gene.strand, chrom, gene_qualifiers, gene_id, gene_biotype, gene_symbol
+            )
+            transcripts.append(tx)
+
+        # this gene was totally isolated; no transcripts and no exons/CDS
         if len(transcripts) == 0:
             # infer a transcript for a gene
             logger.info(f"Inferring a transcript for gene {gene_symbol}")
-            tx = dict(
-                exon_starts=[gene.start],
-                exon_ends=[gene.end],
-                strand=Strand.from_symbol(gene.strand).name,
-                qualifiers=gene_qualifiers,
-                transcript_type=gene_biotype.name if gene_biotype else gene_biotype,
-                transcript_id=gene_id,
-                sequence_name=gene.seqid,
+            tx = _convert_features_to_transcript(
+                [gene],
+                [gene] if gene_biotype == Biotype.protein_coding else [],
+                gene.strand,
+                chrom,
+                gene_qualifiers,
+                gene_id,
+                gene_biotype,
+                gene_symbol,
             )
             transcripts.append(tx)
 
