@@ -634,11 +634,18 @@ def group_gene_records_by_locus_tag(
         ):
             # sort the features for this locus tag to bubble the "gene" feature to the top, if it exists
             gene_features = sorted(gene_features, key=lambda f: f.type != "gene")
-            gene = gene_features[0]
 
-            if gene.type not in GeneFeature.types:
-                raise GenBankLocusTagError("Grouping by locus tag produced a mis-ordered interpretation")
-            gene = GeneFeature(gene, seqrecord)
+            # do we have more than one gene with this locus_tag?
+            if len(gene_features) > 1 and gene_features[1].type == "gene":
+                raise GenBankLocusTagError(
+                    f"Grouping by locus tag found multiple gene features with the same locus tag:\n{gene_features[0]}\n{gene_features[1]}"
+                )
+
+            gene = gene_features[0]
+            if gene.type == "gene":
+                gene = GeneFeature(gene, seqrecord)
+            else:
+                gene = GeneFeature.from_transcript_or_cds_feature(gene, seqrecord)
 
             for feature in gene_features[1:]:
                 if feature.type in GeneFeature.types:

@@ -1,0 +1,597 @@
+LOCUS       ToyChr_R64v5_overlapping_genes       15516 bp    DNA     linear   UNA 03-SEP-2020
+DEFINITION  Saccharomyces cerevisiae S288C chromosome III, complete sequence.
+ACCESSION   CM021127 JAAEAL010000000
+VERSION     CM021127.1
+KEYWORDS    .
+SOURCE      Saccharomyces cerevisiae S288C
+  ORGANISM  Saccharomyces cerevisiae S288C
+            Eukaryota; Fungi; Dikarya; Ascomycota; Saccharomycotina;
+            Saccharomycetes; Saccharomycetales; Saccharomycetaceae;
+            Saccharomyces.
+FEATURES             Location/Qualifiers
+     source          <1..>15516
+                     /organism="Saccharomyces cerevisiae S288C"
+                     /mol_type="genomic DNA"
+                     /strain="S288C"
+                     /db_xref="taxon:559292"
+                     /chromosome="III"
+                     /label="source Saccharomyces cerevisiae S288C"
+     source          <1..>4411
+                     /organism="Saccharomyces cerevisiae S288C"
+                     /mol_type="genomic DNA"
+                     /strain="S288C"
+                     /db_xref="taxon:559292"
+                     /chromosome="X"
+                     /label="source Saccharomyces cerevisiae S288C"
+     CDS             371..2080
+                     /gene="HXT8"
+                     /locus_tag="YJL214W"
+                     /experiment="EXISTENCE:direct assay:GO:0071944 cell
+                     periphery [PMID:26928762]"
+                     /experiment="EXISTENCE:mutant phenotype:GO:0005353
+                     fructose transmembrane transporter activity
+                     [PMID:10618490]"
+                     /experiment="EXISTENCE:mutant phenotype:GO:0005355
+                     glucosetransmembrane transporter activity [PMID:10618490]"
+                     /experiment="EXISTENCE:mutant phenotype:GO:0008645 hexose
+                     transmembrane transport [PMID:10618490]"
+                     /experiment="EXISTENCE:mutant phenotype:GO:0015578
+                     mannosetransmembrane transporter activity [PMID:10618490]"
+                     /note="hypothetical protein with similarity to hexose
+                     transporters; expression is induced by low levels of
+                     glucose and repressed by high levels of glucose"
+                     /codon_start=1
+                     /product="hexose transporter HXT8"
+                     /protein_id="NP_012321.1"
+                     /db_xref="GeneID:853216"
+                     /db_xref="SGD:S000003750"
+                     /translation="MTDRKTNLPEEPIFEEAEDDGCPSIENSSHLSVPTVEENKDFSE
+                     YNGEEAEEVVVPEKPASAYATVSIMCLCMAFGGFMSGWDTGTISGFVNQTDFLRRFGN
+                     YSHSKNTYYLSNVRTGLIVSIFNVGSAIGCLFLSKLGDIYGRCMGLIIVIVVYMVGIV
+                     IQIASIDKWYQYFIGRIIAGIGAGSISVLAPMLISETAPKHIRGTLLACWQLMVTFAI
+                     FLGYCTNYGTKTYSNSVQWRVPLGLCFAWAIIMIGGMTFVPESPRFLVQVGKIEQAKA
+                     SFAKSNKLSVDDPAVVAEIDLLVAGVEAEEAMGTASWKELFSRKTKVFQRLTMTVMIN
+                     SLQQLTGDNYFFYYGTTIFKSVGMNDSFETSIVLGIVNFASCFFSLYSVDKLGRRRCL
+                     LLGAATMTACMVIYASVGVTRLYPNGKSEPSSKGAGNCTIVFTCFYIFCFSCTWGPVC
+                     YVIISETFPLRVRSKCMSVATAANLLWGFLIGFFTPFITSAINFYYGYVFMGCLAFSY
+                     FYVFFFVPETKGLTLEEVDEMWMDGVLPWKSESWVPASRRDGDYDNEKLQHDEKPFYK
+                     RMF"
+                     /label="HXT8 CDS"
+     CDS             4492..5556
+                     /gene="LSB5"
+                     /locus_tag="YCL034W"
+                     /experiment="EXISTENCE:direct assay:GO:0005737 cytoplasm
+                     [PMID:18298676]"
+                     /experiment="EXISTENCE:direct assay:GO:0005829 cytosol
+                     [PMID:26928762]"
+                     /experiment="EXISTENCE:direct assay:GO:0005938 cell
+                     cortex[PMID:12388763|PMID:15651983|PMID:18298676]"
+                     /experiment="EXISTENCE:direct assay:GO:0030479 actin
+                     cortical patch [PMID:15651983]"
+                     /experiment="EXISTENCE:genetic interaction:GO:0006897
+                     endocytosis [PMID:12388763]"
+                     /experiment="EXISTENCE:genetic interaction:GO:0030036
+                     actin cytoskeleton organization [PMID:12388763]"
+                     /experiment="EXISTENCE:genetic interaction:GO:0051666
+                     actin cortical patch localization [PMID:12388763]"
+                     /experiment="EXISTENCE:physical interaction:GO:0007015
+                     actin filament organization [PMID:10512884]"
+                     /note="Protein involved in membrane-trafficking events at
+                     plasma membrane; interacts with actin regulators Sla1p and
+                     Las17p, ubiquitin, Arf3p to couple actin dynamics to
+                     membrane trafficking processes; similar structure to GGA
+                     family of proteins with N-terminal VHS domain and GAT
+                     domain; binds Las17p, which is homolog of human
+                     Wiskott-Aldrich Syndrome protein involved in actin patch
+                     assembly, actin polymerization; may mediate disassembly of
+                     Pan1 complex from endocytic coat"
+                     /codon_start=1
+                     /product="Lsb5p"
+                     /protein_id="NP_009896.2"
+                     /db_xref="GeneID:850323"
+                     /db_xref="SGD:S000000539"
+                     /translation="MGFLSDHPHTAITETIFRIVSSRDYTLEVELAPLIQLIKADHND
+                     YNYTVNQEEAARALRKKIKYGNRLQQSRTLDLLDLFISQGVKFTVMYNDDKLLQRLRG
+                     MATNSENSGSGEKYEPRIIKKCAAYAISWLNYITQNNLENARAYSGLYQLGQTVKQRY
+                     SKSSRSRRSGGGSGGRSNFMDDSADDTLYQSNSLTSADRLYRIPQINMNKEAPRIRLI
+                     ISDALASAVSLQNSLIGLPKGKFSTDDEEATSKFIQARAIRRKVLRYLQLVTEGEFLG
+                     SLIHANDELVAALTAYDDRSAQDDSSDESDHGSYDDGIYDENEQDNSRYIDSESSEEE
+                     SLSSYQPSTISNPFGDHNKI"
+                     /label="LSB5 CDS"
+     CDS             complement(5610..6116)
+                     /gene="MXR2"
+                     /locus_tag="YCL033C"
+                     /EC_number="1.8.4.12"
+                     /experiment="EXISTENCE:direct assay:GO:0005739
+                     mitochondrion [PMID:20799725]"
+                     /experiment="EXISTENCE:direct assay:GO:0033743
+                     peptide-methionine (R)-S-oxide reductase activity
+                     [PMID:15141092]"
+                     /experiment="EXISTENCE:genetic interaction:GO:0034599
+                     cellular response to oxidative stress [PMID:11929995]"
+                     /experiment="EXISTENCE:mutant phenotype:GO:0033743
+                     peptide-methionine (R)-S-oxide reductase activity
+                     [PMID:15141092]"
+                     /experiment="EXISTENCE:mutant phenotype:GO:0034599
+                     cellular response to oxidative stress [PMID:11929995]"
+                     /note="Methionine-R-sulfoxide reductase; involved in the
+                     response to oxidative stress; protects iron-sulfur
+                     clusters from oxidative inactivation along with MXR1;
+                     involved in the regulation of lifespan"
+                     /codon_start=1
+                     /product="peptide-methionine (R)-S-oxide reductase"
+                     /protein_id="NP_009897.1"
+                     /db_xref="GeneID:850324"
+                     /db_xref="SGD:S000000538"
+                     /translation="MNKWSRLYVITVRRTFPGRRNIVLTQYWNKSKKMSDESNDVKWN
+                     DALTPLQLMVLRDKATERPNTGAYLHTNESGVYHCANCDRPLYSSKAKFDARCGWPAF
+                     YEEVSPGAITYHRDNSLMPARVEICCARCGGHLGHVFEGEGWKQLLNLPKDTRHCVNS
+                     ASLNLKKD"
+                     /label="MXR2 CDS"
+     source          <6232..>8434
+                     /organism="Saccharomyces cerevisiae S288C"
+                     /mol_type="genomic DNA"
+                     /strain="S288C"
+                     /db_xref="taxon:559292"
+                     /chromosome="VIII"
+                     /label="source Saccharomyces cerevisiae S288C"
+     CDS             6729..7184
+                     /gene="ECM12"
+                     /locus_tag="YHR021W-A"
+                     /note="hypothetical protein; may contribute to cell wall
+                     biosynthesis, mutants display zymolyase hypersensitivity"
+                     /codon_start=1
+                     /product="Ecm12p"
+                     /protein_id="NP_011886.1"
+                     /db_xref="GeneID:856416"
+                     /db_xref="SGD:S000003531"
+                     /translation="MNRSFHFLIKYIYIHVLLVFYFHIKQQAIMPFFIFFFSSFDGLS
+                     FDLRVVAFLAKHVFVGVCSPFFVVGFFGSSRVVVTEWLSKLVLPPPPVSITQVFSLSR
+                     KRGEFSSGYILIINPYKSFLRSLLDFSIFNNTAKNKSSTFTLNLEDVSK"
+                     /label="ECM12 CDS"
+     CDS             complement(7079..7849)
+                     /locus_tag="YHR022C"
+                     /note="hypothetical protein; YHR022C is not an essential
+                     gene"
+                     /codon_start=1
+                     /product="uncharacterized protein"
+                     /protein_id="NP_011887.1"
+                     /db_xref="GeneID:856417"
+                     /db_xref="SGD:S000001064"
+                     /translation="MSVRLSYGASLASIPRCFDLKSSKITVMGDDHSGKTSLVRSWLG
+                     SSFQISDANRYRVSDLYHKTIQFDTLVKYYRTFGVKGQLPNYAGFKAKNSGTIYESCG
+                     NFLEERLINANKSTAQRRTSIDVQVFDTNQMEVSYLSELTTLQIRQSDAIILCFDSTN
+                     DSSLASLESYICIIHHVRLECELDIPIIIACTKCDLDSERTITHEKVLTFIQELGFSP
+                     GNLDYFETSSKFNVNVEDLFLAVLLKIEKSKSDRRKLL"
+                     /gene="YHR022C"
+                     /label="YHR022C CDS"
+     source          <8435..>9318
+                     /organism="Saccharomyces cerevisiae S288C"
+                     /mol_type="genomic DNA"
+                     /strain="S288C"
+                     /db_xref="taxon:559292"
+                     /chromosome="VI"
+                     /label="source Saccharomyces cerevisiae S288C"
+     CDS             8491..8775
+                     /gene="AUA1"
+                     /locus_tag="YFL010W-A"
+                     /gene_synonym="YFL011W-A"
+                     /experiment="EXISTENCE:mutant phenotype:GO:0006865 amino
+                     acid transport [PMID:8497191]"
+                     /note="Protein required for the negative regulation by
+                     ammonia of Gap1p; Gap1p is a general amino acid permease"
+                     /codon_start=1
+                     /product="Aua1p"
+                     /protein_id="NP_116645.1"
+                     /db_xref="GeneID:850537"
+                     /db_xref="SGD:S000001955"
+                     /translation="MDRSLQVYICMYPYLDGSKQYRFDELISFYRPCPKSLDNIKSHY
+                     RQIHHQIRRRTHQHHQIRRRTHQHHHRSNCSRQRQCLVRHSCGRQMRVLA"
+                     /label="AUA1 CDS"
+     CDS             complement(8609..9244)
+                     /gene="WWM1"
+                     /locus_tag="YFL010C"
+                     /experiment="EXISTENCE:direct assay:GO:0005634 nucleus
+                     [PMID:12062425|PMID:14562095]"
+                     /experiment="EXISTENCE:direct assay:GO:0005737 cytoplasm
+                     [PMID:11914276|PMID:14562095]"
+                     /experiment="EXISTENCE:direct assay:GO:0005739
+                     mitochondrion [PMID:14576278|PMID:16823961]"
+                     /note="WW domain containing hypothetical protein; binds
+                     toMca1p, a caspase-related protease that
+                     regulatesH2O2-induced apoptosis; overexpression causes G1
+                     phasegrowth arrest and clonal death that is suppressed
+                     byoverexpression of MCA1"
+                     /codon_start=1
+                     /product="Wwm1p"
+                     /protein_id="NP_570898.1"
+                     /db_xref="GeneID:850538"
+                     /db_xref="SGD:S000001884"
+                     /translation="MAQSKSNPPQVPSGWKAVFDDEYQTWYYVDLSTNSSQWEPPRGT
+                     TWPRPKGPPPGVNNEKSSRQQADQAPPPYSSQSTPQVQAGAQAQQPRYYQPQQPQYPQ
+                     YPQQQRYYPQQAPMPAAAPQQAYYGTAPSTSKGSGHGGAMMGGLLGVGAGLLGGAMLE
+                     HAFDDHNYDGPDTVVVENNYYGDDAGGSDGGFDDAGGFDGGFDDGFDGSDF"
+                     /label="WWM1 CDS"
+     source          <9319..>13484
+                     /organism="Saccharomyces cerevisiae S288C"
+                     /mol_type="genomic DNA"
+                     /strain="S288C"
+                     /db_xref="taxon:559292"
+                     /chromosome="VII"
+                     /label="source Saccharomyces cerevisiae S288C"
+     CDS             9808..10824
+                     /created_by="bryan.leland"
+                     /translation="MMSELKTGHAGHNPWASVANSGPISILSYCGSSILMTVTNKFVV
+                     NLKDFNMNFVMLFVQSLVCTITLIILRILGYAKFRSLNKTDAKNWFPISFLLVLMIYT
+                     SSKALQYLAVPIYTIFKNLTIILIAYGEVLFFGGSVTSMELSSFLLMVLSSVVATWGD
+                     QQAVAAKAASLAEGAAGAVASFNPGYFWMFTNCITSALFVLIMRKRIKLTNFKDFDTM
+                     FYNNVLALPILLLFSFCVEDWSSVNLTNNFSNDSLTAMIISGVASVGISYCSGWCVRV
+                     TSSTTYSMVGALNKLPIALSGLIFFDAPRNFLSILSIFIGFLSGIIYAVAKQKKQQAQ
+                     PLRK"
+                     /gene="VRG4_COPY"
+                     /modified_by="bryan.leland"
+                     /label="VRG4_COPY"
+     CDS             9811..10824
+                     /gene="VRG4"
+                     /locus_tag="YGL225W"
+                     /gene_synonym="GOG5; LDB3; VAN2; VIG4"
+                     /experiment="EXISTENCE:direct assay:GO:0005458
+                     GDP-mannosetransmembrane transporter activity
+                     [PMID:20576760]"
+                     /experiment="EXISTENCE:direct assay:GO:0005739
+                     mitochondrion [PMID:14576278|PMID:16823961]"
+                     /experiment="EXISTENCE:direct assay:GO:0005794 Golgi
+                     apparatus [PMID:9395539]"
+                     /experiment="EXISTENCE:mutant phenotype:GO:0005458
+                     GDP-mannose transmembrane transporter activity
+                     [PMID:9395539]"
+                     /experiment="EXISTENCE:mutant phenotype:GO:1990570
+                     GDP-mannose transmembrane transport [PMID:9395539]"
+                     /note="Golgi GDP-mannose transporter; regulates Golgi
+                     function and glycosylation in Golgi; VRG4 has a paralog,
+                     HVG1, that arose from the whole genome duplication"
+                     /codon_start=1
+                     /product="GDP-mannose transporter"
+                     /protein_id="NP_011290.1"
+                     /db_xref="GeneID:852647"
+                     /db_xref="SGD:S000003193"
+                     /translation="MSELKTGHAGHNPWASVANSGPISILSYCGSSILMTVTNKFVVN
+                     LKDFNMNFVMLFVQSLVCTITLIILRILGYAKFRSLNKTDAKNWFPISFLLVLMIYTS
+                     SKALQYLAVPIYTIFKNLTIILIAYGEVLFFGGSVTSMELSSFLLMVLSSVVATWGDQ
+                     QAVAAKAASLAEGAAGAVASFNPGYFWMFTNCITSALFVLIMRKRIKLTNFKDFDTMF
+                     YNNVLALPILLLFSFCVEDWSSVNLTNNFSNDSLTAMIISGVASVGISYCSGWCVRVT
+                     SSTTYSMVGALNKLPIALSGLIFFDAPRNFLSILSIFIGFLSGIIYAVAKQKKQQAQP
+                     LRK"
+                     /label="VRG4 CDS"
+     CDS             complement(10932..11774)
+                     /gene="SDT1"
+                     /locus_tag="YGL224C"
+                     /gene_synonym="SSM1"
+                     /experiment="EXISTENCE:direct assay:GO:0008252
+                     nucleotidase activity [PMID:11934891]"
+                     /experiment="EXISTENCE:mutant phenotype:GO:0006206
+                     pyrimidine nucleobase metabolic process [PMID:11934891]"
+                     /note="Pyrimidine nucleotidase; responsible for
+                     productionof nicotinamide riboside and nicotinic acid
+                     riboside;overexpression suppresses the 6-AU sensitivity
+                     oftranscription elongation factor S-II, as well as
+                     resistanceto other pyrimidine derivatives; SDT1 has a
+                     paralog, PHM8,that arose from the whole genome
+                     duplication"
+                     /codon_start=1
+                     /product="nucleotidase"
+                     /protein_id="NP_011291.1"
+                     /db_xref="GeneID:852648"
+                     /db_xref="SGD:S000003192"
+                     /translation="MTVEYTASDLATYQNEVNEQIAKNKAHLESLTHPGSKVTFPIDQ
+                     DISATPQNPNLKVFFFDIDNCLYKSSTRIHDLMQQSILRFFQTHLKLSPEDAHVLNNS
+                     YYKEYGLAIRGLVMFHKVNALEYNRLVDDSLPLQDILKPDIPLRNMLLRLRQSGKIDK
+                     LWLFTNAYKNHAIRCLRLLGIADLFDGLTYCDYSRTDTLVCKPHVKAFEKAMKESGLA
+                     RYENAYFIDDSGKNIETGIKLGMKTCIHLVENEVNEILGQTPEGAIVISDILELPHVV
+                     SDLF"
+                     /label="SDT1 CDS"
+     CDS             complement(12029..13282)
+                     /gene="COG1"
+                     /locus_tag="YGL223C"
+                     /gene_synonym="COD3; LDB11; SEC36"
+                     /experiment="EXISTENCE:mutant phenotype:GO:0000301
+                     retrograde transport, vesicle recycling within Golgi
+                     [PMID:11703943]"
+                     /experiment="EXISTENCE:mutant phenotype:GO:0006891
+                     intra-Golgi vesicle-mediated transport [PMID:11703943]"
+                     /experiment="EXISTENCE:mutant phenotype:GO:0007030 Golgi
+                     organization [PMID:15932880]"
+                     /experiment="EXISTENCE:mutant phenotype:GO:0017119 Golgi
+                     transport complex [PMID:11703943]"
+                     /experiment="EXISTENCE:mutant phenotype:GO:0030674
+                     protein-macromolecule adaptor activity [PMID:15932880]"
+                     /experiment="EXISTENCE:mutant phenotype:GO:0032258
+                     cytoplasm to vacuole transport by the Cvt pathway
+                     [PMID:20065092]"
+                     /note="Essential component of the conserved oligomeric
+                     Golgi complex; a cytosolic tethering complex (Cog1p
+                     through Cog8p) that functions in protein trafficking to
+                     mediate fusion of transport vesicles to Golgi
+                     compartments"
+                     /codon_start=1
+                     /product="Golgi transport complex subunit COG1"
+                     /protein_id="NP_011292.1"
+                     /db_xref="GeneID:852649"
+                     /db_xref="SGD:S000003191"
+                     /translation="MDEVLPLFRDSHIPQIKDYQLELQNDLTKTNEAFQKNLLKNYNK
+                     ILSLTDSVNDLSLNLKNVDQDFKSLCFNDEKFQLNKLTPLPYQTTTHISPPRDEEKVS
+                     IPSQNILVISNWTISINNFCNRIVTSTTPSRIFDELLLNFHELSLIPVPSKFEALVKD
+                     KCCRLQKFLVDSMKTLNLTLLQWVKLYNLLNTEFSSKWDDDLLSIFNESLFETLFNDN
+                     VQALLISSANSKDHQYHSNQQYKDAIVVDFVNSSTFRDHLIRRTVKEINTHLDTLSTL
+                     RAKLKEPETLHKLDIFHDNDTNLNDGTVSPLDDDALKQYIDTAVFYSKGLTNDTTLQI
+                     YQTVQPTIEILQNLELYKCPQETLTDLRNKLITQLQEFKTQISSRLPSPLENSTSVVD
+                     DFITSYNNHNLLQLVIDQITQLRQQ"
+                     /label="COG1 CDS"
+     source          <13485..>15516
+                     /organism="Saccharomyces cerevisiae S288C"
+                     /mol_type="genomic DNA"
+                     /strain="S288C"
+                     /db_xref="taxon:559292"
+                     /chromosome="VI"
+                     /label="source Saccharomyces cerevisiae S288C"
+ORIGIN      
+        1 atcctgctgc agcaacttat aaacgtatct cacagaaaag gccggagaaa gttcttgaaa
+       61 tgtgtaattt agcctacctg ccaagcggct ggaattatcc cgagaataat tccgcgaccg
+      121 ggcctgttcc tgaactctaa gaagttttgg aatttccgaa cgcttcttcg catgaaagac
+      181 atgaactctt aagtaaaata atatgaactg gcatggtcgt aatcttttgg acgacggaat
+      241 atcatcgcta accattgtaa gggatgaagc ttgactagat atatttaaac gaccattttt
+      301 gtttcattct tattttagat tgcatttttt ataagtcact tttagttagc tcagaacgcc
+      361 agcaaaaacc atgactgatc gtaaaaccaa cttgccagaa gaaccgattt tcgaagaggc
+      421 agaagatgat ggctgccctt cgatagaaaa ttcttcacat ctgtcagtac ctacagtgga
+      481 ggaaaacaag gacttttccg agtataatgg ggaagaggca gaggaagttg ttgttccaga
+      541 aaagcctgct tcagcctatg ctactgtttc tatcatgtgt ttatgtatgg ctttcggtgg
+      601 atttatgtcc ggttgggaca caggtacgat ttctggtttc gtcaatcaga ctgatttttt
+      661 aagaagattt ggtaattata gccattccaa gaacacttac tacttatcta atgtgagaac
+      721 tgggttgatt gtgtccatct tcaatgtggg aagcgccatt ggctgtcttt tcttgtctaa
+      781 attgggtgat atttacggcc gctgcatggg tttgattata gttattgtcg tttatatggt
+      841 tggtattgtc attcaaattg cctctataga taagtggtat cagtatttta ttggaagaat
+      901 tatcgctggt ataggtgctg gttccattag tgttcttgcc ccgatgctta tttcggaaac
+      961 tgcgccaaag catatcagag gtacgttgct agcttgttgg caattgatgg tgactttcgc
+     1021 aattttcttg ggttattgta ccaattatgg taccaagact tactcgaatt ctgtccagtg
+     1081 gcgtgttccg cttggtctat gttttgcatg ggctattatt atgattggtg gtatgacgtt
+     1141 tgttccggaa tctcctcggt ttttggtgca agtcggtaag attgagcaag ctaaagcttc
+     1201 ttttgccaag tcgaacaagc ttagtgttga cgatcctgct gtggttgcag agattgatct
+     1261 tcttgttgct ggtgtggagg cagaagaagc aatgggaact gcttcatgga aggaattatt
+     1321 ttcgagaaag actaaagttt ttcaacgttt aacgatgaca gtcatgatta actctctgca
+     1381 gcaactaacc ggtgacaact atttcttcta ctacggtact actatcttca aatctgtcgg
+     1441 tatgaatgac tcttttgaga cttcaattgt cttgggtatt gtgaattttg cttcttgctt
+     1501 cttttcactt tattctgttg ataagttggg ccgtcgtaga tgtcttttac ttggagcagc
+     1561 caccatgacg gcgtgcatgg ttatttacgc ctccgttggc gtcacaagac tatatccgaa
+     1621 cggtaaaagt gaaccatcat ctaaaggtgc tggtaattgt acgattgttt tcacgtgttt
+     1681 ttacattttc tgcttttcct gcacctgggg acctgtatgt tatgtgatta tttctgaaac
+     1741 atttccatta agggtgagat ccaagtgtat gtccgttgca acagcggcca acttattgtg
+     1801 ggggttccta atcgggtttt tcactccttt tattacttcg gcaattaatt tctactacgg
+     1861 ttacgttttc atgggttgct tagcgttttc atatttttac gtctttttct ttgttccaga
+     1921 aacaaaaggt ctaactttag aagaagttga tgagatgtgg atggacggtg tattaccttg
+     1981 gaaatctgaa tcctgggtac cagcttctag aagggatggt gattatgata acgaaaaatt
+     2041 acagcatgac gagaaaccct tctacaaaag aatgttttag accggtgaaa acacacgcaa
+     2101 gcaaacttca aagtacattg ataaataatg tccaatgccc tctgtaatat aggggctttt
+     2161 taattcctaa gactgattcg atatattaaa caccagggct actgaagact gacagtcacg
+     2221 ttgagtccta ttatatcatt ttactcacag aagatttggt aatatgatac ttagatgggc
+     2281 ttaacaacaa agtgttttct tgatgttact gcccatgaaa aaaagcaaat caaattagta
+     2341 ggcggattgt taactttgtt tattttgaaa cccgtcagga ctaccaaaat ataacaaagt
+     2401 attgattatc gtcaacgctt tatagatcac tttttttttt ttttgaggaa ccgattaatt
+     2461 aatacatcgt agcctctgct tattgcataa cacaacaaaa aaatacaata atacgcaact
+     2521 tttgtttata gaaaaataaa aatggaacat atgatattct ctgttcgtca tatgataact
+     2581 taagcacttt cgtgtgtaca taggtattct agtgcattgg aatgagatca attatgattt
+     2641 cctaacccag aatttatatt actaatgatt tcagaattaa taaaagctga aataaaagga
+     2701 gtagcaatgt aataggaaat aaacgagggc acatagaaag gaagaagaaa aattacatta
+     2761 tgtggaatta ttgattccct tggcaatttc ccatagtctc atgaaaattc ctggcctatt
+     2821 ctgtattcat aattccatac tcttttttaa caatgaaact ccggtaatta ccacaatatt
+     2881 tacttatatc tcaatacgaa cgcatgttct cttcgaggaa gaccagcatt agcgctaagc
+     2941 gctaagcgat gagttgactt aatttttaaa aggacgatgt tggcgcgtta gtgcataaga
+     3001 aagtcagcaa atccctttaa gctgaaaacc ttgatatatt tctcggcctt taataatggc
+     3061 gcaactgatt ttaattatct ttgaatggct tatctgtaac gaacatgtgt tactaaacta
+     3121 gtagtaagtt agaaatactg tttatccaga atatgtaagt tggtgcttct aaagtaatat
+     3181 aagaccgctt taatttgttg taacctctga aatacaggta accgctgggt catctcctat
+     3241 ctaacttttg gtaaaaatga catcgaaaag aacaattttc gaaatattca atttgttcgg
+     3301 gtgtcggttt aatgctcaag gccccaatat ttcataatag gattctaaga attgcagaaa
+     3361 attcagctat gtttcaccca ttttgttatt ggtgaaaacc gccaaatcga tatcgatata
+     3421 gtcacatttt agagcgtgcc gatagtctct aaacttacac gaacgtcatt atttgtaagt
+     3481 agacaactgg gaattttaaa aaaggttgag aagattcgtt ttataaaata tgacgtcgta
+     3541 aaagaagaaa gtgacaatac tgttgctgcg ggttaaaaaa ataattctcc tacaagcttg
+     3601 agacctttat tacaattcct acctaaattg gctcttcagg ggggttttct aggcaggtat
+     3661 ctctagaatt tactcaagaa gtttattttc tagtgccaaa aagtctactg ctgatattcg
+     3721 cttctactga ttaagagctg ctttaaacca tcttgttgca acattgagtt tggacttaaa
+     3781 gcctcaagtt gttagtgatg ttgcttttca ggatgacgtg tagttgatca tcttacagaa
+     3841 aaggaagcaa tggtacgtat aagatattat tttaaatgag aagtagctgg tcttcaaatc
+     3901 acagacattg tgatggcaaa gcagtgataa ataaagtttt cacacccaaa gcaacatctt
+     3961 tccaaaccgt ttgtgtgccg tggtgaacag atagaagagg gcactgttat tcaaattttg
+     4021 agggtcggga gaattaactc gttaattatt cctggtgtcg aatttgcgtc attcctaaac
+     4081 ttggatattc ttatatggca aaaaaagaat tttttatgcc accaacacga cggcatattc
+     4141 tggagtgatt atagccactg ctaacaagat aaggcggtaa cacccgattg tgcagatgtc
+     4201 ctcatttatc ctgtttccga gcatttgatt aaccgtctct gtgagaccag ttaaagacct
+     4261 ctctcaagaa aaatatgtaa atttttttca gccactttat cggcactgga acgaaacgat
+     4321 atggtattcc cagtatcagc cacggccccg tgtaagccgt aaagtaaaca aaaattttta
+     4381 ccactaattt cgttgcgtat caatttatac tatcctttct aaggatgaag acaacacgat
+     4441 tgtgacagtg tgagagagtg ataaagcatt ggaggcaggc aaaacaagaa catggggttt
+     4501 ctttcggatc atccgcatac agctatcacc gagacgatct ttcgaattgt ctcttcaagg
+     4561 gactatacgc tagaagtgga gttagctccc ttgattcagc ttatcaaagc agatcacaac
+     4621 gattataact ataccgtgaa ccaagaagaa gctgcgcgag cacttagaaa gaaaataaag
+     4681 tatgggaacc ggctgcagca gtccaggact ctggacctct tggatctgtt catctcacaa
+     4741 ggcgtgaagt ttacagtcat gtacaatgat gacaagctgc tgcaaaggct gagagggatg
+     4801 gctacgaact ctgaaaacag cgggtccggt gaaaagtatg agcctaggat tattaagaag
+     4861 tgcgcggcgt atgctatctc gtggctaaac tatattacgc agaacaacct tgagaatgcg
+     4921 agggcgtatt caggtcttta tcaattgggt caaacagtca aacagaggta ctcgaagagc
+     4981 agccgttccc gccgtagcgg cggaggctct ggcggacggt ctaacttcat ggatgatagc
+     5041 gccgacgaca ctttgtacca gtccaactcg ctgactagtg ccgatagatt gtataggatt
+     5101 ccacagatca acatgaacaa agaggcaccc aggattcggc tcataatcag cgatgctctc
+     5161 gcgtctgctg tgtcgttaca gaactcgctg atcgggctgc ccaagggcaa gttctccaca
+     5221 gacgatgaag aggccacgtc caagttcatc caggcaaggg cgatcagaag gaaagttctt
+     5281 agatatctgc aattggtcac ggagggtgag tttctgggta gcttaattca tgccaatgat
+     5341 gaactggtgg ctgcgttgac tgcatacgac gaccgaagcg ctcaggacga tagcagcgat
+     5401 gaaagtgatc acggctcgta cgatgacggt atttatgatg aaaacgagca ggataacagc
+     5461 aggtatattg atagcgagtc ctcagaggaa gagagcttgt cttcttatca gccgtccacg
+     5521 atctcaaacc ctttcggtga tcataacaaa atttgaagaa gtatgtacgt atgcatacac
+     5581 acatatatat atatatatat atagtacatt taatccttct tgaggtttaa agacgcactg
+     5641 ttcacacagt gtctggtgtc cttgggcaag tttagcaact gtttccagcc ttcaccttca
+     5701 aacacatgtc ccaagtgtcc accacacctt gcacaacata tctccaccct cgcaggcatt
+     5761 aaagaattgt cacgatgata tgtgatggct ccaggggata cctcttcgta gaatgcgggc
+     5821 catccacaac gagcgtcgaa cttggccttg ctcgaataca acggtctgtc gcagttggca
+     5881 caatggtaga caccggactc gttggtgtgt aaatacgcac cggtgttggg cctttcagtg
+     5941 gccttatctc tcagcaccat cagctgcaat ggtgtcaggg catcgttcca cttcacgtca
+     6001 ttcgattcgt cactcatttt cttgctctta ttccagtact gcgtcagtac aatgtttctt
+     6061 ctccctggaa aagtcctgcg tacagttata acgtacagcc tgctccactt attcattttt
+     6121 tgatattgct tcctttctcc ctttatttaa actatcatcg gcgacatatt tcccaatagg
+     6181 caaagctgaa aaatactatc gctaattata acaaagaagc taggtcgaag ggcaaatgct
+     6241 atatagaact tttaacgtct aatatcaatt atagatagtg ttaatgactt gcaagttaca
+     6301 gcacacatga aagatgagag catacttact aaactgggcc caagaaaggt cagcgggaag
+     6361 cagaggggaa ttgctgcatt tcccaccacg tcctggtggg agtttccttt ccgagagcca
+     6421 cattgcctag ctagaggaag agagccttgg gcggggcgga tcccgtctag atgggtggca
+     6481 aacaaaagtt tatggtggcc cgtgttaaat gcgaacacac cttccttttt tcttctgaaa
+     6541 tttccccggc agatttttat taaatttttt tctttataat ccaatggtgc atgggtgaaa
+     6601 atgtatgggc taaatacaag aaaggatgtc aatatttctt ttttacgcgg aaggttataa
+     6661 tagacgtaag taatatggaa agaatttatg ggatttataa aatagataat aagtagatag
+     6721 ctgtcacaat gaacagatct tttcactttc taataaagta catatatata catgttcttc
+     6781 ttgtttttta ttttcacatt aagcagcagg ctattatgcc tttttttatt tttttctttt
+     6841 catcattcga cggactttca tttgaccttc gagtggtagc gtttttagcc aagcacgttt
+     6901 tcgttggcgt ttgttcaccc ttttttgttg taggtttttt tggttcatct agagtagttg
+     6961 ttactgaatg gctttcgaag cttgtattac ctcctcctcc agtttcaata acacaggtct
+     7021 tctctttgtc acgtaagaga ggcgaattct ccagcggata catcttgatt ataaaccctt
+     7081 acaaaagttt cctgcgatca cttttagatt tttcaatttt caataatact gccaagaaca
+     7141 aatcttcaac atttacattg aacttggagg atgtctcaaa atagtctaaa ttgcctggcg
+     7201 agaaacccag ctcttggata aatgttaaaa ccttttcatg agtaattgtt ctttccgaat
+     7261 caagatcaca tttcgtacac gctataataa ttggaatatc caattcacat tccaaacgta
+     7321 cgtggtgaat aatacaaata taagactcta agctggcaag agagctgtca ttagtagaat
+     7381 cgaaacataa tataattgca tcagactgcc taatttgaag agtagttagc tccgaaaggt
+     7441 acgaaacctc catttgattg gtatcaaaaa cttgaacatc aatactggtg cgtctttgag
+     7501 cagtcgattt attggcattg atcaggcgct cttctaggaa attgccacaa ctttcataaa
+     7561 ttgtgccaga gtttttagct ttgaaacccg cataattcgg caactgtcct tttacgccaa
+     7621 aggtacgata gtattttacc aaagtatcaa attggattgt cttgtggtag aggtccgaaa
+     7681 ccctataacg attagcatct gatatttgaa atgaactacc tagccaactg cgaaccagag
+     7741 aagtttttcc agaatgatca tcccccatta cagtaatctt cgaagatttc aagtcgaaac
+     7801 atcttgggat tgacgcaagg cttgcgccgt atgataagcg aacactcata gcgtttgacc
+     7861 taatacggta taattaaaag aaaaaaagac aaaaaaatag gatagccaac acagagcaga
+     7921 accttaacaa tttctctaga tacaatttac atgctcagcg tttctttata tacattctcc
+     7981 ctgtatatat tcctttgaaa atttcttaga tttttttgaa attaaataat aagtaacgag
+     8041 ccaagatcgt taaggtaagt acttgaaaag gatttttcaa agaaggcaag catagacgat
+     8101 ctctacgaca tttttttttg cccttgatgt tcttatgaaa aacaacttct acaagttgta
+     8161 cttatcagaa gtgcaaaaaa aaaaaattgt ttagacgaca aaaatagcgt ttaataatca
+     8221 aggtcatggc ttttaaacaa agcgttaatc ttaatcccta tatctcctct aaaatggacg
+     8281 tagcttttac aaagggatat tacgcttgag tatccctttt gaagatcgtt gcaccattac
+     8341 gtattaaagc attttttttc ctccgtcaag atcttacccg aatactgctg caggacatac
+     8401 aaagcgcact gacatgacgc aggaagattg attaagcgta gaatatcatg atgggttttt
+     8461 ttatctttta attgctttct atgtagtata atggaccgat ctttgcaagt atatatctgt
+     8521 atgtatccat atttagatgg cagcaagcaa tatagatttg atgagcttat atcattttat
+     8581 cgtccttgtc caaaaagtct tgataacatt aaaagtcact accgtcaaat ccatcatcaa
+     8641 atccgccgtc gaacccacca gcatcatcaa atccgccgtc ggacccacca gcatcatcac
+     8701 cgtagtaatt gttctcgaca acgacagtgt ctggtccgtc atagttgtgg tcgtcaaatg
+     8761 cgtgttctag catagctcca cctaacaaac ccgcaccaac accaagtaaa ccacccatca
+     8821 tggcaccgcc gtgtccacta cctttactgg tgcttggcgc agttccatag tatgcttgct
+     8881 gtggtgctgc tgctggcata ggggcttgtt gaggatagta acgctgctgt tgagggtatt
+     8941 gagggtactg aggctgttga ggctgatagt aacgaggttg ctgtgcttgg gcccctgctt
+     9001 gcacttgcgg tgttgattga gaagaataag gtggaggagc ctggtctgcc tgttgacgag
+     9061 aactcttctc attgttaaca cctggtggag gacctttggg tcttggccat gttgttcccc
+     9121 ttggtggttc ccactgagag ctgttcgtag ataaatctac ataataccaa gtctggtatt
+     9181 catcatcaaa aacagccttc cagccagaag gcacttgagg aggattactt ttactttgag
+     9241 ccattacttt aaaatgtttt gggttttttt atcgactctc ttgtagtgag tgataaaagc
+     9301 aattcagaaa gagtctttga aaaaagcttg taatggacca tggcaatgtg cgccatatat
+     9361 atatgcggct cccttatgag tagaagaaaa tatatgactg gtggtacaaa gtggcatggt
+     9421 ggtatataga tgtaggaaca ccatttgagt ttgccataat gattaaattt ccctttttat
+     9481 aaagaattag ccgcccataa cacgaaaaat atcacagttg acgaaagaag acacgtcgcc
+     9541 taaacgcgta atgaatcgca atatacgaaa agctaaacgg gtttttcaga atcctcttac
+     9601 ccagccttgg ataatagttt tggccgaaaa aaaaaaaaag aaagaaaaaa attgaaattt
+     9661 cgcgatccga acaaacaatg aacagaaaaa cagaatatat ataacgctgc caagcctatt
+     9721 tcttgttgcc gattaattgt tgacatcctc ttaattacca aaagagccta agaaaacaaa
+     9781 cacactaacc acacagtatc tttcgccatg atgtctgaat tgaaaacagg tcatgcaggc
+     9841 cataaccctt gggcttcagt tgccaattcc ggtccgatct ctattttatc ctactgtggt
+     9901 tcctctattt taatgacggt gactaacaag ttcgtcgtca atttgaagga tttcaacatg
+     9961 aactttgtca tgcttttcgt gcaatctttg gtttgtacta taaccttgat tatcctacgt
+    10021 atactgggct atgcgaagtt ccgttcatta aacaaaacag acgccaagaa ctggttccct
+    10081 atttcctttt tactggtctt gatgatctac acctcttcga aggctttaca atacttggct
+    10141 gttccaattt acaccatttt caagaatttg actattatct tgattgctta tggtgaggtt
+    10201 ctcttttttg gtggctctgt cacctccatg gaattgtcat catttttgtt gatggtcctt
+    10261 tcttctgtcg ttgcaacttg gggtgaccag caagctgtgg ctgccaaggc tgcttcattg
+    10321 gctgaaggag cagccggtgc tgttgcctcc tttaacccag gttatttctg gatgttcacc
+    10381 aactgtatca cttctgcatt attcgttctt ataatgagaa agagaattaa gttaactaac
+    10441 ttcaaggatt tcgacactat gttttacaac aatgttttgg ctctacctat tctattgctg
+    10501 ttttctttct gtgtggaaga ttggtcttca gttaatttga ccaataactt ttctaacgat
+    10561 tcgctaactg ctatgatcat cagtggtgtt gcatccgtcg gtatttctta ctgttccggt
+    10621 tggtgtgttc gtgttacttc gtctactaca tattcgatgg taggggcttt gaacaagctg
+    10681 ccaattgcct tgtctggttt gattttcttt gatgctccaa gaaacttctt atctattctc
+    10741 tccattttta ttggtttcct atcaggtatt atttatgctg ttgccaaaca aaagaagcaa
+    10801 caagcccaac ctttacgtaa atgagaactt acggggggtg caatttattt tttttttttg
+    10861 gtttatttta ttttatagag gcatctaatg caagtagatt tatatacaat tatacttaaa
+    10921 attgatatac cttagaacag gtcggacaca acgtgtggta actccaatat atcactaatg
+    10981 acaatagcgc cttctggtgt ttgccccaaa atttcattta cttcattctc aactaaatga
+    11041 atacatgttt tcatgcccaa tttgatacct gtctcgatgt ttttcccact gtcatctata
+    11101 aaataagcat tctcgtatct tgccaacccg ctttccttca tggctttttc aaatgcttta
+    11161 acatgtggtt tgcagaccag cgtatctgtc ctagagtagt cacaatatgt caatccatca
+    11221 aataaatccg ctatacccaa caatctcagg caacgtattg cgtggttttt ataagcgttg
+    11281 gtgaaaagcc acaatttatc aatctttccc gattgtctca atctcaacag catattcctt
+    11341 aatggtatat caggtttcaa gatatcttgt agtggtaagg aatcatccac aagccggtta
+    11401 tattccagtg cgttcacttt gtggaacatt acaagtcccc ttatggcaag tccatactct
+    11461 ttgtagtaag agttattcaa aacgtgagca tcttcaggtg atagtttcaa gtgtgtttga
+    11521 aagaacctca gtatagattg ttgcataaga tcgtgaattc tcgtggatga tttatagaga
+    11581 cagttgtcga tatcaaaaaa gaaaactttt aagttcgggt tttgaggtgt agcagaaata
+    11641 tcttgatcga tcggaaatgt cactttcgaa cctggatgag tcaatgattc aagatgtgct
+    11701 ttattcttgg caatttgttc gttcacctca ttctgatagg ttgccaaatc ggatgcagta
+    11761 tattcaacag tcatgaagcc tagtaatgat tcggtccaag agcttactca tgtattccga
+    11821 aattaattca ggtgaaatgg gggagtaata tgatatcaag aaggcgatca cttattgaag
+    11881 tccacataga tacacacaga taaacatata tatattatgt atatatatat atatatatat
+    11941 atatatatat atatgtatat atcaacgccc ataccattat cattatcaat aagtttgcga
+    12001 ggcgggtacc ctccctcgtg ctattatatt actgttgcct taattgagta atttgatcga
+    12061 tgactaattg caagagattg tgattgttgt acgaagttat aaaatcatcc acaacactcg
+    12121 ttgagttttc cagtggtgaa ggtaagcggg atgagatctg agtcttaaac tcttgcaatt
+    12181 gagtaatcaa tttatttctc aaatctgtca gtgtctcttg agggcattta tacaattcta
+    12241 agttttgtag gatttcaatc gtaggctgca ccgtttgata aatttgcaac gtggtatcat
+    12301 tggttaaacc ttttgaatag aataccgctg tatcaatata ttgtttcaat gcatcatcat
+    12361 caagtggaga tacagtgcca tcattgaggt tcgtatcatt atcatggaag atatctaatt
+    12421 tatgaagagt ttcaggctcc ttaagcttgg ctctcaaagt agagagtgta tccaaatgtg
+    12481 tgtttatttc tttcacggtt ctccgaatga gatggtctct aaaggtggac gaattcacaa
+    12541 aatcgacaac aatcgcgtcc ttatattgct gattggagtg atattgatga tctttgctgt
+    12601 tggcacttga tatcagtaac gcttgaacgt tatcgttaaa tagtgtctcg aatagggatt
+    12661 cattgaatat agaaagtaaa tcatcgtccc acttcgagga aaactccgtg tttagtaaat
+    12721 tgtatagttt tacccactgt agtaaagtta agtttaatgt cttcatagag tccaccaaga
+    12781 acttctgtag tcgacaacat ttgtccttga caagcgcttc aaatttggaa ggaactggta
+    12841 tcaaagataa ttcgtggaaa ttcaacagta gctcgtcgaa tatccgcgac ggagtagtgg
+    12901 aagtaactat acgattacag aagttgttga tggagatggt ccaatttgaa attactaaaa
+    12961 tgttttgcga tggtatgctg actttttctt cgtcacgagg tggtgatata tgggtagtgg
+    13021 tttggtatgg tagtggagtt aacttattca actgaaattt ttcatcattg aaacacaggg
+    13081 atttaaaatc ttgatcaaca tttttcaaat tgagcgacaa gtcattaaca gaatcggtca
+    13141 agcttaagat cttgttatag ttctttagca aattcttttg gaaggcctca ttggttttag
+    13201 tcaaatcgtt ctgtaactcc aattgataat ctttaatctg tggaatatga gaatcgcgaa
+    13261 acaatggtaa gacttcatcc attttctatc gtattggttt tttttaggtt ttctaccaca
+    13321 agatttgttg tacgaatgtg ttatttatta ttcaccgcca tgtttcattt ttcttcagca
+    13381 taatgatgaa ctgtaacaga aaataggaaa aaaaaattgt catctgagaa attgctttgg
+    13441 atgaccagat ccaaaacaga cataagcatt cgtataattg gtacaccaat tagtgatatt
+    13501 atgcatgact gttaacaact ttttgactaa tctctgaaat catatgaaga tcttgctgca
+    13561 tttcatgcat ctaagaaatc aacctatatc aacagatttc aataattact ctaaacttat
+    13621 gctgtaactt agaaagtaac cagcctgtgt tgactgattg agttgcgtat taactgcgcc
+    13681 tagtcatttc aacacttata atttgcttca gcttaagtgt ggttcatctt tttttttctg
+    13741 gaaactttgc atgccctcaa agcatgagta gttagttatc tttttgacaa tgatctcttt
+    13801 tgaaaatatc tactgtagat ttgcatggac gcacgtcgcc catacgccaa actttggcaa
+    13861 tgatactcgt tattcgtaat atcagtccgt caaggtgctg tgatttctct attttatatt
+    13921 gcctattatt ttttcaaatg atttgagccg ttttaaattg agtatgcaat gagtcttttg
+    13981 aatcaaccgt aaggcagttc cataaccact gccacgaata cgtttcacta ccttgaagaa
+    14041 tctctaatgt aggccgtatt cttcgcactt agttctgacg atgtagacat ctcattatat
+    14101 aagagcataa gcgcctgttt ctagaatcat ttcttcgtga cccagctttt tgagttattt
+    14161 cgcggtattt tgaaacattt ctcgagcttg acgtgaacat ccttatattt catgacaaac
+    14221 tcgatcattg gaacatccct gcctcgattt tagagctagt atcaaatttc aatctctttg
+    14281 tgatggagcc ccgctcctat ttcaaaagag aagtttcttg tatgcatatg ttattgaagt
+    14341 ctgattatag caagtgcaat gtcgtctcaa ttattttaac tatttttagc catacatgtt
+    14401 agttatcctc aaagagagcc tccagactgg gaagcagtgt ttgtcatttc aaataagtag
+    14461 atttcacagt ttgtatgatt ttcgaagcca ggattcattg ggctttgagt aaagagaagc
+    14521 cgcgtattac gaacagctta cgatattgta aaatattccc ttattgtggt gccccaatgg
+    14581 atacatgcca gagaaatgtc tgtgaaattg aacaattaca atgacgagag caagtaatcc
+    14641 ggcggccttg tctctctttc actagtaccg tctatatctc ttgagcgcca atatgcgaaa
+    14701 gctttcacaa ggttgatgtt catggtattc ggcgtcgata gcgaattgct tactaagaaa
+    14761 cattagggtg cagtacagcc ttgtttttcc agttcgacta acctttttct tggcagtatg
+    14821 gagactgact aggtctccca aacattcatt gtaactgctg tttaaagatt ttgttctaac
+    14881 ctaaattcaa gtgagaagct gaacatgtgt ctctacttat gatatcacga cagcaaatac
+    14941 taatcttgcc ataaatagtc tagcgttttg caacttacct ctagatatat tttatttctt
+    15001 gaggaaccgt tttcgtcggt aataacaaaa tactactgaa acgccacagc attgagagaa
+    15061 tacgttatcg attacggctt tcttctcgct ccagatgtcg cgggtaagat attcacctca
+    15121 aacttttctt gttgagtgtc gtcacaaatc tagaacctac atgccatctc aacgattttt
+    15181 ctggagaaag gcctcactcc gttccgtacg taatgcatag ataaagtatc aggatcttca
+    15241 cgatgctcga gagttactta gtagtctgag tttatgcgaa aaaaactccg ccgttgtaat
+    15301 aatcgggaat acacagaagt agtactgcac tatcactggg atactcaaaa accttctttt
+    15361 taacttttct atcccacaaa tagaacatag gaaagaacat tgactcctcc acttgaagtt
+    15421 aaattacagg aacaaacgcc taactataat ttcgacattg ttgcatcaac gaatcgaccg
+    15481 aaagaaaaat ctggagttgc agttatcact tgtatg
+//

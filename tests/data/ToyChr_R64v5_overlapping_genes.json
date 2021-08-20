@@ -1,0 +1,1228 @@
+{
+    "feature_collections": null,
+    "genes": [
+        {
+            "transcripts": [
+                {
+                    "exon_starts": [
+                        5609
+                    ],
+                    "exon_ends": [
+                        6116
+                    ],
+                    "strand": "MINUS",
+                    "cds_starts": [
+                        5609
+                    ],
+                    "cds_ends": [
+                        6116
+                    ],
+                    "cds_frames": [
+                        "ZERO"
+                    ],
+                    "qualifiers": {
+                        "gene": [
+                            "MXR2"
+                        ],
+                        "locus_tag": [
+                            "YCL033C"
+                        ],
+                        "EC_number": [
+                            "1.8.4.12"
+                        ],
+                        "experiment": [
+                            "EXISTENCE:direct assay:GO:0005739 mitochondrion [PMID:20799725]",
+                            "EXISTENCE:direct assay:GO:0033743 peptide-methionine (R)-S-oxide reductase activity [PMID:15141092]",
+                            "EXISTENCE:genetic interaction:GO:0034599 cellular response to oxidative stress [PMID:11929995]",
+                            "EXISTENCE:mutant phenotype:GO:0033743 peptide-methionine (R)-S-oxide reductase activity [PMID:15141092]",
+                            "EXISTENCE:mutant phenotype:GO:0034599 cellular response to oxidative stress [PMID:11929995]"
+                        ],
+                        "note": [
+                            "Methionine-R-sulfoxide reductase; involved in the response to oxidative stress; protects iron-sulfur clusters from oxidative inactivation along with MXR1; involved in the regulation of lifespan"
+                        ],
+                        "codon_start": [
+                            "1"
+                        ],
+                        "product": [
+                            "peptide-methionine (R)-S-oxide reductase"
+                        ],
+                        "protein_id": [
+                            "NP_009897.1"
+                        ],
+                        "db_xref": [
+                            "GeneID:850324",
+                            "SGD:S000000538"
+                        ],
+                        "translation": [
+                            "MNKWSRLYVITVRRTFPGRRNIVLTQYWNKSKKMSDESNDVKWNDALTPLQLMVLRDKATERPNTGAYLHTNESGVYHCANCDRPLYSSKAKFDARCGWPAFYEEVSPGAITYHRDNSLMPARVEICCARCGGHLGHVFEGEGWKQLLNLPKDTRHCVNSASLNLKKD"
+                        ],
+                        "label": [
+                            "MXR2 CDS"
+                        ]
+                    },
+                    "is_primary_tx": false,
+                    "transcript_id": null,
+                    "protein_id": "NP_009897.1",
+                    "product": "peptide-methionine (R)-S-oxide reductase",
+                    "transcript_symbol": "MXR2",
+                    "transcript_type": "protein_coding",
+                    "sequence_name": "CM021127.1",
+                    "sequence_guid": null,
+                    "transcript_interval_guid": "02954a60-2f54-60ee-efa8-68e79cf91fa2",
+                    "transcript_guid": null
+                }
+            ],
+            "gene_id": null,
+            "gene_symbol": "MXR2",
+            "gene_type": "protein_coding",
+            "locus_tag": "YCL033C",
+            "qualifiers": {
+                "gene": [
+                    "MXR2"
+                ],
+                "locus_tag": [
+                    "YCL033C"
+                ],
+                "EC_number": [
+                    "1.8.4.12"
+                ],
+                "experiment": [
+                    "EXISTENCE:direct assay:GO:0005739 mitochondrion [PMID:20799725]",
+                    "EXISTENCE:direct assay:GO:0033743 peptide-methionine (R)-S-oxide reductase activity [PMID:15141092]",
+                    "EXISTENCE:genetic interaction:GO:0034599 cellular response to oxidative stress [PMID:11929995]",
+                    "EXISTENCE:mutant phenotype:GO:0033743 peptide-methionine (R)-S-oxide reductase activity [PMID:15141092]",
+                    "EXISTENCE:mutant phenotype:GO:0034599 cellular response to oxidative stress [PMID:11929995]"
+                ],
+                "note": [
+                    "Methionine-R-sulfoxide reductase; involved in the response to oxidative stress; protects iron-sulfur clusters from oxidative inactivation along with MXR1; involved in the regulation of lifespan"
+                ],
+                "codon_start": [
+                    "1"
+                ],
+                "product": [
+                    "peptide-methionine (R)-S-oxide reductase"
+                ],
+                "protein_id": [
+                    "NP_009897.1"
+                ],
+                "db_xref": [
+                    "GeneID:850324",
+                    "SGD:S000000538"
+                ],
+                "translation": [
+                    "MNKWSRLYVITVRRTFPGRRNIVLTQYWNKSKKMSDESNDVKWNDALTPLQLMVLRDKATERPNTGAYLHTNESGVYHCANCDRPLYSSKAKFDARCGWPAFYEEVSPGAITYHRDNSLMPARVEICCARCGGHLGHVFEGEGWKQLLNLPKDTRHCVNSASLNLKKD"
+                ],
+                "label": [
+                    "MXR2 CDS"
+                ]
+            },
+            "sequence_name": "CM021127.1",
+            "sequence_guid": null,
+            "gene_guid": "50871284-3029-fec2-0df1-a276aef427d6"
+        },
+        {
+            "transcripts": [
+                {
+                    "exon_starts": [
+                        4491
+                    ],
+                    "exon_ends": [
+                        5556
+                    ],
+                    "strand": "PLUS",
+                    "cds_starts": [
+                        4491
+                    ],
+                    "cds_ends": [
+                        5556
+                    ],
+                    "cds_frames": [
+                        "ZERO"
+                    ],
+                    "qualifiers": {
+                        "gene": [
+                            "LSB5"
+                        ],
+                        "locus_tag": [
+                            "YCL034W"
+                        ],
+                        "experiment": [
+                            "EXISTENCE:direct assay:GO:0005737 cytoplasm [PMID:18298676]",
+                            "EXISTENCE:direct assay:GO:0005829 cytosol [PMID:26928762]",
+                            "EXISTENCE:direct assay:GO:0005938 cell cortex[PMID:12388763|PMID:15651983|PMID:18298676]",
+                            "EXISTENCE:direct assay:GO:0030479 actin cortical patch [PMID:15651983]",
+                            "EXISTENCE:genetic interaction:GO:0006897 endocytosis [PMID:12388763]",
+                            "EXISTENCE:genetic interaction:GO:0030036 actin cytoskeleton organization [PMID:12388763]",
+                            "EXISTENCE:genetic interaction:GO:0051666 actin cortical patch localization [PMID:12388763]",
+                            "EXISTENCE:physical interaction:GO:0007015 actin filament organization [PMID:10512884]"
+                        ],
+                        "note": [
+                            "Protein involved in membrane-trafficking events at plasma membrane; interacts with actin regulators Sla1p and Las17p, ubiquitin, Arf3p to couple actin dynamics to membrane trafficking processes; similar structure to GGA family of proteins with N-terminal VHS domain and GAT domain; binds Las17p, which is homolog of human Wiskott-Aldrich Syndrome protein involved in actin patch assembly, actin polymerization; may mediate disassembly of Pan1 complex from endocytic coat"
+                        ],
+                        "codon_start": [
+                            "1"
+                        ],
+                        "product": [
+                            "Lsb5p"
+                        ],
+                        "protein_id": [
+                            "NP_009896.2"
+                        ],
+                        "db_xref": [
+                            "GeneID:850323",
+                            "SGD:S000000539"
+                        ],
+                        "translation": [
+                            "MGFLSDHPHTAITETIFRIVSSRDYTLEVELAPLIQLIKADHNDYNYTVNQEEAARALRKKIKYGNRLQQSRTLDLLDLFISQGVKFTVMYNDDKLLQRLRGMATNSENSGSGEKYEPRIIKKCAAYAISWLNYITQNNLENARAYSGLYQLGQTVKQRYSKSSRSRRSGGGSGGRSNFMDDSADDTLYQSNSLTSADRLYRIPQINMNKEAPRIRLIISDALASAVSLQNSLIGLPKGKFSTDDEEATSKFIQARAIRRKVLRYLQLVTEGEFLGSLIHANDELVAALTAYDDRSAQDDSSDESDHGSYDDGIYDENEQDNSRYIDSESSEEESLSSYQPSTISNPFGDHNKI"
+                        ],
+                        "label": [
+                            "LSB5 CDS"
+                        ]
+                    },
+                    "is_primary_tx": false,
+                    "transcript_id": null,
+                    "protein_id": "NP_009896.2",
+                    "product": "Lsb5p",
+                    "transcript_symbol": "LSB5",
+                    "transcript_type": "protein_coding",
+                    "sequence_name": "CM021127.1",
+                    "sequence_guid": null,
+                    "transcript_interval_guid": "225cce43-5441-0e39-aa4a-4a766ed13fec",
+                    "transcript_guid": null
+                }
+            ],
+            "gene_id": null,
+            "gene_symbol": "LSB5",
+            "gene_type": "protein_coding",
+            "locus_tag": "YCL034W",
+            "qualifiers": {
+                "gene": [
+                    "LSB5"
+                ],
+                "locus_tag": [
+                    "YCL034W"
+                ],
+                "experiment": [
+                    "EXISTENCE:direct assay:GO:0005737 cytoplasm [PMID:18298676]",
+                    "EXISTENCE:direct assay:GO:0005829 cytosol [PMID:26928762]",
+                    "EXISTENCE:direct assay:GO:0005938 cell cortex[PMID:12388763|PMID:15651983|PMID:18298676]",
+                    "EXISTENCE:direct assay:GO:0030479 actin cortical patch [PMID:15651983]",
+                    "EXISTENCE:genetic interaction:GO:0006897 endocytosis [PMID:12388763]",
+                    "EXISTENCE:genetic interaction:GO:0030036 actin cytoskeleton organization [PMID:12388763]",
+                    "EXISTENCE:genetic interaction:GO:0051666 actin cortical patch localization [PMID:12388763]",
+                    "EXISTENCE:physical interaction:GO:0007015 actin filament organization [PMID:10512884]"
+                ],
+                "note": [
+                    "Protein involved in membrane-trafficking events at plasma membrane; interacts with actin regulators Sla1p and Las17p, ubiquitin, Arf3p to couple actin dynamics to membrane trafficking processes; similar structure to GGA family of proteins with N-terminal VHS domain and GAT domain; binds Las17p, which is homolog of human Wiskott-Aldrich Syndrome protein involved in actin patch assembly, actin polymerization; may mediate disassembly of Pan1 complex from endocytic coat"
+                ],
+                "codon_start": [
+                    "1"
+                ],
+                "product": [
+                    "Lsb5p"
+                ],
+                "protein_id": [
+                    "NP_009896.2"
+                ],
+                "db_xref": [
+                    "GeneID:850323",
+                    "SGD:S000000539"
+                ],
+                "translation": [
+                    "MGFLSDHPHTAITETIFRIVSSRDYTLEVELAPLIQLIKADHNDYNYTVNQEEAARALRKKIKYGNRLQQSRTLDLLDLFISQGVKFTVMYNDDKLLQRLRGMATNSENSGSGEKYEPRIIKKCAAYAISWLNYITQNNLENARAYSGLYQLGQTVKQRYSKSSRSRRSGGGSGGRSNFMDDSADDTLYQSNSLTSADRLYRIPQINMNKEAPRIRLIISDALASAVSLQNSLIGLPKGKFSTDDEEATSKFIQARAIRRKVLRYLQLVTEGEFLGSLIHANDELVAALTAYDDRSAQDDSSDESDHGSYDDGIYDENEQDNSRYIDSESSEEESLSSYQPSTISNPFGDHNKI"
+                ],
+                "label": [
+                    "LSB5 CDS"
+                ]
+            },
+            "sequence_name": "CM021127.1",
+            "sequence_guid": null,
+            "gene_guid": "dbe85959-f8bb-9dcd-20d7-07800f3d5d09"
+        },
+        {
+            "transcripts": [
+                {
+                    "exon_starts": [
+                        8608
+                    ],
+                    "exon_ends": [
+                        9244
+                    ],
+                    "strand": "MINUS",
+                    "cds_starts": [
+                        8608
+                    ],
+                    "cds_ends": [
+                        9244
+                    ],
+                    "cds_frames": [
+                        "ZERO"
+                    ],
+                    "qualifiers": {
+                        "gene": [
+                            "WWM1"
+                        ],
+                        "locus_tag": [
+                            "YFL010C"
+                        ],
+                        "experiment": [
+                            "EXISTENCE:direct assay:GO:0005634 nucleus [PMID:12062425|PMID:14562095]",
+                            "EXISTENCE:direct assay:GO:0005737 cytoplasm [PMID:11914276|PMID:14562095]",
+                            "EXISTENCE:direct assay:GO:0005739 mitochondrion [PMID:14576278|PMID:16823961]"
+                        ],
+                        "note": [
+                            "WW domain containing hypothetical protein; binds toMca1p, a caspase-related protease that regulatesH2O2-induced apoptosis; overexpression causes G1 phasegrowth arrest and clonal death that is suppressed byoverexpression of MCA1"
+                        ],
+                        "codon_start": [
+                            "1"
+                        ],
+                        "product": [
+                            "Wwm1p"
+                        ],
+                        "protein_id": [
+                            "NP_570898.1"
+                        ],
+                        "db_xref": [
+                            "GeneID:850538",
+                            "SGD:S000001884"
+                        ],
+                        "translation": [
+                            "MAQSKSNPPQVPSGWKAVFDDEYQTWYYVDLSTNSSQWEPPRGTTWPRPKGPPPGVNNEKSSRQQADQAPPPYSSQSTPQVQAGAQAQQPRYYQPQQPQYPQYPQQQRYYPQQAPMPAAAPQQAYYGTAPSTSKGSGHGGAMMGGLLGVGAGLLGGAMLEHAFDDHNYDGPDTVVVENNYYGDDAGGSDGGFDDAGGFDGGFDDGFDGSDF"
+                        ],
+                        "label": [
+                            "WWM1 CDS"
+                        ]
+                    },
+                    "is_primary_tx": false,
+                    "transcript_id": null,
+                    "protein_id": "NP_570898.1",
+                    "product": "Wwm1p",
+                    "transcript_symbol": "WWM1",
+                    "transcript_type": "protein_coding",
+                    "sequence_name": "CM021127.1",
+                    "sequence_guid": null,
+                    "transcript_interval_guid": "dd32c217-dc6a-3d83-2777-ab46f9229e28",
+                    "transcript_guid": null
+                }
+            ],
+            "gene_id": null,
+            "gene_symbol": "WWM1",
+            "gene_type": "protein_coding",
+            "locus_tag": "YFL010C",
+            "qualifiers": {
+                "gene": [
+                    "WWM1"
+                ],
+                "locus_tag": [
+                    "YFL010C"
+                ],
+                "experiment": [
+                    "EXISTENCE:direct assay:GO:0005634 nucleus [PMID:12062425|PMID:14562095]",
+                    "EXISTENCE:direct assay:GO:0005737 cytoplasm [PMID:11914276|PMID:14562095]",
+                    "EXISTENCE:direct assay:GO:0005739 mitochondrion [PMID:14576278|PMID:16823961]"
+                ],
+                "note": [
+                    "WW domain containing hypothetical protein; binds toMca1p, a caspase-related protease that regulatesH2O2-induced apoptosis; overexpression causes G1 phasegrowth arrest and clonal death that is suppressed byoverexpression of MCA1"
+                ],
+                "codon_start": [
+                    "1"
+                ],
+                "product": [
+                    "Wwm1p"
+                ],
+                "protein_id": [
+                    "NP_570898.1"
+                ],
+                "db_xref": [
+                    "GeneID:850538",
+                    "SGD:S000001884"
+                ],
+                "translation": [
+                    "MAQSKSNPPQVPSGWKAVFDDEYQTWYYVDLSTNSSQWEPPRGTTWPRPKGPPPGVNNEKSSRQQADQAPPPYSSQSTPQVQAGAQAQQPRYYQPQQPQYPQYPQQQRYYPQQAPMPAAAPQQAYYGTAPSTSKGSGHGGAMMGGLLGVGAGLLGGAMLEHAFDDHNYDGPDTVVVENNYYGDDAGGSDGGFDDAGGFDGGFDDGFDGSDF"
+                ],
+                "label": [
+                    "WWM1 CDS"
+                ]
+            },
+            "sequence_name": "CM021127.1",
+            "sequence_guid": null,
+            "gene_guid": "9cc92ad8-11bd-5a7a-ec46-733c48d802cb"
+        },
+        {
+            "transcripts": [
+                {
+                    "exon_starts": [
+                        8490
+                    ],
+                    "exon_ends": [
+                        8775
+                    ],
+                    "strand": "PLUS",
+                    "cds_starts": [
+                        8490
+                    ],
+                    "cds_ends": [
+                        8775
+                    ],
+                    "cds_frames": [
+                        "ZERO"
+                    ],
+                    "qualifiers": {
+                        "gene": [
+                            "AUA1"
+                        ],
+                        "locus_tag": [
+                            "YFL010W-A"
+                        ],
+                        "gene_synonym": [
+                            "YFL011W-A"
+                        ],
+                        "experiment": [
+                            "EXISTENCE:mutant phenotype:GO:0006865 amino acid transport [PMID:8497191]"
+                        ],
+                        "note": [
+                            "Protein required for the negative regulation by ammonia of Gap1p; Gap1p is a general amino acid permease"
+                        ],
+                        "codon_start": [
+                            "1"
+                        ],
+                        "product": [
+                            "Aua1p"
+                        ],
+                        "protein_id": [
+                            "NP_116645.1"
+                        ],
+                        "db_xref": [
+                            "GeneID:850537",
+                            "SGD:S000001955"
+                        ],
+                        "translation": [
+                            "MDRSLQVYICMYPYLDGSKQYRFDELISFYRPCPKSLDNIKSHYRQIHHQIRRRTHQHHQIRRRTHQHHHRSNCSRQRQCLVRHSCGRQMRVLA"
+                        ],
+                        "label": [
+                            "AUA1 CDS"
+                        ]
+                    },
+                    "is_primary_tx": false,
+                    "transcript_id": null,
+                    "protein_id": "NP_116645.1",
+                    "product": "Aua1p",
+                    "transcript_symbol": "AUA1",
+                    "transcript_type": "protein_coding",
+                    "sequence_name": "CM021127.1",
+                    "sequence_guid": null,
+                    "transcript_interval_guid": "48173504-4feb-1b8e-893f-16c53a73e476",
+                    "transcript_guid": null
+                }
+            ],
+            "gene_id": null,
+            "gene_symbol": "AUA1",
+            "gene_type": "protein_coding",
+            "locus_tag": "YFL010W-A",
+            "qualifiers": {
+                "gene": [
+                    "AUA1"
+                ],
+                "locus_tag": [
+                    "YFL010W-A"
+                ],
+                "gene_synonym": [
+                    "YFL011W-A"
+                ],
+                "experiment": [
+                    "EXISTENCE:mutant phenotype:GO:0006865 amino acid transport [PMID:8497191]"
+                ],
+                "note": [
+                    "Protein required for the negative regulation by ammonia of Gap1p; Gap1p is a general amino acid permease"
+                ],
+                "codon_start": [
+                    "1"
+                ],
+                "product": [
+                    "Aua1p"
+                ],
+                "protein_id": [
+                    "NP_116645.1"
+                ],
+                "db_xref": [
+                    "GeneID:850537",
+                    "SGD:S000001955"
+                ],
+                "translation": [
+                    "MDRSLQVYICMYPYLDGSKQYRFDELISFYRPCPKSLDNIKSHYRQIHHQIRRRTHQHHQIRRRTHQHHHRSNCSRQRQCLVRHSCGRQMRVLA"
+                ],
+                "label": [
+                    "AUA1 CDS"
+                ]
+            },
+            "sequence_name": "CM021127.1",
+            "sequence_guid": null,
+            "gene_guid": "35ea6ea6-6486-2fa3-10aa-fb066745d29a"
+        },
+        {
+            "transcripts": [
+                {
+                    "exon_starts": [
+                        12028
+                    ],
+                    "exon_ends": [
+                        13282
+                    ],
+                    "strand": "MINUS",
+                    "cds_starts": [
+                        12028
+                    ],
+                    "cds_ends": [
+                        13282
+                    ],
+                    "cds_frames": [
+                        "ZERO"
+                    ],
+                    "qualifiers": {
+                        "gene": [
+                            "COG1"
+                        ],
+                        "locus_tag": [
+                            "YGL223C"
+                        ],
+                        "gene_synonym": [
+                            "COD3; LDB11; SEC36"
+                        ],
+                        "experiment": [
+                            "EXISTENCE:mutant phenotype:GO:0000301 retrograde transport, vesicle recycling within Golgi [PMID:11703943]",
+                            "EXISTENCE:mutant phenotype:GO:0006891 intra-Golgi vesicle-mediated transport [PMID:11703943]",
+                            "EXISTENCE:mutant phenotype:GO:0007030 Golgi organization [PMID:15932880]",
+                            "EXISTENCE:mutant phenotype:GO:0017119 Golgi transport complex [PMID:11703943]",
+                            "EXISTENCE:mutant phenotype:GO:0030674 protein-macromolecule adaptor activity [PMID:15932880]",
+                            "EXISTENCE:mutant phenotype:GO:0032258 cytoplasm to vacuole transport by the Cvt pathway [PMID:20065092]"
+                        ],
+                        "note": [
+                            "Essential component of the conserved oligomeric Golgi complex; a cytosolic tethering complex (Cog1p through Cog8p) that functions in protein trafficking to mediate fusion of transport vesicles to Golgi compartments"
+                        ],
+                        "codon_start": [
+                            "1"
+                        ],
+                        "product": [
+                            "Golgi transport complex subunit COG1"
+                        ],
+                        "protein_id": [
+                            "NP_011292.1"
+                        ],
+                        "db_xref": [
+                            "GeneID:852649",
+                            "SGD:S000003191"
+                        ],
+                        "translation": [
+                            "MDEVLPLFRDSHIPQIKDYQLELQNDLTKTNEAFQKNLLKNYNKILSLTDSVNDLSLNLKNVDQDFKSLCFNDEKFQLNKLTPLPYQTTTHISPPRDEEKVSIPSQNILVISNWTISINNFCNRIVTSTTPSRIFDELLLNFHELSLIPVPSKFEALVKDKCCRLQKFLVDSMKTLNLTLLQWVKLYNLLNTEFSSKWDDDLLSIFNESLFETLFNDNVQALLISSANSKDHQYHSNQQYKDAIVVDFVNSSTFRDHLIRRTVKEINTHLDTLSTLRAKLKEPETLHKLDIFHDNDTNLNDGTVSPLDDDALKQYIDTAVFYSKGLTNDTTLQIYQTVQPTIEILQNLELYKCPQETLTDLRNKLITQLQEFKTQISSRLPSPLENSTSVVDDFITSYNNHNLLQLVIDQITQLRQQ"
+                        ],
+                        "label": [
+                            "COG1 CDS"
+                        ]
+                    },
+                    "is_primary_tx": false,
+                    "transcript_id": null,
+                    "protein_id": "NP_011292.1",
+                    "product": "Golgi transport complex subunit COG1",
+                    "transcript_symbol": "COG1",
+                    "transcript_type": "protein_coding",
+                    "sequence_name": "CM021127.1",
+                    "sequence_guid": null,
+                    "transcript_interval_guid": "9719a6f5-5d47-1afb-bb5f-fdb6f8cd20cd",
+                    "transcript_guid": null
+                }
+            ],
+            "gene_id": null,
+            "gene_symbol": "COG1",
+            "gene_type": "protein_coding",
+            "locus_tag": "YGL223C",
+            "qualifiers": {
+                "gene": [
+                    "COG1"
+                ],
+                "locus_tag": [
+                    "YGL223C"
+                ],
+                "gene_synonym": [
+                    "COD3; LDB11; SEC36"
+                ],
+                "experiment": [
+                    "EXISTENCE:mutant phenotype:GO:0000301 retrograde transport, vesicle recycling within Golgi [PMID:11703943]",
+                    "EXISTENCE:mutant phenotype:GO:0006891 intra-Golgi vesicle-mediated transport [PMID:11703943]",
+                    "EXISTENCE:mutant phenotype:GO:0007030 Golgi organization [PMID:15932880]",
+                    "EXISTENCE:mutant phenotype:GO:0017119 Golgi transport complex [PMID:11703943]",
+                    "EXISTENCE:mutant phenotype:GO:0030674 protein-macromolecule adaptor activity [PMID:15932880]",
+                    "EXISTENCE:mutant phenotype:GO:0032258 cytoplasm to vacuole transport by the Cvt pathway [PMID:20065092]"
+                ],
+                "note": [
+                    "Essential component of the conserved oligomeric Golgi complex; a cytosolic tethering complex (Cog1p through Cog8p) that functions in protein trafficking to mediate fusion of transport vesicles to Golgi compartments"
+                ],
+                "codon_start": [
+                    "1"
+                ],
+                "product": [
+                    "Golgi transport complex subunit COG1"
+                ],
+                "protein_id": [
+                    "NP_011292.1"
+                ],
+                "db_xref": [
+                    "GeneID:852649",
+                    "SGD:S000003191"
+                ],
+                "translation": [
+                    "MDEVLPLFRDSHIPQIKDYQLELQNDLTKTNEAFQKNLLKNYNKILSLTDSVNDLSLNLKNVDQDFKSLCFNDEKFQLNKLTPLPYQTTTHISPPRDEEKVSIPSQNILVISNWTISINNFCNRIVTSTTPSRIFDELLLNFHELSLIPVPSKFEALVKDKCCRLQKFLVDSMKTLNLTLLQWVKLYNLLNTEFSSKWDDDLLSIFNESLFETLFNDNVQALLISSANSKDHQYHSNQQYKDAIVVDFVNSSTFRDHLIRRTVKEINTHLDTLSTLRAKLKEPETLHKLDIFHDNDTNLNDGTVSPLDDDALKQYIDTAVFYSKGLTNDTTLQIYQTVQPTIEILQNLELYKCPQETLTDLRNKLITQLQEFKTQISSRLPSPLENSTSVVDDFITSYNNHNLLQLVIDQITQLRQQ"
+                ],
+                "label": [
+                    "COG1 CDS"
+                ]
+            },
+            "sequence_name": "CM021127.1",
+            "sequence_guid": null,
+            "gene_guid": "6ecbe73a-edb1-6e26-d228-aae37724f604"
+        },
+        {
+            "transcripts": [
+                {
+                    "exon_starts": [
+                        10931
+                    ],
+                    "exon_ends": [
+                        11774
+                    ],
+                    "strand": "MINUS",
+                    "cds_starts": [
+                        10931
+                    ],
+                    "cds_ends": [
+                        11774
+                    ],
+                    "cds_frames": [
+                        "ZERO"
+                    ],
+                    "qualifiers": {
+                        "gene": [
+                            "SDT1"
+                        ],
+                        "locus_tag": [
+                            "YGL224C"
+                        ],
+                        "gene_synonym": [
+                            "SSM1"
+                        ],
+                        "experiment": [
+                            "EXISTENCE:direct assay:GO:0008252 nucleotidase activity [PMID:11934891]",
+                            "EXISTENCE:mutant phenotype:GO:0006206 pyrimidine nucleobase metabolic process [PMID:11934891]"
+                        ],
+                        "note": [
+                            "Pyrimidine nucleotidase; responsible for productionof nicotinamide riboside and nicotinic acid riboside;overexpression suppresses the 6-AU sensitivity oftranscription elongation factor S-II, as well as resistanceto other pyrimidine derivatives; SDT1 has a paralog, PHM8,that arose from the whole genome duplication"
+                        ],
+                        "codon_start": [
+                            "1"
+                        ],
+                        "product": [
+                            "nucleotidase"
+                        ],
+                        "protein_id": [
+                            "NP_011291.1"
+                        ],
+                        "db_xref": [
+                            "GeneID:852648",
+                            "SGD:S000003192"
+                        ],
+                        "translation": [
+                            "MTVEYTASDLATYQNEVNEQIAKNKAHLESLTHPGSKVTFPIDQDISATPQNPNLKVFFFDIDNCLYKSSTRIHDLMQQSILRFFQTHLKLSPEDAHVLNNSYYKEYGLAIRGLVMFHKVNALEYNRLVDDSLPLQDILKPDIPLRNMLLRLRQSGKIDKLWLFTNAYKNHAIRCLRLLGIADLFDGLTYCDYSRTDTLVCKPHVKAFEKAMKESGLARYENAYFIDDSGKNIETGIKLGMKTCIHLVENEVNEILGQTPEGAIVISDILELPHVVSDLF"
+                        ],
+                        "label": [
+                            "SDT1 CDS"
+                        ]
+                    },
+                    "is_primary_tx": false,
+                    "transcript_id": null,
+                    "protein_id": "NP_011291.1",
+                    "product": "nucleotidase",
+                    "transcript_symbol": "SDT1",
+                    "transcript_type": "protein_coding",
+                    "sequence_name": "CM021127.1",
+                    "sequence_guid": null,
+                    "transcript_interval_guid": "fc087dab-ebe6-30e6-6bdb-ae16534d747d",
+                    "transcript_guid": null
+                }
+            ],
+            "gene_id": null,
+            "gene_symbol": "SDT1",
+            "gene_type": "protein_coding",
+            "locus_tag": "YGL224C",
+            "qualifiers": {
+                "gene": [
+                    "SDT1"
+                ],
+                "locus_tag": [
+                    "YGL224C"
+                ],
+                "gene_synonym": [
+                    "SSM1"
+                ],
+                "experiment": [
+                    "EXISTENCE:direct assay:GO:0008252 nucleotidase activity [PMID:11934891]",
+                    "EXISTENCE:mutant phenotype:GO:0006206 pyrimidine nucleobase metabolic process [PMID:11934891]"
+                ],
+                "note": [
+                    "Pyrimidine nucleotidase; responsible for productionof nicotinamide riboside and nicotinic acid riboside;overexpression suppresses the 6-AU sensitivity oftranscription elongation factor S-II, as well as resistanceto other pyrimidine derivatives; SDT1 has a paralog, PHM8,that arose from the whole genome duplication"
+                ],
+                "codon_start": [
+                    "1"
+                ],
+                "product": [
+                    "nucleotidase"
+                ],
+                "protein_id": [
+                    "NP_011291.1"
+                ],
+                "db_xref": [
+                    "GeneID:852648",
+                    "SGD:S000003192"
+                ],
+                "translation": [
+                    "MTVEYTASDLATYQNEVNEQIAKNKAHLESLTHPGSKVTFPIDQDISATPQNPNLKVFFFDIDNCLYKSSTRIHDLMQQSILRFFQTHLKLSPEDAHVLNNSYYKEYGLAIRGLVMFHKVNALEYNRLVDDSLPLQDILKPDIPLRNMLLRLRQSGKIDKLWLFTNAYKNHAIRCLRLLGIADLFDGLTYCDYSRTDTLVCKPHVKAFEKAMKESGLARYENAYFIDDSGKNIETGIKLGMKTCIHLVENEVNEILGQTPEGAIVISDILELPHVVSDLF"
+                ],
+                "label": [
+                    "SDT1 CDS"
+                ]
+            },
+            "sequence_name": "CM021127.1",
+            "sequence_guid": null,
+            "gene_guid": "057a5e53-715c-3bc7-0a42-47129a79f62b"
+        },
+        {
+            "transcripts": [
+                {
+                    "exon_starts": [
+                        9810
+                    ],
+                    "exon_ends": [
+                        10824
+                    ],
+                    "strand": "PLUS",
+                    "cds_starts": [
+                        9810
+                    ],
+                    "cds_ends": [
+                        10824
+                    ],
+                    "cds_frames": [
+                        "ZERO"
+                    ],
+                    "qualifiers": {
+                        "gene": [
+                            "VRG4"
+                        ],
+                        "locus_tag": [
+                            "YGL225W"
+                        ],
+                        "gene_synonym": [
+                            "GOG5; LDB3; VAN2; VIG4"
+                        ],
+                        "experiment": [
+                            "EXISTENCE:direct assay:GO:0005458 GDP-mannosetransmembrane transporter activity [PMID:20576760]",
+                            "EXISTENCE:direct assay:GO:0005739 mitochondrion [PMID:14576278|PMID:16823961]",
+                            "EXISTENCE:direct assay:GO:0005794 Golgi apparatus [PMID:9395539]",
+                            "EXISTENCE:mutant phenotype:GO:0005458 GDP-mannose transmembrane transporter activity [PMID:9395539]",
+                            "EXISTENCE:mutant phenotype:GO:1990570 GDP-mannose transmembrane transport [PMID:9395539]"
+                        ],
+                        "note": [
+                            "Golgi GDP-mannose transporter; regulates Golgi function and glycosylation in Golgi; VRG4 has a paralog, HVG1, that arose from the whole genome duplication"
+                        ],
+                        "codon_start": [
+                            "1"
+                        ],
+                        "product": [
+                            "GDP-mannose transporter"
+                        ],
+                        "protein_id": [
+                            "NP_011290.1"
+                        ],
+                        "db_xref": [
+                            "GeneID:852647",
+                            "SGD:S000003193"
+                        ],
+                        "translation": [
+                            "MSELKTGHAGHNPWASVANSGPISILSYCGSSILMTVTNKFVVNLKDFNMNFVMLFVQSLVCTITLIILRILGYAKFRSLNKTDAKNWFPISFLLVLMIYTSSKALQYLAVPIYTIFKNLTIILIAYGEVLFFGGSVTSMELSSFLLMVLSSVVATWGDQQAVAAKAASLAEGAAGAVASFNPGYFWMFTNCITSALFVLIMRKRIKLTNFKDFDTMFYNNVLALPILLLFSFCVEDWSSVNLTNNFSNDSLTAMIISGVASVGISYCSGWCVRVTSSTTYSMVGALNKLPIALSGLIFFDAPRNFLSILSIFIGFLSGIIYAVAKQKKQQAQPLRK"
+                        ],
+                        "label": [
+                            "VRG4 CDS"
+                        ]
+                    },
+                    "is_primary_tx": false,
+                    "transcript_id": null,
+                    "protein_id": "NP_011290.1",
+                    "product": "GDP-mannose transporter",
+                    "transcript_symbol": "VRG4",
+                    "transcript_type": "protein_coding",
+                    "sequence_name": "CM021127.1",
+                    "sequence_guid": null,
+                    "transcript_interval_guid": "6d8aa5ab-adec-eb01-f3b8-637fa42fb710",
+                    "transcript_guid": null
+                }
+            ],
+            "gene_id": null,
+            "gene_symbol": "VRG4",
+            "gene_type": "protein_coding",
+            "locus_tag": "YGL225W",
+            "qualifiers": {
+                "gene": [
+                    "VRG4"
+                ],
+                "locus_tag": [
+                    "YGL225W"
+                ],
+                "gene_synonym": [
+                    "GOG5; LDB3; VAN2; VIG4"
+                ],
+                "experiment": [
+                    "EXISTENCE:direct assay:GO:0005458 GDP-mannosetransmembrane transporter activity [PMID:20576760]",
+                    "EXISTENCE:direct assay:GO:0005739 mitochondrion [PMID:14576278|PMID:16823961]",
+                    "EXISTENCE:direct assay:GO:0005794 Golgi apparatus [PMID:9395539]",
+                    "EXISTENCE:mutant phenotype:GO:0005458 GDP-mannose transmembrane transporter activity [PMID:9395539]",
+                    "EXISTENCE:mutant phenotype:GO:1990570 GDP-mannose transmembrane transport [PMID:9395539]"
+                ],
+                "note": [
+                    "Golgi GDP-mannose transporter; regulates Golgi function and glycosylation in Golgi; VRG4 has a paralog, HVG1, that arose from the whole genome duplication"
+                ],
+                "codon_start": [
+                    "1"
+                ],
+                "product": [
+                    "GDP-mannose transporter"
+                ],
+                "protein_id": [
+                    "NP_011290.1"
+                ],
+                "db_xref": [
+                    "GeneID:852647",
+                    "SGD:S000003193"
+                ],
+                "translation": [
+                    "MSELKTGHAGHNPWASVANSGPISILSYCGSSILMTVTNKFVVNLKDFNMNFVMLFVQSLVCTITLIILRILGYAKFRSLNKTDAKNWFPISFLLVLMIYTSSKALQYLAVPIYTIFKNLTIILIAYGEVLFFGGSVTSMELSSFLLMVLSSVVATWGDQQAVAAKAASLAEGAAGAVASFNPGYFWMFTNCITSALFVLIMRKRIKLTNFKDFDTMFYNNVLALPILLLFSFCVEDWSSVNLTNNFSNDSLTAMIISGVASVGISYCSGWCVRVTSSTTYSMVGALNKLPIALSGLIFFDAPRNFLSILSIFIGFLSGIIYAVAKQKKQQAQPLRK"
+                ],
+                "label": [
+                    "VRG4 CDS"
+                ]
+            },
+            "sequence_name": "CM021127.1",
+            "sequence_guid": null,
+            "gene_guid": "9bf1f290-87ca-89db-fd87-7db857318717"
+        },
+        {
+            "transcripts": [
+                {
+                    "exon_starts": [
+                        6728
+                    ],
+                    "exon_ends": [
+                        7184
+                    ],
+                    "strand": "PLUS",
+                    "cds_starts": [
+                        6728
+                    ],
+                    "cds_ends": [
+                        7184
+                    ],
+                    "cds_frames": [
+                        "ZERO"
+                    ],
+                    "qualifiers": {
+                        "gene": [
+                            "ECM12"
+                        ],
+                        "locus_tag": [
+                            "YHR021W-A"
+                        ],
+                        "note": [
+                            "hypothetical protein; may contribute to cell wall biosynthesis, mutants display zymolyase hypersensitivity"
+                        ],
+                        "codon_start": [
+                            "1"
+                        ],
+                        "product": [
+                            "Ecm12p"
+                        ],
+                        "protein_id": [
+                            "NP_011886.1"
+                        ],
+                        "db_xref": [
+                            "GeneID:856416",
+                            "SGD:S000003531"
+                        ],
+                        "translation": [
+                            "MNRSFHFLIKYIYIHVLLVFYFHIKQQAIMPFFIFFFSSFDGLSFDLRVVAFLAKHVFVGVCSPFFVVGFFGSSRVVVTEWLSKLVLPPPPVSITQVFSLSRKRGEFSSGYILIINPYKSFLRSLLDFSIFNNTAKNKSSTFTLNLEDVSK"
+                        ],
+                        "label": [
+                            "ECM12 CDS"
+                        ]
+                    },
+                    "is_primary_tx": false,
+                    "transcript_id": null,
+                    "protein_id": "NP_011886.1",
+                    "product": "Ecm12p",
+                    "transcript_symbol": "ECM12",
+                    "transcript_type": "protein_coding",
+                    "sequence_name": "CM021127.1",
+                    "sequence_guid": null,
+                    "transcript_interval_guid": "23acd371-5ab3-8242-8fcf-b90e8c1dec9c",
+                    "transcript_guid": null
+                }
+            ],
+            "gene_id": null,
+            "gene_symbol": "ECM12",
+            "gene_type": "protein_coding",
+            "locus_tag": "YHR021W-A",
+            "qualifiers": {
+                "gene": [
+                    "ECM12"
+                ],
+                "locus_tag": [
+                    "YHR021W-A"
+                ],
+                "note": [
+                    "hypothetical protein; may contribute to cell wall biosynthesis, mutants display zymolyase hypersensitivity"
+                ],
+                "codon_start": [
+                    "1"
+                ],
+                "product": [
+                    "Ecm12p"
+                ],
+                "protein_id": [
+                    "NP_011886.1"
+                ],
+                "db_xref": [
+                    "GeneID:856416",
+                    "SGD:S000003531"
+                ],
+                "translation": [
+                    "MNRSFHFLIKYIYIHVLLVFYFHIKQQAIMPFFIFFFSSFDGLSFDLRVVAFLAKHVFVGVCSPFFVVGFFGSSRVVVTEWLSKLVLPPPPVSITQVFSLSRKRGEFSSGYILIINPYKSFLRSLLDFSIFNNTAKNKSSTFTLNLEDVSK"
+                ],
+                "label": [
+                    "ECM12 CDS"
+                ]
+            },
+            "sequence_name": "CM021127.1",
+            "sequence_guid": null,
+            "gene_guid": "399f7f5a-cdb1-c294-7208-282dbf09ab57"
+        },
+        {
+            "transcripts": [
+                {
+                    "exon_starts": [
+                        7078
+                    ],
+                    "exon_ends": [
+                        7849
+                    ],
+                    "strand": "MINUS",
+                    "cds_starts": [
+                        7078
+                    ],
+                    "cds_ends": [
+                        7849
+                    ],
+                    "cds_frames": [
+                        "ZERO"
+                    ],
+                    "qualifiers": {
+                        "locus_tag": [
+                            "YHR022C"
+                        ],
+                        "note": [
+                            "hypothetical protein; YHR022C is not an essential gene"
+                        ],
+                        "codon_start": [
+                            "1"
+                        ],
+                        "product": [
+                            "uncharacterized protein"
+                        ],
+                        "protein_id": [
+                            "NP_011887.1"
+                        ],
+                        "db_xref": [
+                            "GeneID:856417",
+                            "SGD:S000001064"
+                        ],
+                        "translation": [
+                            "MSVRLSYGASLASIPRCFDLKSSKITVMGDDHSGKTSLVRSWLGSSFQISDANRYRVSDLYHKTIQFDTLVKYYRTFGVKGQLPNYAGFKAKNSGTIYESCGNFLEERLINANKSTAQRRTSIDVQVFDTNQMEVSYLSELTTLQIRQSDAIILCFDSTNDSSLASLESYICIIHHVRLECELDIPIIIACTKCDLDSERTITHEKVLTFIQELGFSPGNLDYFETSSKFNVNVEDLFLAVLLKIEKSKSDRRKLL"
+                        ],
+                        "gene": [
+                            "YHR022C"
+                        ],
+                        "label": [
+                            "YHR022C CDS"
+                        ]
+                    },
+                    "is_primary_tx": false,
+                    "transcript_id": null,
+                    "protein_id": "NP_011887.1",
+                    "product": "uncharacterized protein",
+                    "transcript_symbol": "YHR022C",
+                    "transcript_type": "protein_coding",
+                    "sequence_name": "CM021127.1",
+                    "sequence_guid": null,
+                    "transcript_interval_guid": "8500559c-6fde-695a-4717-5f3f58212832",
+                    "transcript_guid": null
+                }
+            ],
+            "gene_id": null,
+            "gene_symbol": "YHR022C",
+            "gene_type": "protein_coding",
+            "locus_tag": "YHR022C",
+            "qualifiers": {
+                "locus_tag": [
+                    "YHR022C"
+                ],
+                "note": [
+                    "hypothetical protein; YHR022C is not an essential gene"
+                ],
+                "codon_start": [
+                    "1"
+                ],
+                "product": [
+                    "uncharacterized protein"
+                ],
+                "protein_id": [
+                    "NP_011887.1"
+                ],
+                "db_xref": [
+                    "GeneID:856417",
+                    "SGD:S000001064"
+                ],
+                "translation": [
+                    "MSVRLSYGASLASIPRCFDLKSSKITVMGDDHSGKTSLVRSWLGSSFQISDANRYRVSDLYHKTIQFDTLVKYYRTFGVKGQLPNYAGFKAKNSGTIYESCGNFLEERLINANKSTAQRRTSIDVQVFDTNQMEVSYLSELTTLQIRQSDAIILCFDSTNDSSLASLESYICIIHHVRLECELDIPIIIACTKCDLDSERTITHEKVLTFIQELGFSPGNLDYFETSSKFNVNVEDLFLAVLLKIEKSKSDRRKLL"
+                ],
+                "gene": [
+                    "YHR022C"
+                ],
+                "label": [
+                    "YHR022C CDS"
+                ]
+            },
+            "sequence_name": "CM021127.1",
+            "sequence_guid": null,
+            "gene_guid": "bb66717f-b319-d18e-9317-ebbdcf8a149c"
+        },
+        {
+            "transcripts": [
+                {
+                    "exon_starts": [
+                        370
+                    ],
+                    "exon_ends": [
+                        2080
+                    ],
+                    "strand": "PLUS",
+                    "cds_starts": [
+                        370
+                    ],
+                    "cds_ends": [
+                        2080
+                    ],
+                    "cds_frames": [
+                        "ZERO"
+                    ],
+                    "qualifiers": {
+                        "gene": [
+                            "HXT8"
+                        ],
+                        "locus_tag": [
+                            "YJL214W"
+                        ],
+                        "experiment": [
+                            "EXISTENCE:direct assay:GO:0071944 cell periphery [PMID:26928762]",
+                            "EXISTENCE:mutant phenotype:GO:0005353 fructose transmembrane transporter activity [PMID:10618490]",
+                            "EXISTENCE:mutant phenotype:GO:0005355 glucosetransmembrane transporter activity [PMID:10618490]",
+                            "EXISTENCE:mutant phenotype:GO:0008645 hexose transmembrane transport [PMID:10618490]",
+                            "EXISTENCE:mutant phenotype:GO:0015578 mannosetransmembrane transporter activity [PMID:10618490]"
+                        ],
+                        "note": [
+                            "hypothetical protein with similarity to hexose transporters; expression is induced by low levels of glucose and repressed by high levels of glucose"
+                        ],
+                        "codon_start": [
+                            "1"
+                        ],
+                        "product": [
+                            "hexose transporter HXT8"
+                        ],
+                        "protein_id": [
+                            "NP_012321.1"
+                        ],
+                        "db_xref": [
+                            "GeneID:853216",
+                            "SGD:S000003750"
+                        ],
+                        "translation": [
+                            "MTDRKTNLPEEPIFEEAEDDGCPSIENSSHLSVPTVEENKDFSEYNGEEAEEVVVPEKPASAYATVSIMCLCMAFGGFMSGWDTGTISGFVNQTDFLRRFGNYSHSKNTYYLSNVRTGLIVSIFNVGSAIGCLFLSKLGDIYGRCMGLIIVIVVYMVGIVIQIASIDKWYQYFIGRIIAGIGAGSISVLAPMLISETAPKHIRGTLLACWQLMVTFAIFLGYCTNYGTKTYSNSVQWRVPLGLCFAWAIIMIGGMTFVPESPRFLVQVGKIEQAKASFAKSNKLSVDDPAVVAEIDLLVAGVEAEEAMGTASWKELFSRKTKVFQRLTMTVMINSLQQLTGDNYFFYYGTTIFKSVGMNDSFETSIVLGIVNFASCFFSLYSVDKLGRRRCLLLGAATMTACMVIYASVGVTRLYPNGKSEPSSKGAGNCTIVFTCFYIFCFSCTWGPVCYVIISETFPLRVRSKCMSVATAANLLWGFLIGFFTPFITSAINFYYGYVFMGCLAFSYFYVFFFVPETKGLTLEEVDEMWMDGVLPWKSESWVPASRRDGDYDNEKLQHDEKPFYKRMF"
+                        ],
+                        "label": [
+                            "HXT8 CDS"
+                        ]
+                    },
+                    "is_primary_tx": false,
+                    "transcript_id": null,
+                    "protein_id": "NP_012321.1",
+                    "product": "hexose transporter HXT8",
+                    "transcript_symbol": "HXT8",
+                    "transcript_type": "protein_coding",
+                    "sequence_name": "CM021127.1",
+                    "sequence_guid": null,
+                    "transcript_interval_guid": "639409e8-c091-9b76-ca84-5ac48b743cb6",
+                    "transcript_guid": null
+                }
+            ],
+            "gene_id": null,
+            "gene_symbol": "HXT8",
+            "gene_type": "protein_coding",
+            "locus_tag": "YJL214W",
+            "qualifiers": {
+                "gene": [
+                    "HXT8"
+                ],
+                "locus_tag": [
+                    "YJL214W"
+                ],
+                "experiment": [
+                    "EXISTENCE:direct assay:GO:0071944 cell periphery [PMID:26928762]",
+                    "EXISTENCE:mutant phenotype:GO:0005353 fructose transmembrane transporter activity [PMID:10618490]",
+                    "EXISTENCE:mutant phenotype:GO:0005355 glucosetransmembrane transporter activity [PMID:10618490]",
+                    "EXISTENCE:mutant phenotype:GO:0008645 hexose transmembrane transport [PMID:10618490]",
+                    "EXISTENCE:mutant phenotype:GO:0015578 mannosetransmembrane transporter activity [PMID:10618490]"
+                ],
+                "note": [
+                    "hypothetical protein with similarity to hexose transporters; expression is induced by low levels of glucose and repressed by high levels of glucose"
+                ],
+                "codon_start": [
+                    "1"
+                ],
+                "product": [
+                    "hexose transporter HXT8"
+                ],
+                "protein_id": [
+                    "NP_012321.1"
+                ],
+                "db_xref": [
+                    "GeneID:853216",
+                    "SGD:S000003750"
+                ],
+                "translation": [
+                    "MTDRKTNLPEEPIFEEAEDDGCPSIENSSHLSVPTVEENKDFSEYNGEEAEEVVVPEKPASAYATVSIMCLCMAFGGFMSGWDTGTISGFVNQTDFLRRFGNYSHSKNTYYLSNVRTGLIVSIFNVGSAIGCLFLSKLGDIYGRCMGLIIVIVVYMVGIVIQIASIDKWYQYFIGRIIAGIGAGSISVLAPMLISETAPKHIRGTLLACWQLMVTFAIFLGYCTNYGTKTYSNSVQWRVPLGLCFAWAIIMIGGMTFVPESPRFLVQVGKIEQAKASFAKSNKLSVDDPAVVAEIDLLVAGVEAEEAMGTASWKELFSRKTKVFQRLTMTVMINSLQQLTGDNYFFYYGTTIFKSVGMNDSFETSIVLGIVNFASCFFSLYSVDKLGRRRCLLLGAATMTACMVIYASVGVTRLYPNGKSEPSSKGAGNCTIVFTCFYIFCFSCTWGPVCYVIISETFPLRVRSKCMSVATAANLLWGFLIGFFTPFITSAINFYYGYVFMGCLAFSYFYVFFFVPETKGLTLEEVDEMWMDGVLPWKSESWVPASRRDGDYDNEKLQHDEKPFYKRMF"
+                ],
+                "label": [
+                    "HXT8 CDS"
+                ]
+            },
+            "sequence_name": "CM021127.1",
+            "sequence_guid": null,
+            "gene_guid": "c68d5238-6166-0d26-a410-fadd2a3845db"
+        },
+        {
+            "transcripts": [
+                {
+                    "exon_starts": [
+                        9807
+                    ],
+                    "exon_ends": [
+                        10824
+                    ],
+                    "strand": "PLUS",
+                    "cds_starts": [
+                        9807
+                    ],
+                    "cds_ends": [
+                        10824
+                    ],
+                    "cds_frames": [
+                        "ZERO"
+                    ],
+                    "qualifiers": {
+                        "created_by": [
+                            "bryan.leland"
+                        ],
+                        "translation": [
+                            "MMSELKTGHAGHNPWASVANSGPISILSYCGSSILMTVTNKFVVNLKDFNMNFVMLFVQSLVCTITLIILRILGYAKFRSLNKTDAKNWFPISFLLVLMIYTSSKALQYLAVPIYTIFKNLTIILIAYGEVLFFGGSVTSMELSSFLLMVLSSVVATWGDQQAVAAKAASLAEGAAGAVASFNPGYFWMFTNCITSALFVLIMRKRIKLTNFKDFDTMFYNNVLALPILLLFSFCVEDWSSVNLTNNFSNDSLTAMIISGVASVGISYCSGWCVRVTSSTTYSMVGALNKLPIALSGLIFFDAPRNFLSILSIFIGFLSGIIYAVAKQKKQQAQPLRK"
+                        ],
+                        "gene": [
+                            "VRG4_COPY"
+                        ],
+                        "modified_by": [
+                            "bryan.leland"
+                        ],
+                        "label": [
+                            "VRG4_COPY"
+                        ]
+                    },
+                    "is_primary_tx": false,
+                    "transcript_id": null,
+                    "protein_id": null,
+                    "product": null,
+                    "transcript_symbol": "VRG4_COPY",
+                    "transcript_type": "protein_coding",
+                    "sequence_name": "CM021127.1",
+                    "sequence_guid": null,
+                    "transcript_interval_guid": "7e10cfb7-b85e-9b6a-0478-e6101677e0aa",
+                    "transcript_guid": null
+                }
+            ],
+            "gene_id": null,
+            "gene_symbol": "VRG4_COPY",
+            "gene_type": "protein_coding",
+            "locus_tag": null,
+            "qualifiers": {
+                "created_by": [
+                    "bryan.leland"
+                ],
+                "translation": [
+                    "MMSELKTGHAGHNPWASVANSGPISILSYCGSSILMTVTNKFVVNLKDFNMNFVMLFVQSLVCTITLIILRILGYAKFRSLNKTDAKNWFPISFLLVLMIYTSSKALQYLAVPIYTIFKNLTIILIAYGEVLFFGGSVTSMELSSFLLMVLSSVVATWGDQQAVAAKAASLAEGAAGAVASFNPGYFWMFTNCITSALFVLIMRKRIKLTNFKDFDTMFYNNVLALPILLLFSFCVEDWSSVNLTNNFSNDSLTAMIISGVASVGISYCSGWCVRVTSSTTYSMVGALNKLPIALSGLIFFDAPRNFLSILSIFIGFLSGIIYAVAKQKKQQAQPLRK"
+                ],
+                "gene": [
+                    "VRG4_COPY"
+                ],
+                "modified_by": [
+                    "bryan.leland"
+                ],
+                "label": [
+                    "VRG4_COPY"
+                ]
+            },
+            "sequence_name": "CM021127.1",
+            "sequence_guid": null,
+            "gene_guid": "d57a3822-31f4-29c6-90f6-5645ef25a1a1"
+        }
+    ],
+    "name": "CM021127.1",
+    "id": null,
+    "sequence_name": "CM021127.1",
+    "sequence_guid": null,
+    "sequence_path": null,
+    "qualifiers": {
+        "organism": [
+            "Saccharomyces cerevisiae S288C"
+        ],
+        "mol_type": [
+            "genomic DNA"
+        ],
+        "strain": [
+            "S288C"
+        ],
+        "db_xref": [
+            "taxon:559292"
+        ],
+        "chromosome": [
+            "VI"
+        ],
+        "label": [
+            "source Saccharomyces cerevisiae S288C"
+        ]
+    },
+    "start": 0,
+    "end": 15516,
+    "completely_within": null
+}
