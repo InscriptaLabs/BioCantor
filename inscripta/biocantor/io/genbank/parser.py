@@ -638,7 +638,8 @@ def group_gene_records_by_locus_tag(
             # do we have more than one gene with this locus_tag?
             if len(gene_features) > 1 and gene_features[1].type == "gene":
                 raise GenBankLocusTagError(
-                    f"Grouping by locus tag found multiple gene features with the same locus tag:\n{gene_features[0]}\n{gene_features[1]}"
+                    f"Grouping by locus tag found multiple gene features with the same locus tag:"
+                    f"\n{gene_features[0]}\n{gene_features[1]}"
                 )
 
             gene = gene_features[0]
