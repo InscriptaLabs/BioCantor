@@ -220,7 +220,7 @@ class GeneFeature(Feature):
 
         Construct a GeneFeature from such records."""
         old_type = feature.type
-        feature.type = "gene"
+        feature.type = GeneFeatures.GENE.value
         gene = GeneFeature(feature, seqrecord)
         feature.type = old_type
         gene.add_child(feature)
@@ -307,10 +307,10 @@ class GeneFeature(Feature):
                 cds_frames=cds_frames,
                 qualifiers=tx.merge_cds_qualifiers_to_transcript(),
                 is_primary_tx=False,
-                transcript_id=tx.get_qualifier_from_tx_or_cds_features("transcript_id"),
-                protein_id=tx.get_qualifier_from_tx_or_cds_features("protein_id"),
-                product=tx.get_qualifier_from_tx_or_cds_features("product"),
-                transcript_symbol=tx.get_qualifier_from_tx_or_cds_features("gene"),
+                transcript_id=tx.get_qualifier_from_tx_or_cds_features(KnownQualifiers.TRANSCRIPT_ID.value),
+                protein_id=tx.get_qualifier_from_tx_or_cds_features(KnownQualifiers.PROTEIN_ID.value),
+                product=tx.get_qualifier_from_tx_or_cds_features(KnownQualifiers.PRODUCT.value),
+                transcript_symbol=tx.get_qualifier_from_tx_or_cds_features(KnownQualifiers.GENE.value),
                 transcript_type=transcript_biotype.name,
                 sequence_name=tx.record.id,
             )
@@ -321,9 +321,9 @@ class GeneFeature(Feature):
         gene = GeneIntervalModel.Schema().load(
             dict(
                 transcripts=transcripts,
-                gene_id=cls.feature.qualifiers.get("gene_id", [None])[0],
-                gene_symbol=cls.feature.qualifiers.get("gene", [None])[0],
-                locus_tag=cls.feature.qualifiers.get("locus_tag", [None])[0],
+                gene_id=cls.feature.qualifiers.get(KnownQualifiers.GENE_ID.value, [None])[0],
+                gene_symbol=cls.feature.qualifiers.get(KnownQualifiers.GENE.value, [None])[0],
+                locus_tag=cls.feature.qualifiers.get(KnownQualifiers.LOCUS_TAG.value, [None])[0],
                 gene_type=gene_biotype.name,
                 qualifiers=cls.feature.qualifiers,
                 sequence_name=cls.record.id,
@@ -358,7 +358,7 @@ class TranscriptFeature(Feature):
     def construct_frames(self, cds_interval: Location) -> List[str]:
         """We need to build frames. Since GenBank lacks this info, do our best"""
         # make 0 based offset, if possible, otherwise assume always in frame
-        frame = int(self.children[0].feature.qualifiers.get("codon_start", [1])[0]) - 1
+        frame = int(self.children[0].feature.qualifiers.get(KnownQualifiers.CODON_START.value, [1])[0]) - 1
         frame = CDSFrame.from_int(frame)
         frames = CDSInterval.construct_frames_from_location(cds_interval, frame)
         return [x.name for x in frames]
@@ -619,39 +619,39 @@ def group_gene_records_by_locus_tag(
         remaining_features = []
         source = None
         for f in seqrecord.features:
-            if f.type in GENBANK_GENE_FEATURES and "locus_tag" in f.qualifiers:
+            if f.type in GENBANK_GENE_FEATURES and KnownQualifiers.LOCUS_TAG.value in f.qualifiers:
                 gene_filtered_features.append(f)
             elif f.type == MetadataFeatures.SOURCE.value:
                 source = f
             else:
                 remaining_features.append(f)
 
-        sorted_gene_filtered_features = sorted(gene_filtered_features, key=lambda f: f.qualifiers["locus_tag"])
+        sorted_gene_filtered_features = sorted(
+            gene_filtered_features, key=lambda f: f.qualifiers[KnownQualifiers.LOCUS_TAG.value]
+        )
 
         genes = []
         for locus_tag, gene_features in itertools.groupby(
-            sorted_gene_filtered_features, key=lambda f: f.qualifiers["locus_tag"][0]
+            sorted_gene_filtered_features, key=lambda f: f.qualifiers[KnownQualifiers.LOCUS_TAG.value][0]
         ):
             # sort the features for this locus tag to bubble the "gene" feature to the top, if it exists
-            gene_features = sorted(gene_features, key=lambda f: f.type != "gene")
+            gene_features = sorted(gene_features, key=lambda f: f.type != GeneFeatures.GENE.value)
 
             # do we have more than one gene with this locus_tag?
-            if len(gene_features) > 1 and gene_features[1].type == "gene":
+            if len(gene_features) > 1 and gene_features[1].type == GeneFeatures.GENE.value:
                 raise GenBankLocusTagError(
                     f"Grouping by locus tag found multiple gene features with the same locus tag:"
                     f"\n{gene_features[0]}\n{gene_features[1]}"
                 )
 
             gene = gene_features[0]
-            if gene.type == "gene":
+            if gene.type == GeneFeatures.GENE.value:
                 gene = GeneFeature(gene, seqrecord)
             else:
                 gene = GeneFeature.from_transcript_or_cds_feature(gene, seqrecord)
 
             for feature in gene_features[1:]:
-                if feature.type in GeneFeature.types:
-                    raise GenBankLocusTagError("Grouping by locus tag found two genes")
-                elif feature.type in TranscriptFeature.types:
+                if feature.type in TranscriptFeature.types:
                     gene.add_child(feature)
                 elif feature.type in IntervalFeature.types:
                     if len(gene.children) == 0:
@@ -731,11 +731,13 @@ def _extract_generic_features(
     """
 
     # sort by locus tag, or null if no locus tag is provided.
-    sorted_filtered_features = sorted(filtered_features, key=lambda f: f.qualifiers.get("locus_tag", [""])[0])
+    sorted_filtered_features = sorted(
+        filtered_features, key=lambda f: f.qualifiers.get(KnownQualifiers.LOCUS_TAG.value, [""])[0]
+    )
 
     feature_collections = []
     for locus_tag, features in itertools.groupby(
-        sorted_filtered_features, key=lambda f: f.qualifiers.get("locus_tag", [""])[0]
+        sorted_filtered_features, key=lambda f: f.qualifiers.get(KnownQualifiers.LOCUS_TAG.value, [""])[0]
     ):
         if not locus_tag:
             # we are in the null scenario, meaning that there are no locus tag information and thus no groupings.
