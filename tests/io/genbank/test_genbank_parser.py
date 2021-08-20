@@ -1087,6 +1087,13 @@ class TestHybridParser:
         assert len(lt_recs[0].annotation.feature_collections) == 4
         assert hybrid_recs[0].annotation.feature_collections is None
 
+    def test_toy_overlapping_genes_cds_only(self, test_data_dir):
+        genbank = test_data_dir / "ToyChr_R64v5_overlapping_genes.gb"
+        recs = list(parse_genbank(test_data_dir / genbank, gbk_type=GenBankParserType.HYBRID))
+        c = recs[0].annotation
+        with open(test_data_dir / "ToyChr_R64v5_overlapping_genes.json") as fh:
+            assert AnnotationCollectionModel.Schema().load(json.load(fh)) == c
+
 
 class TestExceptionsWarnings:
     def test_ambiguous_strand(self, test_data_dir):
