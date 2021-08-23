@@ -21,9 +21,9 @@ The generic parsing function that interprets the BioPython results to BioCantor 
 :meth:`GeneFeature.to_gene_model()`. This function can be over-ridden to provide custom parsing implementations.
 """
 import itertools
-import warnings
 import logging
 import pathlib
+import warnings
 from abc import ABC
 from collections import Counter
 from copy import deepcopy
@@ -32,7 +32,6 @@ from typing import Optional, TextIO, Iterator, List, Dict, Callable, Tuple, Any,
 from Bio import SeqIO
 from Bio.SeqFeature import SeqFeature
 from Bio.SeqRecord import SeqRecord
-
 from inscripta.biocantor.gene import Biotype, CDSInterval, CDSFrame
 from inscripta.biocantor.io.exc import StrandViolationWarning
 from inscripta.biocantor.io.features import extract_feature_types, extract_feature_name_id, merge_qualifiers

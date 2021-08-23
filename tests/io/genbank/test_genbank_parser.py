@@ -4,12 +4,11 @@ from collections import OrderedDict
 import pytest
 from inscripta.biocantor.gene.biotype import Biotype
 from inscripta.biocantor.gene.cds_frame import CDSFrame
+from inscripta.biocantor.io.exc import StrandViolationWarning
 from inscripta.biocantor.io.genbank.exc import (
     GenBankLocusTagError,
     GenBankLocationException,
-    GenBankParserError,
 )
-from inscripta.biocantor.io.exc import StrandViolationWarning
 from inscripta.biocantor.io.genbank.parser import parse_genbank, GenBankParserType
 from inscripta.biocantor.io.models import AnnotationCollectionModel
 from inscripta.biocantor.io.parser import ParsedAnnotationRecord
