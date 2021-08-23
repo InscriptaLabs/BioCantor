@@ -9,6 +9,7 @@ from inscripta.biocantor.io.genbank.exc import (
     GenBankLocationException,
     GenBankParserError,
 )
+from inscripta.biocantor.io.exc import StrandViolationWarning
 from inscripta.biocantor.io.genbank.parser import parse_genbank, GenBankParserType
 from inscripta.biocantor.io.models import AnnotationCollectionModel
 from inscripta.biocantor.io.parser import ParsedAnnotationRecord
@@ -1098,10 +1099,14 @@ class TestHybridParser:
 class TestExceptionsWarnings:
     def test_ambiguous_strand(self, test_data_dir):
         genbank = test_data_dir / "INSC1003_ambiguous_strand.gbk"
-        with pytest.raises(GenBankParserError):
-            _ = list(parse_genbank(test_data_dir / genbank, gbk_type=GenBankParserType.SORTED))
-        with pytest.raises(GenBankParserError):
-            _ = list(parse_genbank(test_data_dir / genbank))
+        with pytest.warns(StrandViolationWarning):
+            recs = list(parse_genbank(test_data_dir / genbank, gbk_type=GenBankParserType.SORTED))
+            c = recs[0].annotation
+            assert len(c.genes) == 6
+        with pytest.warns(StrandViolationWarning):
+            recs = list(parse_genbank(test_data_dir / genbank))
+            c = recs[0].annotation
+            assert len(c.genes) == 6
 
     @pytest.mark.parametrize(
         "gbk",

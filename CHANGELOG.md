@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [UNRELEASED]
 ### Fixed
 - `LocusTag` parser is now able to handle CDS-only features, and have more informative error reporting for locus tag collisions. 
+- GenBank parser no longer raises an exception for multi-stranded feature; instead it warns and moves on
 
 ## [0.8.0]
 ### Fixed
