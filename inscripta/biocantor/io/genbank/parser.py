@@ -21,7 +21,6 @@ The generic parsing function that interprets the BioPython results to BioCantor 
 :meth:`GeneFeature.to_gene_model()`. This function can be over-ridden to provide custom parsing implementations.
 """
 import itertools
-import logging
 import pathlib
 import warnings
 from abc import ABC
@@ -64,8 +63,6 @@ from inscripta.biocantor.location import (
     CompoundInterval,
     EmptyLocation,
 )
-
-logger = logging.getLogger(__name__)
 
 
 class Feature(ABC):
@@ -234,7 +231,6 @@ class GeneFeature(Feature):
             self.children.append(TranscriptFeature(feature, self.record))
         elif feature.type in IntervalFeature.types:
             # infer a transcript
-            logger.debug(f"Inferring a transcript for {feature}")
             tx_feature = deepcopy(feature)
             if tx_feature.type == GeneIntervalFeatures.CDS.value:
                 tx_feature.type = TranscriptFeatures.CODING_TRANSCRIPT.value
