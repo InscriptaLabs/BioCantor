@@ -35,3 +35,11 @@ class GenBankLocationException(GenBankParserError):
     """
 
     pass
+
+
+class GenBankNullStrandException(GenBankParserError):
+    """
+    Raised when BioPython constructs a feature with a null Strand.
+    """
+
+    pass
