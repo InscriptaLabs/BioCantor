@@ -190,16 +190,16 @@ def _parse_genes(chrom: str, db: FeatureDB) -> List[Dict]:
             transcript_qualifiers = {
                 x: y for x, y in transcript.attributes.items() if not BioCantorGFF3ReservedQualifiers.has_value(x)
             }
-            providedtranscript_biotype = gene.attributes.get(
+            provided_transcript_biotype = gene.attributes.get(
                 "transcript_biotype", [gene.attributes.get("transcript_type", None)]
             )[0]
 
-            if Biotype.has_name(providedtranscript_biotype):
-                transcript_biotype = Biotype[providedtranscript_biotype]
+            if Biotype.has_name(provided_transcript_biotype):
+                transcript_biotype = Biotype[provided_transcript_biotype]
             else:
                 # keep track of what they gave us, that did not match the enum
-                if providedtranscript_biotype:
-                    transcript_qualifiers["providedtranscript_biotype"] = providedtranscript_biotype
+                if provided_transcript_biotype:
+                    transcript_qualifiers["provided_transcript_biotype"] = provided_transcript_biotype
                 # use the gene biotype
                 transcript_biotype = gene_biotype
 
