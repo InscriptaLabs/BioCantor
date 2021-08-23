@@ -8,6 +8,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Changed
 - `CDSInterval` object now has methods to access the number of codons and codon locations in both chunk-relative and chromosome coordinates. Chromosome accessors will always return the full original CDS.
 
+### Fixed
+- `LocusTag` parser is now able to handle CDS-only features, and have more informative error reporting for locus tag collisions. 
+- GenBank parser no longer raises an exception for multi-stranded feature; instead it warns and moves on
+
+
 ## [0.8.0]
 ### Fixed
 - Do not trust feature type annotations to define coding vs. non-coding when parsing GenBank files; only rely on the presence/absence of CDS intervals associated with the transcript.
