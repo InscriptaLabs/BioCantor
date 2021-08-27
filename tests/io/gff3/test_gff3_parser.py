@@ -107,7 +107,7 @@ class TestGff3Parser:
         from S288C gff3 that surfaced the issue."""
         gff = test_data_dir / "feature_test_non_gene_locus_tag.gff"
         recs = list(parse_standard_gff3(gff))
-        features = list(recs[0].annotation)
+        features = list(recs[0].annotation.to_annotation_collection())
         assert features[0].to_dict()["locus_tag"] is None
         assert features[1].to_dict()["locus_tag"] == "YFL007W"
 
