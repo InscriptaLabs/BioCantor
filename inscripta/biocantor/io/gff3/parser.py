@@ -343,10 +343,9 @@ def _parse_features(chrom: str, db: FeatureDB, feature_types: List[str]) -> List
         locus_tag = None
         if BioCantorQualifiers.LOCUS_TAG.value in top_level_feature.attributes:
             locus_tag = top_level_feature.attributes[BioCantorQualifiers.LOCUS_TAG.value][0]
-
         if not children:
             # treat this isolated feature as both FeatureIntervalCollection and FeatureInterval
-            feature = _parse_child_features_to_feature_interval([top_level_feature])
+            feature = _parse_child_features_to_feature_interval([top_level_feature], locus_tag=locus_tag)
             # infer a FeatureCollection from the information on the FeatureInterval
             feature_collection = dict(
                 feature_intervals=[feature],
