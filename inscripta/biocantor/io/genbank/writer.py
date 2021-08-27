@@ -18,6 +18,7 @@ from Bio import SeqIO
 from Bio.Seq import Seq
 from Bio.SeqFeature import SeqFeature
 from Bio.SeqRecord import SeqRecord
+from Bio.Alphabet import generic_dna
 from inscripta.biocantor.gene import (
     TranslationTable,
     AnnotationCollection,
@@ -85,10 +86,10 @@ def collection_to_genbank(
             raise GenBankExportError("Cannot export GenBank if collections do not have sequence information")
 
         seqrecord = SeqRecord(
-            Seq(str(collection.sequence)),
+            Seq(str(collection.sequence), generic_dna),  # throws an error in SeqIO.write() if alphabet not set
             name=collection.sequence_name,
             id=collection.sequence_guid if collection.sequence_guid else collection.sequence_name,
-            description="GenBank produced by BioCantor",
+            description="GenBank produced by BioCantor"
         )
         if seqrecord_annotations:
             seqrecord.annotations = seqrecord_annotations[i]
