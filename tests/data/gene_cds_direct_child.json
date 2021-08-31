@@ -1,0 +1,167 @@
+{
+    "feature_collections": null,
+    "genes": [
+        {
+            "transcripts": [
+                {
+                    "exon_starts": [
+                        0,
+                        49
+                    ],
+                    "exon_ends": [
+                        25,
+                        100
+                    ],
+                    "strand": "PLUS",
+                    "cds_starts": [
+                        0,
+                        49
+                    ],
+                    "cds_ends": [
+                        25,
+                        100
+                    ],
+                    "cds_frames": [
+                        "ZERO",
+                        "ONE"
+                    ],
+                    "qualifiers": {
+                        "note": [
+                            "direct_CDS_child_without_exon"
+                        ]
+                    },
+                    "is_primary_tx": false,
+                    "transcript_id": "gene1",
+                    "protein_id": null,
+                    "product": null,
+                    "transcript_symbol": "gene1",
+                    "transcript_type": null,
+                    "sequence_name": "chr1",
+                    "sequence_guid": null,
+                    "transcript_interval_guid": null,
+                    "transcript_guid": null
+                }
+            ],
+            "gene_id": "gene1",
+            "gene_symbol": "gene1",
+            "gene_type": null,
+            "locus_tag": null,
+            "qualifiers": {
+                "note": [
+                    "direct_CDS_child_without_exon"
+                ]
+            },
+            "sequence_name": "chr1",
+            "sequence_guid": null,
+            "gene_guid": null
+        },
+        {
+            "transcripts": [
+                {
+                    "exon_starts": [
+                        149,
+                        174
+                    ],
+                    "exon_ends": [
+                        170,
+                        200
+                    ],
+                    "strand": "PLUS",
+                    "cds_starts": [
+                        149,
+                        174
+                    ],
+                    "cds_ends": [
+                        170,
+                        200
+                    ],
+                    "cds_frames": [
+                        "ZERO",
+                        "ZERO"
+                    ],
+                    "qualifiers": {
+                        "note": [
+                            "direct_CDS_child_with_exon"
+                        ]
+                    },
+                    "is_primary_tx": false,
+                    "transcript_id": "gene2",
+                    "protein_id": null,
+                    "product": null,
+                    "transcript_symbol": "gene2",
+                    "transcript_type": null,
+                    "sequence_name": "chr1",
+                    "sequence_guid": null,
+                    "transcript_interval_guid": null,
+                    "transcript_guid": null
+                }
+            ],
+            "gene_id": "gene2",
+            "gene_symbol": "gene2",
+            "gene_type": null,
+            "locus_tag": null,
+            "qualifiers": {
+                "note": [
+                    "direct_CDS_child_with_exon"
+                ]
+            },
+            "sequence_name": "chr1",
+            "sequence_guid": null,
+            "gene_guid": null
+        },
+        {
+            "transcripts": [
+                {
+                    "exon_starts": [
+                        249,
+                        274
+                    ],
+                    "exon_ends": [
+                        270,
+                        300
+                    ],
+                    "strand": "PLUS",
+                    "cds_starts": null,
+                    "cds_ends": null,
+                    "cds_frames": null,
+                    "qualifiers": {
+                        "note": [
+                            "direct_CDS_child_noncoding"
+                        ]
+                    },
+                    "is_primary_tx": false,
+                    "transcript_id": "gene3",
+                    "protein_id": null,
+                    "product": null,
+                    "transcript_symbol": "gene3",
+                    "transcript_type": null,
+                    "sequence_name": "chr1",
+                    "sequence_guid": null,
+                    "transcript_interval_guid": null,
+                    "transcript_guid": null
+                }
+            ],
+            "gene_id": "gene3",
+            "gene_symbol": "gene3",
+            "gene_type": null,
+            "locus_tag": null,
+            "qualifiers": {
+                "note": [
+                    "direct_CDS_child_noncoding"
+                ]
+            },
+            "sequence_name": "chr1",
+            "sequence_guid": null,
+            "gene_guid": null
+        }
+    ],
+    "name": null,
+    "id": null,
+    "sequence_name": "chr1",
+    "sequence_guid": null,
+    "sequence_path": null,
+    "qualifiers": null,
+    "start": null,
+    "end": null,
+    "completely_within": null
+}

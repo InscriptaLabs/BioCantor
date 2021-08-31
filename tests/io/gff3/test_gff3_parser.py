@@ -133,6 +133,12 @@ class TestGff3Parser:
         assert len(invalid_biotype) == 1
         assert list(invalid_biotype[0].qualifiers["provided_biotype"])[0] == "invalid"
 
+    def test_direct_cds_exon(self, test_data_dir):
+        recs = list(parse_standard_gff3(test_data_dir / "gene_cds_direct_child.gff3"))
+        c = recs[0].annotation
+        with open(test_data_dir / "gene_cds_direct_child.json") as fh:
+            assert AnnotationCollectionModel.Schema().load(json.load(fh)) == c
+
 
 class TestGff3FastaParser:
     """Test GFF3 + FASTA parsing"""
