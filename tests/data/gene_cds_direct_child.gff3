@@ -1,0 +1,13 @@
+# this file is a manually constructed example of parsing CDS features as direct descendants of a gene feature
+##gff-version 3
+chr1	BioCantor	gene	1	100	.	+	.	ID=gene1;Name=gene1;note=direct_CDS_child_without_exon
+chr1	BioCantor	CDS	1	25	.	+	.	ID=gene1-cds;Name=gene1;Parent=gene1
+chr1	BioCantor	CDS	50	100	.	+	.	ID=gene1-cds;Name=gene1;Parent=gene1
+chr1	BioCantor	gene	150	200	.	+	.	ID=gene2;Name=gene2;note=direct_CDS_child_with_exon
+chr1	BioCantor	exon	150	170	.	+	.	ID=gene2-cds;Name=gene2;Parent=gene2
+chr1	BioCantor	exon	175	200	.	+	.	ID=gene2-cds;Name=gene2;Parent=gene2
+chr1	BioCantor	CDS	150	170	.	+	.	ID=gene2-cds;Name=gene2;Parent=gene2
+chr1	BioCantor	CDS	175	200	.	+	.	ID=gene2-cds;Name=gene2;Parent=gene2
+chr1	BioCantor	gene	250	300	.	+	.	ID=gene3;Name=gene3;note=direct_CDS_child_noncoding
+chr1	BioCantor	exon	250	270	.	+	.	ID=gene3-cds;Name=gene3;Parent=gene3
+chr1	BioCantor	exon	275	300	.	+	.	ID=gene3-cds;Name=gene3;Parent=gene3

@@ -1,0 +1,2 @@
+NC_001138.5	RefSeq	origin_of_replication	127751	128071	.	+	.	ID=id-YFL007W;Dbxref=SGD:S000007636,GeneID:850541;Note=ARS604~Extremely inefficient ARS on Chromosome VI;gbkey=rep_origin;gene=BLM10;locus_tag=YFL007W
+NC_001138.5	RefSeq	origin_of_replication	118637	118957	.	+	.	ID=id-NC_001138.5:118637..118957;Dbxref=SGD:S000007645;Note=ARS603.5~Autonomously replicating sequence on Chromosome VI%3B activated early in S phase in ~50%25 of cell cycles;gbkey=rep_origin
