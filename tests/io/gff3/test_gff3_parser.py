@@ -102,6 +102,15 @@ class TestGff3Parser:
         with open(test_data_dir / "INSC1006_chrI.json") as fh:
             assert AnnotationCollectionModel.Schema().load(json.load(fh)) == c
 
+    def test_parse_non_gene_locus_tag(self, test_data_dir):
+        """Ran into bug in which non-gene feature with locus tag led to error, ensure handled correctly. Using cases
+        from S288C gff3 that surfaced the issue."""
+        gff = test_data_dir / "feature_test_non_gene_locus_tag.gff"
+        recs = list(parse_standard_gff3(gff))
+        features = list(recs[0].annotation.to_annotation_collection())
+        assert features[0].to_dict()["locus_tag"] is None
+        assert features[1].to_dict()["locus_tag"] == "YFL007W"
+
     @pytest.mark.parametrize(
         "gff3,json_file", [("feature_test_1.gff", "feature_test_1.json"), ("feature_test_2.gff", "feature_test_2.json")]
     )
@@ -123,6 +132,12 @@ class TestGff3Parser:
         invalid_biotype = [x for x in c.genes if not x.gene_type]
         assert len(invalid_biotype) == 1
         assert list(invalid_biotype[0].qualifiers["provided_biotype"])[0] == "invalid"
+
+    def test_direct_cds_exon(self, test_data_dir):
+        recs = list(parse_standard_gff3(test_data_dir / "gene_cds_direct_child.gff3"))
+        c = recs[0].annotation
+        with open(test_data_dir / "gene_cds_direct_child.json") as fh:
+            assert AnnotationCollectionModel.Schema().load(json.load(fh)) == c
 
 
 class TestGff3FastaParser:

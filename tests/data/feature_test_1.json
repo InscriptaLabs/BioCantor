@@ -457,7 +457,7 @@
             "transcripts": [
                 {
                     "exon_starts": [
-                        14816838
+                        14816837
                     ],
                     "exon_ends": [
                         14918668
@@ -480,18 +480,15 @@
                         "gene": [
                             "LINC02246"
                         ],
-                        "gene_biotype": [
-                            "invalid"
-                        ],
                         "provided_biotype": [
                             "invalid"
                         ]
                     },
-                    "is_primary_tx": null,
+                    "is_primary_tx": false,
                     "transcript_id": "gene-LINC02246",
                     "protein_id": null,
                     "product": null,
-                    "transcript_symbol": null,
+                    "transcript_symbol": "LINC02246",
                     "transcript_type": null,
                     "sequence_name": "NC_000021.9",
                     "sequence_guid": null,
@@ -543,18 +540,27 @@
                             "GeneID:54038",
                             "HGNC:HGNC:9190"
                         ],
+                        "description": [
+                            "RNA polymerase II subunit C pseudogene 1"
+                        ],
                         "gbkey": [
-                            "exon"
+                            "Gene"
                         ],
                         "gene": [
                             "POLR2CP1"
+                        ],
+                        "gene_synonym": [
+                            "POLR2CP"
+                        ],
+                        "pseudo": [
+                            "true"
                         ]
                     },
                     "is_primary_tx": false,
-                    "transcript_id": null,
+                    "transcript_id": "gene-POLR2CP1",
                     "protein_id": null,
                     "product": null,
-                    "transcript_symbol": null,
+                    "transcript_symbol": "POLR2CP1",
                     "transcript_type": "pseudogene",
                     "sequence_name": "NC_000021.9",
                     "sequence_guid": null,
@@ -595,7 +601,7 @@
             "transcripts": [
                 {
                     "exon_starts": [
-                        14774303
+                        14774302
                     ],
                     "exon_ends": [
                         14775480
@@ -618,9 +624,6 @@
                         "gene": [
                             "GAPDHP16"
                         ],
-                        "gene_biotype": [
-                            "pseudogene"
-                        ],
                         "gene_synonym": [
                             "GAPDP16"
                         ],
@@ -628,11 +631,11 @@
                             "true"
                         ]
                     },
-                    "is_primary_tx": null,
+                    "is_primary_tx": false,
                     "transcript_id": "gene-GAPDHP16",
                     "protein_id": null,
                     "product": null,
-                    "transcript_symbol": null,
+                    "transcript_symbol": "GAPDHP16",
                     "transcript_type": "pseudogene",
                     "sequence_name": "NC_000021.9",
                     "sequence_guid": null,
