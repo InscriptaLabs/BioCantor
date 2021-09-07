@@ -50,6 +50,32 @@ class TestCDSInterval:
 
     alphabet = Alphabet.NT_STRICT
 
+    seq = "AAAGGAAAGTCCCTGAAAAAA"
+    chrom_parent = Parent(
+        sequence=Sequence(seq, alphabet, type=SequenceType.CHROMOSOME, id="genome2"),
+        location=SingleInterval(0, len(seq), Strand.PLUS),
+    )
+    sequenceless_chrom_parent = Parent(
+        sequence_type=SequenceType.CHROMOSOME, id="genome2", location=SingleInterval(0, len(seq), Strand.PLUS)
+    )
+
+    chunk_parent2_12 = Parent(
+        id="genome2_2_12",
+        sequence=Sequence(
+            seq[2:12],
+            Alphabet.NT_EXTENDED_GAPPED,
+            type=SequenceType.SEQUENCE_CHUNK,
+            parent=Parent(
+                location=SingleInterval(
+                    2,
+                    12,
+                    Strand.PLUS,
+                    parent=Parent(id="genome2", sequence_type=SequenceType.CHROMOSOME),
+                )
+            ),
+        ),
+    )
+
     @pytest.mark.parametrize(
         "cds,expected",
         [
@@ -93,9 +119,21 @@ class TestCDSInterval:
                         [2, 8],
                         [9, 17],
                         Strand.PLUS,
-                        parent=Sequence("AAAGGAAAGTCCCTGAAAAAA", alphabet, type=SequenceType.CHROMOSOME),
+                        parent=chrom_parent,
                     ),
                     [CDSFrame.ZERO, CDSFrame.ONE],
+                ),
+                5,
+            ),
+            # Discontiguous CDS with -1bp programmed frameshift on chunk-relative coordinates
+            # chunk-relative coordinates slice off the last 2 codons
+            (
+                CDSInterval(
+                    [2, 8],
+                    [9, 17],
+                    Strand.PLUS,
+                    [CDSFrame.ZERO, CDSFrame.ONE],
+                    parent_or_seq_chunk_parent=chunk_parent2_12,
                 ),
                 5,
             ),
@@ -103,6 +141,26 @@ class TestCDSInterval:
     )
     def test_num_codons(self, cds, expected):
         assert cds.num_codons == expected
+
+    @pytest.mark.parametrize(
+        "cds,expected",
+        [
+            # Discontiguous CDS with -1bp programmed frameshift on chunk-relative coordinates
+            # chunk-relative coordinates slice off the last 2 codons
+            (
+                CDSInterval(
+                    [2, 8],
+                    [9, 17],
+                    Strand.PLUS,
+                    [CDSFrame.ZERO, CDSFrame.ONE],
+                    parent_or_seq_chunk_parent=chunk_parent2_12,
+                ),
+                3,
+            ),
+        ],
+    )
+    def test_num_chunk_relative_codons(self, cds, expected):
+        assert cds.num_chunk_relative_codons == expected
 
     @pytest.mark.parametrize(
         "cds,expected",
@@ -164,7 +222,7 @@ class TestCDSInterval:
                         [2, 8],
                         [5, 17],
                         Strand.MINUS,
-                        parent=Sequence("AAAGGAAAGTCCCTGAAAAAA", alphabet, type=SequenceType.CHROMOSOME),
+                        parent=chrom_parent,
                     ),
                     [CDSFrame.ONE, CDSFrame.TWO],
                 ),
@@ -177,7 +235,7 @@ class TestCDSInterval:
                         [2, 8],
                         [5, 17],
                         Strand.MINUS,
-                        parent=Sequence("AAAGGAAAGTCCCTGAAAAAA", alphabet, type=SequenceType.CHROMOSOME),
+                        parent=chrom_parent,
                     ),
                     [CDSFrame.TWO, CDSFrame.TWO],
                 ),
@@ -190,7 +248,7 @@ class TestCDSInterval:
                         [2, 8],
                         [9, 17],
                         Strand.PLUS,
-                        parent=Sequence("AAAGGAAAGTCCCTGAAAAAA", alphabet, type=SequenceType.CHROMOSOME),
+                        parent=chrom_parent,
                     ),
                     [CDSFrame.ZERO, CDSFrame.ONE],
                 ),  # G gets repeated here
@@ -468,7 +526,7 @@ class TestCDSInterval:
                         [2, 8],
                         [5, 17],
                         Strand.MINUS,
-                        parent=Sequence("AAAGGAAAGTCCCTGAAAAAA", alphabet, type=SequenceType.CHROMOSOME),
+                        parent=chrom_parent,
                     ),
                     [CDSFrame.ONE, CDSFrame.TWO],
                 ),
@@ -477,19 +535,19 @@ class TestCDSInterval:
                         12,
                         15,
                         Strand.MINUS,
-                        parent=Sequence("AAAGGAAAGTCCCTGAAAAAA", alphabet, type=SequenceType.CHROMOSOME),
+                        parent=chrom_parent,
                     ),  # CAG
                     SingleInterval(
                         9,
                         12,
                         Strand.MINUS,
-                        parent=Sequence("AAAGGAAAGTCCCTGAAAAAA", alphabet, type=SequenceType.CHROMOSOME),
+                        parent=chrom_parent,
                     ),  # GGA
                     CompoundInterval(
                         [3, 8],
                         [5, 9],
                         Strand.MINUS,
-                        parent=Sequence("AAAGGAAAGTCCCTGAAAAAA", alphabet, type=SequenceType.CHROMOSOME),
+                        parent=chrom_parent,
                     ),  # CCC
                 ],
             ),
@@ -500,7 +558,7 @@ class TestCDSInterval:
                         [2, 8],
                         [5, 17],
                         Strand.MINUS,
-                        parent=Sequence("AAAGGAAAGTCCCTGAAAAAA", alphabet, type=SequenceType.CHROMOSOME),
+                        parent=chrom_parent,
                     ),
                     [CDSFrame.TWO, CDSFrame.TWO],
                 ),
@@ -509,13 +567,13 @@ class TestCDSInterval:
                         12,
                         15,
                         Strand.MINUS,
-                        parent=Sequence("AAAGGAAAGTCCCTGAAAAAA", alphabet, type=SequenceType.CHROMOSOME),
+                        parent=chrom_parent,
                     ),  # CAG
                     SingleInterval(
                         9,
                         12,
                         Strand.MINUS,
-                        parent=Sequence("AAAGGAAAGTCCCTGAAAAAA", alphabet, type=SequenceType.CHROMOSOME),
+                        parent=chrom_parent,
                     ),  # GGA
                 ],
             ),
@@ -526,7 +584,7 @@ class TestCDSInterval:
                         [2, 8],
                         [9, 17],
                         Strand.PLUS,
-                        parent=Sequence("AAAGGAAAGTCCCTGAAAAAA", alphabet, type=SequenceType.CHROMOSOME),
+                        parent=chrom_parent,
                     ),
                     [CDSFrame.ZERO, CDSFrame.ONE],
                 ),
@@ -535,31 +593,31 @@ class TestCDSInterval:
                         2,
                         5,
                         Strand.PLUS,
-                        parent=Sequence("AAAGGAAAGTCCCTGAAAAAA", alphabet, type=SequenceType.CHROMOSOME),
+                        parent=chrom_parent,
                     ),  # AGG
                     SingleInterval(
                         5,
                         8,
                         Strand.PLUS,
-                        parent=Sequence("AAAGGAAAGTCCCTGAAAAAA", alphabet, type=SequenceType.CHROMOSOME),
+                        parent=chrom_parent,
                     ),  # AAA
                     CompoundInterval(
                         [8, 8],
                         [9, 10],
                         Strand.PLUS,
-                        parent=Sequence("AAAGGAAAGTCCCTGAAAAAA", alphabet, type=SequenceType.CHROMOSOME),
+                        parent=chrom_parent,
                     ),  # GGT, G gets repeated
                     SingleInterval(
                         10,
                         13,
                         Strand.PLUS,
-                        parent=Sequence("AAAGGAAAGTCCCTGAAAAAA", alphabet, type=SequenceType.CHROMOSOME),
+                        parent=chrom_parent,
                     ),  # CCC
                     SingleInterval(
                         13,
                         16,
                         Strand.PLUS,
-                        parent=Sequence("AAAGGAAAGTCCCTGAAAAAA", alphabet, type=SequenceType.CHROMOSOME),
+                        parent=chrom_parent,
                     ),  # TGA
                 ],
             ),
@@ -614,10 +672,56 @@ class TestCDSInterval:
             ),
         ],
     )
-    def test_scan_codon_locations(self, cds, expected):
-        assert list(cds.scan_codon_locations()) == expected
+    def test_scan_chunk_relative_codon_locations(self, cds, expected):
+        assert list(cds.scan_chunk_relative_codon_locations()) == expected
         # run again to prove caching doesn't kill the iterator
-        assert list(cds.scan_codon_locations()) == expected
+        assert list(cds.scan_chunk_relative_codon_locations()) == expected
+        # show that the tuple accessors works too
+        assert cds.chunk_relative_codon_locations == tuple(expected)
+
+    @pytest.mark.parametrize(
+        "cds,expected",
+        [
+            # chunk relative, so the returned codons are sequenceless but still the whole thing
+            (
+                CDSInterval(
+                    [2, 8],
+                    [9, 17],
+                    Strand.PLUS,
+                    [CDSFrame.ZERO, CDSFrame.ONE],
+                    parent_or_seq_chunk_parent=chunk_parent2_12,
+                ),
+                [
+                    SingleInterval(2, 5, Strand.PLUS, sequenceless_chrom_parent),
+                    SingleInterval(5, 8, Strand.PLUS, sequenceless_chrom_parent),
+                    CompoundInterval([8, 8], [9, 10], Strand.PLUS, sequenceless_chrom_parent),
+                    SingleInterval(10, 13, Strand.PLUS, sequenceless_chrom_parent),
+                    SingleInterval(13, 16, Strand.PLUS, sequenceless_chrom_parent),
+                ],
+            ),
+            # genome relative, so returned codons are identical but have sequence
+            (
+                CDSInterval(
+                    [2, 8],
+                    [9, 17],
+                    Strand.PLUS,
+                    [CDSFrame.ZERO, CDSFrame.ONE],
+                    parent_or_seq_chunk_parent=chrom_parent,
+                ),
+                [
+                    SingleInterval(2, 5, Strand.PLUS, chrom_parent),
+                    SingleInterval(5, 8, Strand.PLUS, chrom_parent),
+                    CompoundInterval([8, 8], [9, 10], Strand.PLUS, chrom_parent),
+                    SingleInterval(10, 13, Strand.PLUS, chrom_parent),
+                    SingleInterval(13, 16, Strand.PLUS, chrom_parent),
+                ],
+            ),
+        ],
+    )
+    def test_scan_chromosome_codon_locations(self, cds, expected):
+        assert list(cds.scan_chromosome_codon_locations()) == expected
+        assert list(cds.scan_chromosome_codon_locations()) == expected
+        assert cds.chromosome_codon_locations == tuple(expected)
 
     @pytest.mark.parametrize(
         "cds,expected",
@@ -655,7 +759,7 @@ class TestCDSInterval:
                         [2, 8],
                         [5, 17],
                         Strand.MINUS,
-                        parent=Sequence("AAAGGAAAGTCCCTGAAAAAA", alphabet, type=SequenceType.CHROMOSOME),
+                        parent=chrom_parent,
                     ),
                     [CDSFrame.TWO, CDSFrame.TWO],
                 ),
@@ -1049,7 +1153,7 @@ class TestCDSInterval:
                         [2, 8],
                         [9, 17],
                         Strand.PLUS,
-                        parent=Sequence("AAAGGAAAGTCCCTGAAAAAA", alphabet, type=SequenceType.CHROMOSOME),
+                        parent=chrom_parent,
                     ),
                     [CDSFrame.ZERO, CDSFrame.ONE],
                 ),
@@ -1062,7 +1166,7 @@ class TestCDSInterval:
                         [2, 8, 12],
                         [5, 13, 18],
                         Strand.PLUS,
-                        parent=Sequence("AAAGGAAAGTCCCTGAAAAAA", alphabet, type=SequenceType.CHROMOSOME),
+                        parent=chrom_parent,
                     ),
                     [CDSFrame.ZERO, CDSFrame.ONE, CDSFrame.ZERO],
                 ),
@@ -1075,7 +1179,7 @@ class TestCDSInterval:
                         [2, 8, 12],
                         [5, 13, 18],
                         Strand.PLUS,
-                        parent=Sequence("AAAGGAAAGTCCCTGAAAAAA", alphabet, type=SequenceType.CHROMOSOME),
+                        parent=chrom_parent,
                     ),
                     [CDSFrame.ONE, CDSFrame.ONE, CDSFrame.ZERO],
                 ),
