@@ -43,6 +43,7 @@ from inscripta.biocantor.io.genbank.constants import (
     KnownQualifiers,
     GENBANK_GENE_FEATURES,
 )
+from inscripta.biocantor.io.exc import DuplicateSequenceException
 from inscripta.biocantor.io.genbank.exc import (
     GenBankParserError,
     EmptyGenBankError,
@@ -485,6 +486,13 @@ def parse_genbank(
          :class:`ParsedAnnotationRecord`.
     """
     seq_records = SeqIO.parse(genbank_handle_or_path, format="genbank")
+
+    seqrecords_dict = {}
+    for rec in seq_records:
+        if rec.id in seqrecords_dict:
+            raise DuplicateSequenceException(f"Sequence {rec.id} found twice in FASTA file.")
+        seqrecords_dict[rec.id] = rec
+
     if gbk_type == GenBankParserType.SORTED:
         gene_records = group_gene_records_from_sorted_genbank(seq_records, parse_func, feature_parse_func)
     else:

@@ -14,3 +14,7 @@ class InvalidInputError(BioCantorIOException):
 
 class StrandViolationWarning(UserWarning):
     pass
+
+
+class DuplicateSequenceException(BioCantorIOException):
+    pass
