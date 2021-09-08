@@ -5,6 +5,7 @@ from Bio import SeqIO
 from inscripta.biocantor.gene.biotype import Biotype
 from inscripta.biocantor.gene.cds_frame import CDSFrame
 from inscripta.biocantor.io.gff3.exc import GFF3FastaException
+from inscripta.biocantor.io.exc import DuplicateSequenceException
 from inscripta.biocantor.io.gff3.parser import (
     parse_gff3_embedded_fasta,
     parse_gff3_fasta,
@@ -163,6 +164,15 @@ class TestGff3FastaParser:
             _ = list(
                 ParsedAnnotationRecord.parsed_annotation_records_to_model(parse_gff3_embedded_fasta(gff3_without_fasta))
             )
+
+    def test_duplicate_sequence(self, test_data_dir):
+        fasta = test_data_dir / "INSC1003_extra_contig_duplicate.fa"
+        gff3 = test_data_dir / "INSC1003.gff3"
+        gff3_with_fasta = test_data_dir / "INSC1003_embedded_extra_contig_duplicate.gff3"
+        with pytest.raises(DuplicateSequenceException):
+            _ = list(parse_gff3_fasta(gff3, fasta))
+        with pytest.raises(DuplicateSequenceException):
+            _ = list(parse_gff3_embedded_fasta(gff3_with_fasta))
 
 
 class TestGff3ToModel:
