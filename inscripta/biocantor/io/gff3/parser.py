@@ -138,8 +138,11 @@ def _parse_genes(chrom: str, db: FeatureDB) -> List[Dict]:
     """
     parsed_genes = []
     for gene in db.region(
-        seqid=chrom, featuretype=[GFF3GeneFeatureTypes.GENE.value, GFF3GeneFeatureTypes.PSEUDOGENE.value]
+        seqid=chrom, featuretype=[GFF3GeneFeatureTypes.GENE.value, GFF3GeneFeatureTypes.PSEUDOGENE.value, "CDS"]
     ):
+        parents = list(db.parents(gene))
+        if len(parents) > 0:
+            continue
         locus_tag = gene.attributes.get("locus_tag", [None])[0]
         gene_qualifiers = {x: y for x, y in gene.attributes.items() if not BioCantorGFF3ReservedQualifiers.has_value(x)}
 
