@@ -137,7 +137,7 @@ def _parse_genes(chrom: str, db: FeatureDB) -> List[Dict]:
         A list of nested dictionaries representing all genes on this chromosome.
     """
     parsed_genes = []
-    for gene in db.region(
+    for gene_or_feature in db.region(
         seqid=chrom,
         featuretype=[
             GFF3GeneFeatureTypes.GENE.value,
@@ -145,24 +145,25 @@ def _parse_genes(chrom: str, db: FeatureDB) -> List[Dict]:
             GFF3GeneFeatureTypes.CDS.value,
         ],
     ):
-        parents = list(db.parents(gene))
+        # empty generators are not None
+        parents = list(db.parents(gene_or_feature))
         if len(parents) > 0:
             continue
-        locus_tag = gene.attributes.get("locus_tag", [None])[0]
-        gene_qualifiers = {x: y for x, y in gene.attributes.items() if not BioCantorGFF3ReservedQualifiers.has_value(x)}
+        locus_tag = gene_or_feature.attributes.get("locus_tag", [None])[0]
+        gene_qualifiers = {x: y for x, y in gene_or_feature.attributes.items() if not BioCantorGFF3ReservedQualifiers.has_value(x)}
 
         for key in ["gene_name", "gene_symbol", "gene", "Name"]:
-            gene_symbol = gene.attributes.get(key, [None])[0]
+            gene_symbol = gene_or_feature.attributes.get(key, [None])[0]
             if gene_symbol:
                 break
 
         for key in ["gene_biotype", "gene_type"]:
-            gene_biotype = gene.attributes.get(key, [None])[0]
+            gene_biotype = gene_or_feature.attributes.get(key, [None])[0]
             if gene_biotype:
                 break
 
         for key in ["gene_id", "ID"]:
-            gene_id = gene.attributes.get(key, [None])[0]
+            gene_id = gene_or_feature.attributes.get(key, [None])[0]
             if gene_id:
                 break
 
@@ -171,13 +172,15 @@ def _parse_genes(chrom: str, db: FeatureDB) -> List[Dict]:
         elif gene_biotype:
             gene_qualifiers["provided_biotype"] = [gene_biotype]
             gene_biotype = None
+        elif gene_biotype is None and gene_or_feature.featuretype == GFF3GeneFeatureTypes.CDS.value:
+            gene_biotype = Biotype.protein_coding
 
         transcripts = []
         # keep track of CDS/exon features that are direct descendants of the gene
         direct_exons = []
         direct_cds = []
 
-        for i, putative_transcript in enumerate(db.children(gene, level=1)):
+        for i, putative_transcript in enumerate(db.children(gene_or_feature, level=1)):
 
             # direct CDS/exon descendants are allowed, but they will all become one transcript
             if putative_transcript.featuretype == GFF3GeneFeatureTypes.CDS.value:
@@ -194,13 +197,13 @@ def _parse_genes(chrom: str, db: FeatureDB) -> List[Dict]:
 
             transcript_id = transcript.attributes.get("transcript_id", [None])[0]
             transcript_symbol = transcript.attributes.get(
-                "transcript_name", [gene.attributes.get("transcript_name", None)]
+                "transcript_name", [gene_or_feature.attributes.get("transcript_name", None)]
             )[0]
             transcript_qualifiers = {
                 x: y for x, y in transcript.attributes.items() if not BioCantorGFF3ReservedQualifiers.has_value(x)
             }
-            provided_transcript_biotype = gene.attributes.get(
-                "transcript_biotype", [gene.attributes.get("transcript_type", None)]
+            provided_transcript_biotype = gene_or_feature.attributes.get(
+                "transcript_biotype", [gene_or_feature.attributes.get("transcript_type", None)]
             )[0]
 
             if Biotype.has_name(provided_transcript_biotype):
@@ -243,7 +246,7 @@ def _parse_genes(chrom: str, db: FeatureDB) -> List[Dict]:
         if direct_cds or direct_exons:
             # construct a transcript directly from CDS/exon features
             tx = _convert_features_to_transcript(
-                direct_exons, direct_cds, gene.strand, chrom, gene_qualifiers, gene_id, gene_biotype, gene_symbol
+                direct_exons, direct_cds, gene_or_feature.strand, chrom, gene_qualifiers, gene_id, gene_biotype, gene_symbol
             )
             transcripts.append(tx)
 
@@ -252,9 +255,9 @@ def _parse_genes(chrom: str, db: FeatureDB) -> List[Dict]:
             # infer a transcript for a gene
             logger.info(f"Inferring a transcript for gene {gene_symbol}")
             tx = _convert_features_to_transcript(
-                [gene],
-                [gene] if gene_biotype == Biotype.protein_coding else [],
-                gene.strand,
+                [gene_or_feature],
+                [gene_or_feature] if gene_biotype == Biotype.protein_coding else [],
+                gene_or_feature.strand,
                 chrom,
                 gene_qualifiers,
                 gene_id,
@@ -263,7 +266,7 @@ def _parse_genes(chrom: str, db: FeatureDB) -> List[Dict]:
             )
             transcripts.append(tx)
 
-        gene = dict(
+        gene_or_feature = dict(
             transcripts=transcripts,
             gene_id=gene_id,
             gene_symbol=gene_symbol,
@@ -273,7 +276,7 @@ def _parse_genes(chrom: str, db: FeatureDB) -> List[Dict]:
             sequence_name=chrom,
         )
 
-        parsed_genes.append(gene)
+        parsed_genes.append(gene_or_feature)
     return parsed_genes
 
 
