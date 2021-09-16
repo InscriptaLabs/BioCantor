@@ -411,7 +411,7 @@ class CDSInterval(AbstractFeatureInterval):
         else:
             yield from reversed(loc.blocks)
 
-    # @lru_cache(maxsize=1)
+    @lru_cache(maxsize=1)
     def extract_sequence(self) -> Sequence:
         """
         Returns a continuous CDS sequence that is in frame and always a multiple of 3.
@@ -465,7 +465,7 @@ class CDSInterval(AbstractFeatureInterval):
             if truncate_at_in_frame_stop and c.is_stop_codon:
                 break
 
-    # @lru_cache(maxsize=1)
+    @lru_cache(maxsize=1)
     @property
     def chunk_relative_codon_locations(self) -> Tuple[Location]:
         """
@@ -476,7 +476,7 @@ class CDSInterval(AbstractFeatureInterval):
         """
         return tuple(self.scan_chunk_relative_codon_locations())
 
-    # @lru_cache(maxsize=1)
+    @lru_cache(maxsize=1)
     @property
     def chromosome_codon_locations(self) -> Tuple[Location]:
         """
