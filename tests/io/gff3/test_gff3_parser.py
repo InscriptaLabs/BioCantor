@@ -144,7 +144,7 @@ class TestGff3Parser:
         """Some prokaryotic GFFs (e.g. prokka) do not have gene features, only CDS"""
         recs = list(parse_standard_gff3(test_data_dir / "test_cds_only.gff"))
         c = recs[0].annotation
-        with open("test_cds_only.json") as fh:
+        with open(test_data_dir / "test_cds_only.json") as fh:
             assert AnnotationCollectionModel.Schema().load(json.load(fh)) == c
 
 
