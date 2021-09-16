@@ -147,7 +147,7 @@ def _parse_genes(chrom: str, db: FeatureDB) -> List[Dict]:
     ):
         # empty generators are not None
         parents = list(db.parents(gene_or_feature))
-        if len(parents) > 0:
+        if parents:
             continue
         locus_tag = gene_or_feature.attributes.get("locus_tag", [None])[0]
         gene_qualifiers = {
