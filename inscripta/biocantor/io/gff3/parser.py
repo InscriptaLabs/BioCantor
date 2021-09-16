@@ -150,7 +150,9 @@ def _parse_genes(chrom: str, db: FeatureDB) -> List[Dict]:
         if len(parents) > 0:
             continue
         locus_tag = gene_or_feature.attributes.get("locus_tag", [None])[0]
-        gene_qualifiers = {x: y for x, y in gene_or_feature.attributes.items() if not BioCantorGFF3ReservedQualifiers.has_value(x)}
+        gene_qualifiers = {
+            x: y for x, y in gene_or_feature.attributes.items() if not BioCantorGFF3ReservedQualifiers.has_value(x)
+        }
 
         for key in ["gene_name", "gene_symbol", "gene", "Name"]:
             gene_symbol = gene_or_feature.attributes.get(key, [None])[0]
@@ -246,7 +248,14 @@ def _parse_genes(chrom: str, db: FeatureDB) -> List[Dict]:
         if direct_cds or direct_exons:
             # construct a transcript directly from CDS/exon features
             tx = _convert_features_to_transcript(
-                direct_exons, direct_cds, gene_or_feature.strand, chrom, gene_qualifiers, gene_id, gene_biotype, gene_symbol
+                direct_exons,
+                direct_cds,
+                gene_or_feature.strand,
+                chrom,
+                gene_qualifiers,
+                gene_id,
+                gene_biotype,
+                gene_symbol,
             )
             transcripts.append(tx)
 
