@@ -138,8 +138,12 @@ def _parse_genes(chrom: str, db: FeatureDB) -> List[Dict]:
     """
     parsed_genes = []
     for gene in db.region(
-        seqid=chrom, featuretype=[GFF3GeneFeatureTypes.GENE.value, GFF3GeneFeatureTypes.PSEUDOGENE.value,
-                                  GFF3GeneFeatureTypes.CDS.value]
+        seqid=chrom,
+        featuretype=[
+            GFF3GeneFeatureTypes.GENE.value,
+            GFF3GeneFeatureTypes.PSEUDOGENE.value,
+            GFF3GeneFeatureTypes.CDS.value,
+        ],
     ):
         parents = list(db.parents(gene))
         if len(parents) > 0:
