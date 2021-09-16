@@ -87,7 +87,7 @@ def collection_to_genbank(
         seqrecord = SeqRecord(
             Seq(str(collection.sequence)),
             name=collection.sequence_name,
-            id=collection.sequence_guid if collection.sequence_guid else collection.sequence_name,
+            id=str(collection.sequence_guid) if collection.sequence_guid else collection.sequence_name,
             description="GenBank produced by BioCantor",
         )
         if seqrecord_annotations:

@@ -522,6 +522,26 @@ class CDSInterval(AbstractFeatureInterval):
         Returns an iterator over codon locations in *chunk relative* coordinates.
 
         Any leading or trailing bases that are annotated as CDS but cannot form a full codon
+        are excluded.
+        """
+        # must check if it is overlapping OR if the frames that would be constructed based only on location
+        # information match the frames seen.
+        loc = self.chunk_relative_location if chunk_relative_coordinates else self.chromosome_location
+        if loc.is_overlapping or self.construct_frames_from_location(loc) != self.frames:
+            yield from self._scan_codon_locations_overlapping(chunk_relative_coordinates)
+        else:
+
+            # must make sure this CDS is at least one codon long
+            if len(loc) >= 3:
+                yield from loc.scan_windows(3, 3, 0)
+
+    def _scan_codon_locations_overlapping(self, chunk_relative_coordinates: bool = True) -> Iterator[Location]:
+        """
+        Returns an iterator over codon locations in *chunk relative* coordinates.
+
+        Only necessary to be used if this CDS has overlapping intervals.
+
+        Any leading or trailing bases that are annotated as CDS but cannot form a full codon
         are excluded. Additionally, any internal codons that are incomplete are excluded.
 
         Incomplete internal codons are determined by comparing the CDSFrame of each exon
