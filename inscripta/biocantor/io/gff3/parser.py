@@ -24,6 +24,7 @@ from gffutils.feature import Feature
 from gffutils.interface import FeatureDB
 from inscripta.biocantor.gene import CDSInterval, CDSPhase, Biotype
 from inscripta.biocantor.location import CompoundInterval
+from inscripta.biocantor.io.exc import DuplicateSequenceException
 from inscripta.biocantor.io.gff3.constants import (
     GFF3Headers,
     BioCantorGFF3ReservedQualifiers,
@@ -597,13 +598,19 @@ def parse_gff3_embedded_fasta(
 
     Raises:
         GFF3FastaException: if the GFF3 lacks a FASTA suffix.
+        DuplicateSequenceException: If the FASTA file contains duplicate sequences.
 
     Yields:
         Iterable of ``ParsedAnnotationRecord`` objects.
     """
     with open(gff3_with_fasta, "r") as fh:
         seqrecords = extract_seqrecords_from_gff3_fasta(fh)
-    seqrecords_dict = {x.id: x for x in seqrecords}
+
+    seqrecords_dict = {}
+    for rec in seqrecords:
+        if rec.id in seqrecords_dict:
+            raise DuplicateSequenceException(f"Sequence {rec.id} found twice in FASTA file.")
+        seqrecords_dict[rec.id] = rec
 
     # keep track of sequences we see in the GFF3 so we can append empty records (contigs with no annotations)
     seen_seqs = set()
@@ -641,11 +648,16 @@ def parse_gff3_fasta(
 
     Raises:
         GFF3FastaException: if the GFF3 lacks a FASTA suffix.
+        DuplicateSequenceException: If the FASTA file contains duplicate sequences.
 
     Yields:
         Iterable of ``ParsedAnnotationRecord`` objects.
     """
-    seqrecords_dict = {x.id: x for x in SeqIO.parse(fasta, format="fasta")}
+    seqrecords_dict = {}
+    for rec in SeqIO.parse(fasta, format="fasta"):
+        if rec.id in seqrecords_dict:
+            raise DuplicateSequenceException(f"Sequence {rec.id} found twice in FASTA file.")
+        seqrecords_dict[rec.id] = rec
 
     # keep track of sequences we see in the GFF3 so we can append empty records (contigs with no annotations)
     seen_seqs = set()

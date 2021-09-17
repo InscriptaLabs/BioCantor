@@ -323,7 +323,7 @@ class CDSTblFeature(TblFeature):
             if val:
                 qualifiers["note"].append(f"original {key}: {val}")
 
-        codon_start = next(transcript.cds.frame_iter()).value + 1
+        codon_start = next(transcript.cds._frame_iter()).value + 1
         qualifiers["codon_start"] = [codon_start]
 
         # try to pull out the special qualifiers

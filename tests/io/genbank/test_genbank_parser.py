@@ -4,7 +4,7 @@ from collections import OrderedDict
 import pytest
 from inscripta.biocantor.gene.biotype import Biotype
 from inscripta.biocantor.gene.cds_frame import CDSFrame
-from inscripta.biocantor.io.exc import StrandViolationWarning
+from inscripta.biocantor.io.exc import StrandViolationWarning, DuplicateSequenceException
 from inscripta.biocantor.io.genbank.exc import (
     GenBankLocusTagError,
     GenBankLocationException,
@@ -1121,3 +1121,8 @@ class TestExceptionsWarnings:
         with pytest.raises(GenBankLocationException):
             with open(gbk, "r") as fh:
                 _ = list(parse_genbank(fh))
+
+    def test_duplicate_sequence(self, test_data_dir):
+        gbk = test_data_dir / "INSC1006_chrI_duplicate.gbff"
+        with pytest.raises(DuplicateSequenceException):
+            _ = list(parse_genbank(test_data_dir / gbk))
