@@ -521,7 +521,7 @@ class CDSInterval(AbstractFeatureInterval):
     def scan_codon_locations(self) -> Iterator[Location]:
         """
         Scan codon locations in chunk-relative coordinates. This function exists for backwards compatibility
-        and is deprecated.
+        and is deprecated. It however retains the speedup optimization introduced in BioCantor 0.10.0.
         """
         warnings.warn(
             DeprecationWarning(
@@ -529,7 +529,7 @@ class CDSInterval(AbstractFeatureInterval):
                 "Use scan_chromosome_codon_locations or scan_chunk_relative_codon_locations."
             )
         )
-        yield from self._scan_codon_locations_overlapping(chunk_relative_coordinates=True)
+        yield from self._scan_codon_locations(chunk_relative_coordinates=True)
 
     def _scan_codon_locations(self, chunk_relative_coordinates: bool = True) -> Iterator[Location]:
         """
