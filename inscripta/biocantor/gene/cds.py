@@ -1,3 +1,4 @@
+import warnings
 from itertools import count, zip_longest
 from typing import Iterator, List, Union, Optional, Dict, Hashable, Any, Iterable, Set, Tuple
 from uuid import UUID
@@ -516,6 +517,19 @@ class CDSInterval(AbstractFeatureInterval):
         to model things like programmed frameshifts and indels that may be assembly errors.
         """
         yield from self._scan_codon_locations(chunk_relative_coordinates=False)
+
+    def scan_codon_locations(self) -> Iterator[Location]:
+        """
+        Scan codon locations in chunk-relative coordinates. This function exists for backwards compatibility
+        and is deprecated.
+        """
+        warnings.warn(
+            DeprecationWarning(
+                "CDSInterval.scan_codon_locations is deprecated. "
+                "Use scan_chromosome_codon_locations or scan_chunk_relative_codon_locations."
+            )
+        )
+        yield from self._scan_codon_locations_overlapping(chunk_relative_coordinates=True)
 
     def _scan_codon_locations(self, chunk_relative_coordinates: bool = True) -> Iterator[Location]:
         """
