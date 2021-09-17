@@ -1,0 +1,10 @@
+##gff-version 3
+##sequence-region NC_000913.3 1 4641652
+NC_000913.3	Prodigal:002006	CDS	337	2799	.	+	0	ID=PLEAFKLE_00001;Name=thrA;db_xref=COG:COG0460;gene=thrA;inference=ab initio prediction:Prodigal:002006,similar to AA sequence:UniProtKB:P00561;locus_tag=PLEAFKLE_00001;product=Bifunctional aspartokinase/homoserine dehydrogenase 1
+NC_000913.3	Prodigal:002006	CDS	2801	3733	.	+	0	ID=PLEAFKLE_00002;eC_number=2.7.1.39;Name=thrB;db_xref=COG:COG0083;gene=thrB;inference=ab initio prediction:Prodigal:002006,similar to AA sequence:UniProtKB:P00547;locus_tag=PLEAFKLE_00002;product=Homoserine kinase
+NC_000913.3	Prodigal:002006	CDS	3734	5020	.	+	0	ID=PLEAFKLE_00003;eC_number=4.2.3.1;Name=thrC;db_xref=COG:COG0498;gene=thrC;inference=ab initio prediction:Prodigal:002006,similar to AA sequence:UniProtKB:P00934;locus_tag=PLEAFKLE_00003;product=Threonine synthase
+NC_000913.3	Prodigal:002006	CDS	5234	5530	.	+	0	ID=PLEAFKLE_00004;inference=ab initio prediction:Prodigal:002006;locus_tag=PLEAFKLE_00004;product=hypothetical protein
+NC_000913.3	Prodigal:002006	CDS	5683	6459	.	-	0	ID=PLEAFKLE_00005;Name=yaaA;db_xref=COG:COG3022;gene=yaaA;inference=ab initio prediction:Prodigal:002006,similar to AA sequence:UniProtKB:P0A8I3;locus_tag=PLEAFKLE_00005;product=Peroxide stress resistance protein YaaA
+NC_000913.3	Prodigal:002006	CDS	6529	7959	.	-	0	ID=PLEAFKLE_00006;Name=alsT;db_xref=COG:COG1115;gene=alsT;inference=ab initio prediction:Prodigal:002006,similar to AA sequence:UniProtKB:Q45068;locus_tag=PLEAFKLE_00006;product=Amino-acid carrier protein AlsT
+NC_000913.3	Prodigal:002006	CDS	8238	9191	.	+	0	ID=PLEAFKLE_00007;eC_number=2.2.1.2;Name=talB;db_xref=COG:COG0176;gene=talB;inference=ab initio prediction:Prodigal:002006,similar to AA sequence:UniProtKB:P0A870;locus_tag=PLEAFKLE_00007;product=Transaldolase B
+NC_000913.3	Prodigal:002006	CDS	9306	9893	.	+	0	ID=PLEAFKLE_00008;eC_number=2.7.7.75;Name=mog;db_xref=COG:COG0521;gene=mog;inference=ab initio prediction:Prodigal:002006,similar to AA sequence:UniProtKB:P0AF03;locus_tag=PLEAFKLE_00008;product=Molybdopterin adenylyltransferase

@@ -1,0 +1,528 @@
+{
+    "feature_collections": null,
+    "genes": [
+        {
+            "transcripts": [
+                {
+                    "exon_starts": [
+                        336
+                    ],
+                    "exon_ends": [
+                        2799
+                    ],
+                    "strand": "PLUS",
+                    "cds_starts": [
+                        336
+                    ],
+                    "cds_ends": [
+                        2799
+                    ],
+                    "cds_frames": [
+                        "ZERO"
+                    ],
+                    "qualifiers": {
+                        "db_xref": [
+                            "COG:COG0460"
+                        ],
+                        "gene": [
+                            "thrA"
+                        ],
+                        "inference": [
+                            "ab initio prediction:Prodigal:002006",
+                            "similar to AA sequence:UniProtKB:P00561"
+                        ]
+                    },
+                    "is_primary_tx": false,
+                    "transcript_id": "PLEAFKLE_00001",
+                    "protein_id": null,
+                    "product": "Bifunctional aspartokinase/homoserine dehydrogenase 1",
+                    "transcript_symbol": "thrA",
+                    "transcript_type": "protein_coding",
+                    "sequence_name": "NC_000913.3",
+                    "sequence_guid": null,
+                    "transcript_interval_guid": null,
+                    "transcript_guid": null
+                }
+            ],
+            "gene_id": "PLEAFKLE_00001",
+            "gene_symbol": "thrA",
+            "gene_type": "protein_coding",
+            "locus_tag": "PLEAFKLE_00001",
+            "qualifiers": {
+                "db_xref": [
+                    "COG:COG0460"
+                ],
+                "gene": [
+                    "thrA"
+                ],
+                "inference": [
+                    "ab initio prediction:Prodigal:002006",
+                    "similar to AA sequence:UniProtKB:P00561"
+                ]
+            },
+            "sequence_name": "NC_000913.3",
+            "sequence_guid": null,
+            "gene_guid": null
+        },
+        {
+            "transcripts": [
+                {
+                    "exon_starts": [
+                        2800
+                    ],
+                    "exon_ends": [
+                        3733
+                    ],
+                    "strand": "PLUS",
+                    "cds_starts": [
+                        2800
+                    ],
+                    "cds_ends": [
+                        3733
+                    ],
+                    "cds_frames": [
+                        "ZERO"
+                    ],
+                    "qualifiers": {
+                        "eC_number": [
+                            "2.7.1.39"
+                        ],
+                        "db_xref": [
+                            "COG:COG0083"
+                        ],
+                        "gene": [
+                            "thrB"
+                        ],
+                        "inference": [
+                            "ab initio prediction:Prodigal:002006",
+                            "similar to AA sequence:UniProtKB:P00547"
+                        ]
+                    },
+                    "is_primary_tx": false,
+                    "transcript_id": "PLEAFKLE_00002",
+                    "protein_id": null,
+                    "product": "Homoserine kinase",
+                    "transcript_symbol": "thrB",
+                    "transcript_type": "protein_coding",
+                    "sequence_name": "NC_000913.3",
+                    "sequence_guid": null,
+                    "transcript_interval_guid": null,
+                    "transcript_guid": null
+                }
+            ],
+            "gene_id": "PLEAFKLE_00002",
+            "gene_symbol": "thrB",
+            "gene_type": "protein_coding",
+            "locus_tag": "PLEAFKLE_00002",
+            "qualifiers": {
+                "eC_number": [
+                    "2.7.1.39"
+                ],
+                "db_xref": [
+                    "COG:COG0083"
+                ],
+                "gene": [
+                    "thrB"
+                ],
+                "inference": [
+                    "ab initio prediction:Prodigal:002006",
+                    "similar to AA sequence:UniProtKB:P00547"
+                ]
+            },
+            "sequence_name": "NC_000913.3",
+            "sequence_guid": null,
+            "gene_guid": null
+        },
+        {
+            "transcripts": [
+                {
+                    "exon_starts": [
+                        3733
+                    ],
+                    "exon_ends": [
+                        5020
+                    ],
+                    "strand": "PLUS",
+                    "cds_starts": [
+                        3733
+                    ],
+                    "cds_ends": [
+                        5020
+                    ],
+                    "cds_frames": [
+                        "ZERO"
+                    ],
+                    "qualifiers": {
+                        "eC_number": [
+                            "4.2.3.1"
+                        ],
+                        "db_xref": [
+                            "COG:COG0498"
+                        ],
+                        "gene": [
+                            "thrC"
+                        ],
+                        "inference": [
+                            "ab initio prediction:Prodigal:002006",
+                            "similar to AA sequence:UniProtKB:P00934"
+                        ]
+                    },
+                    "is_primary_tx": false,
+                    "transcript_id": "PLEAFKLE_00003",
+                    "protein_id": null,
+                    "product": "Threonine synthase",
+                    "transcript_symbol": "thrC",
+                    "transcript_type": "protein_coding",
+                    "sequence_name": "NC_000913.3",
+                    "sequence_guid": null,
+                    "transcript_interval_guid": null,
+                    "transcript_guid": null
+                }
+            ],
+            "gene_id": "PLEAFKLE_00003",
+            "gene_symbol": "thrC",
+            "gene_type": "protein_coding",
+            "locus_tag": "PLEAFKLE_00003",
+            "qualifiers": {
+                "eC_number": [
+                    "4.2.3.1"
+                ],
+                "db_xref": [
+                    "COG:COG0498"
+                ],
+                "gene": [
+                    "thrC"
+                ],
+                "inference": [
+                    "ab initio prediction:Prodigal:002006",
+                    "similar to AA sequence:UniProtKB:P00934"
+                ]
+            },
+            "sequence_name": "NC_000913.3",
+            "sequence_guid": null,
+            "gene_guid": null
+        },
+        {
+            "transcripts": [
+                {
+                    "exon_starts": [
+                        5233
+                    ],
+                    "exon_ends": [
+                        5530
+                    ],
+                    "strand": "PLUS",
+                    "cds_starts": [
+                        5233
+                    ],
+                    "cds_ends": [
+                        5530
+                    ],
+                    "cds_frames": [
+                        "ZERO"
+                    ],
+                    "qualifiers": {
+                        "inference": [
+                            "ab initio prediction:Prodigal:002006"
+                        ]
+                    },
+                    "is_primary_tx": false,
+                    "transcript_id": "PLEAFKLE_00004",
+                    "protein_id": null,
+                    "product": "hypothetical protein",
+                    "transcript_symbol": null,
+                    "transcript_type": "protein_coding",
+                    "sequence_name": "NC_000913.3",
+                    "sequence_guid": null,
+                    "transcript_interval_guid": null,
+                    "transcript_guid": null
+                }
+            ],
+            "gene_id": "PLEAFKLE_00004",
+            "gene_symbol": null,
+            "gene_type": "protein_coding",
+            "locus_tag": "PLEAFKLE_00004",
+            "qualifiers": {
+                "inference": [
+                    "ab initio prediction:Prodigal:002006"
+                ]
+            },
+            "sequence_name": "NC_000913.3",
+            "sequence_guid": null,
+            "gene_guid": null
+        },
+        {
+            "transcripts": [
+                {
+                    "exon_starts": [
+                        5682
+                    ],
+                    "exon_ends": [
+                        6459
+                    ],
+                    "strand": "MINUS",
+                    "cds_starts": [
+                        5682
+                    ],
+                    "cds_ends": [
+                        6459
+                    ],
+                    "cds_frames": [
+                        "ZERO"
+                    ],
+                    "qualifiers": {
+                        "db_xref": [
+                            "COG:COG3022"
+                        ],
+                        "gene": [
+                            "yaaA"
+                        ],
+                        "inference": [
+                            "ab initio prediction:Prodigal:002006",
+                            "similar to AA sequence:UniProtKB:P0A8I3"
+                        ]
+                    },
+                    "is_primary_tx": false,
+                    "transcript_id": "PLEAFKLE_00005",
+                    "protein_id": null,
+                    "product": "Peroxide stress resistance protein YaaA",
+                    "transcript_symbol": "yaaA",
+                    "transcript_type": "protein_coding",
+                    "sequence_name": "NC_000913.3",
+                    "sequence_guid": null,
+                    "transcript_interval_guid": null,
+                    "transcript_guid": null
+                }
+            ],
+            "gene_id": "PLEAFKLE_00005",
+            "gene_symbol": "yaaA",
+            "gene_type": "protein_coding",
+            "locus_tag": "PLEAFKLE_00005",
+            "qualifiers": {
+                "db_xref": [
+                    "COG:COG3022"
+                ],
+                "gene": [
+                    "yaaA"
+                ],
+                "inference": [
+                    "ab initio prediction:Prodigal:002006",
+                    "similar to AA sequence:UniProtKB:P0A8I3"
+                ]
+            },
+            "sequence_name": "NC_000913.3",
+            "sequence_guid": null,
+            "gene_guid": null
+        },
+        {
+            "transcripts": [
+                {
+                    "exon_starts": [
+                        6528
+                    ],
+                    "exon_ends": [
+                        7959
+                    ],
+                    "strand": "MINUS",
+                    "cds_starts": [
+                        6528
+                    ],
+                    "cds_ends": [
+                        7959
+                    ],
+                    "cds_frames": [
+                        "ZERO"
+                    ],
+                    "qualifiers": {
+                        "db_xref": [
+                            "COG:COG1115"
+                        ],
+                        "gene": [
+                            "alsT"
+                        ],
+                        "inference": [
+                            "ab initio prediction:Prodigal:002006",
+                            "similar to AA sequence:UniProtKB:Q45068"
+                        ]
+                    },
+                    "is_primary_tx": false,
+                    "transcript_id": "PLEAFKLE_00006",
+                    "protein_id": null,
+                    "product": "Amino-acid carrier protein AlsT",
+                    "transcript_symbol": "alsT",
+                    "transcript_type": "protein_coding",
+                    "sequence_name": "NC_000913.3",
+                    "sequence_guid": null,
+                    "transcript_interval_guid": null,
+                    "transcript_guid": null
+                }
+            ],
+            "gene_id": "PLEAFKLE_00006",
+            "gene_symbol": "alsT",
+            "gene_type": "protein_coding",
+            "locus_tag": "PLEAFKLE_00006",
+            "qualifiers": {
+                "db_xref": [
+                    "COG:COG1115"
+                ],
+                "gene": [
+                    "alsT"
+                ],
+                "inference": [
+                    "ab initio prediction:Prodigal:002006",
+                    "similar to AA sequence:UniProtKB:Q45068"
+                ]
+            },
+            "sequence_name": "NC_000913.3",
+            "sequence_guid": null,
+            "gene_guid": null
+        },
+        {
+            "transcripts": [
+                {
+                    "exon_starts": [
+                        8237
+                    ],
+                    "exon_ends": [
+                        9191
+                    ],
+                    "strand": "PLUS",
+                    "cds_starts": [
+                        8237
+                    ],
+                    "cds_ends": [
+                        9191
+                    ],
+                    "cds_frames": [
+                        "ZERO"
+                    ],
+                    "qualifiers": {
+                        "eC_number": [
+                            "2.2.1.2"
+                        ],
+                        "db_xref": [
+                            "COG:COG0176"
+                        ],
+                        "gene": [
+                            "talB"
+                        ],
+                        "inference": [
+                            "ab initio prediction:Prodigal:002006",
+                            "similar to AA sequence:UniProtKB:P0A870"
+                        ]
+                    },
+                    "is_primary_tx": false,
+                    "transcript_id": "PLEAFKLE_00007",
+                    "protein_id": null,
+                    "product": "Transaldolase B",
+                    "transcript_symbol": "talB",
+                    "transcript_type": "protein_coding",
+                    "sequence_name": "NC_000913.3",
+                    "sequence_guid": null,
+                    "transcript_interval_guid": null,
+                    "transcript_guid": null
+                }
+            ],
+            "gene_id": "PLEAFKLE_00007",
+            "gene_symbol": "talB",
+            "gene_type": "protein_coding",
+            "locus_tag": "PLEAFKLE_00007",
+            "qualifiers": {
+                "eC_number": [
+                    "2.2.1.2"
+                ],
+                "db_xref": [
+                    "COG:COG0176"
+                ],
+                "gene": [
+                    "talB"
+                ],
+                "inference": [
+                    "ab initio prediction:Prodigal:002006",
+                    "similar to AA sequence:UniProtKB:P0A870"
+                ]
+            },
+            "sequence_name": "NC_000913.3",
+            "sequence_guid": null,
+            "gene_guid": null
+        },
+        {
+            "transcripts": [
+                {
+                    "exon_starts": [
+                        9305
+                    ],
+                    "exon_ends": [
+                        9893
+                    ],
+                    "strand": "PLUS",
+                    "cds_starts": [
+                        9305
+                    ],
+                    "cds_ends": [
+                        9893
+                    ],
+                    "cds_frames": [
+                        "ZERO"
+                    ],
+                    "qualifiers": {
+                        "eC_number": [
+                            "2.7.7.75"
+                        ],
+                        "db_xref": [
+                            "COG:COG0521"
+                        ],
+                        "gene": [
+                            "mog"
+                        ],
+                        "inference": [
+                            "ab initio prediction:Prodigal:002006",
+                            "similar to AA sequence:UniProtKB:P0AF03"
+                        ]
+                    },
+                    "is_primary_tx": false,
+                    "transcript_id": "PLEAFKLE_00008",
+                    "protein_id": null,
+                    "product": "Molybdopterin adenylyltransferase",
+                    "transcript_symbol": "mog",
+                    "transcript_type": "protein_coding",
+                    "sequence_name": "NC_000913.3",
+                    "sequence_guid": null,
+                    "transcript_interval_guid": null,
+                    "transcript_guid": null
+                }
+            ],
+            "gene_id": "PLEAFKLE_00008",
+            "gene_symbol": "mog",
+            "gene_type": "protein_coding",
+            "locus_tag": "PLEAFKLE_00008",
+            "qualifiers": {
+                "eC_number": [
+                    "2.7.7.75"
+                ],
+                "db_xref": [
+                    "COG:COG0521"
+                ],
+                "gene": [
+                    "mog"
+                ],
+                "inference": [
+                    "ab initio prediction:Prodigal:002006",
+                    "similar to AA sequence:UniProtKB:P0AF03"
+                ]
+            },
+            "sequence_name": "NC_000913.3",
+            "sequence_guid": null,
+            "gene_guid": null
+        }
+    ],
+    "name": null,
+    "id": null,
+    "sequence_name": "NC_000913.3",
+    "sequence_guid": null,
+    "sequence_path": null,
+    "qualifiers": null,
+    "start": null,
+    "end": null,
+    "completely_within": null
+}

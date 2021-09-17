@@ -140,6 +140,13 @@ class TestGff3Parser:
         with open(test_data_dir / "gene_cds_direct_child.json") as fh:
             assert AnnotationCollectionModel.Schema().load(json.load(fh)) == c
 
+    def test_cds_only(self, test_data_dir):
+        """Some prokaryotic GFFs (e.g. prokka) do not have gene features, only CDS"""
+        recs = list(parse_standard_gff3(test_data_dir / "test_cds_only.gff"))
+        c = recs[0].annotation
+        with open(test_data_dir / "test_cds_only.json") as fh:
+            assert AnnotationCollectionModel.Schema().load(json.load(fh)) == c
+
 
 class TestGff3FastaParser:
     """Test GFF3 + FASTA parsing"""
