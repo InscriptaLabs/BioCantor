@@ -589,6 +589,8 @@ class CDSInterval(AbstractFeatureInterval):
                 # remove trailing codon from previous block
                 shift = sum((coords[1] - coords[0] for coords in zip(cleaned_rel_starts, cleaned_rel_ends))) % 3
                 if shift > 0:
+                    # it may be possible for this shift to end up producing a 0bp block
+                    # this will be dropped in the list comprehension below that generates the cleaned_blocks
                     cleaned_rel_ends[-1] = cleaned_rel_ends[-1] - shift
                 # we are now inherently in frame
                 next_frame = CDSFrame.ZERO
@@ -634,7 +636,8 @@ class CDSInterval(AbstractFeatureInterval):
             fivep_distance_mod3 = len(fivep_loc) % 3
             phase = CDSPhase(fivep_distance_mod3)
             offset = phase.to_frame().value
-            # cannot iterate over codons that are too short
+            # cannot iterate over codons that are too short; there is no translation for this CDS
+            # (iterator will terminate without returning anything)
             if len(chunk_relative_cleaned_location) - offset < 3:
                 return
             yield from chunk_relative_cleaned_location.scan_windows(3, 3, offset)
