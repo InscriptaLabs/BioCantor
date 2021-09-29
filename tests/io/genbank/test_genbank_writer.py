@@ -1,7 +1,9 @@
 """
 Test GenBank writing.
 """
+
 import pytest
+
 from inscripta.biocantor.io.genbank.parser import parse_genbank, GenBankParserType
 from inscripta.biocantor.io.genbank.writer import collection_to_genbank, GenbankFlavor
 from inscripta.biocantor.io.parser import ParsedAnnotationRecord

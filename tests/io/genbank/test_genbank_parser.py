@@ -1076,6 +1076,17 @@ class TestSortedParser:
             ]
         )
 
+    def test_overlapping_cds_parser(self, test_data_dir):
+        """Overlapping features will be parsed, but the Frames field will be wrong because GenBank files
+        do not have the necessary information to properly encode overlapping ORFs."""
+        genbank = test_data_dir / "overlapping_cds_feature.gb"
+        recs = list(ParsedAnnotationRecord.parsed_annotation_records_to_model(parse_genbank(test_data_dir / genbank)))
+        assert recs[0].genes[0].transcripts[0].cds.num_blocks > 1
+        assert (
+            str(recs[0].genes[0].transcripts[0].cds.translate())
+            == "MLFAYSGCLAPQCIPDISSFKALPFRDTESRFTTDSSVISSRFSSSFTSSSSKIIIITSIFSSKMDNEHVGASLIVSLSMASLILTNVFSFSSTSYSSQPSDYIACSPSGIDDQPVAEPSGYTPVGSPLHILVVLLLVWMQ*VTNLHLMKANRRMHLPDSSQKFTVILP*LI*FYIYSVSFRSFTYK*APFL"  # noqa: E501
+        )
+
 
 class TestHybridParser:
     def test_hybrid_parser_insc1003(self, test_data_dir):

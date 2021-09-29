@@ -31,7 +31,9 @@ from typing import Optional, TextIO, Iterator, List, Dict, Callable, Tuple, Any,
 from Bio import SeqIO
 from Bio.SeqFeature import SeqFeature
 from Bio.SeqRecord import SeqRecord
+
 from inscripta.biocantor.gene import Biotype, CDSInterval, CDSFrame
+from inscripta.biocantor.io.exc import DuplicateSequenceException
 from inscripta.biocantor.io.exc import StrandViolationWarning
 from inscripta.biocantor.io.features import extract_feature_types, extract_feature_name_id, merge_qualifiers
 from inscripta.biocantor.io.genbank.constants import (
@@ -43,7 +45,6 @@ from inscripta.biocantor.io.genbank.constants import (
     KnownQualifiers,
     GENBANK_GENE_FEATURES,
 )
-from inscripta.biocantor.io.exc import DuplicateSequenceException
 from inscripta.biocantor.io.genbank.exc import (
     GenBankParserError,
     EmptyGenBankError,
@@ -60,7 +61,6 @@ from inscripta.biocantor.io.parser import ParsedAnnotationRecord
 from inscripta.biocantor.location import (
     Location,
     Strand,
-    SingleInterval,
     CompoundInterval,
     EmptyLocation,
 )
@@ -274,9 +274,8 @@ class GeneFeature(Feature):
                 exon_ends.append(end)
 
             strand = Strand.from_int(tx.strand)
-            exon_interval = CompoundInterval(exon_starts, exon_ends, strand)
 
-            cds_interval = tx.find_cds_interval(exon_interval)
+            cds_interval = tx.find_cds_interval()
             if cds_interval.is_empty:
                 cds_starts = None
                 cds_ends = None
@@ -287,6 +286,9 @@ class GeneFeature(Feature):
                 for block in cds_interval.blocks:
                     cds_starts.append(block.start)
                     cds_ends.append(block.end)
+                # TODO: this will produce invalid Frames if there is a programmed frameshift or other such problem.
+                # This is a limitation of genbank files. HOWEVER, this code could detect the presence of a
+                # overlapping interval and try all possible frames there to see if any produce a valid translation.
                 cds_frames = tx.construct_frames(cds_interval)
 
             if "pseudo" in tx.feature.qualifiers:
@@ -388,16 +390,21 @@ class TranscriptFeature(Feature):
             for part in sorted(exon.feature.location.parts, key=lambda p: p.start):
                 yield int(part.start), int(part.end)
 
-    def find_cds_interval(self, exon_interval: Location) -> Location:
-        cds = sorted(self.cds_features, key=lambda c: c.feature.location.nofuzzy_start)
-        if len(cds) == 0:
+    def find_cds_interval(self) -> Location:
+        """Finds the Location of the CDS."""
+        cds_starts = []
+        cds_ends = []
+        for cds in sorted(self.cds_features, key=lambda e: e.feature.location.nofuzzy_start):
+            for part in sorted(cds.feature.location.parts, key=lambda p: p.start):
+                cds_starts.append(part.nofuzzy_start)
+                cds_ends.append(part.nofuzzy_end)
+        if len(cds_starts) == 0:
             return EmptyLocation()
-        cds_i = SingleInterval(
-            cds[0].feature.location.nofuzzy_start,
-            cds[-1].feature.location.nofuzzy_end,
+        return CompoundInterval(
+            cds_starts,
+            cds_ends,
             Strand.from_int(self.strand),
         )
-        return exon_interval.intersection(cds_i)
 
     def merge_cds_qualifiers_to_transcript(self) -> Dict[str, List[str]]:
         """
@@ -471,7 +478,7 @@ def parse_genbank(
     feature_parse_func: Optional[
         Callable[[FeatureIntervalGenBankCollection], Dict[str, Any]]
     ] = FeatureIntervalGenBankCollection.to_feature_model,
-    gbk_type: Optional[GenBankParserType] = GenBankParserType.LOCUS_TAG,
+    gbk_type: Optional[GenBankParserType] = GenBankParserType.HYBRID,
 ) -> Iterator[ParsedAnnotationRecord]:
     """This is the main GenBank parsing function. The parse function implemented in :class:`GeneFeature` can be
     over-ridden to provide a custom implementation.
@@ -547,7 +554,9 @@ def group_gene_records_from_sorted_genbank(
         sorted_features = sorted(
             seqrecord.features,
             key=lambda x: (
-                x.location.nofuzzy_start,
+                # features with invalid coordinates will have no location
+                # this will raise GenBankLocationException once it is consumed by a subclass of Feature
+                x.location.nofuzzy_start if x.location else -1,
                 x.type != GeneFeatures.GENE.value,
                 x.type != TranscriptFeatures.CODING_TRANSCRIPT.value,
                 x.type != GeneIntervalFeatures.CDS.value,
