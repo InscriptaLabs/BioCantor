@@ -112,9 +112,17 @@ class CDSInterval(AbstractFeatureInterval):
     @property
     def chunk_relative_frames(self) -> List[CDSFrame]:
         """
-        Returns the frames of this object as a chunk-relative object. This function makes a blanket
+        It may be the case that the chunk relative location of this CDSInterval object is a subset
+        of the full chromosomal location. In this case, the frames list needs to be appropriately
+        subsetted to the correct set of frame entries.
+
+        However, it is far from trivial to subset frames in chunk context, because frames are calculated
+        based on the full transcript length. Therefore, this function makes a blanket
         assumption that everything is in-frame within the interval of the chunk. In other words, if you are modeling
-        a programmed frameshift using the Frames vector, this information will be lost.
+        a programmed frameshift using the Frames vector, this information will be lost. It does this by looping
+        over the frames in transcription orientation until it finds the first exon that is within the chunk,
+        then uses that to parameterize the frame generating function
+        :meth:`CDSInterval.construct_frames_from_location()`
         """
         if not self.is_chunk_relative:
             return self.frames
