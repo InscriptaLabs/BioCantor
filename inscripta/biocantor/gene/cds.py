@@ -131,14 +131,24 @@ class CDSInterval(AbstractFeatureInterval):
                 chrom_loc = self._chunk_relative_bounded_chromosome_location
             else:
                 chrom_loc = self._chunk_relative_bounded_chromosome_location.optimize_and_combine_blocks()
+
+            # this is the section of the current exon with the chunk bounded location; it defines the
+            # portion of this exon that is contained within the chunk
             intersection = genomic_exon.intersection(chrom_loc, match_strand=False)
 
+            # this exon is entirely non-chunk
             if intersection.is_empty:
                 distance_from_start += len(genomic_exon)
+            # this should never happen, but just in case
             elif intersection.num_blocks != 1:
                 raise LocationOverlapException("Found overlapping blocks after block optimization")
+            # this exon is the first exon from the 5' end to be either fully or partially contained within the chunk
+            # calculate the frames starting from here, after determining the distance from the 5' end
             else:
-                distance_from_start += len(genomic_exon) - len(intersection)
+                if self.strand == Strand.PLUS:
+                    distance_from_start += intersection.start - genomic_exon.start
+                else:
+                    distance_from_start += genomic_exon.end - intersection.end
                 # this is equivalent to a CDSPhase, which we can convert to frame to get offset
                 frame = CDSPhase(distance_from_start % 3).to_frame()
                 return self.construct_frames_from_location(self.chunk_relative_location, frame)

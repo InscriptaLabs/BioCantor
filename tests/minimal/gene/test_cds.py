@@ -524,8 +524,6 @@ class TestCDSInterval:
             ),
             # chunk slices off only intergenic bases
             # frame for chunk should be same as frame for full
-            # however, after using the new frames to produce a new transcript the transcription offset by 1
-            # TODO: why is this true? It shouldn't be....
             # Index:      0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20
             # Sequence:   A A A C A A A A G G G  A  C  C  C  A  A  A  A  A  A
             # Exons:          A C A A     G G G  A  C  C  C  A  A  A  A
@@ -557,7 +555,7 @@ class TestCDSInterval:
                     ),
                 ),
                 [CDSFrame.ZERO, CDSFrame.ONE],
-                [Codon.CAA, Codon.GGG, Codon.ACC, Codon.CAA],
+                [Codon.ACA, Codon.AGG, Codon.GAC, Codon.CCA, Codon.AAA],
             ),
             # chunk slices off first base of exon1
             # this removes the first codon
@@ -721,6 +719,16 @@ class TestCDSInterval:
                 [Codon.AGG, Codon.AAA, Codon.GTT, Codon.CCC, Codon.TGA],
             ),
             # slicing off the last exon and 1bp of the 1st exon (removing the double T)
+            # Index:      0 1 2 3 4 5 6 7 8 | 9 10 11 12 13 14 15 16 17 18 19 20
+            # Sequence:   A A A G G A A A G | T C  C  C  T  G  A  A  A  A  A  A
+            # Exons:          A G G A A A G | T
+            #                               | T C  C  C  T  G  A  A  A
+            # Zero Frame:     0 1 2 0 1 2 0 |
+            #                               |
+            # One Frame:      - 0 1 2 0 1 2 |
+            #                               |
+            # Two Frame:      - - 0 1 2 0 1 |
+            #                               |
             (
                 CDSInterval(
                     [2, 9],
@@ -745,7 +753,7 @@ class TestCDSInterval:
                         ),
                     ),
                 ),
-                [CDSFrame.TWO],
+                [CDSFrame.ZERO],
                 [Codon.AGG, Codon.AAA],
             ),
         ],
@@ -754,7 +762,10 @@ class TestCDSInterval:
         assert cds.chunk_relative_frames == expected_frames
         new_cds = CDSInterval.from_dict(
             cds.to_dict(chromosome_relative_coordinates=False),
-            parent_or_seq_chunk_parent=Parent(sequence=cds.chunk_relative_location.parent.sequence),
+            parent_or_seq_chunk_parent=Parent(
+                sequence=Sequence(str(cds.chunk_relative_location.parent.sequence), Alphabet.NT_EXTENDED_GAPPED),
+                sequence_type=SequenceType.CHROMOSOME,
+            ),
         )
         assert list(new_cds.scan_codons()) == exp_codons
 
