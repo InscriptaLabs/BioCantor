@@ -631,7 +631,6 @@ class CDSInterval(AbstractFeatureInterval):
         else:
             yield from cleaned_location.scan_windows(3, 3, 0)
 
-    @lru_cache(maxsize=1)
     def _translate_iter(
         self,
         truncate_at_in_frame_stop: Optional[bool] = False,
