@@ -542,9 +542,10 @@ class CDSInterval(AbstractFeatureInterval):
             yield from self._scan_codon_locations_multi_exon(chunk_relative_coordinates)
         else:
             loc = self.chunk_relative_location
-            # must make sure this CDS is at least one codon long
-            if len(loc) >= 3:
-                yield from loc.scan_windows(3, 3, self.frames[0].value)
+            # must make sure this CDS (with its offset) is at least one codon long
+            offset = self.frames[0].value
+            if (len(loc) - offset) >= 3:
+                yield from loc.scan_windows(3, 3, offset)
 
     def _scan_codon_locations_multi_exon(self, chunk_relative_coordinates: bool = True) -> Iterator[Location]:
         """
@@ -563,7 +564,6 @@ class CDSInterval(AbstractFeatureInterval):
         cleaned_rel_starts = []
         cleaned_rel_ends = []
         loc = self.chromosome_location
-        # loc = self.chunk_relative_location if chunk_relative_coordinates else self.chromosome_location
         # zip_longest is used here to ensure that the two iterators are always actually in sync
         for exon, frame in zip_longest(self._exon_iter(False), self._frame_iter(False)):
 
