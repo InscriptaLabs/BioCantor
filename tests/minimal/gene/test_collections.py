@@ -1268,6 +1268,30 @@ class TestAnnotationCollection:
         with pytest.raises(NoSuchAncestorException):
             _ = "\n".join(str(x) for x in obj.to_gff(chromosome_relative_coordinates=False))
 
+    def test_reset_parent_noop(self):
+        obj = self.annot.to_annotation_collection()
+        # no-op
+        obj._reset_parent()
+        # equivalent
+        obj._reset_parent(None)
+
+    def test_reset_parent_null(self):
+        obj = self.annot.to_annotation_collection(parent_genome)
+        for child in obj:
+            assert child._location.parent
+        obj._reset_parent()
+        for child in obj:
+            assert not child._location.parent
+
+    def test_reset_parent(self):
+        obj = self.annot.to_annotation_collection(parent_genome)
+        obj2 = obj.query_by_position(20, 40)
+        obj2._reset_parent(parent_genome)
+        # the coordinates are now broken, so the sequences are wrong
+        for rec in obj2:
+            orig_rec = next(obj.query_by_guids([rec.guid]).__iter__()).feature_intervals[0]
+            assert orig_rec.get_spliced_sequence() != rec.feature_intervals[0].get_spliced_sequence()
+
     def test_iterator(self):
         obj = self.annot.to_annotation_collection(parent_genome)
         assert list(obj.iter_children()) == list(obj)
