@@ -80,6 +80,10 @@ class AbstractFeatureIntervalCollection(AbstractInterval, ABC):
     def _reset_parent(self, parent: Optional[Parent] = None) -> None:
         """Reset parent of this collection, and all of its children.
 
+        THIS FUNCTION IS ONLY INTENDED TO BE USED DURING INITIALIZATION OF A NEW INTERVAL OBJECT.
+        USING THIS FUNCTION AFTER THAT POINT RUNS THE RISK OF THE PARENT OF THE OBJECT NOT BEING REFLECTED
+        BY METHODS ON THIS FUNCTION THAT USE RESULT CACHING!
+
         NOTE: This function modifies this collection in-place, and does not return a new copy. This is different
         behavior than the base function, and is this way because all of the children of this collection are also
         recursively modified.

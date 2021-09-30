@@ -737,24 +737,6 @@ class TestTranscript:
         expected = TranscriptIntervalModel.Schema().load(expected).to_transcript_interval()
         assert str(expected) == str(val)
 
-    @pytest.mark.parametrize(
-        "schema,expected",
-        [
-            (
-                e3_spliced,
-                "IL",
-            ),
-            (
-                e3_spliced_minus,
-                "*D",
-            ),
-        ],
-    )
-    def test_reset_parent(self, schema, expected):
-        tx = schema.to_transcript_interval(parent_or_seq_chunk_parent=parent)
-        tx._reset_parent(parent_genome2)
-        assert str(tx.get_protein_sequence()) == str(expected)
-
     def test_object_conversion(self):
         for model in [
             e3_spliced,
