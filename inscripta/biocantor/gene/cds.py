@@ -622,7 +622,7 @@ class CDSInterval(AbstractFeatureInterval):
         if len(cleaned_location) < 3:
             return
 
-        if chunk_relative_coordinates:
+        if chunk_relative_coordinates and self.is_chunk_relative:
             # lift the cleaned window on to chunk relative coordinate system
             chunk_relative_cleaned_location = self.liftover_location_to_seq_chunk_parent(
                 cleaned_location, self.chunk_relative_location.parent
