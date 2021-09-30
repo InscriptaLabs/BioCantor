@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [UNRELEASED]
 - Fixing `CDSInterval._scan_codon_locations_multi_exon` to properly handle chunk-relative CDS.
 - Fixing `CDSInterval.chunk_relative_frames` to properly handle chunk-relative CDS.
+- Removed `_reset_parent` from all `Interval` objects because with the caching functionality they possess results may not make sense.
 
 ## [0.11.1] 2021-09-17
 ### Changed
