@@ -267,15 +267,6 @@ class TranscriptInterval(AbstractFeatureInterval):
         """Returns the name of this transcript. Provides a shared API across genes/transcripts and features."""
         return self.transcript_symbol
 
-    def _reset_parent(self, parent: Optional[Parent] = None):
-        """
-        Convenience function that wraps location.reset_parent(). Overrides the parent function in
-        :class:`~biocantor.gene.feature.AbstractInterval` in order to also update the CDS interval.
-        """
-        if self.is_coding:
-            self.cds._reset_parent(parent)
-        super()._reset_parent(parent)
-
     def _liftover_this_location_to_seq_chunk_parent(
         self,
         seq_chunk_parent: Parent,

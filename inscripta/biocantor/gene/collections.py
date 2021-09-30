@@ -77,23 +77,6 @@ class AbstractFeatureIntervalCollection(AbstractInterval, ABC):
             ids: List of GUIDs, or unique IDs.
         """
 
-    def _reset_parent(self, parent: Optional[Parent] = None) -> None:
-        """Reset parent of this collection, and all of its children.
-
-        NOTE: This function modifies this collection in-place, and does not return a new copy. This is different
-        behavior than the base function, and is this way because all of the children of this collection are also
-        recursively modified.
-
-        NOTE: Using this function presents the risk that you will change the sequence of this interval. There are no
-        checks that the new parent provides the same sequence basis as the original parent.
-
-        This overrides :meth:`~biocantor.gene.feature.AbstractInterval.reset_parent()`. The original function
-        will remain applied on the leaf nodes.
-        """
-        self._location = self._location.reset_parent(parent)
-        for child in self:
-            child._reset_parent(parent)
-
     def _initialize_location(self, start: int, end: int, parent_or_seq_chunk_parent: Optional[Parent] = None):
         """
         Initialize the location for this collection. Assumes that the start/end coordinates are genome-relative,
