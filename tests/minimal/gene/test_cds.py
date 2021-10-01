@@ -483,6 +483,153 @@ class TestCDSInterval:
         assert list(cds.scan_codons()) == expected
 
     @pytest.mark.parametrize(
+        "cds,expected",
+        [
+            # chunk slices off only intergenic bases
+            # frame for chunk should be same as frame for full
+            # Index:      0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20
+            # Sequence:   A A A C A A A A G G G  A  C  C  C  A  A  A  A  A  A
+            # Exons:          T G T T     C C C  T  G  G  G  T  T  T  T
+            # Zero Frame:     2 1 0 2     1 0 2  1  0  2  1  0  2  1  0
+            # One Frame:      1 0 2 1     0 2 1  0  2  1  0  2  1  0  -
+            # Two Frame:      0 2 1 0     2 1 0  2  1  0  2  1  0  -  -
+            #
+            # Frame = ZERO, TWO in transcription direction => [CDSFrame.TWO, CDSFrame.ZERO]
+            (
+                CDSInterval(
+                    [2, 8],
+                    [6, 19],
+                    Strand.MINUS,
+                    [CDSFrame.TWO, CDSFrame.ZERO],
+                    parent_or_seq_chunk_parent=Parent(
+                        id="chunk1",
+                        sequence=Sequence(
+                            "AAACAAAAGGGACCCAAAAAA"[2:20],
+                            Alphabet.NT_EXTENDED_GAPPED,
+                            id="chunk1",
+                            type=SequenceType.SEQUENCE_CHUNK,
+                            parent=Parent(
+                                location=SingleInterval(
+                                    2,
+                                    20,
+                                    Strand.PLUS,
+                                    parent=Parent(id="seq", sequence_type=SequenceType.CHROMOSOME),
+                                )
+                            ),
+                        ),
+                    ),
+                ),
+                [Codon.TTT, Codon.TGG, Codon.GTC, Codon.CCT, Codon.TGT],
+            ),
+            # chunk slices off first base of exon1
+            # this removes the first codon
+            # analysis of frame for resulting chunk:
+            # Index:      0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 | 18 19 20
+            # Sequence:   A A A C A A A A G G G  A  C  C  C  A  A  A  | A  A  A
+            # Exons:          T G T T     C C C  T  G  G  G  T  T  T  | T
+            # Zero Frame:     2 1 0 2     1 0 2  1  0  2  1  0  2  1  | 0
+            # One Frame:      1 0 2 1     0 2 1  0  2  1  0  2  1  0  | -
+            # Two Frame:      0 2 1 0     2 1 0  2  1  0  2  1  0  -  | -
+            (
+                CDSInterval(
+                    [2, 8],
+                    [6, 19],
+                    Strand.MINUS,
+                    [CDSFrame.TWO, CDSFrame.ZERO],
+                    parent_or_seq_chunk_parent=Parent(
+                        id="chunk1",
+                        sequence=Sequence(
+                            "AAACAAAAGGGACCCAAAAAA"[1:18],
+                            Alphabet.NT_EXTENDED_GAPPED,
+                            id="chunk1",
+                            type=SequenceType.SEQUENCE_CHUNK,
+                            parent=Parent(
+                                location=SingleInterval(
+                                    1,
+                                    18,
+                                    Strand.PLUS,
+                                    parent=Parent(id="seq", sequence_type=SequenceType.CHROMOSOME),
+                                )
+                            ),
+                        ),
+                    ),
+                ),
+                [Codon.TGG, Codon.GTC, Codon.CCT, Codon.TGT],
+            ),
+            # chunk slices off 1st exon
+            # Index:      0 1 2 3 4 5 6 | 7 8 9 10 11 12 13 14 15 16 17 18 19 20
+            # Sequence:   A A A C A A A | A G G G  A  C  C  C  A  A  A  A  A  A
+            # Exons:          T G T T   |   C C C  T  G  G  G  T  T  T  T
+            # Zero Frame:     2 1 0 2   |   1 0 2  1  0  2  1  0  2  1  0
+            # One Frame:      1 0 2 1   |   0 2 1  0  2  1  0  2  1  0  -
+            # Two Frame:      0 2 1 0   |   2 1 0  2  1  0  2  1  0  -  -
+            (
+                CDSInterval(
+                    [2, 8],
+                    [6, 19],
+                    Strand.MINUS,
+                    [CDSFrame.TWO, CDSFrame.ZERO],
+                    parent_or_seq_chunk_parent=Parent(
+                        id="chunk1",
+                        sequence=Sequence(
+                            "AAACAAAAGGGACCCAAAAAA"[1:7],
+                            Alphabet.NT_EXTENDED_GAPPED,
+                            id="chunk1",
+                            type=SequenceType.SEQUENCE_CHUNK,
+                            parent=Parent(
+                                location=SingleInterval(
+                                    1,
+                                    7,
+                                    Strand.PLUS,
+                                    parent=Parent(id="seq", sequence_type=SequenceType.CHROMOSOME),
+                                )
+                            ),
+                        ),
+                    ),
+                ),
+                [Codon.TGT],
+            ),
+            # chunk slices of 1st exon and 1bp of exon 2
+            # Index:      0 1 2 3 4 | 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20
+            # Sequence:   A A A C A | A A A G G G  A  C  C  C  A  A  A  A  A  A
+            # Exons:          T G T | T     C C C  T  G  G  G  T  T  T  T
+            # Zero Frame:     2 1 0 | 2     1 0 2  1  0  2  1  0  2  1  0
+            # One Frame:      1 0 2 | 1     0 2 1  0  2  1  0  2  1  0  -
+            # Two Frame:      0 2 1 | 0     2 1 0  2  1  0  2  1  0  -  -
+            (
+                CDSInterval(
+                    [2, 8],
+                    [6, 19],
+                    Strand.MINUS,
+                    [CDSFrame.TWO, CDSFrame.ZERO],
+                    parent_or_seq_chunk_parent=Parent(
+                        id="chunk1",
+                        sequence=Sequence(
+                            "AAACAAAAGGGACCCAAAAAA"[1:5],
+                            Alphabet.NT_EXTENDED_GAPPED,
+                            id="chunk1",
+                            type=SequenceType.SEQUENCE_CHUNK,
+                            parent=Parent(
+                                location=SingleInterval(
+                                    1,
+                                    5,
+                                    Strand.PLUS,
+                                    parent=Parent(id="seq", sequence_type=SequenceType.CHROMOSOME),
+                                )
+                            ),
+                        ),
+                    ),
+                ),
+                [Codon.TGT],
+            ),
+        ],
+    )
+    def test_scan_codons_chunk_relative_negative_strand(self, cds, expected):
+        assert list(cds.scan_codons()) == expected
+        # run again to ensure caching is not a problem
+        assert list(cds.scan_codons()) == expected
+
+    @pytest.mark.parametrize(
         "cds,expected_frames,exp_codons",
         [
             # NOT CHUNK RELATIVE:
