@@ -178,6 +178,14 @@ class TestCDSInterval:
                 [Codon.ATA, Codon.CGA, Codon.TCA],
             ),
             # Discontiguous CDS, plus strand, frame=1, codons don't reach end of CDS
+            # Codon interval cleaning therefore removes the 1st codon entirely, because it is incomplete
+            # Index:      0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20
+            # Sequence:   A A A C A A A A G G G  A  C  C  C  A  A  A  A  A  A
+            # Exons:          A C A       G G G  A  C  C  C  A  A  A  A
+            # Zero Frame:     0 1 2       0 1 2  0  1  2  0  1  2  0  1
+            # One Frame:      - 0 1       2 0 1  2  0  1  2  0  1  2  0  <- correct frame
+            # Two Frame:      - - 0       1 2 0  1  2  0  1  2  0  1  2
+            #
             (
                 CDSInterval.from_location(
                     CompoundInterval(
@@ -188,23 +196,43 @@ class TestCDSInterval:
                     ),
                     [CDSFrame.ONE, CDSFrame.TWO],
                 ),
-                [Codon.CAG, Codon.GGA, Codon.CCC],  # QGP
+                [Codon.CAG, Codon.GGA, Codon.CCC],
             ),
             # Discontiguous CDS, plus strand, frame=1, 1bp deletion at start of exon 2
+            # Codon interval cleaning therefore removes the 1st codon entirely, because it is incomplete
+            # Index:      0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20
+            # Sequence:   A A A C A A A A G G G  A  C  C  C  A  A  A  A  A  A
+            # Exons:          A C A       G G G  A  C  C  C  A  A  A  A
+            # Zero Frame:     0 1 2       0 1 2  0  1  2  0  1  2  0  1
+            # One Frame:      - 0 1       2 0 1  2  0  1  2  0  1  2  0  <- correct frame if there was no deletion
+            # Two Frame:      - - 0       1 2 0  1  2  0  1  2  0  1  2
+            #
+            # The codon cleaning algorithm therefore sees:
+            # [A??] [GGG] [ACC] [CAA]
+            # Because it detects that the Frame of the 2nd exon is 0, but it was expecting 2.
             (
                 CDSInterval.from_location(
                     CompoundInterval(
                         [2, 8],
-                        [5, 16],
+                        [5, 17],
                         Strand.PLUS,
-                        parent=Sequence("AAACAAAAGGACCCAAAAAA", alphabet, type=SequenceType.CHROMOSOME),
+                        parent=Sequence("AAACAAAAGGGACCCAAAAAA", alphabet, type=SequenceType.CHROMOSOME),
                     ),
                     [CDSFrame.ONE, CDSFrame.ZERO],
                 ),
-                [Codon.GGA, Codon.CCC],  # GP
+                [Codon.GGG, Codon.ACC, Codon.CAA],
             ),
             # Discontiguous CDS, plus strand, frame=1,
             # 1bp insertion inside exon 2 relative to some canonical genome and we want to maintain original frame
+            # Index:      0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20
+            # Sequence:   A A A C A A A A G G G  A  T  C  C  C  A  A  A  A  A
+            # Exons:          A C A       G G G     T  C  C  C  A  A  A  A
+            # Zero Frame:     0 1 2       0 1 2     0  1  2  0  1  2  0  1
+            # One Frame:      - 0 1       2 0 1     2  0  1  2  0  1  2  0  <- original frame
+            # Two Frame:      - - 0       1 2 0     1  2  0  1  2  0  1  2
+            #
+            # The codon algorithm sees [CAG] [GGA] [CCC]
+            # There is no frame trickery going on here, the insertion is modeled by the extra 'splice' at 11-12
             (
                 CDSInterval.from_location(
                     CompoundInterval(
@@ -299,45 +327,6 @@ class TestCDSInterval:
     @pytest.mark.parametrize(
         "cds,expected",
         [
-            # NOT CHUNK RELATIVE:
-            # Discontiguous CDS, plus strand, frame=1, codons don't reach end of CDS
-            # Index:      0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20
-            # Sequence:   A A A C A A A A G G G  A  C  C  C  A  A  A  A  A  A
-            # Exons:          A C A       G G G  A  C  C  C  A  A  A
-            # Zero Frame:     0 1 2       0 1 2  0  1  2  0  1  2  0
-            # One Frame:      - 0 1       2 0 1  2  0  1  2  0  1  2         <- correct frame
-            # Two Frame:      - - 0       1 2 0  1  2  0  1  2  0  1
-            #
-            # FRAME = ONE, TWO
-            (
-                CDSInterval.from_location(
-                    CompoundInterval(
-                        [2, 8],
-                        [5, 17],
-                        Strand.PLUS,
-                        parent=Sequence(
-                            "AAACAAAAGGGACCCAAAAAA", Alphabet.NT_EXTENDED_GAPPED, type=SequenceType.CHROMOSOME
-                        ),
-                    ),
-                    [CDSFrame.ONE, CDSFrame.TWO],
-                ),
-                [Codon.CAG, Codon.GGA, Codon.CCC],  # QGP
-            ),
-            # ONE frame at start cuts off first codon
-            (
-                CDSInterval.from_location(
-                    CompoundInterval(
-                        [2, 8],
-                        [5, 16],
-                        Strand.PLUS,
-                        parent=Sequence(
-                            "AAACAAAAGGACCCAAAAAA", Alphabet.NT_EXTENDED_GAPPED, type=SequenceType.CHROMOSOME
-                        ),
-                    ),
-                    [CDSFrame.ONE, CDSFrame.ZERO],
-                ),
-                [Codon.GGA, Codon.CCC],  # GP
-            ),
             # chunk slices off only intergenic bases
             # frame for chunk should be same as frame for full
             # Index:      0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20
