@@ -127,11 +127,12 @@ class CDSInterval(AbstractFeatureInterval):
         if not self.is_chunk_relative:
             return self.frames
 
-        distance_from_start = 0
-        for genomic_exon, frame in zip_longest(self._exon_iter(False), self._frame_iter(False)):
+        # TODO: Will there ever be a CDSFrame.NONE value? I don't think so because that is a genePred concept
+        #   GFF3 will put Phase values only on CDS features, and GenBank is a lost cause
+        fivep_phase = next(self._frame_iter(chunk_relative_frames=False)).to_phase().value
+        distance_from_start = fivep_phase
 
-            if genomic_exon is None or frame is None:
-                raise MismatchedFrameException("Frame iterator is not in sync with exon iterator")
+        for genomic_exon in self._exon_iter(chunk_relative_exon=False):
 
             # chromosome location has overlapping blocks merged, so that the intersection always has one block
             # this is OK to do here since the original genomic intervals retain the overlapping information
