@@ -105,6 +105,11 @@ class AbstractInterval(ABC):
         """
 
     @property
+    def is_chunk_relative(self) -> bool:
+        """Does this Interval object exist on a sequence chunk?"""
+        return self.has_ancestor_of_type(SequenceType.SEQUENCE_CHUNK)
+
+    @property
     def chunk_relative_size(self) -> int:
         return len(self.chunk_relative_location)
 

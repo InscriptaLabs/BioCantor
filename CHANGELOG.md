@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [UNRELEASED]
+- Fixing `CDSInterval._scan_codon_locations_multi_exon` to properly handle chunk-relative CDS.
+- Fixing `CDSInterval.chunk_relative_frames` to properly handle chunk-relative CDS.
+
 ## [0.11.1] 2021-09-17
 ### Changed
 - Use the optimized version of `scan_codon_locations` in the backwards compatible function.
