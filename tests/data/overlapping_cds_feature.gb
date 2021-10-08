@@ -1,0 +1,33 @@
+LOCUS       chrVI.0                  590 bp    DNA              UNK 01-JAN-1980
+DEFINITION  GenBank produced by BioCantor.
+ACCESSION   chrVI
+VERSION     chrVI.0
+KEYWORDS    .
+SOURCE      .
+  ORGANISM  .
+            .
+FEATURES             Location/Qualifiers
+     gene            complement(10..587)
+                     /gene_id="INSC1019_G0002199"
+                     /gene_name="YFR054C"
+                     /gene_biotype="protein_coding"
+                     /gene="YFR054C"
+                     /locus_tag="YFR054C"
+     CDS             complement(join(205..587,10..204))
+                     /transcript_id="INSC1019_T0002199"
+                     /transcript_name="YFR054C"
+                     /transcript_biotype="protein_coding"
+                     /gene="YFR054C"
+                     /locus_tag="YFR054C"
+ORIGIN
+        1 tagcatcgtt taagaaatgg tgcttacttg taggtaaaac ttctgaagga tactgagtaa
+       61 atgtaaaatt atatgagtta aggcagaatg actgtaaact tttgtgacga atctggaaga
+      121 tgcattcgtc gattggcctt cattaagtga agattggtaa cctattgcat ccaaaccaga
+      181 agtaatacaa ccagaatgtg gagaggggag ccaacaggtg tgtatccaga aggttcagcc
+      241 acaggttggt catcaatacc actgggggag catgcaatat aatcagatgg ttgcgaggaa
+      301 tagctagtag agctaaaact gaacacatta gttaagatta gactagccat gctcaaagaa
+      361 acaattagag aggcacctac atgttcgtta tccatttttg aggaaaaaat agaagtgata
+      421 ataataattt tgctcgaact actcgtaaag ctacttgaaa aacggctcga gattacggaa
+      481 gagtcggtag taaaccgact ctcagtgtca cggaatggaa gcgccttgaa actactaata
+      541 tcaggtatgc attgaggggc aaggcaacct gaatatgcaa agagcatagt
+//

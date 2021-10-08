@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [UNRELEASED]
 - Fixing `CDSInterval._scan_codon_locations_multi_exon` to properly handle chunk-relative CDS.
 - Fixing `CDSInterval.chunk_relative_frames` to properly handle chunk-relative CDS.
+- GenBank parsing now handles the intervals of overlapping CDS, although it cannot still infer the correct frame downstream of the overlap.
 
 ## [0.11.1] 2021-09-17
 ### Changed
