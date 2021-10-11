@@ -413,14 +413,16 @@ class CDSInterval(AbstractFeatureInterval):
         overlap the relative chunk. These frames will potentially be reduced in quantity, and also shifted to handle
         exons that are now partial exons.
         """
-        frames = self.frames if chunk_relative_frames is False else self.chunk_relative_frames
-        if (
-            self.chunk_relative_location.strand == Strand.PLUS
-            or self.chunk_relative_location.strand == Strand.UNSTRANDED
-        ):
-            yield from frames
+        if chunk_relative_frames is True:
+            if self.chunk_relative_location.strand == Strand.MINUS:
+                yield from reversed(self.chunk_relative_frames)
+            else:
+                yield from self.chunk_relative_frames
         else:
-            yield from reversed(frames)
+            if self.strand == Strand.MINUS:
+                yield from reversed(self.frames)
+            else:
+                yield from self.frames
 
     def _exon_iter(self, chunk_relative_exon: bool = True) -> Iterator[SingleInterval]:
         """Iterate over exons in transcription direction"""
