@@ -2638,6 +2638,87 @@ class TestCDSInterval:
             == "ITLNQLWDISGKYFDLSDKKVKQFVLSCVILKKDIEVYCDGAITTKNVTDIIGDANHSYSVGITEDSLWTLLTGYTKKESTIGNSAFELLLEVAKSGEKGINTMDLAQVTGQDPRSVTGRIKKINHLLTSSQLIYKGHVVKQLKLKKFSHDGVDSNPYINIRDHLATIVEVVKRSKNGIRQIIDLKRELKFDKEKRLSKAFIAAIAWLDEKEYLKKVLVVSPKNPAIKIRCVKYVKDIPDSKGSPSFEYDSNSADEDSVSDSKAAFEDEDLVEGLDNFNATDLLQNQGLVMEEKEDAVKNEVLLNRFYPLQNQTYDIADKSGLKGISTMDVVNRITGKEFQRAFTKSSEYYLESVDKQKENTGGYRLFRIYDFEGKKKFFRLFTAQNFQKLTNAEDEISVPKGFDELGKSRTDLKTLNEDNFVALNNTVRFTTDSDGQDIFFWHGELKIPPNSKKTPNKNKRKRQVKNSTNASVAGNISNPKRIKLEQHVSTAQEPKSAEDSPSSNGGTVVKGKVVNFGGFSARSLRSLQRQRAILKVMNTIGGVAYLREQFYESVSKYMGSTTTLDKKTVRGDVDLMVESEKLGARTEPVSGRKIIFLPTVGEDAIQRYILKEKDSKKATFTDVIHDTEIYFFDQTEKNRFHRGKKSVERIRKFQNRQKNAKIKASDDAISKKSTSVNVSDGKIKRRDKKVSAGRTTVVVENTKEDKTVYHAGTKDGVQALIRAVVVTKSIKNEIMWDKITKLFPNNSLDNLKKKWTARRVRMGHSGWRAYVDKWKKMLVLAIKSEKISLRDVEELDLIKLLDIWTSFDEKEIKRPLFLYKNYEENRKKFTLVRDDTLTHSGNDLAMSSMIQREISSLKKTYTRKISASTKDLSKSQSDDYIRTVIRSILIESPSTTRNEIEALKNVGNESIDNVIMDMAKEKQIYLHGSKLECTDTLPDILENRGNYKDFGVAFQYRCKVNELLEAGNAIVINQEPSDISSWVLIDLISGELLNMDVIPMVRNVRPLTYTSRRFEIRTLTPPLIIYANSQTKLNTARKSAVKVPLGKPFSRLWVNGSGSIRPNIWKQVVTMVVNEIIFHPGITLSRLQSRCREVLSLHEISEICKWLLERQVLITTDFDGYWVNHNWYSIYEST*"  # noqa: E501
         )
 
+    def test_codon_iteration_negative_sequence_chunk_negative_gene(self):
+        """
+        The gene gatR identified issues with codon iteration. This test shows that this gene
+        can be properly iterated over on the 2nd exon when sliced into a chunk that contains only the 2nd
+        exon.
+
+        The issue was identified as a problem with negative strand sequence chunks. On negative strand chunks,
+        the strand of the chunk-relative Location will be resolved to be relative to the sequence, which means
+        that it is a PLUS strand for a MINUS gene.
+
+        The updated frame iterator takes this into account.
+
+        This test is a sequence chunk that fully contains the first exon of the E. coli NC_000913.3 gene gatR.
+        """
+        cds = CDSInterval(
+            [2169692, 2171428],
+            [2170167, 2171727],
+            Strand.MINUS,
+            [CDSFrame.TWO, CDSFrame.ZERO],
+            parent_or_seq_chunk_parent=Parent(
+                id="NC_000913.3:2171278-2171877",
+                sequence=Sequence(
+                    "ATCGCTCGTAATGCTATGCCGGGCAAAGTGTTGCTCATTCCCTGAAACCGCGGGCCAGCGTGATGCTGGCCCGGTATTGTGCAAAACAGATCATTCACCAATGGTCCCCCTTCGTTTACACTAGCCACAATTGAATATGGGTAAATGACGATGAATTCATTCGAGCGAAGGAATAAGATCATCCAATTAGTGAATGAACAGGGAACCGTGCTTGTTCAGGATCTGGCGGGAGTATTTGCTGCCTCGGAAGCGACAATCCGTGCCGATTTGCGCTTTCTCGAACAAAAAGGCGTGGTTACGCGCTTTCATGGCGGTGCGGCGAAAATAATGTCTGGTAATAGTGAAACCGAGACCCAGGAAGTCGGGTTTAAAGAGCGATTTCAGCTCGCCAGCGCGCCAAAAAACAGAATAGCGCAGGCGGCAGTCAAAATGATCCACGAAGGGATGACTGATCCTACCCACGTAATATGGACACAGGCCTAAGCGAGGTTCTTGTTTTCAAATTGTTCCGGACTGAGGCCGCCACACCAACTGTGCCGCCGCCACCGATTGTAATCACATTCGATATAATTAAACACCGTTGCCCGCATTATTTCCCG",  # noqa: E501
+                    Alphabet.NT_EXTENDED_GAPPED,
+                    type=SequenceType.SEQUENCE_CHUNK,
+                    parent=Parent(
+                        location=SingleInterval(
+                            2171278,
+                            2171877,
+                            Strand.MINUS,
+                            parent=Parent(id="chrI", sequence_type=SequenceType.CHROMOSOME),
+                        )
+                    ),
+                ),
+            ),
+        )
+        cds = CDSInterval.from_dict(cds.to_dict(), parent_or_seq_chunk_parent=cds.chunk_relative_location.parent)
+        # Genomic relative strand is MINUS
+        assert cds.strand == Strand.MINUS
+        # chunk relative strand is PLUS
+        assert cds.chunk_relative_location.strand == Strand.PLUS
+        translation = cds.translate()
+        assert (
+            str(translation)
+            == "MNSFERRNKIIQLVNEQGTVLVQDLAGVFAASEATIRADLRFLEQKGVVTRFHGGAAKIMSGNSETETQEVGFKERFQLASAPKNRIAQAAVKMIHEGM"
+        )
+
+    def test_codon_iteration_negative_sequence_chunk_positive_gene(self):
+        """
+        This test is a sequence chunk that contains the first exon of the E. coli NC_000913.3 gene crl.
+        """
+        cds = CDSInterval(
+            [257828, 258675],
+            [257899, 259006],
+            Strand.PLUS,
+            [CDSFrame.ZERO, CDSFrame.TWO],
+            parent_or_seq_chunk_parent=Parent(
+                id="NC_000913.3:257820-257905",
+                sequence=Sequence(
+                    "CCTTCACGAATATACGGGCCTAGTGCGGTAAATTTTTTGATCAATCTGCTCTTCGGGTGTCCACTCGGTAACGTCATTGCTATCT",
+                    Alphabet.NT_EXTENDED_GAPPED,
+                    type=SequenceType.SEQUENCE_CHUNK,
+                    parent=Parent(
+                        location=SingleInterval(
+                            257820,
+                            257905,
+                            Strand.MINUS,
+                            parent=Parent(id="chrI", sequence_type=SequenceType.CHROMOSOME),
+                        )
+                    ),
+                ),
+            ),
+        )
+        cds = CDSInterval.from_dict(cds.to_dict(), parent_or_seq_chunk_parent=cds.chunk_relative_location.parent)
+        # Genomic relative strand is PLUS
+        assert cds.strand == Strand.PLUS
+        # chunk relative strand is MINUS
+        assert cds.chunk_relative_location.strand == Strand.MINUS
+        translation = cds.translate()
+        assert str(translation) == "MTLPSGHPKSRLIKKFTALGPYI"
+
 
 @pytest.mark.parametrize(
     "sequence,translation_table,expected",
