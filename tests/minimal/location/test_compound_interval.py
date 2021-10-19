@@ -976,6 +976,11 @@ class TestCompoundInterval:
                 CompoundInterval([0, 10, 20], [5, 10, 25], Strand.PLUS),
                 CompoundInterval([0, 20], [5, 25], Strand.PLUS),
             ),
+            # All empty
+            (
+                    CompoundInterval([0, 10], [0, 10], Strand.PLUS),
+                    EmptyLocation(),
+            ),
             # No adjacent blocks
             (
                 CompoundInterval([0, 10], [5, 15], Strand.PLUS),
@@ -1008,6 +1013,11 @@ class TestCompoundInterval:
             (
                 CompoundInterval([0, 10, 20], [5, 10, 25], Strand.PLUS),
                 CompoundInterval([0, 20], [5, 25], Strand.PLUS),
+            ),
+            # All empty
+            (
+                    CompoundInterval([0, 10], [0, 10], Strand.PLUS),
+                    EmptyLocation(),
             ),
             # No adjacent blocks
             (
@@ -2596,6 +2606,13 @@ class TestCompoundInterval:
                 SingleInterval(3, 20, Strand.PLUS),
                 True,
                 SingleInterval(0, 3, Strand.PLUS),
+            ),
+            # overlapping CompoundInterval subtracted from encompassing SingleInterval should be null
+            (
+                    SingleInterval(177, 202, Strand.PLUS),
+                    CompoundInterval([177, 200], [201, 202], Strand.PLUS),
+                    True,
+                    EmptyLocation(),
             ),
         ],
     )
