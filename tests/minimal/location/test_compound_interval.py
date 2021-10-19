@@ -2159,6 +2159,12 @@ class TestCompoundInterval:
                 CompoundInterval([10, 30, 50], [20, 40, 60], Strand.UNSTRANDED),
                 SingleInterval(0, 80, Strand.UNSTRANDED),
             ),
+            # Both empty
+            (
+                    CompoundInterval([5], [5], Strand.PLUS),
+                    SingleInterval(10, 10, Strand.PLUS),
+                    EmptyLocation(),
+            ),
         ],
     )
     def test_union_single_interval(self, single_interval, compound_interval, expected):
@@ -2167,12 +2173,6 @@ class TestCompoundInterval:
     @pytest.mark.parametrize(
         "compound_interval,single_interval,expected_exception",
         [
-            # Both empty
-            (
-                CompoundInterval([5], [5], Strand.PLUS),
-                SingleInterval(10, 10, Strand.PLUS),
-                LocationException,
-            ),
             # Opposite strands
             (
                 CompoundInterval([5], [10], Strand.PLUS),
