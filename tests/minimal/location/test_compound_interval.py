@@ -976,6 +976,11 @@ class TestCompoundInterval:
                 CompoundInterval([0, 10, 20], [5, 10, 25], Strand.PLUS),
                 CompoundInterval([0, 20], [5, 25], Strand.PLUS),
             ),
+            # All empty
+            (
+                CompoundInterval([0, 10], [0, 10], Strand.PLUS),
+                EmptyLocation(),
+            ),
             # No adjacent blocks
             (
                 CompoundInterval([0, 10], [5, 15], Strand.PLUS),
@@ -1008,6 +1013,11 @@ class TestCompoundInterval:
             (
                 CompoundInterval([0, 10, 20], [5, 10, 25], Strand.PLUS),
                 CompoundInterval([0, 20], [5, 25], Strand.PLUS),
+            ),
+            # All empty
+            (
+                CompoundInterval([0, 10], [0, 10], Strand.PLUS),
+                EmptyLocation(),
             ),
             # No adjacent blocks
             (
@@ -2149,6 +2159,12 @@ class TestCompoundInterval:
                 CompoundInterval([10, 30, 50], [20, 40, 60], Strand.UNSTRANDED),
                 SingleInterval(0, 80, Strand.UNSTRANDED),
             ),
+            # Both empty
+            (
+                CompoundInterval([5], [5], Strand.PLUS),
+                SingleInterval(10, 10, Strand.PLUS),
+                EmptyLocation(),
+            ),
         ],
     )
     def test_union_single_interval(self, single_interval, compound_interval, expected):
@@ -2157,12 +2173,6 @@ class TestCompoundInterval:
     @pytest.mark.parametrize(
         "compound_interval,single_interval,expected_exception",
         [
-            # Both empty
-            (
-                CompoundInterval([5], [5], Strand.PLUS),
-                SingleInterval(10, 10, Strand.PLUS),
-                LocationException,
-            ),
             # Opposite strands
             (
                 CompoundInterval([5], [10], Strand.PLUS),
@@ -2596,6 +2606,13 @@ class TestCompoundInterval:
                 SingleInterval(3, 20, Strand.PLUS),
                 True,
                 SingleInterval(0, 3, Strand.PLUS),
+            ),
+            # overlapping CompoundInterval subtracted from encompassing SingleInterval should be null
+            (
+                SingleInterval(177, 202, Strand.PLUS),
+                CompoundInterval([177, 200], [201, 202], Strand.PLUS),
+                True,
+                EmptyLocation(),
             ),
         ],
     )
