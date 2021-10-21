@@ -2,7 +2,7 @@ from contextlib import ExitStack
 from unittest.mock import patch
 
 import pytest
-from inscripta.biocantor.exc import NoSuchAncestorException, MismatchedFrameException
+from inscripta.biocantor.exc import NoSuchAncestorException, MismatchedFrameException, InvalidPositionException
 from inscripta.biocantor.gene.cds import CDSInterval, TranslationTable
 from inscripta.biocantor.gene.cds_frame import CDSPhase, CDSFrame
 from inscripta.biocantor.gene.codon import Codon
@@ -2149,6 +2149,86 @@ class TestCDSInterval:
         cds = CDSInterval(**cds)
         cds2 = CDSInterval.from_dict(cds.to_dict())
         assert cds.to_dict() == cds2.to_dict()
+
+    @pytest.mark.parametrize(
+        "pos,exp_cds_pos",
+        [(2, 0), (3, 1), (6, 2), (10, 3), (12, 5)],
+    )
+    def test_sequence_pos_to_cds_plus_strand(self, pos, exp_cds_pos):
+        cds = CDSInterval(
+            [2, 6, 10, 14],
+            [4, 7, 13, 17],
+            Strand.PLUS,
+            [CDSFrame.ZERO, CDSFrame.TWO, CDSFrame.ZERO, CDSFrame.ZERO],
+        )
+        assert cds.sequence_pos_to_cds(pos) == exp_cds_pos
+
+    @pytest.mark.parametrize(
+        "pos",
+        [0, 1, 5, 13, 20],
+    )
+    def test_sequence_pos_to_cds_plus_strand_exception(self, pos):
+        cds = CDSInterval(
+            [2, 6, 10, 14],
+            [4, 7, 13, 17],
+            Strand.PLUS,
+            [CDSFrame.ZERO, CDSFrame.TWO, CDSFrame.ZERO, CDSFrame.ZERO],
+        )
+        with pytest.raises(InvalidPositionException):
+            _ = cds.sequence_pos_to_cds(pos)
+
+    @pytest.mark.parametrize(
+        "pos,exp_aa_pos",
+        [(2, 0), (3, 0), (6, 0), (10, 1), (12, 1)],
+    )
+    def test_sequence_pos_to_aa_pos_plus_strand(self, pos, exp_aa_pos):
+        cds = CDSInterval(
+            [2, 6, 10, 14],
+            [4, 7, 13, 17],
+            Strand.PLUS,
+            [CDSFrame.ZERO, CDSFrame.TWO, CDSFrame.ZERO, CDSFrame.ZERO],
+        )
+        assert cds.sequence_pos_to_amino_acid(pos) == exp_aa_pos
+
+    @pytest.mark.parametrize(
+        "pos,exp_cds_pos",
+        [(16, 0), (14, 2), (12, 3), (10, 5), (6, 6), (2, 8)],
+    )
+    def test_sequence_pos_to_cds_minus_strand(self, pos, exp_cds_pos):
+        cds = CDSInterval(
+            [2, 6, 10, 14],
+            [4, 7, 13, 17],
+            Strand.MINUS,
+            [CDSFrame.ZERO, CDSFrame.TWO, CDSFrame.ZERO, CDSFrame.ZERO],
+        )
+        assert cds.sequence_pos_to_cds(pos) == exp_cds_pos
+
+    @pytest.mark.parametrize(
+        "pos",
+        [0, 1, 5, 13, 20],
+    )
+    def test_sequence_pos_to_cds_minus_strand_exception(self, pos):
+        cds = CDSInterval(
+            [2, 6, 10, 14],
+            [4, 7, 13, 17],
+            Strand.MINUS,
+            [CDSFrame.ZERO, CDSFrame.TWO, CDSFrame.ZERO, CDSFrame.ZERO],
+        )
+        with pytest.raises(InvalidPositionException):
+            _ = cds.sequence_pos_to_cds(pos)
+
+    @pytest.mark.parametrize(
+        "pos,exp_aa_pos",
+        [(16, 0), (14, 0), (12, 1), (10, 1), (6, 2), (2, 2)],
+    )
+    def test_sequence_pos_to_aa_pos_minus_strand(self, pos, exp_aa_pos):
+        cds = CDSInterval(
+            [2, 6, 10, 14],
+            [4, 7, 13, 17],
+            Strand.MINUS,
+            [CDSFrame.ZERO, CDSFrame.TWO, CDSFrame.ZERO, CDSFrame.ZERO],
+        )
+        assert cds.sequence_pos_to_amino_acid(pos) == exp_aa_pos
 
     @pytest.mark.parametrize(
         "parent,expected",

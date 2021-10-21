@@ -5,11 +5,16 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## [UNRELEASED]
+## Fixed
+
 - Fixed `CDSInterval._scan_codon_locations_multi_exon` to properly handle chunk-relative CDS.
 - Fixed `CDSInterval.chunk_relative_frames` to properly handle chunk-relative CDS.
 - GenBank parsing now handles the intervals of overlapping CDS, although it cannot still infer the correct frame downstream of the overlap.
 - Fixed `CompoundInterval.minus` to handle subtraction of overlapping intervals that should lead to a `EmptyLocation`.
 - Fixed `CompoundInterval.optimize_blocks` and `CompoundInterval.optimize_and_combine_blocks` to handle the possibility of the resulting `Location` being a `EmptyLocation`.
+
+## Added
+- `CDSInterval` now has methods `sequence_pos_to_cds` and `sequence_pos_to_amino_acid` to convert sequence positions to amino acid or CDS positions.
 
 
 ## [0.11.1] 2021-09-17
