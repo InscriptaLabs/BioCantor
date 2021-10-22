@@ -831,3 +831,26 @@ class CDSInterval(AbstractFeatureInterval):
         chromosome_relative_coordinates: bool = True,
     ) -> BED12:
         raise NotImplementedError
+
+    def sequence_pos_to_cds(self, pos: int) -> int:
+        """
+        Converts a *sequence* relative position to a CDS position. This is the distance from the translation
+        start in CDS coordinates.
+
+        Returns:
+            An integer position in CDS coordinates.
+        Raises:
+            InvalidPositionException: If the position provided is not part of this CDSInterval.
+        """
+        return self.chromosome_location.parent_to_relative_pos(pos)
+
+    def sequence_pos_to_amino_acid(self, pos: int) -> int:
+        """
+        Converts a *sequence* relative position to amino acid. The resulting value is always left-aligned.
+
+        Returns:
+            A zero based integer position on the amino acid sequence, left aligned.
+        Raises:
+            InvalidPositionException: If the position provided is not part of this CDSInterval.
+        """
+        return self.sequence_pos_to_cds(pos) // 3
