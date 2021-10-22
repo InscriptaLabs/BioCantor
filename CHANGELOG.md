@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## Added
 - `CDSInterval` now has methods `sequence_pos_to_cds` and `sequence_pos_to_amino_acid` to convert sequence positions to amino acid or CDS positions.
+- Support for python3.8.
 
 
 ## [0.11.1] 2021-09-17
