@@ -142,7 +142,7 @@ def gene_to_feature(
         ``SeqFeature``s, one for the gene, one for each child transcript, and one for each transcript's CDS if it
             exists.
     """
-    location = gene_or_feature._location.to_biopython()
+    location = gene_or_feature.chunk_relative_location.to_biopython()
     # update the strand by picking the most common
     strands = [child.strand for child in gene_or_feature]
     strand = max(strands, key=strands.count)
@@ -170,7 +170,9 @@ def gene_to_feature(
     if symbol:
         qualifiers[feature_type] = [symbol]
     if gene_or_feature.locus_tag:
-        qualifiers[KnownQualifiers.LOCUS_TAG.value] = gene_or_feature.locus_tag
+        qualifiers[KnownQualifiers.LOCUS_TAG.value] = [gene_or_feature.locus_tag]
+    elif symbol:
+        qualifiers[KnownQualifiers.LOCUS_TAG.value] = [symbol]
 
     feature = SeqFeature(location, type=feature_type, strand=strand.value)
     feature.qualifiers = qualifiers
@@ -300,7 +302,7 @@ def add_cds_feature(
     Returns:
         ``SeqFeature`` for the CDS of this transcript.
     """
-    location = transcript.cds._location.to_biopython()
+    location = transcript.cds.chunk_relative_location.to_biopython()
     feature = SeqFeature(location, type=GeneIntervalFeatures.CDS.value, strand=strand.value)
     feature.qualifiers = transcript_qualifiers
 

@@ -390,142 +390,6 @@
             "transcripts": [
                 {
                     "exon_starts": [
-                        14816837,
-                        14825522,
-                        14857541,
-                        14918170
-                    ],
-                    "exon_ends": [
-                        14824415,
-                        14825624,
-                        14857708,
-                        14918668
-                    ],
-                    "strand": "MINUS",
-                    "cds_starts": null,
-                    "cds_ends": null,
-                    "cds_frames": null,
-                    "qualifiers": {
-                        "Dbxref": [
-                            "Genbank:NR_146322.1",
-                            "GeneID:107987295",
-                            "HGNC:HGNC:53135"
-                        ],
-                        "gbkey": [
-                            "ncRNA"
-                        ],
-                        "gene": [
-                            "LINC02246"
-                        ]
-                    },
-                    "is_primary_tx": false,
-                    "transcript_id": "NR_146322.1",
-                    "protein_id": null,
-                    "product": null,
-                    "transcript_symbol": null,
-                    "transcript_type": "lncRNA",
-                    "sequence_name": "NC_000021.9",
-                    "sequence_guid": null,
-                    "transcript_interval_guid": null,
-                    "transcript_guid": null
-                }
-            ],
-            "gene_id": "gene-LINC02246",
-            "gene_symbol": "LINC02246",
-            "gene_type": "lncRNA",
-            "locus_tag": null,
-            "qualifiers": {
-                "Dbxref": [
-                    "GeneID:107987295",
-                    "HGNC:HGNC:53135"
-                ],
-                "description": [
-                    "long intergenic non-protein coding RNA 2246"
-                ],
-                "gbkey": [
-                    "Gene"
-                ],
-                "gene": [
-                    "LINC02246"
-                ]
-            },
-            "sequence_name": "NC_000021.9",
-            "sequence_guid": null,
-            "gene_guid": null
-        },
-        {
-            "transcripts": [
-                {
-                    "exon_starts": [
-                        14816837
-                    ],
-                    "exon_ends": [
-                        14918668
-                    ],
-                    "strand": "MINUS",
-                    "cds_starts": null,
-                    "cds_ends": null,
-                    "cds_frames": null,
-                    "qualifiers": {
-                        "Dbxref": [
-                            "GeneID:107987295",
-                            "HGNC:HGNC:53135"
-                        ],
-                        "description": [
-                            "long intergenic non-protein coding RNA 2246"
-                        ],
-                        "gbkey": [
-                            "Gene"
-                        ],
-                        "gene": [
-                            "LINC02246"
-                        ],
-                        "provided_biotype": [
-                            "invalid"
-                        ]
-                    },
-                    "is_primary_tx": false,
-                    "transcript_id": "gene-LINC02246",
-                    "protein_id": null,
-                    "product": null,
-                    "transcript_symbol": "LINC02246",
-                    "transcript_type": null,
-                    "sequence_name": "NC_000021.9",
-                    "sequence_guid": null,
-                    "transcript_interval_guid": null,
-                    "transcript_guid": null
-                }
-            ],
-            "gene_id": "gene-LINC02246",
-            "gene_symbol": "LINC02246",
-            "gene_type": null,
-            "locus_tag": null,
-            "qualifiers": {
-                "Dbxref": [
-                    "GeneID:107987295",
-                    "HGNC:HGNC:53135"
-                ],
-                "description": [
-                    "long intergenic non-protein coding RNA 2246"
-                ],
-                "gbkey": [
-                    "Gene"
-                ],
-                "gene": [
-                    "LINC02246"
-                ],
-                "provided_biotype": [
-                    "invalid"
-                ]
-            },
-            "sequence_name": "NC_000021.9",
-            "sequence_guid": null,
-            "gene_guid": null
-        },
-        {
-            "transcripts": [
-                {
-                    "exon_starts": [
                         14757557
                     ],
                     "exon_ends": [
@@ -666,6 +530,142 @@
                 ],
                 "pseudo": [
                     "true"
+                ]
+            },
+            "sequence_name": "NC_000021.9",
+            "sequence_guid": null,
+            "gene_guid": null
+        },
+        {
+            "transcripts": [
+                {
+                    "exon_starts": [
+                        14816837,
+                        14825522,
+                        14857541,
+                        14918170
+                    ],
+                    "exon_ends": [
+                        14824415,
+                        14825624,
+                        14857708,
+                        14918668
+                    ],
+                    "strand": "MINUS",
+                    "cds_starts": null,
+                    "cds_ends": null,
+                    "cds_frames": null,
+                    "qualifiers": {
+                        "Dbxref": [
+                            "Genbank:NR_146322.1",
+                            "GeneID:107987295",
+                            "HGNC:HGNC:53135"
+                        ],
+                        "gbkey": [
+                            "ncRNA"
+                        ],
+                        "gene": [
+                            "LINC02246"
+                        ]
+                    },
+                    "is_primary_tx": false,
+                    "transcript_id": "NR_146322.1",
+                    "protein_id": null,
+                    "product": null,
+                    "transcript_symbol": null,
+                    "transcript_type": "lncRNA",
+                    "sequence_name": "NC_000021.9",
+                    "sequence_guid": null,
+                    "transcript_interval_guid": null,
+                    "transcript_guid": null
+                }
+            ],
+            "gene_id": "gene-LINC02246",
+            "gene_symbol": "LINC02246",
+            "gene_type": "lncRNA",
+            "locus_tag": null,
+            "qualifiers": {
+                "Dbxref": [
+                    "GeneID:107987295",
+                    "HGNC:HGNC:53135"
+                ],
+                "description": [
+                    "long intergenic non-protein coding RNA 2246"
+                ],
+                "gbkey": [
+                    "Gene"
+                ],
+                "gene": [
+                    "LINC02246"
+                ]
+            },
+            "sequence_name": "NC_000021.9",
+            "sequence_guid": null,
+            "gene_guid": null
+        },
+        {
+            "transcripts": [
+                {
+                    "exon_starts": [
+                        14816837
+                    ],
+                    "exon_ends": [
+                        14918668
+                    ],
+                    "strand": "MINUS",
+                    "cds_starts": null,
+                    "cds_ends": null,
+                    "cds_frames": null,
+                    "qualifiers": {
+                        "Dbxref": [
+                            "GeneID:107987295",
+                            "HGNC:HGNC:53135"
+                        ],
+                        "description": [
+                            "long intergenic non-protein coding RNA 2246"
+                        ],
+                        "gbkey": [
+                            "Gene"
+                        ],
+                        "gene": [
+                            "LINC02246"
+                        ],
+                        "provided_biotype": [
+                            "invalid"
+                        ]
+                    },
+                    "is_primary_tx": false,
+                    "transcript_id": "gene-LINC02246",
+                    "protein_id": null,
+                    "product": null,
+                    "transcript_symbol": "LINC02246",
+                    "transcript_type": null,
+                    "sequence_name": "NC_000021.9",
+                    "sequence_guid": null,
+                    "transcript_interval_guid": null,
+                    "transcript_guid": null
+                }
+            ],
+            "gene_id": "gene-LINC02246",
+            "gene_symbol": "LINC02246",
+            "gene_type": null,
+            "locus_tag": null,
+            "qualifiers": {
+                "Dbxref": [
+                    "GeneID:107987295",
+                    "HGNC:HGNC:53135"
+                ],
+                "description": [
+                    "long intergenic non-protein coding RNA 2246"
+                ],
+                "gbkey": [
+                    "Gene"
+                ],
+                "gene": [
+                    "LINC02246"
+                ],
+                "provided_biotype": [
+                    "invalid"
                 ]
             },
             "sequence_name": "NC_000021.9",

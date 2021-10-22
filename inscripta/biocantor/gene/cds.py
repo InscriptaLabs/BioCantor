@@ -109,7 +109,6 @@ class CDSInterval(AbstractFeatureInterval):
     def name(self) -> str:
         return self.product
 
-    @lru_cache(maxsize=1)
     @property
     def chunk_relative_frames(self) -> List[CDSFrame]:
         """
@@ -117,41 +116,59 @@ class CDSInterval(AbstractFeatureInterval):
         of the full chromosomal location. In this case, the frames list needs to be appropriately
         subsetted to the correct set of frame entries.
 
-        Returns:
-            A list of CDSFrame entries that overlap the chunk relative location.
+        However, it is far from trivial to subset frames in chunk context, because frames are calculated
+        based on the full transcript length. Therefore, this function makes a blanket
+        assumption that everything is in-frame within the interval of the chunk. In other words, if you are modeling
+        a programmed frameshift using the Frames vector, this information will be lost. It does this by looping
+        over the frames in transcription orientation until it finds the first exon that is within the chunk,
+        then uses that to parameterize the frame generating function
+        :meth:`CDSInterval.construct_frames_from_location()`
         """
-        frames = []
-        for genomic_start, genomic_end, frame in zip(self._genomic_starts, self._genomic_ends, self.frames):
-            genomic_exon = SingleInterval(
-                genomic_start, genomic_end, Strand.PLUS, parent=self._chunk_relative_bounded_chromosome_location.parent
-            )
+        if not self.is_chunk_relative:
+            return self.frames
+
+        # TODO: Will there ever be a CDSFrame.NONE value? I don't think so because that is a genePred concept
+        #   GFF3 will put Phase values only on CDS features, and GenBank is a lost cause
+        fivep_phase = next(self._frame_iter(chunk_relative_frames=False)).to_phase().value
+        distance_from_start = fivep_phase
+
+        for genomic_exon in self._exon_iter(chunk_relative_exon=False):
+
             # chromosome location has overlapping blocks merged, so that the intersection always has one block
             # this is OK to do here since the original genomic intervals retain the overlapping information
             if isinstance(self._chunk_relative_bounded_chromosome_location, SingleInterval):
                 chrom_loc = self._chunk_relative_bounded_chromosome_location
-            elif isinstance(self._chunk_relative_bounded_chromosome_location, CompoundInterval):
-                chrom_loc = self._chunk_relative_bounded_chromosome_location.optimize_and_combine_blocks()
             else:
-                return frames
+                chrom_loc = self._chunk_relative_bounded_chromosome_location.optimize_and_combine_blocks()
+
+            # this is the section of the current exon with the chunk bounded location; it defines the
+            # portion of this exon that is contained within the chunk
             intersection = genomic_exon.intersection(chrom_loc, match_strand=False)
 
+            # this exon is entirely non-chunk
             if intersection.is_empty:
-                continue
+                distance_from_start += len(genomic_exon)
+            # this should never happen, but just in case
             elif intersection.num_blocks != 1:
                 raise LocationOverlapException("Found overlapping blocks after block optimization")
-            elif len(intersection) == len(genomic_exon):
-                frames.append(frame)
+            # this exon is the first exon from the 5' end to be either fully or partially contained within the chunk
+            # calculate the frames starting from here, after determining the distance from the 5' end
             else:
-                # shift frame forwards by the amount the exon was sliced from the left
-                shift = intersection.start - genomic_exon.start
-                new_frame = frame.shift(-shift)
-                frames.append(new_frame)
-        return frames
+                if self.strand == Strand.PLUS:
+                    distance_from_start += intersection.start - genomic_exon.start
+                else:
+                    distance_from_start += genomic_exon.end - intersection.end
+                # this is equivalent to a CDSPhase, which we can convert to frame to get offset
+                frame = CDSPhase(distance_from_start % 3).to_frame()
+                return self.construct_frames_from_location(self.chunk_relative_location, frame)
 
     def to_dict(self, chromosome_relative_coordinates: bool = True) -> Dict[str, Any]:
         """
-        Convert this CDS to a dictionary representation. Note that the dictionary representation can only
-        use CDSFrame, not CDSPhase.
+        Convert this CDS to a dictionary representation.
+
+        If ``chromosome_relative_coordinates`` is ``False``, then the Frames list that comes out of this
+        will lose programmed frameshift information.
+
         Args:
             chromosome_relative_coordinates: Optional flag to export the interval in chromosome relative
                 or chunk-relative coordinates.
@@ -183,7 +200,8 @@ class CDSInterval(AbstractFeatureInterval):
     def from_dict(vals: Dict[str, Any], parent_or_seq_chunk_parent: Optional[Parent] = None) -> "CDSInterval":
         """
         Construct a :class:`CDSInterval` from a dictionary representation such as one produced by
-        :meth:`CDSInterval.to_dict()`. The frames must be CDSFrame, not CDSPhase.
+        :meth:`CDSInterval.to_dict()`.
+
         Args:
             vals: A dictionary representation.
             parent_or_seq_chunk_parent: An optional Parent to associate with this new interval.
@@ -395,14 +413,16 @@ class CDSInterval(AbstractFeatureInterval):
         overlap the relative chunk. These frames will potentially be reduced in quantity, and also shifted to handle
         exons that are now partial exons.
         """
-        frames = self.frames if chunk_relative_frames is False else self.chunk_relative_frames
-        if (
-            self.chunk_relative_location.strand == Strand.PLUS
-            or self.chunk_relative_location.strand == Strand.UNSTRANDED
-        ):
-            yield from frames
+        if chunk_relative_frames is True:
+            if self.chunk_relative_location.strand == Strand.MINUS:
+                yield from reversed(self.chunk_relative_frames)
+            else:
+                yield from self.chunk_relative_frames
         else:
-            yield from reversed(frames)
+            if self.strand == Strand.MINUS:
+                yield from reversed(self.frames)
+            else:
+                yield from self.frames
 
     def _exon_iter(self, chunk_relative_exon: bool = True) -> Iterator[SingleInterval]:
         """Iterate over exons in transcription direction"""
@@ -538,18 +558,17 @@ class CDSInterval(AbstractFeatureInterval):
         Any leading or trailing bases that are annotated as CDS but cannot form a full codon
         are excluded.
         """
-        # must check if it is overlapping OR if the frames that would be constructed based only on location
-        # information match the frames seen.
-        loc = self.chunk_relative_location if chunk_relative_coordinates else self.chromosome_location
-        if loc.is_overlapping or self.construct_frames_from_location(loc) != self.frames:
-            yield from self._scan_codon_locations_overlapping(chunk_relative_coordinates)
+        # can only do naive window scanning if this CDS has exactly one exon.
+        if self.num_blocks > 1:
+            yield from self._scan_codon_locations_multi_exon(chunk_relative_coordinates)
         else:
+            loc = self.chunk_relative_location
+            # must make sure this CDS (with its offset) is at least one codon long
+            offset = self.frames[0].value
+            if (len(loc) - offset) >= 3:
+                yield from loc.scan_windows(3, 3, offset)
 
-            # must make sure this CDS is at least one codon long
-            if len(loc) >= 3:
-                yield from loc.scan_windows(3, 3, 0)
-
-    def _scan_codon_locations_overlapping(self, chunk_relative_coordinates: bool = True) -> Iterator[Location]:
+    def _scan_codon_locations_multi_exon(self, chunk_relative_coordinates: bool = True) -> Iterator[Location]:
         """
         Returns an iterator over codon locations in *chunk relative* coordinates.
 
@@ -565,13 +584,11 @@ class CDSInterval(AbstractFeatureInterval):
         next_frame = CDSFrame.ZERO
         cleaned_rel_starts = []
         cleaned_rel_ends = []
-        loc = self.chunk_relative_location if chunk_relative_coordinates else self.chromosome_location
+        loc = self.chromosome_location
         # zip_longest is used here to ensure that the two iterators are always actually in sync
-        for exon, frame in zip_longest(
-            self._exon_iter(chunk_relative_coordinates), self._frame_iter(chunk_relative_coordinates)
-        ):
+        for exon, frame in zip_longest(self._exon_iter(False), self._frame_iter(False)):
 
-            if not exon or not frame:
+            if exon is None or frame is None:
                 raise MismatchedFrameException("Frame iterator is not in sync with exon iterator")
 
             start_to_rel = loc.parent_to_relative_pos(exon.start)
@@ -583,9 +600,11 @@ class CDSInterval(AbstractFeatureInterval):
                 # remove trailing codon from previous block
                 shift = sum((coords[1] - coords[0] for coords in zip(cleaned_rel_starts, cleaned_rel_ends))) % 3
                 if shift > 0:
+                    # it may be possible for this shift to end up producing a 0bp block
+                    # this will be dropped in the list comprehension below that generates the cleaned_blocks
                     cleaned_rel_ends[-1] = cleaned_rel_ends[-1] - shift
                 # we are now inherently in frame
-                next_frame = CDSFrame(CDSFrame.ZERO)
+                next_frame = CDSFrame.ZERO
             # it may be the case that the removal of the trailing codon from the previous block entirely
             # eliminates that block. In that case, skip it.
             if rel_start >= rel_end:
@@ -597,13 +616,45 @@ class CDSInterval(AbstractFeatureInterval):
         cleaned_blocks = [
             loc.relative_interval_to_parent_location(cleaned_rel_starts[i], cleaned_rel_ends[i], Strand.PLUS)
             for i in range(len(cleaned_rel_starts))
+            # remove 0bp blocks here to avoid having to call optimize_blocks()
+            if cleaned_rel_ends[i] != cleaned_rel_starts[i]
         ]
         cleaned_location = CompoundInterval.from_single_intervals(cleaned_blocks)
+
+        # cannot iterate over codons that are too short
         if len(cleaned_location) < 3:
             return
-        yield from cleaned_location.scan_windows(3, 3, 0)
 
-    @lru_cache(maxsize=1)
+        if chunk_relative_coordinates and self.is_chunk_relative:
+            # lift the cleaned window on to chunk relative coordinate system
+            chunk_relative_cleaned_location = self.liftover_location_to_seq_chunk_parent(
+                cleaned_location, self.chunk_relative_location.parent
+            )
+            # lift this back to chromosome coordinates -- this produces a chromosome coordinate Location
+            # whose bounds are the portion of this CDS that are contained on the sequence chunk
+            loc_on_chrom = chunk_relative_cleaned_location.lift_over_to_first_ancestor_of_type(SequenceType.CHROMOSOME)
+            # determine the offset needed for codon iteration to be in-frame
+            # calculate the number of bases from the 5' end that this sequence chunk removes, if any
+            if self.strand == Strand.PLUS:
+                fivep_loc = cleaned_location.relative_interval_to_parent_location(
+                    0, cleaned_location.parent_to_relative_pos(loc_on_chrom.start), Strand.PLUS
+                )
+            else:
+                fivep_loc = cleaned_location.relative_interval_to_parent_location(
+                    0, cleaned_location.parent_to_relative_pos(loc_on_chrom.end - 1), Strand.PLUS
+                )
+            # this is equivalent to a CDSPhase, which we can convert to frame to get offset
+            fivep_distance_mod3 = len(fivep_loc) % 3
+            phase = CDSPhase(fivep_distance_mod3)
+            offset = phase.to_frame().value
+            # cannot iterate over codons that are too short; there is no translation for this CDS
+            # (iterator will terminate without returning anything)
+            if len(chunk_relative_cleaned_location) - offset < 3:
+                return
+            yield from chunk_relative_cleaned_location.scan_windows(3, 3, offset)
+        else:
+            yield from cleaned_location.scan_windows(3, 3, 0)
+
     def _translate_iter(
         self,
         truncate_at_in_frame_stop: Optional[bool] = False,
@@ -780,3 +831,26 @@ class CDSInterval(AbstractFeatureInterval):
         chromosome_relative_coordinates: bool = True,
     ) -> BED12:
         raise NotImplementedError
+
+    def sequence_pos_to_cds(self, pos: int) -> int:
+        """
+        Converts a *sequence* relative position to a CDS position. This is the distance from the translation
+        start in CDS coordinates.
+
+        Returns:
+            An integer position in CDS coordinates.
+        Raises:
+            InvalidPositionException: If the position provided is not part of this CDSInterval.
+        """
+        return self.chromosome_location.parent_to_relative_pos(pos)
+
+    def sequence_pos_to_amino_acid(self, pos: int) -> int:
+        """
+        Converts a *sequence* relative position to amino acid. The resulting value is always left-aligned.
+
+        Returns:
+            A zero based integer position on the amino acid sequence, left aligned.
+        Raises:
+            InvalidPositionException: If the position provided is not part of this CDSInterval.
+        """
+        return self.sequence_pos_to_cds(pos) // 3
