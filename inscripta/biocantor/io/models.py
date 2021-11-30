@@ -5,6 +5,9 @@ and deserializing the models.
 from typing import List, Optional, ClassVar, Type, Dict, Union
 from uuid import UUID
 
+from marshmallow import Schema  # noqa: F401
+from marshmallow_dataclass import dataclass
+
 from inscripta.biocantor.gene.biotype import Biotype
 from inscripta.biocantor.gene.cds_frame import CDSFrame
 from inscripta.biocantor.gene.collections import GeneInterval, FeatureIntervalCollection, AnnotationCollection
@@ -12,8 +15,8 @@ from inscripta.biocantor.gene.feature import FeatureInterval
 from inscripta.biocantor.gene.transcript import TranscriptInterval
 from inscripta.biocantor.location.strand import Strand
 from inscripta.biocantor.parent import Parent
-from marshmallow import Schema  # noqa: F401
-from marshmallow_dataclass import dataclass
+from inscripta.biocantor.sequence.sequence import Alphabet, SequenceType
+from inscripta.biocantor.io.exc import InvalidInputError
 
 
 @dataclass
@@ -24,6 +27,47 @@ class BaseModel:
 
     class Meta:
         ordered = True
+
+
+@dataclass
+class ParentModel(BaseModel):
+    """Data model that allows construction of a :class:`~biocantor.gene.parent.Parent` object."""
+
+    seq: Optional[str] = None
+    alphabet: Optional[Alphabet] = Alphabet.NT_EXTENDED_GAPPED
+    sequence_name: Optional[Union[UUID, str]] = None
+    type: Optional[Union[SequenceType, str]] = SequenceType.CHROMOSOME
+    start: Optional[int] = None
+    end: Optional[int] = None
+    strand: Optional[Strand] = None
+
+    def to_parent(self) -> Parent:
+        if self.seq is None:
+            return Parent(sequence_type=self.type, id=self.sequence_name)
+
+        # avoid circular imports
+        from inscripta.biocantor.io.parser import seq_chunk_to_parent, seq_to_parent
+
+        if self.type == SequenceType.SEQUENCE_CHUNK:
+            if not self.sequence_name:
+                raise InvalidInputError("Cannot construct sequence chunk parent without a sequence name")
+            elif self.start is None or self.end is None:
+                raise InvalidInputError("Cannot construct sequence chunk parent without chunk start/end positions")
+            # the need for fn_call and fn here is to allow seq_to_parent or seq_chunk_to_parent to retain
+            # their default parameters when None is value here
+            fn = seq_chunk_to_parent
+            fn_call = dict(
+                seq=self.seq,
+                sequence_name=self.sequence_name,
+                start=self.start,
+                end=self.end,
+                strand=self.strand,
+                alphabet=self.alphabet,
+            )
+        else:
+            fn = seq_to_parent
+            fn_call = dict(seq=self.seq, alphabet=self.alphabet, seq_id=self.sequence_name, seq_type=self.type)
+        return fn(**{k: v for k, v in fn_call.items() if v is not None})
 
 
 @dataclass
@@ -256,9 +300,14 @@ class AnnotationCollectionModel(BaseModel):
     start: Optional[int] = None
     end: Optional[int] = None
     completely_within: Optional[bool] = None
+    parent_or_seq_chunk_parent: Optional[ParentModel] = None
 
     def to_annotation_collection(self, parent_or_seq_chunk_parent: Optional[Parent] = None) -> "AnnotationCollection":
         """Produce an :class:`~biocantor.gene.collections.AnnotationCollection` from this model."""
+
+        if not parent_or_seq_chunk_parent and self.parent_or_seq_chunk_parent:
+            parent_or_seq_chunk_parent = self.parent_or_seq_chunk_parent.to_parent()
+
         if self.genes:
             genes = [gene.to_gene_interval(parent_or_seq_chunk_parent) for gene in self.genes]
         else:

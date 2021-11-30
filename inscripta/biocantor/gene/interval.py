@@ -80,6 +80,65 @@ class AbstractInterval(ABC):
         back to the true coordinates will be lost.
         """
 
+    def _parent_to_dict(self, chromosome_relative_coordinates: bool = True) -> Optional[Dict[str, Any]]:
+        """Converts the ``_parent_or_seq_chunk_parent`` member of this Interval to a JSON-serializable representation."""
+        if not self._parent_or_seq_chunk_parent:
+            return None
+        elif chromosome_relative_coordinates is False:
+            raise NotImplementedError("Cannot export parent to chunk relative coordinates")
+
+        if self.chunk_relative_location.has_ancestor_of_type(SequenceType.SEQUENCE_CHUNK):
+            chunk_parent = self.chunk_relative_location.first_ancestor_of_type(SequenceType.SEQUENCE_CHUNK)
+            sequence = chunk_parent.sequence
+            if not sequence:
+                raise NoSuchAncestorException("Chunk parents must have sequence")
+            location = sequence.location_on_parent
+            return {
+                "seq": str(sequence),
+                "sequence_name": self.chromosome_location.parent.id,
+                "start": location.start,
+                "end": location.end,
+                "strand": location.strand.name,
+                "alphabet": sequence.alphabet.name,
+                "type": SequenceType.SEQUENCE_CHUNK.name,
+            }
+        elif self.chunk_relative_location.has_ancestor_of_type(SequenceType.CHROMOSOME):
+            parent = self.chunk_relative_location.first_ancestor_of_type(SequenceType.CHROMOSOME)
+            sequence = parent.sequence
+            location = self.chromosome_location
+            return {
+                "seq": str(sequence) if sequence else None,
+                "sequence_name": parent.id,
+                "start": location.start,
+                "end": location.end,
+                "strand": location.strand.name,
+                "alphabet": sequence.alphabet.name if sequence else None,
+                "type": SequenceType.CHROMOSOME.name,
+            }
+        else:
+            parent = self._parent_or_seq_chunk_parent
+            seq_str = None
+            start = None
+            end = None
+            strand = None
+            alphabet = None
+            sequence_type = None
+            if parent.location:
+                start = parent.location.start
+                end = parent.location.end
+            if parent.sequence:
+                sequence_type = parent.sequence_type
+                seq_str = str(parent.sequence)
+            return {
+                "seq": seq_str,
+                "sequence_name": parent.id,
+                "start": start,
+                "end": end,
+                "strand": strand,
+                "alphabet": alphabet,
+                "type": sequence_type,
+            }
+
     @staticmethod
     @abstractmethod
     def from_dict(vals: Dict[str, Any], parent_or_seq_chunk_parent: Optional[Parent] = None) -> "AbstractInterval":

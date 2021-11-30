@@ -37,7 +37,7 @@ from inscripta.biocantor.io.gff3.exc import GFF3MissingSequenceNameError
 from inscripta.biocantor.io.gff3.rows import GFFRow, GFFAttributes
 from inscripta.biocantor.location import Location, SingleInterval, EmptyLocation, Strand
 from inscripta.biocantor.parent import Parent, SequenceType
-from inscripta.biocantor.sequence import Sequence
+from inscripta.biocantor.sequence import Sequence, Alphabet
 from inscripta.biocantor.util.bins import bins
 from inscripta.biocantor.util.hashing import digest_object
 
@@ -942,11 +942,58 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
             start=self.start if chromosome_relative_coordinates else self.chunk_relative_start,
             end=self.end if chromosome_relative_coordinates else self.chunk_relative_end,
             completely_within=self.completely_within,
+            parent_or_seq_chunk_parent=self._parent_to_dict(),
         )
 
     @staticmethod
     def from_dict(vals: Dict[str, Any], parent_or_seq_chunk_parent: Optional[Parent] = None) -> "AnnotationCollection":
-        """Build an :class:`FeatureIntervalCollection` from a dictionary representation"""
+        """Build an :class:`AnnotationCollection` from a dictionary representation.
+
+        Will use the ``parent_or_seq_chunk_parent`` value encoded in the dict if it exists,
+        but this will be overridden by anything passed to the parameter.
+        """
+        if not parent_or_seq_chunk_parent and "parent_or_seq_chunk_parent" in vals:
+            from inscripta.biocantor.io.parser import seq_chunk_to_parent, seq_to_parent
+
+            parent_dict = vals["parent_or_seq_chunk_parent"]
+            if parent_dict["alphabet"]:
+                parent_dict["alphabet"] = Alphabet[parent_dict["alphabet"]]
+            if parent_dict["strand"]:
+                parent_dict["strand"] = Strand[parent_dict["strand"]]
+            if parent_dict["type"]:
+                type_str = parent_dict["type"].upper()
+                # convert type -> seq_type for kwargs below
+                if type_str == SequenceType.CHROMOSOME.name:
+                    parent_dict["seq_type"] = SequenceType.CHROMOSOME
+                elif type_str == SequenceType.SEQUENCE_CHUNK.name:
+                    parent_dict["seq_type"] = SequenceType.SEQUENCE_CHUNK
+                else:
+                    parent_dict["seq_type"] = parent_dict["type"]
+                del parent_dict["type"]
+
+            if parent_dict["seq"]:
+                # use dictionary to avoid seq_to_parent or seq_chunk_to_parent to retain their default parameters
+                if parent_dict.get("seq_type") and parent_dict["seq_type"] == SequenceType.SEQUENCE_CHUNK:
+                    fn = seq_chunk_to_parent
+                    # not an argument to seq_chunk_to_parent because it is implicit
+                    del parent_dict["seq_type"]
+                else:
+                    # seq_to_parent uses slightly different kwargs, unfortunately
+                    fn = seq_to_parent
+                    parent_dict["seq_id"] = parent_dict["sequence_name"]
+                    # remove incorrectly named or invalid parameters
+                    parent_dict = {
+                        k: v
+                        for k, v in parent_dict.items()
+                        if k not in ["sequence_name", "type", "start", "end", "strand"]
+                    }
+                parent_dict = {k: v for k, v in parent_dict.items() if v is not None}
+                parent_or_seq_chunk_parent = fn(**parent_dict)
+            else:
+                parent_or_seq_chunk_parent = Parent(
+                    id=parent_dict["sequence_name"], sequence_type=parent_dict.get("seq_type")
+                )
+
         return AnnotationCollection(
             genes=[GeneInterval.from_dict(x, parent_or_seq_chunk_parent) for x in vals["genes"]],
             feature_collections=[

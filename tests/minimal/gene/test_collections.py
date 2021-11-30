@@ -18,6 +18,7 @@ from inscripta.biocantor.io.models import (
     FeatureIntervalCollectionModel,
     TranscriptIntervalModel,
 )
+from inscripta.biocantor.gene.collections import AnnotationCollection
 from inscripta.biocantor.io.parser import seq_chunk_to_parent
 from inscripta.biocantor.location.location_impl import SingleInterval
 from inscripta.biocantor.location.strand import Strand
@@ -1566,6 +1567,37 @@ class TestAnnotationCollection:
         assert obj.get_children_by_type("FEATURE") == obj.feature_collections
         with pytest.raises(InvalidQueryError):
             _ = obj.get_children_by_type("gene")
+
+    @pytest.mark.parametrize(
+        "parent",
+        [
+            parent_genome,
+            parent_genome_10_49,
+            parent_genome_with_location,
+            parent_genome_rev,
+            parent_genome_rev_5_44,
+            parent_nonstandard_type_with_sequence,
+        ],
+    )
+    def test_parent_to_dict(self, parent):
+        as_dict = self.annot.to_annotation_collection(parent).to_dict()
+        obj = AnnotationCollectionModel.Schema().load(as_dict).to_annotation_collection()
+        obj2 = AnnotationCollection.from_dict(as_dict)
+        assert obj.get_reference_sequence() == obj2.get_reference_sequence()
+        assert obj == obj2
+
+    @pytest.mark.parametrize(
+        "parent",
+        [
+            parent_no_seq,
+            parent_nonstandard_type,
+        ],
+    )
+    def test_parent_to_dict_no_sequence(self, parent):
+        as_dict = self.annot.to_annotation_collection(parent).to_dict()
+        obj = AnnotationCollectionModel.Schema().load(as_dict).to_annotation_collection()
+        obj2 = AnnotationCollection.from_dict(as_dict)
+        assert obj == obj2
 
 
 class TestNegative:
