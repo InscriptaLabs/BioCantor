@@ -20,35 +20,7 @@
                     "cds_frames": [
                         "ZERO"
                     ],
-                    "qualifiers": {
-                        "gene": [
-                            "thrA"
-                        ],
-                        "locus_tag": [
-                            "FEPOIHMA_00001"
-                        ],
-                        "EC_number": [
-                            "2.7.2.4"
-                        ],
-                        "inference": [
-                            "ab initio prediction:Prodigal:2.6"
-                        ],
-                        "codon_start": [
-                            "1"
-                        ],
-                        "transl_table": [
-                            "11"
-                        ],
-                        "product": [
-                            "aspartate kinase / homoserine dehydrogenase"
-                        ],
-                        "protein_id": [
-                            "X:FEPOIHMA_00001"
-                        ],
-                        "translation": [
-                            "MRVLKFGGTSVANAERFLRVADILESNARQGQVATVLSAPAKITNHLVAMIEKTISGQDALPNISDAERIFAELLTGLAAAQPGFPLAQLKTFVDQEFAQIKHVLHGISLLGQCPDSINAALICRGEKMSIAIMAGVLEARGHNVTVIDPVEKLLAVGHYLESTVDIAESTRRIAASRIPADHMVLMAGFTAGNEKGELVVLGRNGSDYSAAVLAACLRADCCEIWTDVDGVYTCDPRQVPDARLLKSMSYQEAMELSYFGAKVLHPRTITPIAQFQIPCLIKNTGNPQAPGTLIGASRDEDELPVKGISNLNNMAMFSVSGPGMKGMVGMAARVFAAMSRARISVVLITQSSSEYSISFCVPQSDCVRAERAMQEEFYLELKEGLLEPLAVTERLAIISVVGDGMRTLRGISAKFFAALARANINIVAIAQGSSERSISVVVNNDDATTGVRVTHQMLFNTDQVIEVFVIGVGGVGGALLEQLKRQQSWLKNKHIDLRVCGVANSKALLTNVHGLNLENWQEELAQAKEPFNLGRLIRLVKEYHLLNPVIVDCTSSQAVADQYADFLREGFHVVTPNKKANTSSMDYYHLLRHAAEKSRRKFLYDTNVGAGLPVIENLQNLLNAGDELMKFSGILSGSLSYIFGKLDEGMSFSEATTLAREMGYTEPDPRDDLSGMDVARKLLILARETGRELELADIEIEPVLPAEFNAEGDVAAFMANLSQLDDLFAARVAKARDEGKVLRYVGNIDEDGACRVKIAEVDGNDPLFKVKNGENALAFYSHYYQPLPLVLRGYGAGNDVTAAGVFADLLRTLSWKLGV"
-                        ]
-                    },
+                    "qualifiers": null,
                     "is_primary_tx": false,
                     "transcript_id": null,
                     "protein_id": "X:FEPOIHMA_00001",
@@ -65,14 +37,7 @@
             "gene_symbol": "thrA",
             "gene_type": "protein_coding",
             "locus_tag": "FEPOIHMA_00001",
-            "qualifiers": {
-                "gene": [
-                    "thrA"
-                ],
-                "locus_tag": [
-                    "FEPOIHMA_00001"
-                ]
-            },
+            "qualifiers": null,
             "sequence_name": "FEPOIHMA_1",
             "sequence_guid": null,
             "gene_guid": "ff1fa9c6-fc20-f699-7164-f0c2e235a487"
@@ -96,7 +61,7 @@
                     "cds_frames": [
                         "ZERO"
                     ],
-                    "qualifiers": {},
+                    "qualifiers": null,
                     "is_primary_tx": false,
                     "transcript_id": null,
                     "protein_id": "X:FEPOIHMA_00002",
@@ -144,7 +109,7 @@
                     "cds_frames": [
                         "ZERO"
                     ],
-                    "qualifiers": {},
+                    "qualifiers": null,
                     "is_primary_tx": false,
                     "transcript_id": null,
                     "protein_id": "X:FEPOIHMA_00003",
@@ -192,7 +157,7 @@
                     "cds_frames": [
                         "ZERO"
                     ],
-                    "qualifiers": {},
+                    "qualifiers": null,
                     "is_primary_tx": false,
                     "transcript_id": null,
                     "protein_id": "X:FEPOIHMA_00004",
@@ -240,7 +205,7 @@
                     "cds_frames": [
                         "ZERO"
                     ],
-                    "qualifiers": {},
+                    "qualifiers": null,
                     "is_primary_tx": false,
                     "transcript_id": null,
                     "protein_id": "X:FEPOIHMA_00005",
@@ -282,7 +247,7 @@
                     "cds_starts": null,
                     "cds_ends": null,
                     "cds_frames": null,
-                    "qualifiers": {},
+                    "qualifiers": null,
                     "is_primary_tx": false,
                     "transcript_id": null,
                     "protein_id": null,
@@ -321,7 +286,7 @@
                     "cds_starts": null,
                     "cds_ends": null,
                     "cds_frames": null,
-                    "qualifiers": {},
+                    "qualifiers": null,
                     "is_primary_tx": false,
                     "transcript_id": null,
                     "protein_id": null,
@@ -338,7 +303,7 @@
             "gene_symbol": null,
             "gene_type": "rRNA",
             "locus_tag": "FEPOIHMA_02457",
-            "qualifiers": {},
+            "qualifiers": null,
             "sequence_name": "FEPOIHMA_1",
             "sequence_guid": null,
             "gene_guid": "b8a03f84-ba9d-6209-88e4-38f1d54f7e65"
