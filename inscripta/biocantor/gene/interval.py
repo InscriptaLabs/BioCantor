@@ -83,6 +83,12 @@ class AbstractInterval(ABC):
     def _parent_to_dict(self, chromosome_relative_coordinates: bool = True) -> Optional[Dict[str, Any]]:
         """
         Converts the ``_parent_or_seq_chunk_parent`` member of this Interval to a JSON-serializable representation.
+
+        Raises:
+            NotImplementedError: If chromosome_relative_coordinates is ``False`` and
+                ``self._parent_or_seq_chunk_parent`` is not ``None``.
+            NoSuchAncestorException: If ``self._parent_or_seq_chunk_parent`` is chunk-relative but lacks
+                sequence information.
         """
         if not self._parent_or_seq_chunk_parent:
             return None

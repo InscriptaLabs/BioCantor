@@ -1580,7 +1580,7 @@ class TestAnnotationCollection:
         ],
     )
     def test_parent_to_dict(self, parent):
-        as_dict = self.annot.to_annotation_collection(parent).to_dict()
+        as_dict = self.annot.to_annotation_collection(parent).to_dict(export_parent=True)
         obj = AnnotationCollectionModel.Schema().load(as_dict).to_annotation_collection()
         obj2 = AnnotationCollection.from_dict(as_dict)
         assert obj.get_reference_sequence() == obj2.get_reference_sequence()
@@ -1594,10 +1594,20 @@ class TestAnnotationCollection:
         ],
     )
     def test_parent_to_dict_no_sequence(self, parent):
-        as_dict = self.annot.to_annotation_collection(parent).to_dict()
+        as_dict = self.annot.to_annotation_collection(parent).to_dict(export_parent=True)
         obj = AnnotationCollectionModel.Schema().load(as_dict).to_annotation_collection()
         obj2 = AnnotationCollection.from_dict(as_dict)
         assert obj == obj2
+        with pytest.raises(NullSequenceException):
+            _ = obj.get_reference_sequence()
+        with pytest.raises(NullSequenceException):
+            _ = obj2.get_reference_sequence()
+
+    def test_parent_to_dict_exception(self):
+        with pytest.raises(NotImplementedError):
+            _ = self.annot.to_annotation_collection(parent_genome).to_dict(
+                export_parent=True, chromosome_relative_coordinates=False
+            )
 
 
 class TestNegative:

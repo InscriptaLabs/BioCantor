@@ -336,7 +336,15 @@ class AnnotationCollectionModel(BaseModel):
         )
 
     @staticmethod
-    def from_annotation_collection(annotation_collection: AnnotationCollection) -> "AnnotationCollectionModel":
+    def from_annotation_collection(
+        annotation_collection: AnnotationCollection,
+        chromosome_relative_coordinates: bool = True,
+        export_parent: bool = False,
+    ) -> "AnnotationCollectionModel":
         """Convert back to :class:`~AnnotationCollectionModel`."""
 
-        return AnnotationCollectionModel.Schema().load(annotation_collection.to_dict())
+        return AnnotationCollectionModel.Schema().load(
+            annotation_collection.to_dict(
+                chromosome_relative_coordinates=chromosome_relative_coordinates, export_parent=export_parent
+            )
+        )

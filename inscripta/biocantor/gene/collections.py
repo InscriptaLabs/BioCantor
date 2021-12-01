@@ -926,8 +926,22 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
         sort_iter = sorted(chain_iter, key=lambda x: x.start)
         yield from sort_iter
 
-    def to_dict(self, chromosome_relative_coordinates: bool = True) -> Dict[str, Any]:
-        """Convert to a dict usable by :class:`~biocantor.io.models.AnnotationCollectionModel`."""
+    def to_dict(self, chromosome_relative_coordinates: bool = True, export_parent: bool = False) -> Dict[str, Any]:
+        """Convert to a dict usable by :class:`~biocantor.io.models.AnnotationCollectionModel`.
+
+        Allows export of the parent object as well, which allows for sequence information to be serialized to disk.
+
+        It is not currently possible to export the parent in chunk-relative coordinates.
+
+        Raises:
+            NotImplementedError if chromosome_relative_coordinates is ``False`` and export_parent is ``True``.
+        """
+
+        if export_parent is True:
+            parent_or_seq_chunk_parent = self._parent_to_dict(chromosome_relative_coordinates)
+        else:
+            parent_or_seq_chunk_parent = None
+
         return dict(
             genes=[gene.to_dict(chromosome_relative_coordinates) for gene in self.genes],
             feature_collections=[
@@ -942,7 +956,7 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
             start=self.start if chromosome_relative_coordinates else self.chunk_relative_start,
             end=self.end if chromosome_relative_coordinates else self.chunk_relative_end,
             completely_within=self.completely_within,
-            parent_or_seq_chunk_parent=self._parent_to_dict(),
+            parent_or_seq_chunk_parent=parent_or_seq_chunk_parent,
         )
 
     @staticmethod
@@ -1248,11 +1262,11 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
             genes_to_keep, features_collections_to_keep, start, end, self.completely_within
         )
 
-    def query_by_guids(self, ids: List[UUID]) -> "AnnotationCollection":
+    def query_by_guids(self, id_or_ids: Union[UUID, List[UUID]]) -> "AnnotationCollection":
         """Filter this annotation collection object by a list of unique IDs.
 
         Args:
-            ids: List of GUIDs, or unique IDs.
+            id_or_ids: List of GUIDs, or unique IDs. Can also be a single ID.
 
         NOTE: If the children of this collection have GUID collisions, either across genes or features or
         within genes and features, this function will return all members with the matching GUID.
@@ -1260,6 +1274,11 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
         Returns:
            :class:`AnnotationCollection` that may be empty.
         """
+        if isinstance(id_or_ids, UUID):
+            ids = [id_or_ids]
+        else:
+            ids = id_or_ids
+
         genes_to_keep = []
         features_collections_to_keep = []
         for i in ids:

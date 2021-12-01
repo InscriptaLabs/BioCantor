@@ -1,0 +1,375 @@
+{
+    "feature_collections": [],
+    "genes": [
+        {
+            "transcripts": [
+                {
+                    "exon_starts": [
+                        334
+                    ],
+                    "exon_ends": [
+                        2797
+                    ],
+                    "strand": "PLUS",
+                    "cds_starts": [
+                        334
+                    ],
+                    "cds_ends": [
+                        2797
+                    ],
+                    "cds_frames": [
+                        "ZERO"
+                    ],
+                    "qualifiers": {
+                        "gene": [
+                            "thrA"
+                        ],
+                        "locus_tag": [
+                            "FEPOIHMA_00001"
+                        ],
+                        "EC_number": [
+                            "2.7.2.4"
+                        ],
+                        "inference": [
+                            "ab initio prediction:Prodigal:2.6"
+                        ],
+                        "codon_start": [
+                            "1"
+                        ],
+                        "transl_table": [
+                            "11"
+                        ],
+                        "product": [
+                            "aspartate kinase / homoserine dehydrogenase"
+                        ],
+                        "protein_id": [
+                            "X:FEPOIHMA_00001"
+                        ],
+                        "translation": [
+                            "MRVLKFGGTSVANAERFLRVADILESNARQGQVATVLSAPAKITNHLVAMIEKTISGQDALPNISDAERIFAELLTGLAAAQPGFPLAQLKTFVDQEFAQIKHVLHGISLLGQCPDSINAALICRGEKMSIAIMAGVLEARGHNVTVIDPVEKLLAVGHYLESTVDIAESTRRIAASRIPADHMVLMAGFTAGNEKGELVVLGRNGSDYSAAVLAACLRADCCEIWTDVDGVYTCDPRQVPDARLLKSMSYQEAMELSYFGAKVLHPRTITPIAQFQIPCLIKNTGNPQAPGTLIGASRDEDELPVKGISNLNNMAMFSVSGPGMKGMVGMAARVFAAMSRARISVVLITQSSSEYSISFCVPQSDCVRAERAMQEEFYLELKEGLLEPLAVTERLAIISVVGDGMRTLRGISAKFFAALARANINIVAIAQGSSERSISVVVNNDDATTGVRVTHQMLFNTDQVIEVFVIGVGGVGGALLEQLKRQQSWLKNKHIDLRVCGVANSKALLTNVHGLNLENWQEELAQAKEPFNLGRLIRLVKEYHLLNPVIVDCTSSQAVADQYADFLREGFHVVTPNKKANTSSMDYYHLLRHAAEKSRRKFLYDTNVGAGLPVIENLQNLLNAGDELMKFSGILSGSLSYIFGKLDEGMSFSEATTLAREMGYTEPDPRDDLSGMDVARKLLILARETGRELELADIEIEPVLPAEFNAEGDVAAFMANLSQLDDLFAARVAKARDEGKVLRYVGNIDEDGACRVKIAEVDGNDPLFKVKNGENALAFYSHYYQPLPLVLRGYGAGNDVTAAGVFADLLRTLSWKLGV"
+                        ]
+                    },
+                    "is_primary_tx": false,
+                    "transcript_id": null,
+                    "protein_id": "X:FEPOIHMA_00001",
+                    "product": "aspartate kinase / homoserine dehydrogenase",
+                    "transcript_symbol": "thrA",
+                    "transcript_type": "protein_coding",
+                    "sequence_name": "FEPOIHMA_1",
+                    "sequence_guid": null,
+                    "transcript_interval_guid": "6fd4a86d-62b0-eafd-70f5-33cb2d575769",
+                    "transcript_guid": null
+                }
+            ],
+            "gene_id": null,
+            "gene_symbol": "thrA",
+            "gene_type": "protein_coding",
+            "locus_tag": "FEPOIHMA_00001",
+            "qualifiers": {
+                "gene": [
+                    "thrA"
+                ],
+                "locus_tag": [
+                    "FEPOIHMA_00001"
+                ]
+            },
+            "sequence_name": "FEPOIHMA_1",
+            "sequence_guid": null,
+            "gene_guid": "ff1fa9c6-fc20-f699-7164-f0c2e235a487"
+        },
+        {
+            "transcripts": [
+                {
+                    "exon_starts": [
+                        2798
+                    ],
+                    "exon_ends": [
+                        3731
+                    ],
+                    "strand": "PLUS",
+                    "cds_starts": [
+                        2798
+                    ],
+                    "cds_ends": [
+                        3731
+                    ],
+                    "cds_frames": [
+                        "ZERO"
+                    ],
+                    "qualifiers": {},
+                    "is_primary_tx": false,
+                    "transcript_id": null,
+                    "protein_id": "X:FEPOIHMA_00002",
+                    "product": "homoserine kinase",
+                    "transcript_symbol": "thrB",
+                    "transcript_type": "protein_coding",
+                    "sequence_name": "FEPOIHMA_1",
+                    "sequence_guid": null,
+                    "transcript_interval_guid": "a51bd755-1683-7c7a-c9fb-1ae7f49cb249",
+                    "transcript_guid": null
+                }
+            ],
+            "gene_id": null,
+            "gene_symbol": "thrB",
+            "gene_type": "protein_coding",
+            "locus_tag": "FEPOIHMA_00002",
+            "qualifiers": {
+                "gene": [
+                    "thrB"
+                ],
+                "locus_tag": [
+                    "FEPOIHMA_00002"
+                ]
+            },
+            "sequence_name": "FEPOIHMA_1",
+            "sequence_guid": null,
+            "gene_guid": "f497ba2e-0b43-dae5-5300-56a7976de0c8"
+        },
+        {
+            "transcripts": [
+                {
+                    "exon_starts": [
+                        3731
+                    ],
+                    "exon_ends": [
+                        5018
+                    ],
+                    "strand": "PLUS",
+                    "cds_starts": [
+                        3731
+                    ],
+                    "cds_ends": [
+                        5018
+                    ],
+                    "cds_frames": [
+                        "ZERO"
+                    ],
+                    "qualifiers": {},
+                    "is_primary_tx": false,
+                    "transcript_id": null,
+                    "protein_id": "X:FEPOIHMA_00003",
+                    "product": "threonine synthase",
+                    "transcript_symbol": "thrC",
+                    "transcript_type": "protein_coding",
+                    "sequence_name": "FEPOIHMA_1",
+                    "sequence_guid": null,
+                    "transcript_interval_guid": "3008ee04-fc1f-9a03-47f1-092e9b527c92",
+                    "transcript_guid": null
+                }
+            ],
+            "gene_id": null,
+            "gene_symbol": "thrC",
+            "gene_type": "protein_coding",
+            "locus_tag": "FEPOIHMA_00003",
+            "qualifiers": {
+                "gene": [
+                    "thrC"
+                ],
+                "locus_tag": [
+                    "FEPOIHMA_00003"
+                ]
+            },
+            "sequence_name": "FEPOIHMA_1",
+            "sequence_guid": null,
+            "gene_guid": "329eac8f-31b9-4bc8-20b9-ff1210639449"
+        },
+        {
+            "transcripts": [
+                {
+                    "exon_starts": [
+                        5230
+                    ],
+                    "exon_ends": [
+                        5527
+                    ],
+                    "strand": "PLUS",
+                    "cds_starts": [
+                        5230
+                    ],
+                    "cds_ends": [
+                        5527
+                    ],
+                    "cds_frames": [
+                        "ZERO"
+                    ],
+                    "qualifiers": {},
+                    "is_primary_tx": false,
+                    "transcript_id": null,
+                    "protein_id": "X:FEPOIHMA_00004",
+                    "product": "hypothetical protein",
+                    "transcript_symbol": "yaaX",
+                    "transcript_type": "protein_coding",
+                    "sequence_name": "FEPOIHMA_1",
+                    "sequence_guid": null,
+                    "transcript_interval_guid": "078847e2-d770-83e0-e0ff-928bc7d5025f",
+                    "transcript_guid": null
+                }
+            ],
+            "gene_id": null,
+            "gene_symbol": "yaaX",
+            "gene_type": "protein_coding",
+            "locus_tag": "FEPOIHMA_00004",
+            "qualifiers": {
+                "gene": [
+                    "yaaX"
+                ],
+                "locus_tag": [
+                    "FEPOIHMA_00004"
+                ]
+            },
+            "sequence_name": "FEPOIHMA_1",
+            "sequence_guid": null,
+            "gene_guid": "8b2e3283-604b-0233-c770-115889d84bbe"
+        },
+        {
+            "transcripts": [
+                {
+                    "exon_starts": [
+                        5679
+                    ],
+                    "exon_ends": [
+                        6456
+                    ],
+                    "strand": "MINUS",
+                    "cds_starts": [
+                        5679
+                    ],
+                    "cds_ends": [
+                        6456
+                    ],
+                    "cds_frames": [
+                        "ZERO"
+                    ],
+                    "qualifiers": {},
+                    "is_primary_tx": false,
+                    "transcript_id": null,
+                    "protein_id": "X:FEPOIHMA_00005",
+                    "product": "protein that reduces intracellular iron levels under peroxide stress",
+                    "transcript_symbol": "yaaA",
+                    "transcript_type": "protein_coding",
+                    "sequence_name": "FEPOIHMA_1",
+                    "sequence_guid": null,
+                    "transcript_interval_guid": "6e1ecab2-29fe-7c9c-8394-30e55172d989",
+                    "transcript_guid": null
+                }
+            ],
+            "gene_id": null,
+            "gene_symbol": "yaaA",
+            "gene_type": "protein_coding",
+            "locus_tag": "FEPOIHMA_00005",
+            "qualifiers": {
+                "gene": [
+                    "yaaA"
+                ],
+                "locus_tag": [
+                    "FEPOIHMA_00005"
+                ]
+            },
+            "sequence_name": "FEPOIHMA_1",
+            "sequence_guid": null,
+            "gene_guid": "93599885-f0c0-9818-ae68-64816e366a77"
+        },
+        {
+            "transcripts": [
+                {
+                    "exon_starts": [
+                        6755
+                    ],
+                    "exon_ends": [
+                        6843
+                    ],
+                    "strand": "PLUS",
+                    "cds_starts": null,
+                    "cds_ends": null,
+                    "cds_frames": null,
+                    "qualifiers": {},
+                    "is_primary_tx": false,
+                    "transcript_id": null,
+                    "protein_id": null,
+                    "product": "tRNA-Pro",
+                    "transcript_symbol": null,
+                    "transcript_type": "tRNA",
+                    "sequence_name": "FEPOIHMA_1",
+                    "sequence_guid": null,
+                    "transcript_interval_guid": "6d44fc35-9f6d-9bb2-c0d9-80fff74ee031",
+                    "transcript_guid": null
+                }
+            ],
+            "gene_id": null,
+            "gene_symbol": null,
+            "gene_type": "tRNA",
+            "locus_tag": "FEPOIHMA_02080",
+            "qualifiers": {
+                "locus_tag": [
+                    "FEPOIHMA_02080"
+                ]
+            },
+            "sequence_name": "FEPOIHMA_1",
+            "sequence_guid": null,
+            "gene_guid": "1adc918e-fcb2-18ff-384b-e7d2a109120f"
+        },
+        {
+            "transcripts": [
+                {
+                    "exon_starts": [
+                        6955
+                    ],
+                    "exon_ends": [
+                        7066
+                    ],
+                    "strand": "MINUS",
+                    "cds_starts": null,
+                    "cds_ends": null,
+                    "cds_frames": null,
+                    "qualifiers": {},
+                    "is_primary_tx": false,
+                    "transcript_id": null,
+                    "protein_id": null,
+                    "product": "5S ribosomal RNA",
+                    "transcript_symbol": null,
+                    "transcript_type": "rRNA",
+                    "sequence_name": "FEPOIHMA_1",
+                    "sequence_guid": null,
+                    "transcript_interval_guid": "9a3d0d0d-3edd-ba8b-51c9-78377ffa7131",
+                    "transcript_guid": null
+                }
+            ],
+            "gene_id": null,
+            "gene_symbol": null,
+            "gene_type": "rRNA",
+            "locus_tag": "FEPOIHMA_02457",
+            "qualifiers": {},
+            "sequence_name": "FEPOIHMA_1",
+            "sequence_guid": null,
+            "gene_guid": "b8a03f84-ba9d-6209-88e4-38f1d54f7e65"
+        }
+    ],
+    "name": "FEPOIHMA_1",
+    "id": null,
+    "sequence_name": "FEPOIHMA_1",
+    "sequence_guid": null,
+    "sequence_path": null,
+    "qualifiers": {
+        "organism": [
+            "Genus species"
+        ],
+        "mol_type": [
+            "genomic DNA"
+        ],
+        "strain": [
+            "strain"
+        ]
+    },
+    "start": 0,
+    "end": 7200,
+    "completely_within": null,
+    "parent_or_seq_chunk_parent": {
+        "seq": "GCTTTTCATTCTGACTGCAACGGGCAATATGTCTCTGTGTGGATTAAAAAAAGAGTGTCTGATAGCAGCTTCTGAACTGGTTACCTGCCGTGAGTAAATTAAAATTTTATTGACTTAGGTCACTAAATACTTTAACCAATATAGGCATAGCGCACAGACAGATAAAAATTACAGAGTACACAACATCCATGAAACGCATTAGCACCACCATTACCACCACCATCACCATTACCACAGGTAACGGTGCGGGCTGACGCGTACAGGAAACACAGAAAAAAGCCCGCACCTGACAGTGCGGGCTTTTTTTTCGACCAAAGGTAACGAGGTAACAACCATGCGAGTGTTGAAGTTCGGCGGTACATCAGTGGCAAATGCAGAACGTTTTCTGCGGGTTGCCGATATTCTGGAAAGCAATGCCAGGCAGGGGCAGGTGGCCACCGTCCTCTCTGCCCCCGCCAAAATCACCAACCACCTGGTGGCGATGATTGAAAAAACCATTAGCGGCCAGGATGCTTTACCCAATATCAGCGATGCCGAACGTATTTTTGCCGAACTTTTGACGGGACTCGCCGCCGCCCAGCCGGGATTCCCGCTGGCGCAATTGAAAACTTTCGTCGATCAGGAATTTGCCCAAATAAAACATGTCCTGCATGGCATTAGTTTGTTGGGGCAGTGCCCGGATAGCATCAACGCTGCGCTGATTTGCCGTGGCGAGAAAATGTCGATCGCCATTATGGCCGGCGTATTAGAAGCGCGCGGTCACAACGTTACCGTTATCGATCCGGTCGAAAAACTGCTGGCAGTGGGGCATTACCTCGAATCTACCGTCGATATTGCTGAGTCCACCCGCCGTATTGCGGCAAGTCGCATTCCGGCTGATCACATGGTGCTGATGGCAGGTTTCACCGCCGGTAATGAAAAAGGCGAACTGGTGGTACTTGGACGCAACGGTTCCGACTACTCCGCGGCGGTGCTGGCTGCCTGTTTACGCGCCGATTGTTGCGAGATTTGGACGGACGTTGACGGGGTCTATACCTGCGACCCGCGTCAGGTGCCCGATGCGAGGTTGTTGAAGTCGATGTCCTACCAGGAAGCGATGGAGCTTTCCTACTTCGGCGCTAAAGTTCTTCACCCCCGCACCATTACCCCCATCGCCCAGTTCCAGATCCCTTGCCTGATTAAAAATACCGGAAATCCTCAAGCTCCAGGTACGCTCATTGGTGCCAGCCGTGATGAAGACGAATTACCGGTCAAGGGCATTTCCAATCTGAATAATATGGCAATGTTCAGCGTTTCCGGCCCGGGGATGAAAGGGATGGTTGGCATGGCGGCGCGCGTGTTTGCAGCGATGTCACGCGCCCGTATTTCCGTGGTGCTGATTACGCAATCATCTTCCGAATACAGTATCAGTTTCTGCGTTCCGCAAAGCGACTGTGTGCGAGCTGAACGGGCAATGCAGGAAGAGTTCTACCTGGAACTGAAAGAAGGCTTACTGGAGCCGCTGGCGGTGACGGAACGGCTGGCCATTATCTCGGTGGTAGGTGATGGTATGCGCACCTTGCGTGGGATCTCGGCGAAATTCTTTGCCGCGCTGGCCCGCGCCAATATCAACATTGTCGCCATTGCTCAGGGATCTTCTGAACGCTCAATCTCTGTCGTGGTAAATAACGATGATGCGACCACTGGCGTGCGCGTTACTCATCAGATGCTGTTCAATACCGATCAGGTTATCGAAGTGTTTGTGATTGGCGTCGGTGGCGTTGGCGGTGCGCTGCTGGAGCAACTGAAGCGTCAACAAAGCTGGCTGAAGAATAAACATATCGACTTACGTGTCTGCGGTGTTGCCAACTCGAAGGCACTGCTCACCAATGTGCATGGCCTAAATCTGGAAAACTGGCAGGAAGAACTGGCGCAAGCCAAAGAGCCGTTTAATCTCGGGCGCTTAATTCGCCTCGTGAAAGAATATCATCTGCTGAACCCGGTCATTGTTGACTGCACTTCCAGCCAGGCAGTGGCGGATCAATATGCCGACTTCTTGCGCGAAGGTTTCCACGTTGTCACGCCGAACAAAAAGGCCAACACCTCGTCGATGGATTACTACCATCTGTTGCGTCATGCGGCGGAAAAATCGCGGCGTAAATTCCTCTATGACACCAACGTTGGGGCTGGATTACCGGTTATTGAGAACCTGCAAAATCTGCTCAATGCTGGTGATGAATTGATGAAGTTCTCCGGCATTCTTTCAGGTTCGCTTTCTTATATCTTCGGCAAGTTAGACGAAGGCATGAGTTTCTCCGAGGCGACTACTCTGGCGCGGGAAATGGGTTATACCGAACCGGATCCGCGAGATGATCTTTCTGGTATGGATGTAGCGCGTAAGCTATTGATTCTCGCTCGTGAAACGGGACGTGAACTGGAGCTGGCGGATATTGAAATTGAACCTGTGCTGCCCGCAGAGTTTAACGCTGAGGGTGATGTTGCCGCTTTTATGGCGAATCTGTCACAGCTCGACGATCTCTTTGCCGCGCGCGTGGCGAAGGCCCGTGATGAAGGAAAAGTTTTGCGCTATGTTGGCAATATTGATGAAGATGGTGCCTGCCGCGTGAAGATTGCCGAAGTGGATGGTAATGATCCGCTGTTCAAAGTGAAAAATGGCGAAAACGCCCTGGCCTTTTATAGCCACTATTATCAGCCGCTGCCGTTGGTGCTGCGCGGATATGGTGCGGGCAATGACGTTACAGCTGCCGGTGTCTTTGCCGATCTGCTACGTACCCTCTCATGGAAGTTAGGAGTCTGACATGGTTAAAGTTTATGCCCCGGCTTCCAGTGCCAATATGAGCGTCGGGTTTGATGTGCTCGGGGCGGCGGTGACACCTGTTGATGGTGCATTGCTCGGAGATGTAGTCACGGTTGAGGCGGCAGAGACATTCAGTCTCAACAACCTCGGACGCTTTGCCGATAAGCTGCCGTCAGAACCACGGGAAAATATCGTTTATCAGTGCTGGGAGCGTTTTTGCCAGGAGCTTGGCAAGCAAATTCCAGTGGCGATGACTCTGGAAAAGAATATGCCAATCGGTTCGGGCTTAGGCTCCAGCGCCTGTTCGGTGGTCGCGGCGCTGATGGCGATGAATGAACACTGTGGCAAGCCGCTTAATGACACTCGTTTGCTGGCTTTGATGGGCGAGCTGGAAGGACGAATCTCCGGCAGCATTCATTACGACAACGTGGCACCGTGTTTTCTTGGTGGTATGCAGTTGATGATCGAAGAAAACGACATCATCAGCCAGCAAGTGCCAGGGTTTGATGAGTGGCTGTGGGTGCTGGCGTATCCGGGGATTAAAGTCTCGACGGCAGAAGCCAGGGCTATTTTACCGGCGCAGTATCGCCGCCAGGATTGCATTGCGCACGGGCGACATCTGGCTGGCTTCATTCACGCCTGCTATTCCCGTCAGCCTGAGCTTGCCGCGAAGCTGATGAAAGATGTTATCGCTGAACCCTACCGTGAACGGTTACTGCCTGGCTTCCGGCAGGCGCGGCAGGCGGTTGCGGAAATCGGCGCGGTAGCGAGCGGTATCTCCGGCTCCGGCCCGACCTTGTTCGCTCTGTGTGACAAGCCGGATACCGCCCAGCGCGTTGCCGACTGGTTGGGTAAGAACTACCTGCAAAATCAGGAAGGTTTTGTTCATATTTGCCGGCTGGATACGGCGGGCGCACGAGTACTGGAAAACTAAATGAAACTCTACAATCTGAAAGATCACAATGAGCAGGTCAGCTTTGCGCAAGCCGTAACCCAGGGGTTGGGCAAAAATCAGGGGCTGTTTTTTCCGCACGACCTGCCGGAATTCAGCCTGACTGAAATTGATGAGATGCTGAAGCTGGATTTTGTCACCCGCAGTGCGAAGATCCTCTCGGCGTTTATTGGTGATGAAATCCCGCAGGAAATCCTGGAAGAGCGCGTGCGCGCGGCGTTTGCCTTCCCGGCTCCGGTCGCCAATGTTGAAAGCGATGTCGGTTGTCTGGAATTGTTCCACGGGCCAACGCTGGCATTTAAAGATTTCGGCGGTCGCTTTATGGCACAAATGCTGACCCATATTGCGGGCGATAAGCCAGTGACCATTCTGACCGCGACCTCCGGTGATACCGGAGCGGCAGTGGCTCATGCTTTCTACGGTTTACCGAATGTGAAAGTGGTTATCCTCTATCCACGAGGCAAAATCAGTCCACTGCAAGAAAAACTGTTCTGTACATTGGGCGGCAATATCGAAACTGTTGCCATCGACGGCGATTTCGATGCCTGTCAGGCGCTGGTGAAGCAGGCGTTTGATGATGAAGAGCTGAAAGTGGCGCTGGGGTTAAACTCAGCTAACTCGATTAACATCAGCCGTTTGCTGGCGCAGATTTGCTACTACTTTGAAGCAGTTGCGCAGCTGCCGCAGGAAGCGCGCAACCAGCTGGTTGTCTCGGTGCCAAGCGGAAACTTCGGCGATTTGACGGCGGGTCTGCTGGCGAAGTCACTCGGTCTGCCGGTGAAACGTTTTATTGCTGCGACCAACGTGAACGATACCGTGCCACGTTTCCTGCACGACGGTCAGTGGTCACCCAAAGCGACTCAGGCGACGTTATCCAACGCGATGGACGTGAGTCAGCCGAACAACTGGCCGCGTGTGGAAGAGTTGTTCCGCCGCAAAATCTGGCAACTGAAAGAGCTGGGTTATGCAGCCGTGGATGATGAAACCACGCAACAGACAATGCGTGAGTTAAAAGAACTGGGCTACACCTCGGAGCCGCACGCTGCCGTAGCGTATCGTGCGCTGCGTGACCAGTTGAATCCAGGCGAATATGGCTTGTTCCTCGGCACCGCGCATCCGGCGAAATTTAAAGAGAGCGTGGAAGCGATTCTCGGTGAAACGTTGGATCTGCCAAAAGAGCTGGCAGAACGTGCTGATTTACCCTTGCTTTCACATAATCTGCCCGCCGATTTTGCTGCGTTGCGTAAATTGATGATGAATCATCAGTAAAATCTATTCATTATCTCAATCAGGCCGGGTTTGCTTTTATGCAGCCGGCTTTTTTATGAAGAAATTATGGAGAAAAACGACAGGGAAAAAGGAGAAATTCTCAATAAATGCGGTAACTTAGAGATTAGGATTGCGGAGAATAACAACCGTCGTTCTCATCGCGTAATCTCCGGATATCGACCCATAACGGGCAATGATAAAAGGAGTAACCTATGAAAAAGATGCAATCTATCGTACTCGCACTTTCCCTGGTTCTGGTCGCTCCCATGGCAGCACAGGCTGCGGAAATTACGTTAGTCCCGTCAGTAAAATTACAGATAGGCGATCGTGATAATCGTGGCTATTACTGGGATGGAGGTCACTGGCGCGACCACGGCTGGTGGAAACAACATTATGAATGGCGAGGCAATCGCTGGCACCCACACGGACCGCCGCCACCGCCGCGCCACCATAAGAAAGCTCCTCATGATCATCACGGCGGTCATGGTCCAGGCAAACATCACCGCTAAATGACAAATGCCGGGTAACAATCCGGCATTCAGCGCCTGATGCGACGCTGGCGCGTCTTATCAGGCCTACGTGAATTCTGCAATATATTGAATCTGCATGCTTTTGTAGGCCGGATAAGGCGTTCACGCCGCATCCGGCATTGACTGCAAACTTAACGCTGCTCGTAGCGTTTAAACACCAGTTCGCCATTGCTGGAGGAAGCTTCATCAAAGAAGTAACCTTCGCTATTAAAACCAGTCAGTTGCTCTGGTTTGGTCAGCCGATTTTCAATAATAAAACGACTCATCAGACCGCGTGCTTTCTTAGCGTAGAAGCTGATTATCTTAAATTTGCCGTTCTTCTCATCGAGGAACACCGGCTTGATAATCTCGGCATTCAATTTCTTCGGCTTCACCGATTTAAAATACTCATCTGACGCCAGATTAATCACCACATTATCGCCTTGTGCTGCGAGCGCCTCGTTCAGCTTGTTGGTGATGATATCTCCCCAGAATTGATACAGATCTTTCCCTCGGGCATTCTCAAGACGGATCCCCATTTCCAGACGATAAGGCTGCATTAAATCGAGCGGGCGCAGTACGCCATACAAGCCGGAAAGCATTCGCAAATGCTGTTGGGCAAAATCGAAATCGTCTTCGCTGAAGGTTTCGGCCTGCAAGCCGGTGTAGACATCACCTTTAAACGCCAGAATCGCCTGGCGGGCATTCTCCGGCGTGAAATCTGGCTGCCAGTCATGAAAGCGAGCGGCGTTGATACCCGCCAGTTTGTCGCTGATGCGCATCAGCGTGCTAATCTGCGGAGGCGTCAGTTTCCGCGCTTCATGGATCAACTGCTGGGAATTGTCTAACAGCTCCGGCAGCGTATAGCGCGTGGTGGTCAACGGGCTTTGGTAATCAAGCGTTTTCGCAGGTGAAATAAGAATCAGCATATCCAGTCCTTGCAGGAAATTTATGCCGACTTTAGCAAAAAAAGAGAATGAGTTGATCGATAGTTGTGATTACTCCTGCGAAACATCATCCCACGCGTCCGGAGAAAGCTGGCGGCCGATATCCGGATAACGCAACGGATCAAACACCGGGCGCACGCCGAGTTTACGCTGGCGTAGATAATCACTGGCAATGGTATGAACCACAGGCGAGAGCAGTAAAATGGCGGTCAAATTGGTAATAGCCATGCAGGCCATTATGATATCTGCCAGTTGCCACATCAGCGGAAGACTTAGCAAGGTGCCGCCGATGACCGTTGCGAAGGTGCAGATCCGCAAACACCAGATCGCTTTAGGGTTGTTCAGGCGTAAAAAGAAGAGATTGTTTTCGGCGTAAATGTAGTTGGCAACGATGGAGCTGAAGGCAAACAGAATAACCACGAGGGTAACAAACTCAGCACCCCAGGAACCCATTAACACCCGCATCGCCTTCTGGATAAGCTGAATACCTTCCAGCGGCATGTAGGTTGTGCCGTTACCCGCCAGTAATATCAGCATGGCGCTTGCCGTACAGATGACCAGGGTGTCGATAAAAATGCCAATCATCTGGACAATCCCTTGCGCTGCCGGATGCGGAGGCCAGGACGCCGCTGCCGCTGCCGCGTTTGGCGTCGACCCCATTCCCGCCTCATTGGAAAACATACTGCGCTGAAAACCGTTAGTAATCGCCTGGCTTAAGGTATATCC",
+        "alphabet": "NT_EXTENDED_GAPPED",
+        "sequence_name": "FEPOIHMA_1",
+        "type": "CHROMOSOME",
+        "start": 0,
+        "end": 7200,
+        "strand": "PLUS"
+    }
+}
