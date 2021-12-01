@@ -134,11 +134,11 @@ class AbstractInterval(ABC):
             if parent.location:
                 start = parent.location.start
                 end = parent.location.end
-                strand = parent.location.strand
+                strand = parent.location.strand.name
             if parent.sequence:
                 sequence_type = parent.sequence_type
                 seq_str = str(parent.sequence)
-                alphabet = parent.sequence.alphabet
+                alphabet = parent.sequence.alphabet.name
             return {
                 "seq": seq_str,
                 "sequence_name": parent.id,
