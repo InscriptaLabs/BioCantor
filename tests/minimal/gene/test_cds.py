@@ -2850,6 +2850,30 @@ class TestCDSInterval:
             (3, 16, 3, 19, CDSFrame.ONE, Strand.MINUS, "KPGH"),
             # this chunk cuts off the last base of the last codon as well as the 2nd base of the start
             (4, 16, 3, 19, CDSFrame.ONE, Strand.MINUS, "KPG"),
+            # this chunk is beyond the CDS on both sides, so the translation is full length
+            (0, 27, 1, 24, CDSFrame.TWO, Strand.PLUS, "MPGFHP*"),
+            # this chunk exactly bounds the CDS
+            (1, 27, 1, 24, CDSFrame.TWO, Strand.PLUS, "MPGFHP*"),
+            # this chunk cuts the first off codon exactly
+            (4, 27, 1, 24, CDSFrame.TWO, Strand.PLUS, "PGFHP*"),
+            # this chunk cuts off the 1st base of the 1st codon, so the translation starts from the 2nd codon
+            (3, 27, 1, 24, CDSFrame.TWO, Strand.PLUS, "PGFHP*"),
+            # this chunk cuts off the 2nd base of the 1st codon, so the translation starts from the 2nd codon
+            (4, 27, 1, 24, CDSFrame.TWO, Strand.PLUS, "PGFHP*"),
+            # this chunk cuts off the last base of the stop codon as well as the 2nd base of the start
+            (4, 23, 1, 24, CDSFrame.TWO, Strand.PLUS, "PGFHP"),
+            # this chunk is beyond the CDS on both sides, so the translation is full length
+            (0, 27, 3, 20, CDSFrame.TWO, Strand.MINUS, "MKPGH"),
+            # this chunk exactly bounds the CDS
+            (3, 20, 3, 20, CDSFrame.TWO, Strand.MINUS, "MKPGH"),
+            # this chunk cuts the first off codon exactly
+            (3, 17, 3, 20, CDSFrame.TWO, Strand.MINUS, "KPGH"),
+            # this chunk cuts off the 1st base of the 1st codon, so the translation starts from the 2nd codon
+            (3, 19, 3, 20, CDSFrame.TWO, Strand.MINUS, "KPGH"),
+            # this chunk cuts off the 2nd base of the 1st codon, so the translation starts from the 2nd codon
+            (3, 18, 3, 20, CDSFrame.TWO, Strand.MINUS, "KPGH"),
+            # this chunk cuts off the last base of the last codon as well as the 2nd base of the start
+            (4, 18, 3, 20, CDSFrame.TWO, Strand.MINUS, "KPG"),
         ],
     )
     def test_single_exon_chunk_relative_translation(self, start, end, cds_start, cds_end, frame, strand, expected):
