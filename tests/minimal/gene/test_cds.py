@@ -2799,6 +2799,86 @@ class TestCDSInterval:
         translation = cds.translate()
         assert str(translation) == "MTLPSGHPKSRLIKKFTALGPYI"
 
+    @pytest.mark.parametrize(
+        "start,end,cds_start,cds_end,frame,strand,expected",
+        [
+            # this chunk is beyond the CDS on both sides, so the translation is full length
+            (0, 27, 3, 24, CDSFrame.ZERO, Strand.PLUS, "MPGFHP*"),
+            # this chunk exactly bounds the CDS
+            (3, 27, 3, 24, CDSFrame.ZERO, Strand.PLUS, "MPGFHP*"),
+            # this chunk cuts the first off codon exactly
+            (6, 27, 3, 24, CDSFrame.ZERO, Strand.PLUS, "PGFHP*"),
+            # this chunk cuts off the 1st base of the 1st codon, so the translation starts from the 2nd codon
+            (4, 27, 3, 24, CDSFrame.ZERO, Strand.PLUS, "PGFHP*"),
+            # this chunk cuts off the 2nd base of the 1st codon, so the translation starts from the 2nd codon
+            (5, 27, 3, 24, CDSFrame.ZERO, Strand.PLUS, "PGFHP*"),
+            # this chunk cuts off the last base of the stop codon as well as the 2nd base of the start
+            (5, 23, 3, 24, CDSFrame.ZERO, Strand.PLUS, "PGFHP"),
+            # this chunk is beyond the CDS on both sides, so the translation is full length
+            (0, 27, 3, 18, CDSFrame.ZERO, Strand.MINUS, "MKPGH"),
+            # this chunk exactly bounds the CDS
+            (3, 18, 3, 18, CDSFrame.ZERO, Strand.MINUS, "MKPGH"),
+            # this chunk cuts the first off codon exactly
+            (3, 15, 3, 18, CDSFrame.ZERO, Strand.MINUS, "KPGH"),
+            # this chunk cuts off the 1st base of the 1st codon, so the translation starts from the 2nd codon
+            (3, 17, 3, 18, CDSFrame.ZERO, Strand.MINUS, "KPGH"),
+            # this chunk cuts off the 2nd base of the 1st codon, so the translation starts from the 2nd codon
+            (3, 16, 3, 18, CDSFrame.ZERO, Strand.MINUS, "KPGH"),
+            # this chunk cuts off the last base of the last codon as well as the 2nd base of the start
+            (4, 16, 3, 18, CDSFrame.ZERO, Strand.MINUS, "KPG"),
+            # this chunk is beyond the CDS on both sides, so the translation is full length
+            (0, 27, 2, 24, CDSFrame.ONE, Strand.PLUS, "MPGFHP*"),
+            # this chunk exactly bounds the CDS
+            (2, 27, 2, 24, CDSFrame.ONE, Strand.PLUS, "MPGFHP*"),
+            # this chunk cuts the first off codon exactly
+            (5, 27, 2, 24, CDSFrame.ONE, Strand.PLUS, "PGFHP*"),
+            # this chunk cuts off the 1st base of the 1st codon, so the translation starts from the 2nd codon
+            (4, 27, 2, 24, CDSFrame.ONE, Strand.PLUS, "PGFHP*"),
+            # this chunk cuts off the 2nd base of the 1st codon, so the translation starts from the 2nd codon
+            (5, 27, 2, 24, CDSFrame.ONE, Strand.PLUS, "PGFHP*"),
+            # this chunk cuts off the last base of the stop codon as well as the 2nd base of the start
+            (5, 23, 2, 24, CDSFrame.ONE, Strand.PLUS, "PGFHP"),
+            # this chunk is beyond the CDS on both sides, so the translation is full length
+            (0, 27, 3, 19, CDSFrame.ONE, Strand.MINUS, "MKPGH"),
+            # this chunk exactly bounds the CDS
+            (3, 19, 3, 19, CDSFrame.ONE, Strand.MINUS, "MKPGH"),
+            # this chunk cuts the first off codon exactly
+            (3, 16, 3, 19, CDSFrame.ONE, Strand.MINUS, "KPGH"),
+            # this chunk cuts off the 1st base of the 1st codon, so the translation starts from the 2nd codon
+            (3, 17, 3, 19, CDSFrame.ONE, Strand.MINUS, "KPGH"),
+            # this chunk cuts off the 2nd base of the 1st codon, so the translation starts from the 2nd codon
+            (3, 16, 3, 19, CDSFrame.ONE, Strand.MINUS, "KPGH"),
+            # this chunk cuts off the last base of the last codon as well as the 2nd base of the start
+            (4, 16, 3, 19, CDSFrame.ONE, Strand.MINUS, "KPG"),
+        ],
+    )
+    def test_single_exon_chunk_relative_translation(self, start, end, cds_start, cds_end, frame, strand, expected):
+        full_chunk = "AAAATGCCCGGGTTTCATCCCTGACCC"
+        chunk_offset = 100
+        parent = Parent(
+            sequence=Sequence(
+                full_chunk[start:end],
+                Alphabet.NT_EXTENDED_GAPPED,
+                type=SequenceType.SEQUENCE_CHUNK,
+                parent=Parent(
+                    location=SingleInterval(
+                        chunk_offset + start,
+                        chunk_offset + end,
+                        Strand.PLUS,
+                        parent=Parent(sequence_type=SequenceType.CHROMOSOME),
+                    )
+                ),
+            ),
+        )
+        cds = CDSInterval(
+            [cds_start + chunk_offset],
+            [cds_end + chunk_offset],
+            strand,
+            [frame],
+            parent_or_seq_chunk_parent=parent,
+        )
+        assert str(cds.translate()) == expected
+
 
 @pytest.mark.parametrize(
     "sequence,translation_table,expected",

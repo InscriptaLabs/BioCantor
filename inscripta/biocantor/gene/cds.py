@@ -565,6 +565,10 @@ class CDSInterval(AbstractFeatureInterval):
             loc = self.chunk_relative_location
             # must make sure this CDS (with its offset) is at least one codon long
             offset = self.frames[0].value
+            if chunk_relative_coordinates and self.is_chunk_relative:
+                # calculate offset for this chunk that may be out of frame
+                loc_on_chrom = loc.lift_over_to_first_ancestor_of_type(SequenceType.CHROMOSOME)
+                offset += self._calculate_frame_offset(self.chromosome_location, loc_on_chrom)
             if (len(loc) - offset) >= 3:
                 yield from loc.scan_windows(3, 3, offset)
 
@@ -633,20 +637,7 @@ class CDSInterval(AbstractFeatureInterval):
             # lift this back to chromosome coordinates -- this produces a chromosome coordinate Location
             # whose bounds are the portion of this CDS that are contained on the sequence chunk
             loc_on_chrom = chunk_relative_cleaned_location.lift_over_to_first_ancestor_of_type(SequenceType.CHROMOSOME)
-            # determine the offset needed for codon iteration to be in-frame
-            # calculate the number of bases from the 5' end that this sequence chunk removes, if any
-            if self.strand == Strand.PLUS:
-                fivep_loc = cleaned_location.relative_interval_to_parent_location(
-                    0, cleaned_location.parent_to_relative_pos(loc_on_chrom.start), Strand.PLUS
-                )
-            else:
-                fivep_loc = cleaned_location.relative_interval_to_parent_location(
-                    0, cleaned_location.parent_to_relative_pos(loc_on_chrom.end - 1), Strand.PLUS
-                )
-            # this is equivalent to a CDSPhase, which we can convert to frame to get offset
-            fivep_distance_mod3 = len(fivep_loc) % 3
-            phase = CDSPhase(fivep_distance_mod3)
-            offset = phase.to_frame().value
+            offset = self._calculate_frame_offset(cleaned_location, loc_on_chrom)
             # cannot iterate over codons that are too short; there is no translation for this CDS
             # (iterator will terminate without returning anything)
             if len(chunk_relative_cleaned_location) - offset < 3:
@@ -654,6 +645,28 @@ class CDSInterval(AbstractFeatureInterval):
             yield from chunk_relative_cleaned_location.scan_windows(3, 3, offset)
         else:
             yield from cleaned_location.scan_windows(3, 3, 0)
+
+    def _calculate_frame_offset(self, cleaned_location: Location, loc_on_chrom: Location) -> int:
+        """
+        In either single-exon or multi-exon codon iteration, if this CDSInterval exists on chunk-relative coordinates
+        that slice down the CDS, then the initial offset provided by the CDSFrame field must be adjusted
+        to maintain frame.
+        """
+        # determine the offset needed for codon iteration to be in-frame
+        # calculate the number of bases from the 5' end that this sequence chunk removes, if any
+        if self.strand == Strand.PLUS:
+            fivep_loc = cleaned_location.relative_interval_to_parent_location(
+                0, cleaned_location.parent_to_relative_pos(loc_on_chrom.start), Strand.PLUS
+            )
+        else:
+            fivep_loc = cleaned_location.relative_interval_to_parent_location(
+                0, cleaned_location.parent_to_relative_pos(loc_on_chrom.end - 1), Strand.PLUS
+            )
+        # this is equivalent to a CDSPhase, which we can convert to frame to get offset
+        fivep_distance_mod3 = len(fivep_loc) % 3
+        phase = CDSPhase(fivep_distance_mod3)
+        offset = phase.to_frame().value
+        return offset
 
     def _translate_iter(
         self,
