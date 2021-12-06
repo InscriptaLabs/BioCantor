@@ -864,6 +864,26 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
     def __len__(self):
         return len(self.feature_collections) + len(self.genes)
 
+    def __getstate__(self):
+        return self.to_dict(export_parent=True)
+
+    def __setstate__(self, state):
+        ac = self.from_dict(state)
+        self.__init__(
+            ac.feature_collections,
+            ac.genes,
+            ac.name,
+            ac.id,
+            ac.sequence_name,
+            ac.sequence_guid,
+            ac.sequence_path,
+            ac._export_qualifiers_to_list(),
+            ac.start,
+            ac.end,
+            ac.completely_within,
+            ac._parent_or_seq_chunk_parent,
+        )
+
     @property
     def is_empty(self) -> bool:
         """Is this an empty collection?"""
