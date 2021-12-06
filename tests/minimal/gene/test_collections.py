@@ -1,7 +1,9 @@
+import pickle
 from copy import deepcopy
 from uuid import UUID
 
 import pytest
+
 from inscripta.biocantor.exc import (
     InvalidAnnotationError,
     NoncodingTranscriptError,
@@ -12,13 +14,13 @@ from inscripta.biocantor.exc import (
 )
 from inscripta.biocantor.gene.biotype import Biotype
 from inscripta.biocantor.gene.cds_frame import CDSFrame
+from inscripta.biocantor.gene.collections import AnnotationCollection
 from inscripta.biocantor.io.models import (
     GeneIntervalModel,
     AnnotationCollectionModel,
     FeatureIntervalCollectionModel,
     TranscriptIntervalModel,
 )
-from inscripta.biocantor.gene.collections import AnnotationCollection
 from inscripta.biocantor.io.parser import seq_chunk_to_parent
 from inscripta.biocantor.location.location_impl import SingleInterval
 from inscripta.biocantor.location.strand import Strand
@@ -1759,3 +1761,11 @@ class TestNegative:
         obj2 = self.annot.to_annotation_collection(parent_genome_rev_5_44)
         assert obj1 != obj2
         assert hash(obj1) != hash(obj2)
+
+    @pytest.mark.parametrize("parent", [parent_genome, parent_genome_10_49, parent_genome_rev_5_44])
+    def test_pickling(self, parent):
+        obj = self.annot.to_annotation_collection(parent)
+        obj_str = pickle.dumps(obj)
+        new_obj = pickle.loads(obj_str)
+        assert obj.to_dict() == new_obj.to_dict()
+        assert obj.get_reference_sequence() == new_obj.get_reference_sequence()
