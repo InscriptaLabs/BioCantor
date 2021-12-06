@@ -2903,6 +2903,56 @@ class TestCDSInterval:
         )
         assert str(cds.translate()) == expected
 
+    @pytest.mark.parametrize(
+        "cds,cleaned_location,loc_on_chrom,expected_offset",
+        [
+            # + strand with full span chunk -> 0 offset
+            (
+                CDSInterval([0], [10], Strand.PLUS, [CDSFrame.ZERO]),
+                SingleInterval(0, 10, Strand.PLUS),
+                SingleInterval(0, 10, Strand.PLUS),
+                0,
+            ),
+            # + strand with 1bp cutoff from 5' end -> 2 offset
+            (
+                CDSInterval([0], [10], Strand.PLUS, [CDSFrame.ZERO]),
+                SingleInterval(0, 10, Strand.PLUS),
+                SingleInterval(1, 10, Strand.PLUS),
+                2,
+            ),
+            # + strand with 2bp cutoff from 5' end -> 1 offset
+            (
+                CDSInterval([0], [10], Strand.PLUS, [CDSFrame.ZERO]),
+                SingleInterval(0, 10, Strand.PLUS),
+                SingleInterval(2, 10, Strand.PLUS),
+                1,
+            ),
+            # - strand with full span chunk -> 0 offset
+            (
+                CDSInterval([0], [10], Strand.MINUS, [CDSFrame.ZERO]),
+                SingleInterval(0, 10, Strand.MINUS),
+                SingleInterval(0, 10, Strand.MINUS),
+                0,
+            ),
+            # - strand with 1bp cutoff from 5' end -> 2 offset
+            (
+                CDSInterval([0], [10], Strand.MINUS, [CDSFrame.ZERO]),
+                SingleInterval(0, 10, Strand.MINUS),
+                SingleInterval(0, 9, Strand.MINUS),
+                2,
+            ),
+            # - strand with 2bp cutoff from 5' end -> 1 offset
+            (
+                CDSInterval([0], [10], Strand.MINUS, [CDSFrame.ZERO]),
+                SingleInterval(0, 10, Strand.MINUS),
+                SingleInterval(0, 8, Strand.MINUS),
+                1,
+            ),
+        ],
+    )
+    def test__calculate_frame_offset(self, cds, cleaned_location, loc_on_chrom, expected_offset):
+        assert cds._calculate_frame_offset(cleaned_location, loc_on_chrom) == expected_offset
+
 
 @pytest.mark.parametrize(
     "sequence,translation_table,expected",
