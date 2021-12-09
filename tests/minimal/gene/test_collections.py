@@ -1584,7 +1584,9 @@ class TestAnnotationCollection:
     def test_parent_to_dict(self, parent):
         as_dict = self.annot.to_annotation_collection(parent).to_dict(export_parent=True)
         obj = AnnotationCollectionModel.Schema().load(as_dict).to_annotation_collection()
-        obj2 = AnnotationCollection.from_dict(as_dict)
+        as_dict_cpy = as_dict.copy()
+        obj2 = AnnotationCollection.from_dict(as_dict_cpy)
+        assert as_dict_cpy == as_dict  # did not modify the dictionary
         assert obj.get_reference_sequence() == obj2.get_reference_sequence()
         assert obj == obj2
 
@@ -1598,7 +1600,9 @@ class TestAnnotationCollection:
     def test_parent_to_dict_no_sequence(self, parent):
         as_dict = self.annot.to_annotation_collection(parent).to_dict(export_parent=True)
         obj = AnnotationCollectionModel.Schema().load(as_dict).to_annotation_collection()
-        obj2 = AnnotationCollection.from_dict(as_dict)
+        as_dict_cpy = as_dict.copy()
+        obj2 = AnnotationCollection.from_dict(as_dict_cpy)
+        assert as_dict_cpy == as_dict  # did not modify the dictionary
         assert obj == obj2
         with pytest.raises(NullSequenceException):
             _ = obj.get_reference_sequence()

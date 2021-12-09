@@ -998,6 +998,10 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
 
             This function first checks for the presence of any sequence information, then infers if the sequence
             was a chunk or not.
+
+            This function also modifies the contents of ``parent_dict``. It is expected that it is only called
+            from ``convert_parent_dict_to_parent``, which copies ``parent_dict`` out of the input ``vals``
+            dictionary.
             """
             if parent_dict.get("seq"):
                 # have to import here to avoid circular imports
