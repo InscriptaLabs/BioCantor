@@ -992,16 +992,16 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
             Extract a ``parent_or_seq_chunk_parent`` from a dictionary representation. This function is called
             if no ``parent_or_seq_chunk_parent`` is provided explicitly to ``from_dict``.
 
+            NOTE: This function modifies the contents of ``parent_dict``. It is expected that it is only called
+            from ``convert_parent_dict_to_parent``, which copies ``parent_dict`` out of the input ``vals``
+            dictionary.
+
             When the original :class:`AnnotationCollection` was exported to dictionary, it may or may not have had
             a ``parent_or_seq_chunk_parent``, and that :class:`~biocantor.parent.Parent` may or may not have had
             any sequence. The sequence may or may not have been a sequence-chunk.
 
             This function first checks for the presence of any sequence information, then infers if the sequence
             was a chunk or not.
-
-            This function also modifies the contents of ``parent_dict``. It is expected that it is only called
-            from ``convert_parent_dict_to_parent``, which copies ``parent_dict`` out of the input ``vals``
-            dictionary.
             """
             if parent_dict.get("seq"):
                 # have to import here to avoid circular imports
@@ -1035,6 +1035,8 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
         def convert_parent_dict_to_parent(vals: Dict[str, Any]) -> Optional[Parent]:
             """Converts the optional dictionary representation of a ``parent_or_seq_chunk_parent`` to
             a Parent object.
+
+            NOTE: This function copies the input dictionary, stripping out null values.
             """
             # copy the input parent dictionary, stripping out null values
             parent_dict = {k: v for k, v in vals["parent_or_seq_chunk_parent"].items() if v is not None}
