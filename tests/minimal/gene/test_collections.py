@@ -1,7 +1,9 @@
+import pickle
 from copy import deepcopy
 from uuid import UUID
 
 import pytest
+
 from inscripta.biocantor.exc import (
     InvalidAnnotationError,
     NoncodingTranscriptError,
@@ -12,6 +14,7 @@ from inscripta.biocantor.exc import (
 )
 from inscripta.biocantor.gene.biotype import Biotype
 from inscripta.biocantor.gene.cds_frame import CDSFrame
+from inscripta.biocantor.gene.collections import AnnotationCollection
 from inscripta.biocantor.io.models import (
     GeneIntervalModel,
     AnnotationCollectionModel,
@@ -1567,6 +1570,51 @@ class TestAnnotationCollection:
         with pytest.raises(InvalidQueryError):
             _ = obj.get_children_by_type("gene")
 
+    @pytest.mark.parametrize(
+        "parent",
+        [
+            parent_genome,
+            parent_genome_10_49,
+            parent_genome_with_location,
+            parent_genome_rev,
+            parent_genome_rev_5_44,
+            parent_nonstandard_type_with_sequence,
+        ],
+    )
+    def test_parent_to_dict(self, parent):
+        as_dict = self.annot.to_annotation_collection(parent).to_dict(export_parent=True)
+        obj = AnnotationCollectionModel.Schema().load(as_dict).to_annotation_collection()
+        as_dict_cpy = as_dict.copy()
+        obj2 = AnnotationCollection.from_dict(as_dict_cpy)
+        assert as_dict_cpy == as_dict  # did not modify the dictionary
+        assert obj.get_reference_sequence() == obj2.get_reference_sequence()
+        assert obj == obj2
+
+    @pytest.mark.parametrize(
+        "parent",
+        [
+            parent_no_seq,
+            parent_nonstandard_type,
+        ],
+    )
+    def test_parent_to_dict_no_sequence(self, parent):
+        as_dict = self.annot.to_annotation_collection(parent).to_dict(export_parent=True)
+        obj = AnnotationCollectionModel.Schema().load(as_dict).to_annotation_collection()
+        as_dict_cpy = as_dict.copy()
+        obj2 = AnnotationCollection.from_dict(as_dict_cpy)
+        assert as_dict_cpy == as_dict  # did not modify the dictionary
+        assert obj == obj2
+        with pytest.raises(NullSequenceException):
+            _ = obj.get_reference_sequence()
+        with pytest.raises(NullSequenceException):
+            _ = obj2.get_reference_sequence()
+
+    def test_parent_to_dict_exception(self):
+        with pytest.raises(NotImplementedError):
+            _ = self.annot.to_annotation_collection(parent_genome).to_dict(
+                export_parent=True, chromosome_relative_coordinates=False
+            )
+
 
 class TestNegative:
     tx1 = dict(
@@ -1717,3 +1765,11 @@ class TestNegative:
         obj2 = self.annot.to_annotation_collection(parent_genome_rev_5_44)
         assert obj1 != obj2
         assert hash(obj1) != hash(obj2)
+
+    @pytest.mark.parametrize("parent", [parent_genome, parent_genome_10_49, parent_genome_rev_5_44])
+    def test_pickling(self, parent):
+        obj = self.annot.to_annotation_collection(parent)
+        obj_str = pickle.dumps(obj)
+        new_obj = pickle.loads(obj_str)
+        assert obj.to_dict() == new_obj.to_dict()
+        assert obj.get_reference_sequence() == new_obj.get_reference_sequence()

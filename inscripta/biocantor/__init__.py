@@ -14,6 +14,19 @@ class SequenceType(str, Enum):
     CHROMOSOME = "chromosome"
     SEQUENCE_CHUNK = "sequence_chunk"
 
+    @staticmethod
+    def sequence_type_str_to_type(sequence_type: Optional[str]) -> Optional[Union["SequenceType", str]]:
+        """Convenience function to convert a str to a SequenceType, if possible"""
+        if not sequence_type:
+            return None
+        type_str = sequence_type.upper()
+        if type_str == SequenceType.SEQUENCE_CHUNK.name:
+            return SequenceType.SEQUENCE_CHUNK
+        elif type_str == SequenceType.CHROMOSOME.name:
+            return SequenceType.CHROMOSOME
+        else:
+            return sequence_type
+
 
 class DistanceType(Enum):
     INNER = "inner"
