@@ -667,6 +667,10 @@ class CDSInterval(AbstractFeatureInterval):
         ]
         cleaned_location = CompoundInterval.from_single_intervals(cleaned_blocks)
 
+        # cannot iterate over codons that are too short
+        if len(cleaned_location) < 3:
+            return
+
         if relative_window:
             relative_cleaned_location = cleaned_location.intersection(relative_window)
         else:
