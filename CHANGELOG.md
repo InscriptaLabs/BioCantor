@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## Added
 - `AnnotationCollections` can now export their `Parent` objects in a dictionary representation
 - `AnnotationCollectionModel` have a new optional `Parent` member that represents a `Parent` object that can be serialized to disk
+- `CDSInterval.scan_chromosome_codon_locations` and `CDSInterval.scan_chunk_relative_codon_locations` now have optional arguments to restrict the iteration to section of the CDS based on *chromosomal* coordinates
 
 ### Changed
 - Improved documentation
