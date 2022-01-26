@@ -711,6 +711,7 @@ class TestGenBankFeatures:
                 ("start", 0),
                 ("end", 50040),
                 ("completely_within", None),
+                ("parent_or_seq_chunk_parent", None),
             ]
         )
 
@@ -929,6 +930,7 @@ class TestSortedParser:
                 ("start", 0),
                 ("end", 7200),
                 ("completely_within", None),
+                ("parent_or_seq_chunk_parent", None),
             ]
         )
 
@@ -1073,6 +1075,7 @@ class TestSortedParser:
                 ("start", 0),
                 ("end", 50040),
                 ("completely_within", None),
+                ("parent_or_seq_chunk_parent", None),
             ]
         )
 
