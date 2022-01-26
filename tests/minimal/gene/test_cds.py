@@ -82,25 +82,25 @@ class TestCDSInterval:
         "cds,expected",
         [
             # 2bp CDS
-            # (
-            #     CDSInterval.from_location(
-            #         SingleInterval(
-            #             0, 2, Strand.PLUS, parent=Sequence("ATACGATCA", alphabet, type=SequenceType.CHROMOSOME)
-            #         ),
-            #         [CDSFrame.ZERO],
-            #     ),
-            #     0,
-            # ),
-            # # Contiguous CDS, plus strand, frame=0
-            # (
-            #     CDSInterval.from_location(
-            #         SingleInterval(
-            #             0, 9, Strand.PLUS, parent=Sequence("ATACGATCA", alphabet, type=SequenceType.CHROMOSOME)
-            #         ),
-            #         [CDSFrame.ZERO],
-            #     ),
-            #     3,
-            # ),
+            (
+                CDSInterval.from_location(
+                    SingleInterval(
+                        0, 2, Strand.PLUS, parent=Sequence("ATACGATCA", alphabet, type=SequenceType.CHROMOSOME)
+                    ),
+                    [CDSFrame.ZERO],
+                ),
+                0,
+            ),
+            # Contiguous CDS, plus strand, frame=0
+            (
+                CDSInterval.from_location(
+                    SingleInterval(
+                        0, 9, Strand.PLUS, parent=Sequence("ATACGATCA", alphabet, type=SequenceType.CHROMOSOME)
+                    ),
+                    [CDSFrame.ZERO],
+                ),
+                3,
+            ),
             # Discontiguous CDS, plus strand, frame=1, codons don't reach end of CDS
             (
                 CDSInterval.from_location(
