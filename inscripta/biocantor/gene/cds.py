@@ -598,43 +598,51 @@ class CDSInterval(AbstractFeatureInterval):
         Any leading or trailing bases that are annotated as CDS but cannot form a full codon
         are excluded.
         """
-        # can only do naive window scanning if this CDS has exactly one exon.
+        # can only do naive window scanning if this CDS has exactly one exon
         if self.num_blocks > 1:
-            yield from self._scan_codon_locations_multi_exon(relative_window, chunk_relative_coordinates)
+            codon_fn = self._prepare_multi_exon_window_for_scan_codon_locations
         else:
-            loc = self.chunk_relative_location
+            codon_fn = self._prepare_single_exon_window_for_scan_codon_locations
+        location, offset = codon_fn(relative_window, chunk_relative_coordinates)
+        # must make sure this CDS (with its offset) is at least one codon long
+        if (len(location) - offset) >= 3:
+            yield from location.scan_windows(3, 3, offset)
 
-            if relative_window:
-                relative_loc = loc.intersection(relative_window)
-            else:
-                relative_loc = loc
-
-            offset = self.frames[0].value
-            if chunk_relative_coordinates and self.is_chunk_relative:
-                # calculate offset for this chunk that may be out of frame
-                loc_on_chrom = relative_loc.lift_over_to_first_ancestor_of_type(SequenceType.CHROMOSOME)
-                offset += self._calculate_frame_offset(self.chromosome_location, loc_on_chrom)
-            else:
-                offset += self._calculate_frame_offset(self.chromosome_location, relative_loc)
-
-            # must make sure this CDS (with its offset) is at least one codon long
-            if (len(relative_loc) - offset) >= 3:
-                yield from relative_loc.scan_windows(3, 3, offset)
-
-    def _scan_codon_locations_multi_exon(
+    @lru_cache(maxsize=20)
+    def _prepare_single_exon_window_for_scan_codon_locations(
         self, relative_window: Optional[SingleInterval] = None, chunk_relative_coordinates: bool = True
-    ) -> Iterator[Location]:
+    ) -> Tuple[Location, int]:
         """
-        Returns an iterator over codon locations in *chunk relative* coordinates.
+        This function exists to prepare a Location object to pass to the iterator ``_scan_codon_locations``.
+        By placing the logic in this function, the result can be cached, as you cannot cache iterators.
 
-        Only necessary to be used if this CDS has overlapping intervals.
+        Returns a tuple of the Location to be iterated over, and its offset.
+        """
+        loc = self.chunk_relative_location
 
-        Any leading or trailing bases that are annotated as CDS but cannot form a full codon
-        are excluded. Additionally, any internal codons that are incomplete are excluded.
+        if relative_window:
+            relative_loc = loc.intersection(relative_window)
+        else:
+            relative_loc = loc
 
-        Incomplete internal codons are determined by comparing the CDSFrame of each exon
-        as annotated, to the expected value of the CDSFrame. This allows for an annotation
-        to model things like programmed frameshifts and indels that may be assembly errors.
+        offset = self.frames[0].value
+        if chunk_relative_coordinates and self.is_chunk_relative:
+            # calculate offset for this chunk that may be out of frame
+            loc_on_chrom = relative_loc.lift_over_to_first_ancestor_of_type(SequenceType.CHROMOSOME)
+            offset += self._calculate_frame_offset(self.chromosome_location, loc_on_chrom)
+        else:
+            offset += self._calculate_frame_offset(self.chromosome_location, relative_loc)
+        return relative_loc, offset
+
+    @lru_cache(maxsize=20)
+    def _prepare_multi_exon_window_for_scan_codon_locations(
+        self, relative_window: Optional[SingleInterval] = None, chunk_relative_coordinates: bool = True
+    ) -> Tuple[Location, int]:
+        """
+        This function exists to prepare a Location object to pass to the iterator ``_scan_codon_locations``.
+        By placing the logic in this function, the result can be cached, as you cannot cache iterators.
+
+        Returns a tuple of the Location to be iterated over, and its offset.
         """
         next_frame = CDSFrame.ZERO
         cleaned_rel_starts = []
@@ -676,10 +684,6 @@ class CDSInterval(AbstractFeatureInterval):
         ]
         cleaned_location = CompoundInterval.from_single_intervals(cleaned_blocks)
 
-        # cannot iterate over codons that are too short
-        if len(cleaned_location) < 3:
-            return
-
         if relative_window:
             relative_cleaned_location = cleaned_location.intersection(relative_window)
         else:
@@ -694,14 +698,10 @@ class CDSInterval(AbstractFeatureInterval):
             # whose bounds are the portion of this CDS that are contained on the sequence chunk
             loc_on_chrom = chunk_relative_cleaned_location.lift_over_to_first_ancestor_of_type(SequenceType.CHROMOSOME)
             offset = self._calculate_frame_offset(relative_cleaned_location, loc_on_chrom)
-            # cannot iterate over codons that are too short; there is no translation for this CDS
-            # (iterator will terminate without returning anything)
-            if len(chunk_relative_cleaned_location) - offset < 3:
-                return
-            yield from chunk_relative_cleaned_location.scan_windows(3, 3, offset)
+            return chunk_relative_cleaned_location, offset
         else:
             offset = self._calculate_frame_offset(cleaned_location, relative_cleaned_location)
-            yield from relative_cleaned_location.scan_windows(3, 3, offset)
+            return relative_cleaned_location, offset
 
     def _calculate_frame_offset(self, cleaned_location: Location, loc_on_chrom: Location) -> int:
         """

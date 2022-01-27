@@ -2954,11 +2954,9 @@ class TestCDSInterval:
                 ),
             ),
         )
-        # show that calling translate() calls _scan_codon_locations_multi_exon()
+        # show that calling translate() calls _scan_codon_locations()
         with ExitStack() as stack:
-            overlapping = stack.enter_context(
-                patch("inscripta.biocantor.gene.cds.CDSInterval._scan_codon_locations_multi_exon")
-            )
+            overlapping = stack.enter_context(patch("inscripta.biocantor.gene.cds.CDSInterval._scan_codon_locations"))
             _ = list(cds.translate())
         overlapping.assert_called()
         # show that the function returns a sensible translation that starts from the 1st in-frame codon
@@ -2995,11 +2993,9 @@ class TestCDSInterval:
                 ),
             ),
         )
-        # show that calling translate() calls _scan_codon_locations_multi_exon()
+        # show that calling translate() calls _scan_codon_locations()
         with ExitStack() as stack:
-            overlapping = stack.enter_context(
-                patch("inscripta.biocantor.gene.cds.CDSInterval._scan_codon_locations_multi_exon")
-            )
+            overlapping = stack.enter_context(patch("inscripta.biocantor.gene.cds.CDSInterval._scan_codon_locations"))
             _ = list(cds.translate())
         overlapping.assert_called()
         # show that the function returns a sensible translation that starts from the 1st in-frame codon
