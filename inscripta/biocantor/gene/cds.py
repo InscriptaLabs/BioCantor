@@ -603,14 +603,23 @@ class CDSInterval(AbstractFeatureInterval):
             yield from self._scan_codon_locations_multi_exon(relative_window, chunk_relative_coordinates)
         else:
             loc = self.chunk_relative_location
-            # must make sure this CDS (with its offset) is at least one codon long
+
+            if relative_window:
+                relative_loc = loc.intersection(relative_window)
+            else:
+                relative_loc = loc
+
             offset = self.frames[0].value
             if chunk_relative_coordinates and self.is_chunk_relative:
                 # calculate offset for this chunk that may be out of frame
-                loc_on_chrom = loc.lift_over_to_first_ancestor_of_type(SequenceType.CHROMOSOME)
+                loc_on_chrom = relative_loc.lift_over_to_first_ancestor_of_type(SequenceType.CHROMOSOME)
                 offset += self._calculate_frame_offset(self.chromosome_location, loc_on_chrom)
-            if (len(loc) - offset) >= 3:
-                yield from loc.scan_windows(3, 3, offset)
+            else:
+                offset += self._calculate_frame_offset(self.chromosome_location, relative_loc)
+
+            # must make sure this CDS (with its offset) is at least one codon long
+            if (len(relative_loc) - offset) >= 3:
+                yield from relative_loc.scan_windows(3, 3, offset)
 
     def _scan_codon_locations_multi_exon(
         self, relative_window: Optional[SingleInterval] = None, chunk_relative_coordinates: bool = True
