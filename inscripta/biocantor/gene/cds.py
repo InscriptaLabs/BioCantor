@@ -83,6 +83,7 @@ class CDSInterval(AbstractFeatureInterval):
             self.guid = digest_object(
                 self._genomic_starts,
                 self._genomic_ends,
+                self.strand,
                 self.frames,
                 self.product,
                 self.protein_id,

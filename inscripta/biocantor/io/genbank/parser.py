@@ -33,8 +33,13 @@ from Bio.SeqFeature import SeqFeature
 from Bio.SeqRecord import SeqRecord
 
 from inscripta.biocantor.gene import Biotype, CDSInterval, CDSFrame
-from inscripta.biocantor.io.exc import DuplicateSequenceException
-from inscripta.biocantor.io.exc import StrandViolationWarning
+from inscripta.biocantor.io.exc import (
+    DuplicateSequenceException,
+    InvalidCDSIntervalWarning,
+    StrandViolationWarning,
+    DuplicateFeatureWarning,
+    DuplicateTranscriptWarning,
+)
 from inscripta.biocantor.io.features import extract_feature_types, extract_feature_name_id, merge_qualifiers
 from inscripta.biocantor.io.genbank.constants import (
     GeneFeatures,
@@ -62,6 +67,7 @@ from inscripta.biocantor.location import (
     Location,
     Strand,
     CompoundInterval,
+    SingleInterval,
     EmptyLocation,
 )
 
@@ -166,19 +172,22 @@ class FeatureIntervalGenBankCollection:
             if KnownQualifiers.LOCUS_TAG.value in feature.qualifiers:
                 locus_tag = feature.qualifiers[KnownQualifiers.LOCUS_TAG.value][0]
 
-            features.append(
-                dict(
-                    interval_starts=interval_starts,
-                    interval_ends=interval_ends,
-                    strand=strand.name,
-                    qualifiers=feature.qualifiers,
-                    feature_id=feature_id,
-                    feature_name=feature_name,
-                    feature_types=sorted(feature_types),
-                    sequence_name=cls.record.id,
-                    is_primary_feature=False,
-                )
+            feature_model = dict(
+                interval_starts=interval_starts,
+                interval_ends=interval_ends,
+                strand=strand.name,
+                qualifiers=feature.qualifiers,
+                feature_id=feature_id,
+                feature_name=feature_name,
+                feature_types=sorted(feature_types),
+                sequence_name=cls.record.id,
+                is_primary_feature=False,
             )
+            if feature_model in features:
+                warnings.warn(DuplicateFeatureWarning(f"Feature {feature} found twice within a feature collection"))
+            else:
+                features.append(feature_model)
+
             merged_qualifiers = merge_qualifiers(merged_qualifiers, feature.qualifiers)
 
         if len(feature_names) > 0:
@@ -267,11 +276,12 @@ class GeneFeature(Feature):
         transcripts = []
         tx_biotypes = Counter()
         for tx in cls.children:
+            exon_interval = tx.find_exon_interval()
             exon_starts = []
             exon_ends = []
-            for start, end in tx.iterate_intervals():
-                exon_starts.append(start)
-                exon_ends.append(end)
+            for block in exon_interval.blocks:
+                exon_starts.append(block.start)
+                exon_ends.append(block.end)
 
             strand = Strand.from_int(tx.strand)
 
@@ -315,7 +325,10 @@ class GeneFeature(Feature):
                 transcript_type=transcript_biotype.name,
                 sequence_name=tx.record.id,
             )
-            transcripts.append(tx_model)
+            if tx_model in transcripts:
+                warnings.warn(DuplicateTranscriptWarning("Transcript {tx_model} found twice within a gene"))
+            else:
+                transcripts.append(tx_model)
 
         # pick most common transcript type; hacky
         gene_biotype = tx_biotypes.most_common(1)[0][0]
@@ -339,6 +352,7 @@ class TranscriptFeature(Feature):
     """A transcript"""
 
     types = {x.value for x in TranscriptFeatures}
+    _exon_interval = None
 
     def __str__(self):
         return f"--> {self.feature.__repr__()}"
@@ -384,27 +398,70 @@ class TranscriptFeature(Feature):
             if qualifier in feature.feature.qualifiers:
                 return feature.feature.qualifiers[qualifier][0]
 
-    def iterate_intervals(self) -> Iterator[Tuple[int, int]]:
+    def iterate_exon_intervals(self) -> Iterator[Tuple[int, int]]:
         """Iterate over the location parts"""
         for exon in sorted(self.exon_features, key=lambda e: e.feature.location.nofuzzy_start):
             for part in sorted(exon.feature.location.parts, key=lambda p: p.start):
-                yield int(part.start), int(part.end)
+                yield int(part.nofuzzy_start), int(part.nofuzzy_end)
 
-    def find_cds_interval(self) -> Location:
-        """Finds the Location of the CDS."""
-        cds_starts = []
-        cds_ends = []
+    def iterate_cds_intervals(self) -> Iterator[Tuple[int, int]]:
+        """Iterate over the CDS location parts"""
         for cds in sorted(self.cds_features, key=lambda e: e.feature.location.nofuzzy_start):
             for part in sorted(cds.feature.location.parts, key=lambda p: p.start):
-                cds_starts.append(part.nofuzzy_start)
-                cds_ends.append(part.nofuzzy_end)
-        if len(cds_starts) == 0:
-            return EmptyLocation()
-        return CompoundInterval(
-            cds_starts,
-            cds_ends,
+                yield int(part.nofuzzy_start), int(part.nofuzzy_end)
+
+    def find_exon_interval(self) -> CompoundInterval:
+        """Finds the Location of the Exons."""
+        if self._exon_interval:
+            return self._exon_interval
+        exon_starts = []
+        exon_ends = []
+        for exon_start, exon_end in self.iterate_exon_intervals():
+            exon_starts.append(exon_start)
+            exon_ends.append(exon_end)
+        self._exon_interval = CompoundInterval(
+            exon_starts,
+            exon_ends,
             Strand.from_int(self.strand),
         )
+        return self._exon_interval
+
+    def find_transcript_interval(self) -> Location:
+        """Finds the Location that spans the full length of the Transcript"""
+        exon_interval = self.find_exon_interval()
+        return SingleInterval(exon_interval.blocks[0].start, exon_interval.blocks[-1].end, Strand.from_int(self.strand))
+
+    def find_cds_interval(self) -> Location:
+        """Finds the Location of the CDS.
+
+        Handle edge cases from tools like Geneious where the CDS Interval exceeds the bounds of the Exons.
+        """
+        cds_starts = []
+        cds_ends = []
+        for cds_start, cds_end in self.iterate_cds_intervals():
+            cds_starts.append(cds_start)
+            cds_ends.append(cds_end)
+        if len(cds_starts) == 0:
+            return EmptyLocation()
+        # must use SingleInterval here because otherwise the optimization step of cds_interval.intersection below
+        # will return a SingleInterval, and the equality comparison will raise a spurious InvalidCDSIntervalWarning
+        elif len(cds_starts) == 1:
+            cds_interval = SingleInterval(cds_starts[0], cds_ends[0], Strand.from_int(self.strand))
+        else:
+            cds_interval = CompoundInterval(
+                cds_starts,
+                cds_ends,
+                Strand.from_int(self.strand),
+            )
+        cds_interval_intersection_with_exons = cds_interval.intersection(self.find_transcript_interval())
+        if cds_interval_intersection_with_exons != cds_interval:
+            warnings.warn(
+                InvalidCDSIntervalWarning(
+                    f"CDS Interval {cds_interval} was sliced down to {cds_interval_intersection_with_exons} "
+                    f"because that is the exon boundaries found"
+                )
+            )
+        return cds_interval_intersection_with_exons
 
     def merge_cds_qualifiers_to_transcript(self) -> Dict[str, List[str]]:
         """

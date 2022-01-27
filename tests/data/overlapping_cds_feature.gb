@@ -13,7 +13,7 @@ FEATURES             Location/Qualifiers
                      /gene_biotype="protein_coding"
                      /gene="YFR054C"
                      /locus_tag="YFR054C"
-     CDS             complement(join(205..587,10..204))
+     CDS             complement(join(203..587,10..204))
                      /transcript_id="INSC1019_T0002199"
                      /transcript_name="YFR054C"
                      /transcript_biotype="protein_coding"

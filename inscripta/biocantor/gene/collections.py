@@ -25,6 +25,8 @@ from inscripta.biocantor.exc import (
     InvalidAnnotationError,
     InvalidQueryError,
     NoSuchAncestorException,
+    DuplicateFeatureError,
+    DuplicateTranscriptError,
 )
 from inscripta.biocantor.gene.biotype import Biotype, UNKNOWN_BIOTYPE
 from inscripta.biocantor.gene.cds import CDSInterval
@@ -229,7 +231,7 @@ class GeneInterval(AbstractFeatureIntervalCollection):
         self.guid_map = {}
         for tx in self.transcripts:
             if tx.guid in self.guid_map:
-                raise InvalidAnnotationError(f"Guid {tx.guid} found more than once in this GeneInterval")
+                raise DuplicateTranscriptError(f"Guid {tx.guid} found more than once in this GeneInterval")
             self.guid_map[tx.guid] = tx
 
     def __repr__(self):
@@ -547,7 +549,7 @@ class FeatureIntervalCollection(AbstractFeatureIntervalCollection):
         self.guid_map = {}
         for feat in self.feature_intervals:
             if feat.guid in self.guid_map:
-                raise InvalidAnnotationError(f"Guid {feat.guid} found more than once in this FeatureIntervalCollection")
+                raise DuplicateFeatureError(f"Guid {feat.guid} found more than once in this FeatureIntervalCollection")
             self.guid_map[feat.guid] = feat
 
     def __repr__(self):

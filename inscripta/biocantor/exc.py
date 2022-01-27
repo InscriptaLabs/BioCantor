@@ -157,3 +157,15 @@ class MismatchedFrameException(BioCantorException):
     """
 
     pass
+
+
+class DuplicateFeatureError(BioCantorException):
+    """
+    More than one feature GUID was found within a single FeatureIntervalCollection.
+    """
+
+
+class DuplicateTranscriptError(BioCantorException):
+    """
+    More than one transcript GUID was found within a single GeneInterval.
+    """
