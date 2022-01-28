@@ -1123,6 +1123,22 @@ class TestSortedParser:
             == "MLFAYSGCLAPQCIPDISSFKALPFRDTESRFTTDSSVISSRFSSSFTSSSSKIIIITSIFSSKMDNEHVGASLIVSLSMASLILTNVFSFSSTSYSSQPSDYIACSPSGIDDQPVAEPSGYTPVGSPSSTFWLYYFWFGCNRLPIFT**RPIDECIFQIRHKSLQSFCLNSYNFTFTQYPSEVLPTSKHHFL"  # noqa: E501
         )
 
+    @pytest.mark.parametrize(
+        "parser_mode", [GenBankParserType.SORTED, GenBankParserType.HYBRID, GenBankParserType.LOCUS_TAG]
+    )
+    def test_multiple_cds_gene_parser(self, test_data_dir, parser_mode):
+        """Sometimes genbank files have multiple CDS for a gene intended to represent alternative isoforms,
+        but these still have the same locus tag. Show that this can be successfully parsed in all parser modes.
+        """
+        genbank = test_data_dir / "multiple_cds_same_gene.gb"
+        recs = list(
+            ParsedAnnotationRecord.parsed_annotation_records_to_model(
+                parse_genbank(test_data_dir / genbank, gbk_type=parser_mode)
+            )
+        )
+        assert len(recs[0].genes[0].transcripts) == 2
+        assert len(recs[0].genes[1].transcripts) == 2
+
 
 class TestHybridParser:
     def test_hybrid_parser_insc1003(self, test_data_dir):

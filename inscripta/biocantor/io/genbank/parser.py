@@ -379,16 +379,28 @@ class TranscriptFeature(Feature):
         return [x.name for x in frames]
 
     @property
-    def exon_features(self) -> SeqFeature:
+    def exon_features(self) -> List["IntervalFeature"]:
+        exon_features = []
         for f in self.children:
             if f.type == GeneIntervalFeatures.EXON.value:
-                yield f
+                exon_features.append(f)
+        return exon_features
 
     @property
-    def cds_features(self) -> SeqFeature:
+    def cds_features(self) -> List["IntervalFeature"]:
+        cds_features = []
         for f in self.children:
             if f.type == GeneIntervalFeatures.CDS.value:
-                yield f
+                cds_features.append(f)
+        return cds_features
+
+    @property
+    def has_cds(self) -> bool:
+        return bool(self.cds_features)
+
+    @property
+    def has_exons(self) -> bool:
+        return bool(self.exon_features)
 
     def get_qualifier_from_tx_or_cds_features(self, qualifier: str) -> Optional[str]:
         """Get a specific qualifier, if it exists. Look at tx first, then children"""
@@ -669,6 +681,12 @@ def group_gene_records_from_sorted_genbank(
             elif feature.type in IntervalFeature.types:
                 if not gene.has_children:
                     gene.add_child(feature)
+                # if the most recent child of this gene already has exons and this is a exon, then this is a new isoform
+                elif gene.children[-1].has_exons and feature.type == GeneIntervalFeatures.EXON.value:
+                    gene.add_child(feature)
+                # if the most recent child of this gene already has a CDS and this is a CDS, then this is a new isoform
+                elif gene.children[-1].has_cds and feature.type == GeneIntervalFeatures.CDS.value:
+                    gene.add_child(feature)
                 else:
                     gene.children[-1].add_child(feature)
             else:
@@ -780,7 +798,15 @@ def group_gene_records_by_locus_tag(
                 if feature.type in TranscriptFeature.types:
                     gene.add_child(feature)
                 elif feature.type in IntervalFeature.types:
-                    if len(gene.children) == 0:
+                    if not gene.has_children:
+                        gene.add_child(feature)
+                    # if the most recent child of this gene already has exons and this is a exon,
+                    # then this is a new isoform
+                    elif gene.children[-1].has_exons and feature.type == GeneIntervalFeatures.EXON.value:
+                        gene.add_child(feature)
+                    # if the most recent child of this gene already has a CDS and this is a CDS,
+                    # then this is a new isoform
+                    elif gene.children[-1].has_cds and feature.type == GeneIntervalFeatures.CDS.value:
                         gene.add_child(feature)
                     else:
                         gene.children[-1].add_child(feature)
