@@ -137,6 +137,7 @@ class TranscriptInterval(AbstractFeatureInterval):
             self.guid = digest_object(
                 self._genomic_starts,
                 self._genomic_ends,
+                self.strand,
                 self._cds_frames,
                 self.qualifiers,
                 self.transcript_id,

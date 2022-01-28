@@ -2,9 +2,16 @@ import json
 from collections import OrderedDict
 
 import pytest
+import warnings
 from inscripta.biocantor.gene.biotype import Biotype
 from inscripta.biocantor.gene.cds_frame import CDSFrame
-from inscripta.biocantor.io.exc import StrandViolationWarning, DuplicateSequenceException
+from inscripta.biocantor.io.exc import (
+    StrandViolationWarning,
+    DuplicateSequenceException,
+    InvalidCDSIntervalWarning,
+    DuplicateFeatureWarning,
+    DuplicateTranscriptWarning,
+)
 from inscripta.biocantor.io.genbank.exc import (
     GenBankLocusTagError,
     GenBankLocationException,
@@ -32,7 +39,12 @@ class TestEukaryoticGenbankParser:
     def test_parse_genbank_metadata(self, test_data_dir):
         gbk = test_data_dir / self.gbk
         with open(gbk, "r") as fh:
-            parsed = list(parse_genbank(fh))[0]
+            # this functionality will exist after pytest 7.0 is released
+            # https://stackoverflow.com/questions/45671803/how-to-use-pytest-to-assert-no-warning-is-raised
+            # with pytest.does_not_warn():
+            with warnings.catch_warnings():
+                warnings.simplefilter("error")
+                parsed = list(parse_genbank(fh))[0]
 
         assert parsed.annotation.feature_collections is None
         assert parsed.annotation.sequence_name == "CM021111.1"
@@ -303,6 +315,27 @@ class TestGenbank:
         result = annot_collection.query_by_feature_identifiers(identifiers)
         assert result.is_empty
 
+    def test_extended_cds_bounds(self, test_data_dir):
+        gbk = test_data_dir / "INSC1006_chrI_CDS_outside_bounds.gb"
+        with open(gbk, "r") as fh:
+            with pytest.warns(InvalidCDSIntervalWarning):
+                annot_collection = list(ParsedAnnotationRecord.parsed_annotation_records_to_model(parse_genbank(fh)))[0]
+            assert annot_collection.genes[0].transcripts[0].cds.chromosome_location.reset_parent(
+                None
+            ) == CompoundInterval([37637, 39102], [39011, 39103], Strand.PLUS)
+
+    def test_duplicate_transcripts(self, test_data_dir):
+        gbk = test_data_dir / "INSC1006_chrI_duplicate_gene_feature.gb"
+        with open(gbk, "r") as fh:
+            with pytest.warns(DuplicateTranscriptWarning):
+                _ = list(ParsedAnnotationRecord.parsed_annotation_records_to_model(parse_genbank(fh)))[0]
+
+    def test_duplicate_features(self, test_data_dir):
+        gbk = test_data_dir / "INSC1006_chrI_duplicate_gene_feature.gb"
+        with open(gbk, "r") as fh:
+            with pytest.warns(DuplicateFeatureWarning):
+                _ = list(ParsedAnnotationRecord.parsed_annotation_records_to_model(parse_genbank(fh)))[0]
+
 
 class TestSplicedGenbank:
     """Test Spliced GenBank Parsing"""
@@ -508,7 +541,7 @@ class TestGenBankFeatures:
                                                 ),
                                                 ("sequence_name", "CM021111.1"),
                                                 ("sequence_guid", None),
-                                                ("feature_interval_guid", "dad6ee93-38c2-bf22-5111-d7c0fc0a5863"),
+                                                ("feature_interval_guid", "fe625a6c-9c50-c3c8-a6a5-7cef254445ce"),
                                                 ("feature_guid", None),
                                                 ("feature_types", ["feature"]),
                                                 ("feature_name", "overlapping_ncrna_opposite_strand"),
@@ -524,7 +557,7 @@ class TestGenBankFeatures:
                                 ("feature_collection_type", None),
                                 ("sequence_name", "CM021111.1"),
                                 ("sequence_guid", None),
-                                ("feature_collection_guid", "cc74d80d-d815-7b93-f105-8801c81cb164"),
+                                ("feature_collection_guid", "c6e2963b-917e-0c58-b8aa-91eec158ac2d"),
                                 (
                                     "qualifiers",
                                     {"name": ["overlapping_ncrna_opposite_strand"], "note": ["not a joined interval"]},
@@ -544,7 +577,7 @@ class TestGenBankFeatures:
                                                 ("qualifiers", {"name": ["joined_feature_plus_strand"]}),
                                                 ("sequence_name", "CM021111.1"),
                                                 ("sequence_guid", None),
-                                                ("feature_interval_guid", "b048fa8c-e5e9-b903-42f4-ae7275a79506"),
+                                                ("feature_interval_guid", "0d398fb8-a366-90b9-f8d2-1521192b636b"),
                                                 ("feature_guid", None),
                                                 ("feature_types", ["feature"]),
                                                 ("feature_name", "joined_feature_plus_strand"),
@@ -560,7 +593,7 @@ class TestGenBankFeatures:
                                 ("feature_collection_type", None),
                                 ("sequence_name", "CM021111.1"),
                                 ("sequence_guid", None),
-                                ("feature_collection_guid", "e986d20b-2e0e-8e11-76d1-bd49796ef25c"),
+                                ("feature_collection_guid", "a268a62a-59d2-33ec-0b57-37682b71c2d4"),
                                 ("qualifiers", {"name": ["joined_feature_plus_strand"]}),
                             ]
                         ),
@@ -583,7 +616,7 @@ class TestGenBankFeatures:
                                                 ),
                                                 ("sequence_name", "CM021111.1"),
                                                 ("sequence_guid", None),
-                                                ("feature_interval_guid", "da172494-6af0-688e-5ff2-9bc583fec47d"),
+                                                ("feature_interval_guid", "37bc71aa-ccc3-738f-bb4c-99d139d67ff0"),
                                                 ("feature_guid", None),
                                                 ("feature_types", ["feature"]),
                                                 ("feature_name", "joined_feature_minus_strand"),
@@ -599,7 +632,7 @@ class TestGenBankFeatures:
                                 ("feature_collection_type", None),
                                 ("sequence_name", "CM021111.1"),
                                 ("sequence_guid", None),
-                                ("feature_collection_guid", "46d4dd7a-6c99-0264-4def-6180624f84c5"),
+                                ("feature_collection_guid", "387b0ac4-3a25-a4d8-93d5-d041d2326e51"),
                                 (
                                     "qualifiers",
                                     {"name": ["joined_feature_minus_strand"], "note": ["overlaps last feature"]},
@@ -619,7 +652,7 @@ class TestGenBankFeatures:
                                                 ("qualifiers", {"name": ["unjoined_minus_strand"]}),
                                                 ("sequence_name", "CM021111.1"),
                                                 ("sequence_guid", None),
-                                                ("feature_interval_guid", "a853506f-377f-8093-6f01-342c2c61be69"),
+                                                ("feature_interval_guid", "ed9f13bf-6b43-b97a-d338-08a91fa4b9ac"),
                                                 ("feature_guid", None),
                                                 ("feature_types", ["feature"]),
                                                 ("feature_name", "unjoined_minus_strand"),
@@ -635,7 +668,7 @@ class TestGenBankFeatures:
                                 ("feature_collection_type", None),
                                 ("sequence_name", "CM021111.1"),
                                 ("sequence_guid", None),
-                                ("feature_collection_guid", "6332c330-1268-5088-fd99-fc18bc37a9a2"),
+                                ("feature_collection_guid", "8aac966f-963c-94e3-ddae-a3ac7654e266"),
                                 ("qualifiers", {"name": ["unjoined_minus_strand"]}),
                             ]
                         ),
@@ -674,7 +707,7 @@ class TestGenBankFeatures:
                                                 ("transcript_type", "ncRNA"),
                                                 ("sequence_name", "CM021111.1"),
                                                 ("sequence_guid", None),
-                                                ("transcript_interval_guid", "7cf2db76-c9db-96e8-c85f-74daf603d9cf"),
+                                                ("transcript_interval_guid", "7335bd29-8f4b-131b-3628-965728adfa23"),
                                                 ("transcript_guid", None),
                                             ]
                                         )
@@ -687,7 +720,7 @@ class TestGenBankFeatures:
                                 ("qualifiers", {"locus_tag": ["GI526_G0000001"]}),
                                 ("sequence_name", "CM021111.1"),
                                 ("sequence_guid", None),
-                                ("gene_guid", "6cb70a2b-c2aa-542d-f382-0a10980cb00a"),
+                                ("gene_guid", "ebf02008-e818-1551-697e-e9d015e06d7a"),
                             ]
                         )
                     ],
@@ -789,7 +822,7 @@ class TestSortedParser:
                                                 ("transcript_type", "protein_coding"),
                                                 ("sequence_name", "FEPOIHMA_1"),
                                                 ("sequence_guid", None),
-                                                ("transcript_interval_guid", "4548a57b-41ec-dcc5-85ca-565412a1d59e"),
+                                                ("transcript_interval_guid", "1885d4a8-3523-3584-1904-ab8ead6f1ec5"),
                                                 ("transcript_guid", None),
                                             ]
                                         )
@@ -802,7 +835,7 @@ class TestSortedParser:
                                 ("qualifiers", {"gene": ["thrA"]}),
                                 ("sequence_name", "FEPOIHMA_1"),
                                 ("sequence_guid", None),
-                                ("gene_guid", "bac88ae4-8de0-147c-a151-887bb370cd3c"),
+                                ("gene_guid", "2708950c-f1de-5100-abbf-42374a4e8b95"),
                             ]
                         ),
                         OrderedDict(
@@ -827,7 +860,7 @@ class TestSortedParser:
                                                 ("transcript_type", "protein_coding"),
                                                 ("sequence_name", "FEPOIHMA_1"),
                                                 ("sequence_guid", None),
-                                                ("transcript_interval_guid", "8a837d19-5fdc-78e4-dd98-8b504d826d46"),
+                                                ("transcript_interval_guid", "0b534e84-512b-230d-8de1-90fc57c644b7"),
                                                 ("transcript_guid", None),
                                             ]
                                         )
@@ -840,7 +873,7 @@ class TestSortedParser:
                                 ("qualifiers", {"gene": ["thrB"]}),
                                 ("sequence_name", "FEPOIHMA_1"),
                                 ("sequence_guid", None),
-                                ("gene_guid", "b3254e70-1495-7b59-d944-b962dc7415eb"),
+                                ("gene_guid", "377f60d8-bc3f-959a-1fc5-6b3a7af00132"),
                             ]
                         ),
                         OrderedDict(
@@ -865,7 +898,7 @@ class TestSortedParser:
                                                 ("transcript_type", "tRNA"),
                                                 ("sequence_name", "FEPOIHMA_1"),
                                                 ("sequence_guid", None),
-                                                ("transcript_interval_guid", "54e26268-7e89-5cb1-d9b0-4e9d5944dae6"),
+                                                ("transcript_interval_guid", "6138a160-a59a-132f-0f8b-cd2666e2c03f"),
                                                 ("transcript_guid", None),
                                             ]
                                         )
@@ -878,7 +911,7 @@ class TestSortedParser:
                                 ("qualifiers", {"locus_tag": ["FEPOIHMA_02080"]}),
                                 ("sequence_name", "FEPOIHMA_1"),
                                 ("sequence_guid", None),
-                                ("gene_guid", "841a7bc3-79bc-d9ca-9923-5d3f239a2dde"),
+                                ("gene_guid", "50e31c78-f5c7-3803-1311-b8d7e12c720e"),
                             ]
                         ),
                         OrderedDict(
@@ -903,7 +936,7 @@ class TestSortedParser:
                                                 ("transcript_type", "protein_coding"),
                                                 ("sequence_name", "FEPOIHMA_1"),
                                                 ("sequence_guid", None),
-                                                ("transcript_interval_guid", "f8fba432-72c3-1d17-d327-2f57e5956435"),
+                                                ("transcript_interval_guid", "c90401f8-d6a2-cd99-85be-2fd71a059ee5"),
                                                 ("transcript_guid", None),
                                             ]
                                         )
@@ -916,7 +949,7 @@ class TestSortedParser:
                                 ("qualifiers", {"gene": ["fake"]}),
                                 ("sequence_name", "FEPOIHMA_1"),
                                 ("sequence_guid", None),
-                                ("gene_guid", "014d29f5-58e8-b5c1-2b12-d66e7dabf849"),
+                                ("gene_guid", "19974310-8f9b-4cb6-6c4d-864fb4a217c9"),
                             ]
                         ),
                     ],
@@ -966,7 +999,7 @@ class TestSortedParser:
                                                 ("transcript_type", "ncRNA"),
                                                 ("sequence_name", "CM021111.1"),
                                                 ("sequence_guid", None),
-                                                ("transcript_interval_guid", "071c9bc1-6eaf-0c54-d52a-586b1fa2c6a5"),
+                                                ("transcript_interval_guid", "c878c7a1-5a83-e846-b331-967b34f40a9b"),
                                                 ("transcript_guid", None),
                                             ]
                                         )
@@ -979,7 +1012,7 @@ class TestSortedParser:
                                 ("qualifiers", {"note": ["gene_after_ncrnA"]}),
                                 ("sequence_name", "CM021111.1"),
                                 ("sequence_guid", None),
-                                ("gene_guid", "e381e2b6-f541-69d2-f00d-0d5339d402a3"),
+                                ("gene_guid", "89f19909-0955-72a6-c04b-3a2cc3dfc66d"),
                             ]
                         ),
                         OrderedDict(
@@ -1010,7 +1043,7 @@ class TestSortedParser:
                                                 ("transcript_type", "protein_coding"),
                                                 ("sequence_name", "CM021111.1"),
                                                 ("sequence_guid", None),
-                                                ("transcript_interval_guid", "76813021-961f-4eaa-e6d8-2ef87b0d90b5"),
+                                                ("transcript_interval_guid", "b0adbc68-ed5e-fe54-fce7-59fb42ddc206"),
                                                 ("transcript_guid", None),
                                             ]
                                         )
@@ -1023,7 +1056,7 @@ class TestSortedParser:
                                 ("qualifiers", {"gene": ["GDH3"], "note": ["gene_at_end"]}),
                                 ("sequence_name", "CM021111.1"),
                                 ("sequence_guid", None),
-                                ("gene_guid", "151367c7-f12e-172f-f3f8-2ec9c7c0d1f1"),
+                                ("gene_guid", "e1adb093-d865-0c67-da19-08aa5c188cc3"),
                             ]
                         ),
                         OrderedDict(
@@ -1048,7 +1081,7 @@ class TestSortedParser:
                                                 ("transcript_type", "protein_coding"),
                                                 ("sequence_name", "CM021111.1"),
                                                 ("sequence_guid", None),
-                                                ("transcript_interval_guid", "b8331bbf-c851-ff60-eee4-8e2b6cbbad95"),
+                                                ("transcript_interval_guid", "5a379323-210e-9acd-b9a5-d2dd4a843c27"),
                                                 ("transcript_guid", None),
                                             ]
                                         )
@@ -1061,7 +1094,7 @@ class TestSortedParser:
                                 ("qualifiers", {"gene": ["BDH2"]}),
                                 ("sequence_name", "CM021111.1"),
                                 ("sequence_guid", None),
-                                ("gene_guid", "0529c9ed-3ef4-9642-044c-5498a8e5f2d3"),
+                                ("gene_guid", "fbc56e86-ab99-b4f5-f8f9-655ec522340e"),
                             ]
                         ),
                     ],
@@ -1087,8 +1120,24 @@ class TestSortedParser:
         assert recs[0].genes[0].transcripts[0].cds.num_blocks > 1
         assert (
             str(recs[0].genes[0].transcripts[0].cds.translate())
-            == "MLFAYSGCLAPQCIPDISSFKALPFRDTESRFTTDSSVISSRFSSSFTSSSSKIIIITSIFSSKMDNEHVGASLIVSLSMASLILTNVFSFSSTSYSSQPSDYIACSPSGIDDQPVAEPSGYTPVGSPLHILVVLLLVWMQ*VTNLHLMKANRRMHLPDSSQKFTVILP*LI*FYIYSVSFRSFTYK*APFL"  # noqa: E501
+            == "MLFAYSGCLAPQCIPDISSFKALPFRDTESRFTTDSSVISSRFSSSFTSSSSKIIIITSIFSSKMDNEHVGASLIVSLSMASLILTNVFSFSSTSYSSQPSDYIACSPSGIDDQPVAEPSGYTPVGSPSSTFWLYYFWFGCNRLPIFT**RPIDECIFQIRHKSLQSFCLNSYNFTFTQYPSEVLPTSKHHFL"  # noqa: E501
         )
+
+    @pytest.mark.parametrize(
+        "parser_mode", [GenBankParserType.SORTED, GenBankParserType.HYBRID, GenBankParserType.LOCUS_TAG]
+    )
+    def test_multiple_cds_gene_parser(self, test_data_dir, parser_mode):
+        """Sometimes genbank files have multiple CDS for a gene intended to represent alternative isoforms,
+        but these still have the same locus tag. Show that this can be successfully parsed in all parser modes.
+        """
+        genbank = test_data_dir / "multiple_cds_same_gene.gb"
+        recs = list(
+            ParsedAnnotationRecord.parsed_annotation_records_to_model(
+                parse_genbank(test_data_dir / genbank, gbk_type=parser_mode)
+            )
+        )
+        assert len(recs[0].genes[0].transcripts) == 2
+        assert len(recs[0].genes[1].transcripts) == 2
 
 
 class TestHybridParser:

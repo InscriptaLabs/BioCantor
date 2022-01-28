@@ -69,6 +69,7 @@ class FeatureInterval(AbstractFeatureInterval):
             self.guid = digest_object(
                 self._genomic_starts,
                 self._genomic_ends,
+                self.strand,
                 self.qualifiers,
                 self.sequence_name,
                 self.feature_types,

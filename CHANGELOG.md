@@ -12,9 +12,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Changed
 - Improved documentation
+- GenBank parser now handles `CDSInterval`s that exceed the bounds of their Exons by raising a warning and truncating the CDS interval
+- GenBank parser now handles duplicate `TranscriptInterval` or `FeatureInterval` objects by removing the duplicates
 
 ### Fixed
-- `AnnotationCollection.query_by_guids` did not accept a single GUID as a argument
+- `AnnotationCollection.query_by_guids` did not accept a single GUID as an argument
+- `FeatureInterval`, `TranscriptInterval`, and `CDSInterval` did not take strand into account when generating a GUID
+- GenBank parser was inadvertently merging alternative isoforms in all parser modes instead of keeping them separate
 
 
 ## [0.12.0] 2021-10-22
