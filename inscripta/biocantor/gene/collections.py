@@ -25,6 +25,8 @@ from inscripta.biocantor.exc import (
     InvalidAnnotationError,
     InvalidQueryError,
     NoSuchAncestorException,
+    DuplicateFeatureError,
+    DuplicateTranscriptError,
 )
 from inscripta.biocantor.gene.biotype import Biotype, UNKNOWN_BIOTYPE
 from inscripta.biocantor.gene.cds import CDSInterval
@@ -37,7 +39,7 @@ from inscripta.biocantor.io.gff3.exc import GFF3MissingSequenceNameError
 from inscripta.biocantor.io.gff3.rows import GFFRow, GFFAttributes
 from inscripta.biocantor.location import Location, SingleInterval, EmptyLocation, Strand
 from inscripta.biocantor.parent import Parent, SequenceType
-from inscripta.biocantor.sequence import Sequence
+from inscripta.biocantor.sequence import Sequence, Alphabet
 from inscripta.biocantor.util.bins import bins
 from inscripta.biocantor.util.hashing import digest_object
 
@@ -229,7 +231,7 @@ class GeneInterval(AbstractFeatureIntervalCollection):
         self.guid_map = {}
         for tx in self.transcripts:
             if tx.guid in self.guid_map:
-                raise InvalidAnnotationError(f"Guid {tx.guid} found more than once in this GeneInterval")
+                raise DuplicateTranscriptError(f"Guid {tx.guid} found more than once in this GeneInterval")
             self.guid_map[tx.guid] = tx
 
     def __repr__(self):
@@ -547,7 +549,7 @@ class FeatureIntervalCollection(AbstractFeatureIntervalCollection):
         self.guid_map = {}
         for feat in self.feature_intervals:
             if feat.guid in self.guid_map:
-                raise InvalidAnnotationError(f"Guid {feat.guid} found more than once in this FeatureIntervalCollection")
+                raise DuplicateFeatureError(f"Guid {feat.guid} found more than once in this FeatureIntervalCollection")
             self.guid_map[feat.guid] = feat
 
     def __repr__(self):
@@ -864,6 +866,26 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
     def __len__(self):
         return len(self.feature_collections) + len(self.genes)
 
+    def __getstate__(self):
+        return self.to_dict(export_parent=True)
+
+    def __setstate__(self, state):
+        ac = self.from_dict(state)
+        self.__init__(
+            ac.feature_collections,
+            ac.genes,
+            ac.name,
+            ac.id,
+            ac.sequence_name,
+            ac.sequence_guid,
+            ac.sequence_path,
+            ac._export_qualifiers_to_list(),
+            ac.start,
+            ac.end,
+            ac.completely_within,
+            ac._parent_or_seq_chunk_parent,
+        )
+
     @property
     def is_empty(self) -> bool:
         """Is this an empty collection?"""
@@ -926,8 +948,22 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
         sort_iter = sorted(chain_iter, key=lambda x: x.start)
         yield from sort_iter
 
-    def to_dict(self, chromosome_relative_coordinates: bool = True) -> Dict[str, Any]:
-        """Convert to a dict usable by :class:`~biocantor.io.models.AnnotationCollectionModel`."""
+    def to_dict(self, chromosome_relative_coordinates: bool = True, export_parent: bool = False) -> Dict[str, Any]:
+        """Convert to a dict usable by :class:`~biocantor.io.models.AnnotationCollectionModel`.
+
+        Allows export of the parent object as well, which allows for sequence information to be serialized to disk.
+
+        It is not currently possible to export the parent in chunk-relative coordinates.
+
+        Raises:
+            NotImplementedError if chromosome_relative_coordinates is ``False`` and export_parent is ``True``.
+        """
+
+        if export_parent is True:
+            parent_or_seq_chunk_parent = self._parent_to_dict(chromosome_relative_coordinates)
+        else:
+            parent_or_seq_chunk_parent = None
+
         return dict(
             genes=[gene.to_dict(chromosome_relative_coordinates) for gene in self.genes],
             feature_collections=[
@@ -942,11 +978,84 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
             start=self.start if chromosome_relative_coordinates else self.chunk_relative_start,
             end=self.end if chromosome_relative_coordinates else self.chunk_relative_end,
             completely_within=self.completely_within,
+            parent_or_seq_chunk_parent=parent_or_seq_chunk_parent,
         )
 
     @staticmethod
     def from_dict(vals: Dict[str, Any], parent_or_seq_chunk_parent: Optional[Parent] = None) -> "AnnotationCollection":
-        """Build an :class:`FeatureIntervalCollection` from a dictionary representation"""
+        """Build an :class:`AnnotationCollection` from a dictionary representation.
+
+        Will use the ``parent_or_seq_chunk_parent`` value encoded in the dict if it exists,
+        but this will be overridden by anything passed to the parameter.
+        """
+
+        def extract_parent_or_seq_chunk_parent_from_parent_dict(parent_dict: Dict[str, Any]) -> Optional[Parent]:
+            """
+            Extract a ``parent_or_seq_chunk_parent`` from a dictionary representation. This function is called
+            if no ``parent_or_seq_chunk_parent`` is provided explicitly to ``from_dict``.
+
+            NOTE: This function modifies the contents of ``parent_dict``. It is expected that it is only called
+            from ``convert_parent_dict_to_parent``, which copies ``parent_dict`` out of the input ``vals``
+            dictionary.
+
+            When the original :class:`AnnotationCollection` was exported to dictionary, it may or may not have had
+            a ``parent_or_seq_chunk_parent``, and that :class:`~biocantor.parent.Parent` may or may not have had
+            any sequence. The sequence may or may not have been a sequence-chunk.
+
+            This function first checks for the presence of any sequence information, then infers if the sequence
+            was a chunk or not.
+            """
+            if parent_dict.get("seq"):
+                # have to import here to avoid circular imports
+                from inscripta.biocantor.io.parser import seq_chunk_to_parent, seq_to_parent
+
+                # use dictionary to prevent seq_to_parent or seq_chunk_to_parent from retaining their default parameters
+                if parent_dict.get("seq_type") and parent_dict["seq_type"] == SequenceType.SEQUENCE_CHUNK:
+                    fn = seq_chunk_to_parent
+                    # not an argument to seq_chunk_to_parent because it is implicit
+                    del parent_dict["seq_type"]
+                else:
+                    # seq_to_parent uses slightly different kwargs, unfortunately
+                    fn = seq_to_parent
+                    parent_dict["seq_id"] = parent_dict["sequence_name"]
+                    # remove incorrectly named or invalid parameters
+                    parent_dict = {
+                        k: v
+                        for k, v in parent_dict.items()
+                        if k not in ["sequence_name", "type", "start", "end", "strand"]
+                    }
+                parent_or_seq_chunk_parent = fn(**parent_dict)
+            elif "seq_type" in parent_dict or "sequence_name" in parent_dict:
+                # the previous AnnotationCollection had a sequenceless Parent
+                parent_or_seq_chunk_parent = Parent(
+                    id=parent_dict.get("sequence_name"), sequence_type=parent_dict.get("seq_type")
+                )
+            else:
+                parent_or_seq_chunk_parent = None
+            return parent_or_seq_chunk_parent
+
+        def convert_parent_dict_to_parent(vals: Dict[str, Any]) -> Optional[Parent]:
+            """Converts the optional dictionary representation of a ``parent_or_seq_chunk_parent`` to
+            a Parent object.
+
+            NOTE: This function copies the input dictionary, stripping out null values.
+            """
+            # copy the input parent dictionary, stripping out null values
+            parent_dict = {k: v for k, v in vals["parent_or_seq_chunk_parent"].items() if v is not None}
+
+            if parent_dict.get("alphabet"):
+                parent_dict["alphabet"] = Alphabet[parent_dict["alphabet"]]
+            if parent_dict.get("strand"):
+                parent_dict["strand"] = Strand[parent_dict["strand"]]
+            if parent_dict.get("type"):
+                parent_dict["seq_type"] = SequenceType.sequence_type_str_to_type(parent_dict["type"])
+                del parent_dict["type"]
+
+            return extract_parent_or_seq_chunk_parent_from_parent_dict(parent_dict)
+
+        if not parent_or_seq_chunk_parent and "parent_or_seq_chunk_parent" in vals:
+            parent_or_seq_chunk_parent = convert_parent_dict_to_parent(vals)
+
         return AnnotationCollection(
             genes=[GeneInterval.from_dict(x, parent_or_seq_chunk_parent) for x in vals["genes"]],
             feature_collections=[
@@ -1201,11 +1310,11 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
             genes_to_keep, features_collections_to_keep, start, end, self.completely_within
         )
 
-    def query_by_guids(self, ids: List[UUID]) -> "AnnotationCollection":
+    def query_by_guids(self, id_or_ids: Union[UUID, List[UUID]]) -> "AnnotationCollection":
         """Filter this annotation collection object by a list of unique IDs.
 
         Args:
-            ids: List of GUIDs, or unique IDs.
+            id_or_ids: List of GUIDs, or unique IDs. Can also be a single ID.
 
         NOTE: If the children of this collection have GUID collisions, either across genes or features or
         within genes and features, this function will return all members with the matching GUID.
@@ -1213,6 +1322,11 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
         Returns:
            :class:`AnnotationCollection` that may be empty.
         """
+        if isinstance(id_or_ids, UUID):
+            ids = [id_or_ids]
+        else:
+            ids = id_or_ids
+
         genes_to_keep = []
         features_collections_to_keep = []
         for i in ids:

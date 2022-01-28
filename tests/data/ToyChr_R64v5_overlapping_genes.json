@@ -68,7 +68,7 @@
                     "transcript_type": "protein_coding",
                     "sequence_name": "CM021127.1",
                     "sequence_guid": null,
-                    "transcript_interval_guid": "02954a60-2f54-60ee-efa8-68e79cf91fa2",
+                    "transcript_interval_guid": "c67100d2-b331-4657-e83e-a032daebd98a",
                     "transcript_guid": null
                 }
             ],
@@ -118,7 +118,7 @@
             },
             "sequence_name": "CM021127.1",
             "sequence_guid": null,
-            "gene_guid": "50871284-3029-fec2-0df1-a276aef427d6"
+            "gene_guid": "74012a47-0f73-00ac-0c9b-3f2017b562f3"
         },
         {
             "transcripts": [
@@ -187,7 +187,7 @@
                     "transcript_type": "protein_coding",
                     "sequence_name": "CM021127.1",
                     "sequence_guid": null,
-                    "transcript_interval_guid": "225cce43-5441-0e39-aa4a-4a766ed13fec",
+                    "transcript_interval_guid": "ed97d4de-61e2-418a-e419-e727a3c7f3cb",
                     "transcript_guid": null
                 }
             ],
@@ -237,7 +237,7 @@
             },
             "sequence_name": "CM021127.1",
             "sequence_guid": null,
-            "gene_guid": "dbe85959-f8bb-9dcd-20d7-07800f3d5d09"
+            "gene_guid": "25f8645c-cb55-d2d5-3ef0-a59fbf122abc"
         },
         {
             "transcripts": [
@@ -301,7 +301,7 @@
                     "transcript_type": "protein_coding",
                     "sequence_name": "CM021127.1",
                     "sequence_guid": null,
-                    "transcript_interval_guid": "dd32c217-dc6a-3d83-2777-ab46f9229e28",
+                    "transcript_interval_guid": "5343d61c-8603-b871-880a-13951f59677a",
                     "transcript_guid": null
                 }
             ],
@@ -346,7 +346,7 @@
             },
             "sequence_name": "CM021127.1",
             "sequence_guid": null,
-            "gene_guid": "9cc92ad8-11bd-5a7a-ec46-733c48d802cb"
+            "gene_guid": "6f4d00ff-0bd6-b3ff-7193-d64a11a088de"
         },
         {
             "transcripts": [
@@ -411,7 +411,7 @@
                     "transcript_type": "protein_coding",
                     "sequence_name": "CM021127.1",
                     "sequence_guid": null,
-                    "transcript_interval_guid": "48173504-4feb-1b8e-893f-16c53a73e476",
+                    "transcript_interval_guid": "3d756161-a7a0-1473-2b46-ff87cf23a17b",
                     "transcript_guid": null
                 }
             ],
@@ -457,7 +457,7 @@
             },
             "sequence_name": "CM021127.1",
             "sequence_guid": null,
-            "gene_guid": "35ea6ea6-6486-2fa3-10aa-fb066745d29a"
+            "gene_guid": "7cbc70a1-4b77-d7b3-4b82-57d38cb33e17"
         },
         {
             "transcripts": [
@@ -527,7 +527,7 @@
                     "transcript_type": "protein_coding",
                     "sequence_name": "CM021127.1",
                     "sequence_guid": null,
-                    "transcript_interval_guid": "9719a6f5-5d47-1afb-bb5f-fdb6f8cd20cd",
+                    "transcript_interval_guid": "beca8a3e-85ec-4b82-b4a0-c5220b368c83",
                     "transcript_guid": null
                 }
             ],
@@ -578,7 +578,7 @@
             },
             "sequence_name": "CM021127.1",
             "sequence_guid": null,
-            "gene_guid": "6ecbe73a-edb1-6e26-d228-aae37724f604"
+            "gene_guid": "e4fd6b77-631b-a46c-55d8-1b606770f323"
         },
         {
             "transcripts": [
@@ -644,7 +644,7 @@
                     "transcript_type": "protein_coding",
                     "sequence_name": "CM021127.1",
                     "sequence_guid": null,
-                    "transcript_interval_guid": "fc087dab-ebe6-30e6-6bdb-ae16534d747d",
+                    "transcript_interval_guid": "4da9bb0e-cdc4-b4aa-fe62-1c18ec68631d",
                     "transcript_guid": null
                 }
             ],
@@ -691,7 +691,7 @@
             },
             "sequence_name": "CM021127.1",
             "sequence_guid": null,
-            "gene_guid": "057a5e53-715c-3bc7-0a42-47129a79f62b"
+            "gene_guid": "f7dd253f-2fb6-fb7d-363e-6d16d0d9b9d4"
         },
         {
             "transcripts": [
@@ -760,7 +760,7 @@
                     "transcript_type": "protein_coding",
                     "sequence_name": "CM021127.1",
                     "sequence_guid": null,
-                    "transcript_interval_guid": "6d8aa5ab-adec-eb01-f3b8-637fa42fb710",
+                    "transcript_interval_guid": "708ddc5d-a6c2-c570-15c1-0fab6fae6167",
                     "transcript_guid": null
                 }
             ],
@@ -810,7 +810,7 @@
             },
             "sequence_name": "CM021127.1",
             "sequence_guid": null,
-            "gene_guid": "9bf1f290-87ca-89db-fd87-7db857318717"
+            "gene_guid": "4f5eaa86-b30e-c64d-5425-3a66e81a2f8e"
         },
         {
             "transcripts": [
@@ -869,7 +869,7 @@
                     "transcript_type": "protein_coding",
                     "sequence_name": "CM021127.1",
                     "sequence_guid": null,
-                    "transcript_interval_guid": "23acd371-5ab3-8242-8fcf-b90e8c1dec9c",
+                    "transcript_interval_guid": "5d6c5690-13d4-48bb-24b7-93b20f105440",
                     "transcript_guid": null
                 }
             ],
@@ -909,7 +909,7 @@
             },
             "sequence_name": "CM021127.1",
             "sequence_guid": null,
-            "gene_guid": "399f7f5a-cdb1-c294-7208-282dbf09ab57"
+            "gene_guid": "5b3cb12c-64cf-f3ae-4eb7-7800788e1738"
         },
         {
             "transcripts": [
@@ -968,7 +968,7 @@
                     "transcript_type": "protein_coding",
                     "sequence_name": "CM021127.1",
                     "sequence_guid": null,
-                    "transcript_interval_guid": "8500559c-6fde-695a-4717-5f3f58212832",
+                    "transcript_interval_guid": "57e4774b-1763-b544-c968-19c5bf16ff50",
                     "transcript_guid": null
                 }
             ],
@@ -1008,7 +1008,7 @@
             },
             "sequence_name": "CM021127.1",
             "sequence_guid": null,
-            "gene_guid": "bb66717f-b319-d18e-9317-ebbdcf8a149c"
+            "gene_guid": "7a696eb5-280f-cdd7-8ad0-47d46383ecc0"
         },
         {
             "transcripts": [
@@ -1074,7 +1074,7 @@
                     "transcript_type": "protein_coding",
                     "sequence_name": "CM021127.1",
                     "sequence_guid": null,
-                    "transcript_interval_guid": "639409e8-c091-9b76-ca84-5ac48b743cb6",
+                    "transcript_interval_guid": "75723b91-042c-1035-a7ce-369e6393c365",
                     "transcript_guid": null
                 }
             ],
@@ -1121,7 +1121,7 @@
             },
             "sequence_name": "CM021127.1",
             "sequence_guid": null,
-            "gene_guid": "c68d5238-6166-0d26-a410-fadd2a3845db"
+            "gene_guid": "c2a84a17-b9e5-5762-949a-1abdab9d0345"
         },
         {
             "transcripts": [
@@ -1167,7 +1167,7 @@
                     "transcript_type": "protein_coding",
                     "sequence_name": "CM021127.1",
                     "sequence_guid": null,
-                    "transcript_interval_guid": "7e10cfb7-b85e-9b6a-0478-e6101677e0aa",
+                    "transcript_interval_guid": "09373882-95ae-0f4f-3951-0ca55b3624e9",
                     "transcript_guid": null
                 }
             ],
@@ -1194,7 +1194,7 @@
             },
             "sequence_name": "CM021127.1",
             "sequence_guid": null,
-            "gene_guid": "d57a3822-31f4-29c6-90f6-5645ef25a1a1"
+            "gene_guid": "911e4cc5-d153-242d-b8a9-782baf7ec894"
         }
     ],
     "name": "CM021127.1",
@@ -1224,5 +1224,6 @@
     },
     "start": 0,
     "end": 15516,
-    "completely_within": null
+    "completely_within": null,
+    "parent_or_seq_chunk_parent": null
 }

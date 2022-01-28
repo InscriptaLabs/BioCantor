@@ -24,12 +24,12 @@
                         "group"
                     ],
                     "feature_name": "feat2",
-                    "feature_id": "31b96c20-3cbd-1633-b666-d83173e2c62e",
+                    "feature_id": "2b4a5f34-aa89-c36b-ccc1-87cab22213b0",
                     "is_primary_feature": false
                 }
             ],
             "feature_collection_name": "featgrp1",
-            "feature_collection_id": "4cd9e7a7-623b-4446-a313-7ae90b15df83",
+            "feature_collection_id": "3fe68ba4-4ba0-37cd-594e-4d1bba892126",
             "locus_tag": null,
             "feature_collection_type": "biological_region",
             "sequence_name": "chr1",
@@ -41,35 +41,6 @@
     "genes": [
         {
             "transcripts": [
-                {
-                    "exon_starts": [
-                        2
-                    ],
-                    "exon_ends": [
-                        18
-                    ],
-                    "strand": "PLUS",
-                    "cds_starts": [
-                        5
-                    ],
-                    "cds_ends": [
-                        9
-                    ],
-                    "cds_frames": [
-                        "ZERO"
-                    ],
-                    "qualifiers": null,
-                    "is_primary_tx": false,
-                    "transcript_id": null,
-                    "protein_id": null,
-                    "product": null,
-                    "transcript_symbol": "tx1",
-                    "transcript_type": "protein_coding",
-                    "sequence_name": "chr1",
-                    "sequence_guid": null,
-                    "transcript_interval_guid": null,
-                    "transcript_guid": null
-                },
                 {
                     "exon_starts": [
                         2,
@@ -108,6 +79,35 @@
                     "sequence_guid": null,
                     "transcript_interval_guid": null,
                     "transcript_guid": null
+                },
+                {
+                    "exon_starts": [
+                        2
+                    ],
+                    "exon_ends": [
+                        18
+                    ],
+                    "strand": "PLUS",
+                    "cds_starts": [
+                        5
+                    ],
+                    "cds_ends": [
+                        9
+                    ],
+                    "cds_frames": [
+                        "ZERO"
+                    ],
+                    "qualifiers": null,
+                    "is_primary_tx": false,
+                    "transcript_id": null,
+                    "protein_id": null,
+                    "product": null,
+                    "transcript_symbol": "tx1",
+                    "transcript_type": "protein_coding",
+                    "sequence_name": "chr1",
+                    "sequence_guid": null,
+                    "transcript_interval_guid": null,
+                    "transcript_guid": null
                 }
             ],
             "gene_id": "gene1",
@@ -128,5 +128,6 @@
     "qualifiers": null,
     "start": null,
     "end": null,
-    "completely_within": null
+    "completely_within": null,
+    "parent_or_seq_chunk_parent": null
 }

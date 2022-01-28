@@ -129,6 +129,7 @@ class TestCDSInterval:
             ),
             # Discontiguous CDS with -1bp programmed frameshift on chunk-relative coordinates
             # chunk-relative coordinates slice off the last 2 codons
+            # however, there should still be 5 codons despite the chunk slicing
             (
                 CDSInterval(
                     [2, 8],
@@ -1553,6 +1554,298 @@ class TestCDSInterval:
         assert cds.chromosome_codon_locations == tuple(expected)
 
     @pytest.mark.parametrize(
+        "cds,start,end,expected",
+        [
+            # single-exon, zero frame, no slicing
+            (
+                CDSInterval([2], [17], Strand.PLUS, [CDSFrame.ZERO], parent_or_seq_chunk_parent=chrom_parent),
+                None,
+                None,
+                [
+                    SingleInterval(2, 5, Strand.PLUS, chrom_parent),
+                    SingleInterval(5, 8, Strand.PLUS, chrom_parent),
+                    SingleInterval(8, 11, Strand.PLUS, chrom_parent),
+                    SingleInterval(11, 14, Strand.PLUS, chrom_parent),
+                    SingleInterval(14, 17, Strand.PLUS, chrom_parent),
+                ],
+            ),
+            # single-exon, zero frame, slice off first codon
+            (
+                CDSInterval([2], [17], Strand.PLUS, [CDSFrame.ZERO], parent_or_seq_chunk_parent=chrom_parent),
+                4,
+                None,
+                [
+                    SingleInterval(5, 8, Strand.PLUS, chrom_parent),
+                    SingleInterval(8, 11, Strand.PLUS, chrom_parent),
+                    SingleInterval(11, 14, Strand.PLUS, chrom_parent),
+                    SingleInterval(14, 17, Strand.PLUS, chrom_parent),
+                ],
+            ),
+            # single-exon, zero frame, slice off last codon
+            (
+                CDSInterval([2], [17], Strand.PLUS, [CDSFrame.ZERO], parent_or_seq_chunk_parent=chrom_parent),
+                None,
+                16,
+                [
+                    SingleInterval(2, 5, Strand.PLUS, chrom_parent),
+                    SingleInterval(5, 8, Strand.PLUS, chrom_parent),
+                    SingleInterval(8, 11, Strand.PLUS, chrom_parent),
+                    SingleInterval(11, 14, Strand.PLUS, chrom_parent),
+                ],
+            ),
+            # single-exon, one frame, no slicing
+            (
+                CDSInterval([2], [17], Strand.PLUS, [CDSFrame.ONE], parent_or_seq_chunk_parent=chrom_parent),
+                None,
+                None,
+                [
+                    SingleInterval(3, 6, Strand.PLUS, chrom_parent),
+                    SingleInterval(6, 9, Strand.PLUS, chrom_parent),
+                    SingleInterval(9, 12, Strand.PLUS, chrom_parent),
+                    SingleInterval(12, 15, Strand.PLUS, chrom_parent),
+                ],
+            ),
+            # single-exon, one frame, slice off first codon
+            (
+                CDSInterval([2], [17], Strand.PLUS, [CDSFrame.ONE], parent_or_seq_chunk_parent=chrom_parent),
+                4,
+                None,
+                [
+                    SingleInterval(6, 9, Strand.PLUS, chrom_parent),
+                    SingleInterval(9, 12, Strand.PLUS, chrom_parent),
+                    SingleInterval(12, 15, Strand.PLUS, chrom_parent),
+                ],
+            ),
+            # single-exon, one frame, slice off last codon
+            (
+                CDSInterval([2], [17], Strand.PLUS, [CDSFrame.ONE], parent_or_seq_chunk_parent=chrom_parent),
+                None,
+                14,
+                [
+                    SingleInterval(3, 6, Strand.PLUS, chrom_parent),
+                    SingleInterval(6, 9, Strand.PLUS, chrom_parent),
+                    SingleInterval(9, 12, Strand.PLUS, chrom_parent),
+                ],
+            ),
+            # single-exon, zero frame, no slicing, minus strand
+            (
+                CDSInterval([2], [17], Strand.MINUS, [CDSFrame.ZERO], parent_or_seq_chunk_parent=chrom_parent),
+                None,
+                None,
+                [
+                    SingleInterval(14, 17, Strand.MINUS, chrom_parent),
+                    SingleInterval(11, 14, Strand.MINUS, chrom_parent),
+                    SingleInterval(8, 11, Strand.MINUS, chrom_parent),
+                    SingleInterval(5, 8, Strand.MINUS, chrom_parent),
+                    SingleInterval(2, 5, Strand.MINUS, chrom_parent),
+                ],
+            ),
+            # single-exon, zero frame, slice off last codon, minus strand
+            (
+                CDSInterval([2], [17], Strand.MINUS, [CDSFrame.ZERO], parent_or_seq_chunk_parent=chrom_parent),
+                4,
+                None,
+                [
+                    SingleInterval(14, 17, Strand.MINUS, chrom_parent),
+                    SingleInterval(11, 14, Strand.MINUS, chrom_parent),
+                    SingleInterval(8, 11, Strand.MINUS, chrom_parent),
+                    SingleInterval(5, 8, Strand.MINUS, chrom_parent),
+                ],
+            ),
+            # single-exon, zero frame, slice off first codon, minus strand
+            (
+                CDSInterval([2], [17], Strand.MINUS, [CDSFrame.ZERO], parent_or_seq_chunk_parent=chrom_parent),
+                None,
+                16,
+                [
+                    SingleInterval(11, 14, Strand.MINUS, chrom_parent),
+                    SingleInterval(8, 11, Strand.MINUS, chrom_parent),
+                    SingleInterval(5, 8, Strand.MINUS, chrom_parent),
+                    SingleInterval(2, 5, Strand.MINUS, chrom_parent),
+                ],
+            ),
+            # single-exon, one frame, no slicing, minus strand
+            (
+                CDSInterval([2], [17], Strand.MINUS, [CDSFrame.ONE], parent_or_seq_chunk_parent=chrom_parent),
+                None,
+                None,
+                [
+                    SingleInterval(13, 16, Strand.MINUS, chrom_parent),
+                    SingleInterval(10, 13, Strand.MINUS, chrom_parent),
+                    SingleInterval(7, 10, Strand.MINUS, chrom_parent),
+                    SingleInterval(4, 7, Strand.MINUS, chrom_parent),
+                ],
+            ),
+            # single-exon, one frame, slice off last codon, minus strand
+            (
+                CDSInterval([2], [17], Strand.MINUS, [CDSFrame.ONE], parent_or_seq_chunk_parent=chrom_parent),
+                5,
+                None,
+                [
+                    SingleInterval(13, 16, Strand.MINUS, chrom_parent),
+                    SingleInterval(10, 13, Strand.MINUS, chrom_parent),
+                    SingleInterval(7, 10, Strand.MINUS, chrom_parent),
+                ],
+            ),
+            # single-exon, one frame, slice off first codon, minus strand
+            (
+                CDSInterval([2], [17], Strand.MINUS, [CDSFrame.ONE], parent_or_seq_chunk_parent=chrom_parent),
+                None,
+                14,
+                [
+                    SingleInterval(10, 13, Strand.MINUS, chrom_parent),
+                    SingleInterval(7, 10, Strand.MINUS, chrom_parent),
+                    SingleInterval(4, 7, Strand.MINUS, chrom_parent),
+                ],
+            ),
+            # slice off no codons with all null
+            (
+                CDSInterval(
+                    [2, 8],
+                    [9, 17],
+                    Strand.PLUS,
+                    [CDSFrame.ZERO, CDSFrame.ONE],
+                    parent_or_seq_chunk_parent=chunk_parent2_12,
+                ),
+                None,
+                None,
+                [
+                    SingleInterval(2, 5, Strand.PLUS, sequenceless_chrom_parent),
+                    SingleInterval(5, 8, Strand.PLUS, sequenceless_chrom_parent),
+                    CompoundInterval([8, 8], [9, 10], Strand.PLUS, sequenceless_chrom_parent),
+                    SingleInterval(10, 13, Strand.PLUS, sequenceless_chrom_parent),
+                    SingleInterval(13, 16, Strand.PLUS, sequenceless_chrom_parent),
+                ],
+            ),
+            # slice off no codons with a large number
+            (
+                CDSInterval(
+                    [2, 8],
+                    [9, 17],
+                    Strand.PLUS,
+                    [CDSFrame.ZERO, CDSFrame.ONE],
+                    parent_or_seq_chunk_parent=chunk_parent2_12,
+                ),
+                None,
+                30,
+                [
+                    SingleInterval(2, 5, Strand.PLUS, sequenceless_chrom_parent),
+                    SingleInterval(5, 8, Strand.PLUS, sequenceless_chrom_parent),
+                    CompoundInterval([8, 8], [9, 10], Strand.PLUS, sequenceless_chrom_parent),
+                    SingleInterval(10, 13, Strand.PLUS, sequenceless_chrom_parent),
+                    SingleInterval(13, 16, Strand.PLUS, sequenceless_chrom_parent),
+                ],
+            ),
+            # slice off the first codon
+            (
+                CDSInterval(
+                    [2, 8],
+                    [9, 17],
+                    Strand.PLUS,
+                    [CDSFrame.ZERO, CDSFrame.ONE],
+                    parent_or_seq_chunk_parent=chunk_parent2_12,
+                ),
+                3,
+                None,
+                [
+                    SingleInterval(5, 8, Strand.PLUS, sequenceless_chrom_parent),
+                    CompoundInterval([8, 8], [9, 10], Strand.PLUS, sequenceless_chrom_parent),
+                    SingleInterval(10, 13, Strand.PLUS, sequenceless_chrom_parent),
+                    SingleInterval(13, 16, Strand.PLUS, sequenceless_chrom_parent),
+                ],
+            ),
+            # slice off the first and last codon
+            (
+                CDSInterval(
+                    [2, 8],
+                    [9, 17],
+                    Strand.PLUS,
+                    [CDSFrame.ZERO, CDSFrame.ONE],
+                    parent_or_seq_chunk_parent=chunk_parent2_12,
+                ),
+                3,
+                15,
+                [
+                    SingleInterval(5, 8, Strand.PLUS, sequenceless_chrom_parent),
+                    CompoundInterval([8, 8], [9, 10], Strand.PLUS, sequenceless_chrom_parent),
+                    SingleInterval(10, 13, Strand.PLUS, sequenceless_chrom_parent),
+                ],
+            ),
+            # slice off the first two codons
+            (
+                CDSInterval(
+                    [2, 8],
+                    [9, 17],
+                    Strand.PLUS,
+                    [CDSFrame.ZERO, CDSFrame.ONE],
+                    parent_or_seq_chunk_parent=chunk_parent2_12,
+                ),
+                8,
+                17,
+                [
+                    CompoundInterval([8, 8], [9, 10], Strand.PLUS, sequenceless_chrom_parent),
+                    SingleInterval(10, 13, Strand.PLUS, sequenceless_chrom_parent),
+                    SingleInterval(13, 16, Strand.PLUS, sequenceless_chrom_parent),
+                ],
+            ),
+            # slice off the first codon in relative coordinates
+            (
+                CDSInterval(
+                    [2, 8],
+                    [9, 17],
+                    Strand.PLUS,
+                    [CDSFrame.ZERO, CDSFrame.ONE],
+                    parent_or_seq_chunk_parent=chrom_parent,
+                ),
+                3,
+                None,
+                [
+                    SingleInterval(5, 8, Strand.PLUS, chrom_parent),
+                    CompoundInterval([8, 8], [9, 10], Strand.PLUS, chrom_parent),
+                    SingleInterval(10, 13, Strand.PLUS, chrom_parent),
+                    SingleInterval(13, 16, Strand.PLUS, chrom_parent),
+                ],
+            ),
+            # slice off the first and last codons
+            (
+                CDSInterval(
+                    [2, 8],
+                    [9, 17],
+                    Strand.PLUS,
+                    [CDSFrame.ZERO, CDSFrame.ONE],
+                    parent_or_seq_chunk_parent=chrom_parent,
+                ),
+                3,
+                15,
+                [
+                    SingleInterval(5, 8, Strand.PLUS, chrom_parent),
+                    CompoundInterval([8, 8], [9, 10], Strand.PLUS, chrom_parent),
+                    SingleInterval(10, 13, Strand.PLUS, chrom_parent),
+                ],
+            ),
+            # slice off the first two codons
+            (
+                CDSInterval(
+                    [2, 8],
+                    [9, 17],
+                    Strand.PLUS,
+                    [CDSFrame.ZERO, CDSFrame.ONE],
+                    parent_or_seq_chunk_parent=chrom_parent,
+                ),
+                8,
+                17,
+                [
+                    CompoundInterval([8, 8], [9, 10], Strand.PLUS, chrom_parent),
+                    SingleInterval(10, 13, Strand.PLUS, chrom_parent),
+                    SingleInterval(13, 16, Strand.PLUS, chrom_parent),
+                ],
+            ),
+        ],
+    )
+    def test_scan_chromosome_codon_locations_sliced(self, cds, start, end, expected):
+        assert list(cds.scan_chromosome_codon_locations(start, end)) == expected
+
+    @pytest.mark.parametrize(
         "cds,expected",
         [
             # Contiguous CDS, plus strand, frame=0
@@ -2661,11 +2954,9 @@ class TestCDSInterval:
                 ),
             ),
         )
-        # show that calling translate() calls _scan_codon_locations_multi_exon()
+        # show that calling translate() calls _scan_codon_locations()
         with ExitStack() as stack:
-            overlapping = stack.enter_context(
-                patch("inscripta.biocantor.gene.cds.CDSInterval._scan_codon_locations_multi_exon")
-            )
+            overlapping = stack.enter_context(patch("inscripta.biocantor.gene.cds.CDSInterval._scan_codon_locations"))
             _ = list(cds.translate())
         overlapping.assert_called()
         # show that the function returns a sensible translation that starts from the 1st in-frame codon
@@ -2702,11 +2993,9 @@ class TestCDSInterval:
                 ),
             ),
         )
-        # show that calling translate() calls _scan_codon_locations_multi_exon()
+        # show that calling translate() calls _scan_codon_locations()
         with ExitStack() as stack:
-            overlapping = stack.enter_context(
-                patch("inscripta.biocantor.gene.cds.CDSInterval._scan_codon_locations_multi_exon")
-            )
+            overlapping = stack.enter_context(patch("inscripta.biocantor.gene.cds.CDSInterval._scan_codon_locations"))
             _ = list(cds.translate())
         overlapping.assert_called()
         # show that the function returns a sensible translation that starts from the 1st in-frame codon
@@ -2798,6 +3087,160 @@ class TestCDSInterval:
         assert cds.chunk_relative_location.strand == Strand.MINUS
         translation = cds.translate()
         assert str(translation) == "MTLPSGHPKSRLIKKFTALGPYI"
+
+    @pytest.mark.parametrize(
+        "start,end,cds_start,cds_end,frame,strand,expected",
+        [
+            # this chunk is beyond the CDS on both sides, so the translation is full length
+            (0, 27, 3, 24, CDSFrame.ZERO, Strand.PLUS, "MPGFHP*"),
+            # this chunk exactly bounds the CDS
+            (3, 27, 3, 24, CDSFrame.ZERO, Strand.PLUS, "MPGFHP*"),
+            # this chunk cuts the first off codon exactly
+            (6, 27, 3, 24, CDSFrame.ZERO, Strand.PLUS, "PGFHP*"),
+            # this chunk cuts off the 1st base of the 1st codon, so the translation starts from the 2nd codon
+            (4, 27, 3, 24, CDSFrame.ZERO, Strand.PLUS, "PGFHP*"),
+            # this chunk cuts off the 2nd base of the 1st codon, so the translation starts from the 2nd codon
+            (5, 27, 3, 24, CDSFrame.ZERO, Strand.PLUS, "PGFHP*"),
+            # this chunk cuts off the last base of the stop codon as well as the 2nd base of the start
+            (5, 23, 3, 24, CDSFrame.ZERO, Strand.PLUS, "PGFHP"),
+            # this chunk is beyond the CDS on both sides, so the translation is full length
+            (0, 27, 3, 18, CDSFrame.ZERO, Strand.MINUS, "MKPGH"),
+            # this chunk exactly bounds the CDS
+            (3, 18, 3, 18, CDSFrame.ZERO, Strand.MINUS, "MKPGH"),
+            # this chunk cuts the first off codon exactly
+            (3, 15, 3, 18, CDSFrame.ZERO, Strand.MINUS, "KPGH"),
+            # this chunk cuts off the 1st base of the 1st codon, so the translation starts from the 2nd codon
+            (3, 17, 3, 18, CDSFrame.ZERO, Strand.MINUS, "KPGH"),
+            # this chunk cuts off the 2nd base of the 1st codon, so the translation starts from the 2nd codon
+            (3, 16, 3, 18, CDSFrame.ZERO, Strand.MINUS, "KPGH"),
+            # this chunk cuts off the last base of the last codon as well as the 2nd base of the start
+            (4, 16, 3, 18, CDSFrame.ZERO, Strand.MINUS, "KPG"),
+            # this chunk is beyond the CDS on both sides, so the translation is full length
+            (0, 27, 2, 24, CDSFrame.ONE, Strand.PLUS, "MPGFHP*"),
+            # this chunk exactly bounds the CDS
+            (2, 27, 2, 24, CDSFrame.ONE, Strand.PLUS, "MPGFHP*"),
+            # this chunk cuts the first off codon exactly
+            (5, 27, 2, 24, CDSFrame.ONE, Strand.PLUS, "PGFHP*"),
+            # this chunk cuts off the 1st base of the 1st codon, so the translation starts from the 2nd codon
+            (4, 27, 2, 24, CDSFrame.ONE, Strand.PLUS, "PGFHP*"),
+            # this chunk cuts off the 2nd base of the 1st codon, so the translation starts from the 2nd codon
+            (5, 27, 2, 24, CDSFrame.ONE, Strand.PLUS, "PGFHP*"),
+            # this chunk cuts off the last base of the stop codon as well as the 2nd base of the start
+            (5, 23, 2, 24, CDSFrame.ONE, Strand.PLUS, "PGFHP"),
+            # this chunk is beyond the CDS on both sides, so the translation is full length
+            (0, 27, 3, 19, CDSFrame.ONE, Strand.MINUS, "MKPGH"),
+            # this chunk exactly bounds the CDS
+            (3, 19, 3, 19, CDSFrame.ONE, Strand.MINUS, "MKPGH"),
+            # this chunk cuts the first off codon exactly
+            (3, 16, 3, 19, CDSFrame.ONE, Strand.MINUS, "KPGH"),
+            # this chunk cuts off the 1st base of the 1st codon, so the translation starts from the 2nd codon
+            (3, 17, 3, 19, CDSFrame.ONE, Strand.MINUS, "KPGH"),
+            # this chunk cuts off the 2nd base of the 1st codon, so the translation starts from the 2nd codon
+            (3, 16, 3, 19, CDSFrame.ONE, Strand.MINUS, "KPGH"),
+            # this chunk cuts off the last base of the last codon as well as the 2nd base of the start
+            (4, 16, 3, 19, CDSFrame.ONE, Strand.MINUS, "KPG"),
+            # this chunk is beyond the CDS on both sides, so the translation is full length
+            (0, 27, 1, 24, CDSFrame.TWO, Strand.PLUS, "MPGFHP*"),
+            # this chunk exactly bounds the CDS
+            (1, 27, 1, 24, CDSFrame.TWO, Strand.PLUS, "MPGFHP*"),
+            # this chunk cuts the first off codon exactly
+            (4, 27, 1, 24, CDSFrame.TWO, Strand.PLUS, "PGFHP*"),
+            # this chunk cuts off the 1st base of the 1st codon, so the translation starts from the 2nd codon
+            (3, 27, 1, 24, CDSFrame.TWO, Strand.PLUS, "PGFHP*"),
+            # this chunk cuts off the 2nd base of the 1st codon, so the translation starts from the 2nd codon
+            (4, 27, 1, 24, CDSFrame.TWO, Strand.PLUS, "PGFHP*"),
+            # this chunk cuts off the last base of the stop codon as well as the 2nd base of the start
+            (4, 23, 1, 24, CDSFrame.TWO, Strand.PLUS, "PGFHP"),
+            # this chunk is beyond the CDS on both sides, so the translation is full length
+            (0, 27, 3, 20, CDSFrame.TWO, Strand.MINUS, "MKPGH"),
+            # this chunk exactly bounds the CDS
+            (3, 20, 3, 20, CDSFrame.TWO, Strand.MINUS, "MKPGH"),
+            # this chunk cuts the first off codon exactly
+            (3, 17, 3, 20, CDSFrame.TWO, Strand.MINUS, "KPGH"),
+            # this chunk cuts off the 1st base of the 1st codon, so the translation starts from the 2nd codon
+            (3, 19, 3, 20, CDSFrame.TWO, Strand.MINUS, "KPGH"),
+            # this chunk cuts off the 2nd base of the 1st codon, so the translation starts from the 2nd codon
+            (3, 18, 3, 20, CDSFrame.TWO, Strand.MINUS, "KPGH"),
+            # this chunk cuts off the last base of the last codon as well as the 2nd base of the start
+            (4, 18, 3, 20, CDSFrame.TWO, Strand.MINUS, "KPG"),
+        ],
+    )
+    def test_single_exon_chunk_relative_translation(self, start, end, cds_start, cds_end, frame, strand, expected):
+        full_chunk = "AAAATGCCCGGGTTTCATCCCTGACCC"
+        chunk_offset = 100
+        parent = Parent(
+            sequence=Sequence(
+                full_chunk[start:end],
+                Alphabet.NT_EXTENDED_GAPPED,
+                type=SequenceType.SEQUENCE_CHUNK,
+                parent=Parent(
+                    location=SingleInterval(
+                        chunk_offset + start,
+                        chunk_offset + end,
+                        Strand.PLUS,
+                        parent=Parent(sequence_type=SequenceType.CHROMOSOME),
+                    )
+                ),
+            ),
+        )
+        cds = CDSInterval(
+            [cds_start + chunk_offset],
+            [cds_end + chunk_offset],
+            strand,
+            [frame],
+            parent_or_seq_chunk_parent=parent,
+        )
+        assert str(cds.translate()) == expected
+
+    @pytest.mark.parametrize(
+        "cds,cleaned_location,loc_on_chrom,expected_offset",
+        [
+            # + strand with full span chunk -> 0 offset
+            (
+                CDSInterval([0], [10], Strand.PLUS, [CDSFrame.ZERO]),
+                SingleInterval(0, 10, Strand.PLUS),
+                SingleInterval(0, 10, Strand.PLUS),
+                0,
+            ),
+            # + strand with 1bp cutoff from 5' end -> 2 offset
+            (
+                CDSInterval([0], [10], Strand.PLUS, [CDSFrame.ZERO]),
+                SingleInterval(0, 10, Strand.PLUS),
+                SingleInterval(1, 10, Strand.PLUS),
+                2,
+            ),
+            # + strand with 2bp cutoff from 5' end -> 1 offset
+            (
+                CDSInterval([0], [10], Strand.PLUS, [CDSFrame.ZERO]),
+                SingleInterval(0, 10, Strand.PLUS),
+                SingleInterval(2, 10, Strand.PLUS),
+                1,
+            ),
+            # - strand with full span chunk -> 0 offset
+            (
+                CDSInterval([0], [10], Strand.MINUS, [CDSFrame.ZERO]),
+                SingleInterval(0, 10, Strand.MINUS),
+                SingleInterval(0, 10, Strand.MINUS),
+                0,
+            ),
+            # - strand with 1bp cutoff from 5' end -> 2 offset
+            (
+                CDSInterval([0], [10], Strand.MINUS, [CDSFrame.ZERO]),
+                SingleInterval(0, 10, Strand.MINUS),
+                SingleInterval(0, 9, Strand.MINUS),
+                2,
+            ),
+            # - strand with 2bp cutoff from 5' end -> 1 offset
+            (
+                CDSInterval([0], [10], Strand.MINUS, [CDSFrame.ZERO]),
+                SingleInterval(0, 10, Strand.MINUS),
+                SingleInterval(0, 8, Strand.MINUS),
+                1,
+            ),
+        ],
+    )
+    def test__calculate_frame_offset(self, cds, cleaned_location, loc_on_chrom, expected_offset):
+        assert cds._calculate_frame_offset(cleaned_location, loc_on_chrom) == expected_offset
 
 
 @pytest.mark.parametrize(

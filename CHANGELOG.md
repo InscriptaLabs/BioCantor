@@ -4,8 +4,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [0.13.0] 2022-1-28
+## Added
+- `AnnotationCollections` can now export their `Parent` objects in a dictionary representation
+- `AnnotationCollectionModel` have a new optional `Parent` member that represents a `Parent` object that can be serialized to disk
+- `CDSInterval.scan_chromosome_codon_locations` and `CDSInterval.scan_chunk_relative_codon_locations` now have optional arguments to restrict the iteration to section of the CDS based on *chromosomal* coordinates
+
+### Changed
+- Improved documentation
+- GenBank parser now handles `CDSInterval`s that exceed the bounds of their Exons by raising a warning and truncating the CDS interval
+- GenBank parser now handles duplicate `TranscriptInterval` or `FeatureInterval` objects by removing the duplicates
+
+### Fixed
+- `AnnotationCollection.query_by_guids` did not accept a single GUID as an argument
+- `FeatureInterval`, `TranscriptInterval`, and `CDSInterval` did not take strand into account when generating a GUID
+- GenBank parser was inadvertently merging alternative isoforms in all parser modes instead of keeping them separate
+
+
 ## [0.12.0] 2021-10-22
-## Fixed
+### Fixed
 
 - Fixed `CDSInterval._scan_codon_locations_multi_exon` to properly handle chunk-relative CDS.
 - Fixed `CDSInterval.chunk_relative_frames` to properly handle chunk-relative CDS.
@@ -13,7 +30,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Fixed `CompoundInterval.minus` to handle subtraction of overlapping intervals that should lead to a `EmptyLocation`.
 - Fixed `CompoundInterval.optimize_blocks` and `CompoundInterval.optimize_and_combine_blocks` to handle the possibility of the resulting `Location` being a `EmptyLocation`.
 
-## Added
+### Added
 - `CDSInterval` now has methods `sequence_pos_to_cds` and `sequence_pos_to_amino_acid` to convert sequence positions to amino acid or CDS positions.
 - Support for python3.8.
 

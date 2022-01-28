@@ -83,6 +83,7 @@ class CDSInterval(AbstractFeatureInterval):
             self.guid = digest_object(
                 self._genomic_starts,
                 self._genomic_ends,
+                self.strand,
                 self.frames,
                 self.product,
                 self.protein_id,
@@ -510,7 +511,25 @@ class CDSInterval(AbstractFeatureInterval):
         """
         return tuple(self._scan_codon_locations(chunk_relative_coordinates=False))
 
-    def scan_chunk_relative_codon_locations(self) -> Iterator[Location]:
+    def _convert_chromosome_start_end_to_relative_window(
+        self, chromosome_start: Optional[int] = None, chromosome_end: Optional[int] = None
+    ) -> Optional[SingleInterval]:
+        """
+        Converts possibly null chromosomal start/end positions to a SingleInterval representing the genomic
+        span of that window. Null start/end values default to the start/end of this CDS.
+        """
+        if not chromosome_start and not chromosome_end:
+            return None
+        if not chromosome_start:
+            chromosome_start = self.start
+        if not chromosome_end:
+            chromosome_end = self.end
+        relative_window = SingleInterval(chromosome_start, chromosome_end, self.strand, self.chromosome_location.parent)
+        return relative_window
+
+    def scan_chunk_relative_codon_locations(
+        self, chromosome_start: Optional[int] = None, chromosome_end: Optional[int] = None
+    ) -> Iterator[Location]:
         """
         Returns an iterator over codon locations in *chunk relative* coordinates.
 
@@ -520,10 +539,21 @@ class CDSInterval(AbstractFeatureInterval):
         Incomplete internal codons are determined by comparing the CDSFrame of each exon
         as annotated, to the expected value of the CDSFrame. This allows for an annotation
         to model things like programmed frameshifts and indels that may be assembly errors.
-        """
-        yield from self._scan_codon_locations(chunk_relative_coordinates=True)
 
-    def scan_chromosome_codon_locations(self) -> Iterator[Location]:
+        Args:
+            chromosome_start: An optional *chromosome* position to offset the iteration to. The resulting codons
+                will maintain frame.
+            chromosome_end: An optional *chromosome* position to offset the iteration to end at. The resulting codons
+                will maintain frame. This number can be larger than the chromosome end position.
+        """
+        yield from self._scan_codon_locations(
+            self._convert_chromosome_start_end_to_relative_window(chromosome_start, chromosome_end),
+            chunk_relative_coordinates=True,
+        )
+
+    def scan_chromosome_codon_locations(
+        self, chromosome_start: Optional[int] = None, chromosome_end: Optional[int] = None
+    ) -> Iterator[Location]:
         """
         Returns an iterator over codon locations in *chromosome* coordinates.
 
@@ -535,8 +565,17 @@ class CDSInterval(AbstractFeatureInterval):
         Incomplete internal codons are determined by comparing the CDSFrame of each exon
         as annotated, to the expected value of the CDSFrame. This allows for an annotation
         to model things like programmed frameshifts and indels that may be assembly errors.
+
+        Args:
+            chromosome_start: An optional *chromosome* position to offset the iteration to. The resulting codons
+                will maintain frame.
+            chromosome_end: An optional *chromosome* position to offset the iteration to end at. The resulting codons
+                will maintain frame. This number can be larger than the chromosome end position.
         """
-        yield from self._scan_codon_locations(chunk_relative_coordinates=False)
+        yield from self._scan_codon_locations(
+            self._convert_chromosome_start_end_to_relative_window(chromosome_start, chromosome_end),
+            chunk_relative_coordinates=False,
+        )
 
     def scan_codon_locations(self) -> Iterator[Location]:
         """
@@ -551,35 +590,60 @@ class CDSInterval(AbstractFeatureInterval):
         )
         yield from self._scan_codon_locations(chunk_relative_coordinates=True)
 
-    def _scan_codon_locations(self, chunk_relative_coordinates: bool = True) -> Iterator[Location]:
+    def _scan_codon_locations(
+        self, relative_window: Optional[SingleInterval] = None, chunk_relative_coordinates: bool = True
+    ) -> Iterator[Location]:
         """
         Returns an iterator over codon locations in *chunk relative* coordinates.
 
         Any leading or trailing bases that are annotated as CDS but cannot form a full codon
         are excluded.
         """
-        # can only do naive window scanning if this CDS has exactly one exon.
+        # can only do naive window scanning if this CDS has exactly one exon
         if self.num_blocks > 1:
-            yield from self._scan_codon_locations_multi_exon(chunk_relative_coordinates)
+            codon_fn = self._prepare_multi_exon_window_for_scan_codon_locations
         else:
-            loc = self.chunk_relative_location
-            # must make sure this CDS (with its offset) is at least one codon long
-            offset = self.frames[0].value
-            if (len(loc) - offset) >= 3:
-                yield from loc.scan_windows(3, 3, offset)
+            codon_fn = self._prepare_single_exon_window_for_scan_codon_locations
+        location, offset = codon_fn(relative_window, chunk_relative_coordinates)
+        # must make sure this CDS (with its offset) is at least one codon long
+        if (len(location) - offset) >= 3:
+            yield from location.scan_windows(3, 3, offset)
 
-    def _scan_codon_locations_multi_exon(self, chunk_relative_coordinates: bool = True) -> Iterator[Location]:
+    @lru_cache(maxsize=20)
+    def _prepare_single_exon_window_for_scan_codon_locations(
+        self, relative_window: Optional[SingleInterval] = None, chunk_relative_coordinates: bool = True
+    ) -> Tuple[Location, int]:
         """
-        Returns an iterator over codon locations in *chunk relative* coordinates.
+        This function exists to prepare a Location object to pass to the iterator ``_scan_codon_locations``.
+        By placing the logic in this function, the result can be cached, as you cannot cache iterators.
 
-        Only necessary to be used if this CDS has overlapping intervals.
+        Returns a tuple of the Location to be iterated over, and its offset.
+        """
+        loc = self.chunk_relative_location
 
-        Any leading or trailing bases that are annotated as CDS but cannot form a full codon
-        are excluded. Additionally, any internal codons that are incomplete are excluded.
+        if relative_window:
+            relative_loc = loc.intersection(relative_window)
+        else:
+            relative_loc = loc
 
-        Incomplete internal codons are determined by comparing the CDSFrame of each exon
-        as annotated, to the expected value of the CDSFrame. This allows for an annotation
-        to model things like programmed frameshifts and indels that may be assembly errors.
+        offset = self.frames[0].value
+        if chunk_relative_coordinates and self.is_chunk_relative:
+            # calculate offset for this chunk that may be out of frame
+            loc_on_chrom = relative_loc.lift_over_to_first_ancestor_of_type(SequenceType.CHROMOSOME)
+            offset += self._calculate_frame_offset(self.chromosome_location, loc_on_chrom)
+        else:
+            offset += self._calculate_frame_offset(self.chromosome_location, relative_loc)
+        return relative_loc, offset
+
+    @lru_cache(maxsize=20)
+    def _prepare_multi_exon_window_for_scan_codon_locations(
+        self, relative_window: Optional[SingleInterval] = None, chunk_relative_coordinates: bool = True
+    ) -> Tuple[Location, int]:
+        """
+        This function exists to prepare a Location object to pass to the iterator ``_scan_codon_locations``.
+        By placing the logic in this function, the result can be cached, as you cannot cache iterators.
+
+        Returns a tuple of the Location to be iterated over, and its offset.
         """
         next_frame = CDSFrame.ZERO
         cleaned_rel_starts = []
@@ -621,39 +685,46 @@ class CDSInterval(AbstractFeatureInterval):
         ]
         cleaned_location = CompoundInterval.from_single_intervals(cleaned_blocks)
 
-        # cannot iterate over codons that are too short
-        if len(cleaned_location) < 3:
-            return
+        if relative_window:
+            relative_cleaned_location = cleaned_location.intersection(relative_window)
+        else:
+            relative_cleaned_location = cleaned_location
 
         if chunk_relative_coordinates and self.is_chunk_relative:
             # lift the cleaned window on to chunk relative coordinate system
             chunk_relative_cleaned_location = self.liftover_location_to_seq_chunk_parent(
-                cleaned_location, self.chunk_relative_location.parent
+                relative_cleaned_location, self.chunk_relative_location.parent
             )
             # lift this back to chromosome coordinates -- this produces a chromosome coordinate Location
             # whose bounds are the portion of this CDS that are contained on the sequence chunk
             loc_on_chrom = chunk_relative_cleaned_location.lift_over_to_first_ancestor_of_type(SequenceType.CHROMOSOME)
-            # determine the offset needed for codon iteration to be in-frame
-            # calculate the number of bases from the 5' end that this sequence chunk removes, if any
-            if self.strand == Strand.PLUS:
-                fivep_loc = cleaned_location.relative_interval_to_parent_location(
-                    0, cleaned_location.parent_to_relative_pos(loc_on_chrom.start), Strand.PLUS
-                )
-            else:
-                fivep_loc = cleaned_location.relative_interval_to_parent_location(
-                    0, cleaned_location.parent_to_relative_pos(loc_on_chrom.end - 1), Strand.PLUS
-                )
-            # this is equivalent to a CDSPhase, which we can convert to frame to get offset
-            fivep_distance_mod3 = len(fivep_loc) % 3
-            phase = CDSPhase(fivep_distance_mod3)
-            offset = phase.to_frame().value
-            # cannot iterate over codons that are too short; there is no translation for this CDS
-            # (iterator will terminate without returning anything)
-            if len(chunk_relative_cleaned_location) - offset < 3:
-                return
-            yield from chunk_relative_cleaned_location.scan_windows(3, 3, offset)
+            offset = self._calculate_frame_offset(relative_cleaned_location, loc_on_chrom)
+            return chunk_relative_cleaned_location, offset
         else:
-            yield from cleaned_location.scan_windows(3, 3, 0)
+            offset = self._calculate_frame_offset(cleaned_location, relative_cleaned_location)
+            return relative_cleaned_location, offset
+
+    def _calculate_frame_offset(self, cleaned_location: Location, loc_on_chrom: Location) -> int:
+        """
+        In either single-exon or multi-exon codon iteration, if this CDSInterval exists on chunk-relative coordinates
+        that slice down the CDS, then the initial offset provided by the CDSFrame field must be adjusted
+        to maintain frame.
+        """
+        # determine the offset needed for codon iteration to be in-frame
+        # calculate the number of bases from the 5' end that this sequence chunk removes, if any
+        if self.strand == Strand.PLUS:
+            fivep_loc = cleaned_location.relative_interval_to_parent_location(
+                0, cleaned_location.parent_to_relative_pos(loc_on_chrom.start), Strand.PLUS
+            )
+        else:
+            fivep_loc = cleaned_location.relative_interval_to_parent_location(
+                0, cleaned_location.parent_to_relative_pos(loc_on_chrom.end - 1), Strand.PLUS
+            )
+        # this is equivalent to a CDSPhase, which we can convert to frame to get offset
+        fivep_distance_mod3 = len(fivep_loc) % 3
+        phase = CDSPhase(fivep_distance_mod3)
+        offset = phase.to_frame().value
+        return offset
 
     def _translate_iter(
         self,

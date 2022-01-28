@@ -16,5 +16,17 @@ class StrandViolationWarning(UserWarning):
     pass
 
 
+class InvalidCDSIntervalWarning(UserWarning):
+    pass
+
+
+class DuplicateFeatureWarning(UserWarning):
+    pass
+
+
+class DuplicateTranscriptWarning(UserWarning):
+    pass
+
+
 class DuplicateSequenceException(BioCantorIOException):
     pass
