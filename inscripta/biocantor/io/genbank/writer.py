@@ -273,6 +273,9 @@ def transcripts_to_feature(
             # NCBI does not like protein_id on transcript level features
             if "protein_id" in feature.qualifiers:
                 del feature.qualifiers["protein_id"]
+            # do not include translation tag on transcript level features
+            if "translation" in feature.qualifiers:
+                del feature.qualifiers["translation"]
 
             yield feature
             # only in eukaryotic mode for coding genes do we add a third layer
