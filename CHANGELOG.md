@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## UNRELEASED
+### Changed
+- GenBank export will no longer propagate `/translation` tags to `mRNA` features when generating eukaryotic style GenBank files
+
 ## [0.13.0] 2022-1-28
 ## Added
 - `AnnotationCollections` can now export their `Parent` objects in a dictionary representation

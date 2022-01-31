@@ -68,7 +68,7 @@ OFFSETS = [
 # for BED (0-based, half-open) or GFF (1-based, closed intervals)
 COORD_OFFSETS = {"bed": 0, "gff": 1}
 
-MAX_CHROM_SIZE = 2 ** 29
+MAX_CHROM_SIZE = 2**29
 
 
 def bins(start, stop, fmt="gff", one=True):
