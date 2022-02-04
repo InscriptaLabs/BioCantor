@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Improved documentation
 - GenBank parser now handles `CDSInterval`s that exceed the bounds of their Exons by raising a warning and truncating the CDS interval
 - GenBank parser now handles duplicate `TranscriptInterval` or `FeatureInterval` objects by removing the duplicates
+- GenBank export will no longer propagate `/translation` tags to `mRNA` features when generating eukaryotic style GenBank files
 
 ### Fixed
 - `AnnotationCollection.query_by_guids` did not accept a single GUID as an argument
