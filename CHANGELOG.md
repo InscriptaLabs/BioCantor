@@ -4,9 +4,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## UNRELEASED
-### Changed
-- GenBank export will no longer propagate `/translation` tags to `mRNA` features when generating eukaryotic style GenBank files
+## [0.13.1] 2022-2-04
+### Fixed
+- Both Sorted and LocusTag GenBank parser modes did not properly discard mixed-strand annotations if the strand-mixing was present on the `CDS` or `mRNA` feature
+
 
 ## [0.13.0] 2022-1-28
 ## Added
@@ -18,6 +19,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Improved documentation
 - GenBank parser now handles `CDSInterval`s that exceed the bounds of their Exons by raising a warning and truncating the CDS interval
 - GenBank parser now handles duplicate `TranscriptInterval` or `FeatureInterval` objects by removing the duplicates
+- GenBank export will no longer propagate `/translation` tags to `mRNA` features when generating eukaryotic style GenBank files
 
 ### Fixed
 - `AnnotationCollection.query_by_guids` did not accept a single GUID as an argument
