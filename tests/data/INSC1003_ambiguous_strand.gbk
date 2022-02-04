@@ -9,117 +9,42 @@ SOURCE      Genus species
 COMMENT     Annotated using prokka 1.14.0 from
             https://github.com/tseemann/prokka.
 FEATURES             Location/Qualifiers
-     source          1..4528123
-                     /organism="Genus species"
-                     /mol_type="genomic DNA"
-                     /strain="strain"
      gene            join(335..2797,complement(3000..3200))
                      /gene="thrA"
                      /locus_tag="FEPOIHMA_00001"
+                     /note="mixed strand on gene"
      CDS             join(335..2797,complement(3000..3200))
                      /gene="thrA"
                      /locus_tag="FEPOIHMA_00001"
-                     /EC_number="2.7.2.4"
-                     /inference="ab initio prediction:Prodigal:2.6"
-                     /codon_start=1
-                     /transl_table=11
-                     /product="aspartate kinase / homoserine dehydrogenase"
-                     /protein_id="X:FEPOIHMA_00001"
-                     /translation="MRVLKFGGTSVANAERFLRVADILESNARQGQVATVLSAPAKIT
-                     NHLVAMIEKTISGQDALPNISDAERIFAELLTGLAAAQPGFPLAQLKTFVDQEFAQIK
-                     HVLHGISLLGQCPDSINAALICRGEKMSIAIMAGVLEARGHNVTVIDPVEKLLAVGHY
-                     LESTVDIAESTRRIAASRIPADHMVLMAGFTAGNEKGELVVLGRNGSDYSAAVLAACL
-                     RADCCEIWTDVDGVYTCDPRQVPDARLLKSMSYQEAMELSYFGAKVLHPRTITPIAQF
-                     QIPCLIKNTGNPQAPGTLIGASRDEDELPVKGISNLNNMAMFSVSGPGMKGMVGMAAR
-                     VFAAMSRARISVVLITQSSSEYSISFCVPQSDCVRAERAMQEEFYLELKEGLLEPLAV
-                     TERLAIISVVGDGMRTLRGISAKFFAALARANINIVAIAQGSSERSISVVVNNDDATT
-                     GVRVTHQMLFNTDQVIEVFVIGVGGVGGALLEQLKRQQSWLKNKHIDLRVCGVANSKA
-                     LLTNVHGLNLENWQEELAQAKEPFNLGRLIRLVKEYHLLNPVIVDCTSSQAVADQYAD
-                     FLREGFHVVTPNKKANTSSMDYYHLLRHAAEKSRRKFLYDTNVGAGLPVIENLQNLLN
-                     AGDELMKFSGILSGSLSYIFGKLDEGMSFSEATTLAREMGYTEPDPRDDLSGMDVARK
-                     LLILARETGRELELADIEIEPVLPAEFNAEGDVAAFMANLSQLDDLFAARVAKARDEG
-                     KVLRYVGNIDEDGACRVKIAEVDGNDPLFKVKNGENALAFYSHYYQPLPLVLRGYGAG
-                     NDVTAAGVFADLLRTLSWKLGV"
      gene            2799..3731
                      /gene="thrB"
                      /locus_tag="FEPOIHMA_00002"
-     CDS             2799..3731
+                     /note="mixed strand on CDS"
+     CDS             join(2790..2799,complement(3300..3731))
                      /gene="thrB"
                      /locus_tag="FEPOIHMA_00002"
-                     /EC_number="2.7.1.39"
-                     /inference="ab initio prediction:Prodigal:2.6"
-                     /codon_start=1
-                     /transl_table=11
-                     /product="homoserine kinase"
-                     /protein_id="X:FEPOIHMA_00002"
-                     /translation="MVKVYAPASSANMSVGFDVLGAAVTPVDGALLGDVVTVEAAETF
-                     SLNNLGRFADKLPSEPRENIVYQCWERFCQELGKQIPVAMTLEKNMPIGSGLGSSACS
-                     VVAALMAMNEHCGKPLNDTRLLALMGELEGRISGSIHYDNVAPCFLGGMQLMIEENDI
-                     ISQQVPGFDEWLWVLAYPGIKVSTAEARAILPAQYRRQDCIAHGRHLAGFIHACYSRQ
-                     PELAAKLMKDVIAEPYRERLLPGFRQARQAVAEIGAVASGISGSGPTLFALCDKPDTA
-                     QRVADWLGKNYLQNQEGFVHICRLDTAGARVLEN"
      gene            3732..5018
                      /gene="thrC"
                      /locus_tag="FEPOIHMA_00003"
-     CDS             3732..5018
+                     /note="mixed strand on CDS and mRNA"
+     mRNA            join(3732..3740,complement(3932..5018))
                      /gene="thrC"
                      /locus_tag="FEPOIHMA_00003"
-                     /EC_number="4.2.3.1"
-                     /inference="ab initio prediction:Prodigal:2.6"
-                     /codon_start=1
-                     /transl_table=11
-                     /product="threonine synthase"
-                     /protein_id="X:FEPOIHMA_00003"
-                     /translation="MKLYNLKDHNEQVSFAQAVTQGLGKNQGLFFPHDLPEFSLTEID
-                     EMLKLDFVTRSAKILSAFIGDEIPQEILEERVRAAFAFPAPVANVESDVGCLELFHGP
-                     TLAFKDFGGRFMAQMLTHIAGDKPVTILTATSGDTGAAVAHAFYGLPNVKVVILYPRG
-                     KISPLQEKLFCTLGGNIETVAIDGDFDACQALVKQAFDDEELKVALGLNSANSINISR
-                     LLAQICYYFEAVAQLPQEARNQLVVSVPSGNFGDLTAGLLAKSLGLPVKRFIAATNVN
-                     DTVPRFLHDGQWSPKATQATLSNAMDVSQPNNWPRVEELFRRKIWQLKELGYAAVDDE
-                     TTQQTMRELKELGYTSEPHAAVAYRALRDQLNPGEYGLFLGTAHPAKFKESVEAILGE
-                     TLDLPKELAERADLPLLSHNLPADFAALRKLMMNHQ"
-     gene            5231..5527
-                     /gene="yaaX"
-                     /locus_tag="FEPOIHMA_00004"
-     CDS             5231..5527
-                     /gene="yaaX"
-                     /locus_tag="FEPOIHMA_00004"
-                     /inference="ab initio prediction:Prodigal:2.6"
-                     /codon_start=1
-                     /transl_table=11
-                     /product="hypothetical protein"
-                     /protein_id="X:FEPOIHMA_00004"
-                     /translation="MKKMQSIVLALSLVLVAPMAAQAAEITLVPSVKLQIGDRDNRGY
-                     YWDGGHWRDHGWWKQHYEWRGNRWHPHGPPPPPRHHKKAPHDHHGGHGPGKHHR"
-     gene            complement(5680..6456)
-                     /gene="yaaA"
-                     /locus_tag="FEPOIHMA_00005"
-     CDS             complement(5680..6456)
-                     /gene="yaaA"
-                     /locus_tag="FEPOIHMA_00005"
-                     /inference="ab initio prediction:Prodigal:2.6"
-                     /codon_start=1
-                     /transl_table=11
-                     /product="protein that reduces intracellular iron levels
-                     under peroxide stress"
-                     /protein_id="X:FEPOIHMA_00005"
-                     /translation="MLILISPAKTLDYQSPLTTTRYTLPELLDNSQQLIHEARKLTPP
-                     QISTLMRISDKLAGINAARFHDWQPDFTPENARQAILAFKGDVYTGLQAETFSEDDFD
-                     FAQQHLRMLSGLYGVLRPLDLMQPYRLEMGIRLENARGKDLYQFWGDIITNKLNEALA
-                     AQGDNVVINLASDEYFKSVKPKKLNAEIIKPVFLDEKNGKFKIISFYAKKARGLMSRF
-                     IIENRLTKPEQLTGFNSEGYFFDEASSSNGELVFKRYEQR"
-     gene            6756..6843
-                     /locus_tag="FEPOIHMA_02080"
-     tRNA            6756..6843
-                     /locus_tag="FEPOIHMA_02080"
-                     /product="tRNA-Pro"
-                     /inference="COORDINATES:profile:Aragorn:1.2"
-                     /note="tRNA-Pro(ggg)"
-     gene            complement(6956..7066)
-                     /locus_tag="FEPOIHMA_02457"
-     rRNA            complement(6956..7066)
-                     /locus_tag="FEPOIHMA_02457"
-                     /product="5S ribosomal RNA"
+                     /note="mixed strand on CDS and mRNA"
+     CDS             join(3732..3740,complement(3932..5018))
+                     /gene="thrC"
+                     /locus_tag="FEPOIHMA_00003"
+     gene            6000..7000
+                     /gene="test"
+                     /note="mixed strand on CDS and mRNA without locus tag"
+     mRNA            join(6000..6500,complement(6600..7000))
+                     /gene="test"
+                     /note="mixed strand on CDS and mRNA"
+     CDS             join(6000..6500,complement(6600..7000))
+                     /gene="test"
+     feature         6000..7000
+                     /gene="test"
+                     /note="need a feature to not raise a unparseable exception"
 ORIGIN
         1 gcttttcatt ctgactgcaa cgggcaatat gtctctgtgt ggattaaaaa aagagtgtct
        61 gatagcagct tctgaactgg ttacctgccg tgagtaaatt aaaattttat tgacttaggt

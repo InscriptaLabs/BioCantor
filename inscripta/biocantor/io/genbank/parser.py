@@ -676,10 +676,22 @@ def group_gene_records_from_sorted_genbank(
                     # gene is None if it was not parseable
                     if not gene:
                         continue
+                elif not feature.strand:
+                    warnings.warn(
+                        StrandViolationWarning(
+                            f"Found multiple strands for feature {feature}. This feature will be skipped."
+                        )
+                    )
                 else:
                     gene.add_child(feature)
             elif feature.type in IntervalFeature.types:
-                if not gene.has_children:
+                if not feature.strand:
+                    warnings.warn(
+                        StrandViolationWarning(
+                            f"Found multiple strands for feature {feature}. This feature will be skipped."
+                        )
+                    )
+                elif not gene.has_children:
                     gene.add_child(feature)
                 # if the most recent child of this gene already has exons and this is a exon, then this is a new isoform
                 elif gene.children[-1].has_exons and feature.type == GeneIntervalFeatures.EXON.value:
@@ -795,7 +807,13 @@ def group_gene_records_by_locus_tag(
                 continue
 
             for feature in gene_features[1:]:
-                if feature.type in TranscriptFeature.types:
+                if not feature.strand:
+                    warnings.warn(
+                        StrandViolationWarning(
+                            f"Found multiple strands for feature {feature}. This feature will be skipped."
+                        )
+                    )
+                elif feature.type in TranscriptFeature.types:
                     gene.add_child(feature)
                 elif feature.type in IntervalFeature.types:
                     if not gene.has_children:
