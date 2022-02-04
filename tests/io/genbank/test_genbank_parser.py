@@ -1164,11 +1164,13 @@ class TestExceptionsWarnings:
         with pytest.warns(StrandViolationWarning):
             recs = list(parse_genbank(test_data_dir / genbank, gbk_type=GenBankParserType.SORTED))
             c = recs[0].annotation
-            assert len(c.genes) == 6
+            assert len(c.genes) == 0
+            assert len(c.feature_collections) == 1
         with pytest.warns(StrandViolationWarning):
             recs = list(parse_genbank(test_data_dir / genbank))
             c = recs[0].annotation
-            assert len(c.genes) == 6
+            assert len(c.genes) == 0
+            assert len(c.feature_collections) == 1
 
     @pytest.mark.parametrize(
         "gbk",
