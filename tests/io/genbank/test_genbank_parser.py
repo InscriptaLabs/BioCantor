@@ -2,7 +2,6 @@ import json
 from collections import OrderedDict
 
 import pytest
-import warnings
 from Bio.SeqFeature import SeqFeature
 from inscripta.biocantor.gene.biotype import Biotype
 from inscripta.biocantor.gene.cds_frame import CDSFrame
