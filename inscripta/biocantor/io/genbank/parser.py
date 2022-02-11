@@ -62,6 +62,7 @@ from inscripta.biocantor.io.genbank.exc import (
     GenBankUnknownFeatureWarning,
     GenBankEmptyGeneWarning,
     GenBankDuplicateLocusTagWarning,
+    UnknownGenBankFeatureWarning,
 )
 from inscripta.biocantor.io.models import (
     GeneIntervalModel,
@@ -553,7 +554,9 @@ class BaseGenBankParser(ABC):
             return GeneFeature.from_transcript_or_cds_feature(feature, seqrecord)
         else:
             warnings.warn(
-                f"Feature {feature} was associated with a gene but was not of a known type " f"and will be ignored"
+                UnknownGenBankFeatureWarning(
+                    f"Feature {feature} was associated with a gene but was not of a known type and will be ignored"
+                )
             )
 
     @staticmethod
@@ -649,7 +652,10 @@ class BaseGenBankParser(ABC):
                     group = []
                 else:
                     warnings.warn(
-                        f"Feature {feature} was associated with a gene but was not of a known type and will be ignored"
+                        UnknownGenBankFeatureWarning(
+                            f"Feature {feature} was associated with a gene "
+                            f"but was not of a known type and will be ignored"
+                        )
                     )
             # next gene; reset
             elif feature.type in GeneFeature.types:
@@ -675,7 +681,9 @@ class BaseGenBankParser(ABC):
                     group.append(feature)
             else:
                 warnings.warn(
-                    f"Feature {feature} was associated with a gene but was not of a known type and will be ignored"
+                    UnknownGenBankFeatureWarning(
+                        f"Feature {feature} was associated with a gene but was not of a known type and will be ignored"
+                    )
                 )
         if group:
             yield group
@@ -694,8 +702,10 @@ class BaseGenBankParser(ABC):
                     cds_features.append(feature)
                 else:
                     warnings.warn(
-                        f"Feature {feature} was associated with a gene but was not of a known type "
-                        f"and will be ignored"
+                        UnknownGenBankFeatureWarning(
+                            f"Feature {feature} was associated with a gene but was not of a known type "
+                            f"and will be ignored"
+                        )
                     )
             # due to the grouping predicate in _group_position_sorted_by_gene_feature it is not possible
             # for there to be more than one gene feature
@@ -753,8 +763,10 @@ class BaseGenBankParser(ABC):
                     cds_features.append(feature)
                 else:
                     warnings.warn(
-                        f"Feature {feature} was associated with a gene but was not of a known type "
-                        f"and will be ignored"
+                        UnknownGenBankFeatureWarning(
+                            f"Feature {feature} was associated with a gene but was not of a known type "
+                            f"and will be ignored"
+                        )
                     )
 
             self.grouped_gene_features[locus_tag] = GroupedGeneFeatures(

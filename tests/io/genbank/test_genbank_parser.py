@@ -3,6 +3,7 @@ from collections import OrderedDict
 
 import pytest
 from Bio.SeqFeature import SeqFeature
+
 from inscripta.biocantor.gene.biotype import Biotype
 from inscripta.biocantor.gene.cds_frame import CDSFrame
 from inscripta.biocantor.io.exc import (
@@ -16,6 +17,8 @@ from inscripta.biocantor.io.exc import (
 from inscripta.biocantor.io.genbank.exc import (
     GenBankLocusTagError,
     GenBankEmptyGeneWarning,
+    UnknownGenBankFeatureWarning,
+    GenBankDuplicateLocusTagWarning,
 )
 from inscripta.biocantor.io.genbank.parser import parse_genbank, GenBankParserType, SortedGenBankParser
 from inscripta.biocantor.io.models import AnnotationCollectionModel
@@ -542,7 +545,7 @@ class TestGenBankErrors:
                         parse_genbank(fh, gbk_type=GenBankParserType.LOCUS_TAG)
                     )
                 )[0]
-        # works fine in sorted mode
+        # # works fine in sorted mode
         with open(gbk, "r") as fh:
             rec = list(
                 ParsedAnnotationRecord.parsed_annotation_records_to_model(
@@ -550,21 +553,24 @@ class TestGenBankErrors:
                 )
             )[0]
             assert rec.genes[0].locus_tag == rec.genes[1].locus_tag
-        # also works fine in hybrid mode
-        with open(gbk, "r") as fh:
-            rec = list(
-                ParsedAnnotationRecord.parsed_annotation_records_to_model(
-                    parse_genbank(fh, gbk_type=GenBankParserType.HYBRID)
-                )
-            )[0]
-            assert rec.genes[0].locus_tag == rec.genes[1].locus_tag
+        # also works fine in hybrid mode, but raises a warning this time because the duplicate locus tags were
+        # detected by the hybrid parser
+        with pytest.warns(GenBankDuplicateLocusTagWarning):
+            with open(gbk, "r") as fh:
+                rec = list(
+                    ParsedAnnotationRecord.parsed_annotation_records_to_model(
+                        parse_genbank(fh, gbk_type=GenBankParserType.HYBRID)
+                    )
+                )[0]
+                assert rec.genes[0].locus_tag == rec.genes[1].locus_tag
 
 
 class TestGenBankFeatures:
     def test_parse_feature_test_2(self, test_data_dir):
         genbank = "feature_test_2.gbk"
         json_file = "feature_test_2_gbk.json"
-        recs = list(parse_genbank(test_data_dir / genbank))
+        with pytest.warns(DuplicateTranscriptWarning):
+            recs = list(parse_genbank(test_data_dir / genbank))
         c = recs[0].annotation
         assert len(c.feature_collections) == 2
         assert len(c.feature_collections[0].feature_intervals) == 3
@@ -833,7 +839,8 @@ class TestSortedParser:
         ],
     )
     def test_missing_gene(self, test_data_dir, genbank):
-        recs = list(parse_genbank(test_data_dir / genbank, gbk_type=GenBankParserType.SORTED))
+        with pytest.warns(DuplicateTranscriptWarning):
+            recs = list(parse_genbank(test_data_dir / genbank, gbk_type=GenBankParserType.SORTED))
         c = recs[0].annotation
         assert len(c.genes) == 8
         assert len([x for x in c.genes if x.gene_type == Biotype.protein_coding]) == 6
@@ -858,7 +865,8 @@ class TestSortedParser:
     def test_wrong_biotype_sorted(self, test_data_dir):
         """Sorted parsing can sort of handle the case where the biotype is incorrect"""
         genbank = test_data_dir / "INSC1006_wrong_feature_type.gbk"
-        recs = list(parse_genbank(test_data_dir / genbank, gbk_type=GenBankParserType.SORTED))
+        with pytest.warns(DuplicateTranscriptWarning):
+            recs = list(parse_genbank(test_data_dir / genbank, gbk_type=GenBankParserType.SORTED))
         c = recs[0].annotation
         assert len(c.genes) == 2
         gene = c.genes[0]
@@ -869,7 +877,8 @@ class TestSortedParser:
 
     def test_misordered(self, test_data_dir):
         genbank = test_data_dir / "INSC1003_misordered.gbk"
-        recs = list(parse_genbank(test_data_dir / genbank, gbk_type=GenBankParserType.SORTED))
+        with pytest.warns(UnknownGenBankFeatureWarning):
+            recs = list(parse_genbank(test_data_dir / genbank, gbk_type=GenBankParserType.SORTED))
         c = recs[0].annotation
         assert AnnotationCollectionModel.Schema().dump(c) == OrderedDict(
             [
@@ -1170,11 +1179,12 @@ class TestSortedParser:
         but these still have the same locus tag. Show that this can be successfully parsed in all parser modes.
         """
         genbank = test_data_dir / "multiple_cds_same_gene.gb"
-        recs = list(
-            ParsedAnnotationRecord.parsed_annotation_records_to_model(
-                parse_genbank(test_data_dir / genbank, gbk_type=parser_mode)
+        with pytest.warns(UnknownGenBankFeatureWarning):
+            recs = list(
+                ParsedAnnotationRecord.parsed_annotation_records_to_model(
+                    parse_genbank(test_data_dir / genbank, gbk_type=parser_mode)
+                )
             )
-        )
         assert len(recs[0].genes[0].transcripts) == 2
         assert len(recs[0].genes[1].transcripts) == 2
 
@@ -1191,7 +1201,8 @@ class TestHybridParser:
 
     def test_toy_overlapping_genes_cds_only(self, test_data_dir):
         genbank = test_data_dir / "ToyChr_R64v5_overlapping_genes.gb"
-        recs = list(parse_genbank(test_data_dir / genbank, gbk_type=GenBankParserType.HYBRID))
+        with pytest.warns(DuplicateTranscriptWarning):
+            recs = list(parse_genbank(test_data_dir / genbank, gbk_type=GenBankParserType.HYBRID))
         c = recs[0].annotation
         with open(test_data_dir / "ToyChr_R64v5_overlapping_genes.json") as fh:
             assert AnnotationCollectionModel.Schema().load(json.load(fh)) == c

@@ -61,3 +61,7 @@ class GenBankEmptyGeneWarning(Warning):
 
 class GenBankDuplicateLocusTagWarning(Warning):
     pass
+
+
+class UnknownGenBankFeatureWarning(Warning):
+    pass
