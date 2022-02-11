@@ -15,6 +15,12 @@ class GenBankLocusTagError(GenBankParserError):
     """
 
 
+class GenBankMultipleTranscriptFeatureError(GenBankParserError):
+    """
+    Raised when more than one transcript-level feature maps to a gene in a genbank file.
+    """
+
+
 class EmptyGenBankError(GenBankParserError):
     """
     Raised when a genbank parsing event returns zero genes and zero features.
@@ -42,4 +48,16 @@ class GenBankNullStrandException(GenBankParserError):
     Raised when BioPython constructs a feature with a null Strand.
     """
 
+    pass
+
+
+class GenBankUnknownFeatureWarning(Warning):
+    pass
+
+
+class GenBankEmptyGeneWarning(Warning):
+    pass
+
+
+class GenBankDuplicateLocusTagWarning(Warning):
     pass

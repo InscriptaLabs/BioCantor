@@ -30,6 +30,8 @@ COMMENT     ##Genome-Assembly-Data-START##
 FEATURES             Location/Qualifiers
      feature         100.1000
                      /name="broken_coordinates"
+     feature         100..10000
+                     /name="valid"
 ORIGIN
         1 actctctcta tctcatccac ctttactcgc gctgtcacac cttacccggc tttctgaccg
        61 aaattaaaaa aatgaaaata aatcctcttc tttagcccta caacactttt acatagccct

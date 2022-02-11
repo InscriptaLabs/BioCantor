@@ -15,7 +15,7 @@ In some genomes (often Prokaryotic), there is no transcript level feature for co
 That is, it goes from gene -> CDS. This is Model 1B.
 
 The second way that a GenBank file can be grouped is via the locus_tag qualifiers. This method is the
-default for this parsing module. This does not work for genomes with alternative isoforms.
+default for this parsing module.
 
 The generic parsing function that interprets the BioPython results to BioCantor data models is implemented in
 :meth:`GeneFeature.to_gene_model()`. This function can be over-ridden to provide custom parsing implementations.
@@ -23,10 +23,11 @@ The generic parsing function that interprets the BioPython results to BioCantor 
 import itertools
 import pathlib
 import warnings
-from abc import ABC
-from collections import Counter
+from abc import ABC, abstractmethod
+from collections import Counter, OrderedDict
 from copy import deepcopy
-from typing import Optional, TextIO, Iterator, List, Dict, Callable, Tuple, Any, Union
+from dataclasses import dataclass
+from typing import Optional, TextIO, Iterator, List, Dict, Callable, Any, Union
 
 from Bio import SeqIO
 from Bio.SeqFeature import SeqFeature
@@ -36,6 +37,7 @@ from inscripta.biocantor.gene import Biotype, CDSInterval, CDSFrame
 from inscripta.biocantor.io.exc import (
     DuplicateSequenceException,
     InvalidCDSIntervalWarning,
+    InvalidIntervalWarning,
     StrandViolationWarning,
     DuplicateFeatureWarning,
     DuplicateTranscriptWarning,
@@ -48,6 +50,7 @@ from inscripta.biocantor.io.genbank.constants import (
     MetadataFeatures,
     GenBankParserType,
     KnownQualifiers,
+    NonCodingTranscriptFeatures,
     GENBANK_GENE_FEATURES,
 )
 from inscripta.biocantor.io.genbank.exc import (
@@ -56,6 +59,9 @@ from inscripta.biocantor.io.genbank.exc import (
     GenBankLocusTagError,
     GenBankLocationException,
     GenBankNullStrandException,
+    GenBankUnknownFeatureWarning,
+    GenBankEmptyGeneWarning,
+    GenBankDuplicateLocusTagWarning,
 )
 from inscripta.biocantor.io.models import (
     GeneIntervalModel,
@@ -84,30 +90,20 @@ class Feature(ABC):
             raise GenBankLocationException(f"Feature {feature} did not have parseable coordinates.")
         if not feature.strand:
             raise GenBankNullStrandException(f"Feature {feature} is unstranded or has multiple strands.")
-        self.feature = feature
+        self._seq_feature = feature
         self.record = record
-        self.children = []
-
-    def __iter__(self) -> Iterator[SeqFeature]:
-        """Pre-order depth first traversal of this feature."""
-        yield self
-        for child in self.children:
-            yield from child
-
-    def __repr__(self):
-        return "\n".join((str(x) for x in self))
 
     @property
     def type(self) -> str:
-        return str(self.feature.type)
-
-    @property
-    def has_children(self) -> bool:
-        return len(self.children) > 0
+        return self._seq_feature.type
 
     @property
     def strand(self) -> int:
-        return self.feature.strand
+        return Strand.from_int(self._seq_feature.strand)
+
+    @property
+    def start(self) -> int:
+        return self._seq_feature.location.nofuzzy_start
 
 
 class FeatureIntervalGenBankCollection:
@@ -128,7 +124,11 @@ class FeatureIntervalGenBankCollection:
 
         self.types = {feature.type for feature in features}
         self.record = record
-        self.features = features
+        self._seq_features = features
+
+    @property
+    def start(self) -> int:
+        return min(x.location.nofuzzy_start for x in self._seq_features)
 
     @staticmethod
     def to_feature_model(cls: "FeatureIntervalGenBankCollection") -> Dict[str, Any]:
@@ -148,7 +148,7 @@ class FeatureIntervalGenBankCollection:
         feature_ids = Counter()
         locus_tag = None
         merged_qualifiers = {}
-        for feature in cls.features:
+        for feature in cls._seq_features:
             interval_starts = []
             interval_ends = []
             for loc in sorted(feature.location.parts, key=lambda p: p.start):
@@ -220,8 +220,23 @@ class GeneFeature(Feature):
 
     types = {x.value for x in GeneFeatures}
 
+    def __init__(self, feature: SeqFeature, record: SeqRecord):
+        super().__init__(feature, record)
+        self.children = []
+
     def __str__(self):
-        return self.feature.__repr__()
+        return self._seq_feature.__repr__()
+
+    def __repr__(self):
+        return "\n".join((str(x) for x in itertools.chain((self,), self.children)))
+
+    @property
+    def type(self) -> str:
+        return self._seq_feature.type
+
+    @property
+    def has_children(self) -> bool:
+        return len(self.children) > 0
 
     @staticmethod
     def from_transcript_or_cds_feature(feature: SeqFeature, seqrecord: SeqRecord) -> "GeneFeature":
@@ -235,11 +250,11 @@ class GeneFeature(Feature):
         gene.add_child(feature)
         return gene
 
-    def add_child(self, feature: SeqFeature):
-        """Add a new feature as a child. Infer Transcripts if this child is a CDS or exon feature."""
+    def add_child(self, feature: SeqFeature, cds_feature: Optional[SeqFeature] = None):
+        """Add a new feature as a child. Infer Transcripts if this child is a CDS feature."""
         if feature.type in TranscriptFeature.types:
-            self.children.append(TranscriptFeature(feature, self.record))
-        elif feature.type in IntervalFeature.types:
+            self.children.append(TranscriptFeature(feature, self.record, cds_feature=cds_feature))
+        elif feature.type in CDSFeature.types:
             # infer a transcript
             tx_feature = deepcopy(feature)
             if tx_feature.type == GeneIntervalFeatures.CDS.value:
@@ -249,19 +264,10 @@ class GeneFeature(Feature):
                 tx_feature.type = TranscriptFeatures.CODING_TRANSCRIPT.value
             else:
                 tx_feature.type = TranscriptFeatures[tx_feature.type].value
-            tx = TranscriptFeature(tx_feature, self.record)
+            tx = TranscriptFeature(tx_feature, self.record, cds_feature=feature)
             self.children.append(tx)
-            tx.add_child(feature)
         else:
             raise GenBankParserError(f"Invalid feature type {feature.type}")
-
-    def finalize(self):
-        """Make sure we have a full hierarchy; infer children if necessary.
-
-        This is often needed for non-coding genes which lack an explicit exon.
-        """
-        for transcript in self.children:
-            transcript.infer_exon_features()
 
     @staticmethod
     def to_gene_model(cls: "GeneFeature") -> Dict[str, Any]:
@@ -276,13 +282,9 @@ class GeneFeature(Feature):
         transcripts = []
         tx_biotypes = Counter()
         for tx in cls.children:
-            exon_interval = tx.find_exon_interval()
-            exon_starts = []
-            exon_ends = []
-            for block in exon_interval.blocks:
-                exon_starts.append(block.start)
-                exon_ends.append(block.end)
-
+            exon_interval: CompoundInterval = tx.find_exon_interval()
+            exon_starts = exon_interval._starts
+            exon_ends = exon_interval._ends
             strand = Strand.from_int(tx.strand)
 
             cds_interval = tx.find_cds_interval()
@@ -291,22 +293,19 @@ class GeneFeature(Feature):
                 cds_ends = None
                 cds_frames = []
             else:
-                cds_starts = []
-                cds_ends = []
-                for block in cds_interval.blocks:
-                    cds_starts.append(block.start)
-                    cds_ends.append(block.end)
+                cds_starts = cds_interval._starts
+                cds_ends = cds_interval._ends
                 # TODO: this will produce invalid Frames if there is a programmed frameshift or other such problem.
                 # This is a limitation of genbank files. HOWEVER, this code could detect the presence of a
                 # overlapping interval and try all possible frames there to see if any produce a valid translation.
                 cds_frames = tx.construct_frames(cds_interval)
 
-            if "pseudo" in tx.feature.qualifiers:
+            if "pseudo" in tx._seq_feature.qualifiers:
                 transcript_biotype = Biotype.pseudogene
-            elif tx.feature.type == TranscriptFeatures.CODING_TRANSCRIPT.value:
+            elif tx._seq_feature.type == TranscriptFeatures.CODING_TRANSCRIPT.value:
                 transcript_biotype = Biotype.protein_coding
             else:
-                transcript_biotype = Biotype[tx.feature.type]
+                transcript_biotype = Biotype[tx._seq_feature.type]
             tx_biotypes[transcript_biotype] += 1
 
             tx_model = dict(
@@ -326,7 +325,7 @@ class GeneFeature(Feature):
                 sequence_name=tx.record.id,
             )
             if tx_model in transcripts:
-                warnings.warn(DuplicateTranscriptWarning("Transcript {tx_model} found twice within a gene"))
+                warnings.warn(DuplicateTranscriptWarning(f"Transcript {tx_model} found twice within a gene"))
             else:
                 transcripts.append(tx_model)
 
@@ -335,11 +334,11 @@ class GeneFeature(Feature):
         gene = GeneIntervalModel.Schema().load(
             dict(
                 transcripts=transcripts,
-                gene_id=cls.feature.qualifiers.get(KnownQualifiers.GENE_ID.value, [None])[0],
-                gene_symbol=cls.feature.qualifiers.get(KnownQualifiers.GENE.value, [None])[0],
-                locus_tag=cls.feature.qualifiers.get(KnownQualifiers.LOCUS_TAG.value, [None])[0],
+                gene_id=cls._seq_feature.qualifiers.get(KnownQualifiers.GENE_ID.value, [None])[0],
+                gene_symbol=cls._seq_feature.qualifiers.get(KnownQualifiers.GENE.value, [None])[0],
+                locus_tag=cls._seq_feature.qualifiers.get(KnownQualifiers.LOCUS_TAG.value, [None])[0],
                 gene_type=gene_biotype.name,
-                qualifiers=cls.feature.qualifiers,
+                qualifiers=cls._seq_feature.qualifiers,
                 sequence_name=cls.record.id,
             )
         )
@@ -353,74 +352,36 @@ class TranscriptFeature(Feature):
 
     types = {x.value for x in TranscriptFeatures}
     _exon_interval = None
+    _cds_interval = None
+
+    def __init__(self, feature: SeqFeature, record: SeqRecord, cds_feature: Optional[SeqFeature] = None):
+        super().__init__(feature, record)
+        if cds_feature:
+            self.cds_feature = CDSFeature(cds_feature, self.record)
+        else:
+            self.cds_feature = None
 
     def __str__(self):
-        return f"--> {self.feature.__repr__()}"
-
-    def add_child(self, feature: SeqFeature):
-        self.children.append(IntervalFeature(feature, self.record))
-
-    def infer_exon_features(self):
-        """Commonly, non-coding genes lack IntervalFeatures, coding genes only have CDS features"""
-        # no children means this is likely a non-coding transcript with no exon features
-        # no exon features means this is likely a coding transcript with no exon features
-        if len(self.children) == 0 or len(list(self.exon_features)) == 0:
-            # add an exon with the same interval as the transcript
-            feature = deepcopy(self.feature)
-            feature.type = GeneIntervalFeatures.EXON.value
-            self.add_child(feature)
+        as_str = f"--> {self._seq_feature.__repr__()}"
+        if self.cds_feature:
+            as_str += f"---> {self.cds_feature._seq_feature.__repr__()}"
+        return as_str
 
     def construct_frames(self, cds_interval: Location) -> List[str]:
         """We need to build frames. Since GenBank lacks this info, do our best"""
         # make 0 based offset, if possible, otherwise assume always in frame
-        frame = int(self.children[0].feature.qualifiers.get(KnownQualifiers.CODON_START.value, [1])[0]) - 1
+        frame = int(self.cds_feature._seq_feature.qualifiers.get(KnownQualifiers.CODON_START.value, [1])[0]) - 1
         frame = CDSFrame.from_int(frame)
         frames = CDSInterval.construct_frames_from_location(cds_interval, frame)
         return [x.name for x in frames]
 
-    @property
-    def exon_features(self) -> List["IntervalFeature"]:
-        exon_features = []
-        for f in self.children:
-            if f.type == GeneIntervalFeatures.EXON.value:
-                exon_features.append(f)
-        return exon_features
-
-    @property
-    def cds_features(self) -> List["IntervalFeature"]:
-        cds_features = []
-        for f in self.children:
-            if f.type == GeneIntervalFeatures.CDS.value:
-                cds_features.append(f)
-        return cds_features
-
-    @property
-    def has_cds(self) -> bool:
-        return bool(self.cds_features)
-
-    @property
-    def has_exons(self) -> bool:
-        return bool(self.exon_features)
-
     def get_qualifier_from_tx_or_cds_features(self, qualifier: str) -> Optional[str]:
         """Get a specific qualifier, if it exists. Look at tx first, then children"""
-        if qualifier in self.feature.qualifiers:
-            return self.feature.qualifiers[qualifier][0]
-        for feature in self.cds_features:
-            if qualifier in feature.feature.qualifiers:
-                return feature.feature.qualifiers[qualifier][0]
-
-    def iterate_exon_intervals(self) -> Iterator[Tuple[int, int]]:
-        """Iterate over the location parts"""
-        for exon in sorted(self.exon_features, key=lambda e: e.feature.location.nofuzzy_start):
-            for part in sorted(exon.feature.location.parts, key=lambda p: p.start):
-                yield int(part.nofuzzy_start), int(part.nofuzzy_end)
-
-    def iterate_cds_intervals(self) -> Iterator[Tuple[int, int]]:
-        """Iterate over the CDS location parts"""
-        for cds in sorted(self.cds_features, key=lambda e: e.feature.location.nofuzzy_start):
-            for part in sorted(cds.feature.location.parts, key=lambda p: p.start):
-                yield int(part.nofuzzy_start), int(part.nofuzzy_end)
+        if qualifier in self._seq_feature.qualifiers:
+            return self._seq_feature.qualifiers[qualifier][0]
+        if self.cds_feature:
+            if qualifier in self.cds_feature._seq_feature.qualifiers:
+                return self.cds_feature._seq_feature.qualifiers[qualifier][0]
 
     def find_exon_interval(self) -> CompoundInterval:
         """Finds the Location of the Exons."""
@@ -428,9 +389,9 @@ class TranscriptFeature(Feature):
             return self._exon_interval
         exon_starts = []
         exon_ends = []
-        for exon_start, exon_end in self.iterate_exon_intervals():
-            exon_starts.append(exon_start)
-            exon_ends.append(exon_end)
+        for part in sorted(self._seq_feature.location.parts, key=lambda p: p.start):
+            exon_starts.append(int(part.nofuzzy_start))
+            exon_ends.append(int(part.nofuzzy_end))
         self._exon_interval = CompoundInterval(
             exon_starts,
             exon_ends,
@@ -448,16 +409,22 @@ class TranscriptFeature(Feature):
 
         Handle edge cases from tools like Geneious where the CDS Interval exceeds the bounds of the Exons.
         """
+        if self._cds_interval:
+            return self._cds_interval
+
+        # this is a non-coding transcript
+        if not self.cds_feature:
+            self._cds_interval = EmptyLocation()
+            return self._cds_interval
+
         cds_starts = []
         cds_ends = []
-        for cds_start, cds_end in self.iterate_cds_intervals():
-            cds_starts.append(cds_start)
-            cds_ends.append(cds_end)
-        if len(cds_starts) == 0:
-            return EmptyLocation()
+        for part in sorted(self.cds_feature._seq_feature.location.parts, key=lambda p: p.start):
+            cds_starts.append(int(part.nofuzzy_start))
+            cds_ends.append(int(part.nofuzzy_end))
         # must use SingleInterval here because otherwise the optimization step of cds_interval.intersection below
         # will return a SingleInterval, and the equality comparison will raise a spurious InvalidCDSIntervalWarning
-        elif len(cds_starts) == 1:
+        if len(cds_starts) == 1:
             cds_interval = SingleInterval(cds_starts[0], cds_ends[0], Strand.from_int(self.strand))
         else:
             cds_interval = CompoundInterval(
@@ -473,7 +440,13 @@ class TranscriptFeature(Feature):
                     f"because that is the exon boundaries found"
                 )
             )
-        return cds_interval_intersection_with_exons
+        # convert to CompoundInterval, if SingleInterval, for consistent ability to extract position information
+        if isinstance(cds_interval_intersection_with_exons, SingleInterval):
+            cds_interval_intersection_with_exons = CompoundInterval.from_single_intervals(
+                [cds_interval_intersection_with_exons]
+            )
+        self._cds_interval = cds_interval_intersection_with_exons
+        return self._cds_interval
 
     def merge_cds_qualifiers_to_transcript(self) -> Dict[str, List[str]]:
         """
@@ -481,9 +454,9 @@ class TranscriptFeature(Feature):
         when converting to the BioCantor data model unless those qualifiers are rolled into the qualifiers on
         the transcript feature.
         """
-        qualifiers = {key: set(vals) for key, vals in self.feature.qualifiers.items()}
-        for cds_feature in self.cds_features:
-            for key, vals in cds_feature.feature.qualifiers.items():
+        qualifiers = {key: set(vals) for key, vals in self._seq_feature.qualifiers.items()}
+        if self.cds_feature:
+            for key, vals in self.cds_feature._seq_feature.qualifiers.items():
                 if key not in qualifiers:
                     qualifiers[key] = set(vals)
                 else:
@@ -491,59 +464,586 @@ class TranscriptFeature(Feature):
         return {key: list(vals) for key, vals in qualifiers.items()}
 
 
-class IntervalFeature(Feature):
-    """A set of intervals"""
+class CDSFeature(Feature):
+    """A CDS interval"""
 
-    types = {"CDS", "exon"}
+    types = {GeneIntervalFeatures.CDS.value}
 
     def __str__(self):
-        return f"----> {self.feature.__repr__()}"
+        return f"----> {self._seq_feature.__repr__()}"
 
 
-def _construct_gene_from_feature(
-    feature: SeqFeature,
-    seqrecord: SeqRecord,
-    cls_or_fn: Callable[[SeqFeature, SeqRecord], GeneFeature],
-) -> Optional[GeneFeature]:
+@dataclass
+class GroupedGeneFeatures:
     """
-    Convenience function for producing :class:`GeneFeature` from a `SeqFeature`, handling both
-    possible constructor routes (construction from a ``gene`` feature as found in the GenBank,
-    or inference from a transcript/interval level feature in case no ``gene`` level feature was found).
-
-    This wrapper function catches exceptions raised for common errors, and converts them to warnings
-    as appropriate.
+    Container class for a grouping of gene-like SeqFeatures on their associated SeqRrecord
     """
-    try:
-        return cls_or_fn(feature, seqrecord)
-    except GenBankNullStrandException:
-        warnings.warn(
-            StrandViolationWarning(f"Found multiple strands for feature {feature}. This feature will be skipped.")
+
+    seqrecord: SeqRecord
+    gene_feature: Optional[SeqFeature] = None
+    transcript_feature: Optional[SeqFeature] = None
+    cds_features: Optional[List[SeqFeature]] = None
+
+
+class BaseGenBankParser(ABC):
+    """
+    Base class for GenBank parsing.
+    """
+
+    genbank_parser_type: GenBankParserType
+
+    def __init__(
+        self,
+        seq_records: List[SeqRecord],
+        gene_parse_func: Callable[[GeneFeature], Dict[str, Any]],
+        feature_parse_func: Callable[[FeatureIntervalGenBankCollection], Dict[str, Any]],
+    ):
+        self.seq_records = seq_records
+        self.gene_parse_func = gene_parse_func
+        self.feature_parse_func = feature_parse_func
+
+        self.sources = OrderedDict([seqrecord.id, None] for seqrecord in seq_records)
+        # this is the filtered set of SeqFeatures mapped onto the seqrecord ID
+        self.gene_filtered_features: Dict[str, List[SeqFeature]] = {}
+        self.feature_features: Dict[str, List[SeqFeature]] = {}
+
+        self.grouped_gene_features: Dict[str, GroupedGeneFeatures] = {}
+
+        self.genes: Dict[str, List[GeneFeature]] = OrderedDict([seqrecord.id, []] for seqrecord in seq_records)
+        self.feature_collections: Dict[str, List[FeatureIntervalGenBankCollection]] = OrderedDict(
+            [seqrecord.id, []] for seqrecord in seq_records
         )
 
+    @property
+    def num_genes(self) -> int:
+        return sum(len(x) for x in self.genes.values())
 
-def _construct_feature_collection_from_features(
-    features: List[SeqFeature],
-    seqrecord: SeqRecord,
-) -> Optional[FeatureIntervalGenBankCollection]:
-    """
-    Convenience function for producing :class:`FeatureIntervalGenBankCollection` from a `SeqFeature`.
+    @property
+    def num_feature_collections(self):
+        return sum(len(x) for x in self.feature_collections.values())
 
-    This wrapper function catches exceptions raised for common errors, and converts them to warnings
-    as appropriate.
-    """
-    try:
-        return FeatureIntervalGenBankCollection(features, seqrecord)
-    except GenBankNullStrandException:
-        warnings.warn(
-            StrandViolationWarning(
-                f"Found multiple strands for feature group {features}. " f"This feature collection will be skipped."
+    @abstractmethod
+    def parse(self) -> Iterator[ParsedAnnotationRecord]:
+        """Parse features"""
+
+    @staticmethod
+    def validate_seqfeature(feature: SeqFeature) -> bool:
+        """
+        Perform validation checks on a SeqFeature. If there are issues with the feature,
+        warnings and raised and this function returns ``False``.
+        """
+        if not feature.location:
+            warnings.warn(
+                InvalidIntervalWarning(f"Invalid location for feature {feature}. This feature will be skipped.")
             )
+            return False
+        elif not feature.strand:
+            warnings.warn(
+                StrandViolationWarning(f"Found multiple strands for feature {feature}. This feature will be skipped.")
+            )
+            return False
+        return True
+
+    @staticmethod
+    def _construct_gene_from_feature(feature: SeqFeature, seqrecord: SeqRecord) -> Optional[GeneFeature]:
+        """Convenience function for deciding which function to use when converting a feature to a gene"""
+        if feature.type in GeneFeature.types:
+            return GeneFeature(feature, seqrecord)
+        elif feature.type in TranscriptFeature.types or feature.type in CDSFeature.types:
+            return GeneFeature.from_transcript_or_cds_feature(feature, seqrecord)
+        else:
+            warnings.warn(
+                f"Feature {feature} was associated with a gene but was not of a known type " f"and will be ignored"
+            )
+
+    @staticmethod
+    def _sort_features_by_position_and_type(features: List[SeqFeature]) -> List[SeqFeature]:
+        """
+        sort features first by position then by the expected order of features for a coding gene
+        all non-coding transcripts as a result end up at the end of the group
+        """
+        return sorted(
+            features,
+            key=lambda x: (
+                x.location.nofuzzy_start,
+                x.type != GeneFeatures.GENE.value,
+                x.type != TranscriptFeatures.CODING_TRANSCRIPT.value,
+                x.type != GeneIntervalFeatures.CDS.value,
+            ),
         )
+
+    @staticmethod
+    def _group_sorted_features_by_type(features: List[SeqFeature]) -> Iterator[List[SeqFeature]]:
+        """
+        Iterator for grouping sorted features by each time a ``gene`` feature appears.
+
+        This function identifies groups of canonical genes, as well as interspersed non-coding genes,
+        while also trying to identify isolated CDS records.
+
+        As an example, take this set of ordered features:
+
+        .. code-block::
+            gene
+            mRNA
+            CDS
+            tRNA
+            rRNA
+            gene
+            CDS
+
+        This would be grouped as:
+
+        .. code-block::
+            [gene, mRNA, CDS]
+            [tRNA]
+            [rRNA]
+            [gene, CDS]
+
+        However, sometimes non-coding genes still have the gene feature. Take this example:
+
+        .. code-block::
+            gene
+            mRNA
+            CDS
+            gene
+            ncRNA
+            gene
+            CDS
+
+        This would be grouped as:
+
+        .. code-block::
+            [gene, mRNA, CDS]
+            [gene, ncRNA]
+            [gene, CDS]
+
+        Now consider this problematic ordering, where a non-coding object interrupts a coding object:
+
+        .. code-block::
+            gene
+            tRNA
+            CDS
+
+        This is ambiguous -- is the gene meant to go with the tRNA, or the CDS? This would be grouped as:
+
+        .. code-block::
+            [gene, tRNA]
+            [CDS]
+
+        And there will be a new ``gene`` object inferred for the ``CDS``, regardless of if the ``gene`` was supposed
+        to go with it or not.
+
+        This is an example of why the Sorted parser is inherently more fragile than the LocusTag parser.
+        """
+        group = []
+        for feature in features:
+            # new gene group
+            if not group:
+                if feature.type in GeneFeature.types:
+                    group.append(feature)
+                    # base case for starting with a isolated ncRNA or CDS feature; immediately add them
+                    # and reset the gene to None
+                elif feature.type in TranscriptFeature.types or feature.type in CDSFeature.types:
+                    group.append(feature)
+                    yield group
+                    group = []
+                else:
+                    warnings.warn(
+                        f"Feature {feature} was associated with a gene but was not of a known type and will be ignored"
+                    )
+            # next gene; reset
+            elif feature.type in GeneFeature.types:
+                yield group
+                group = [feature]
+            elif feature.type in TranscriptFeature.types:
+                # if the current gene is non-empty, and the feature is not a mRNA, then this is a isolated ncRNA
+                # finish this gene and start a new one
+                if group and feature.type != TranscriptFeatures.CODING_TRANSCRIPT:
+                    if group[-1].type in GeneFeature.types:
+                        group.append(feature)
+                    else:
+                        yield group
+                        group = [feature]
+                else:
+                    group.append(feature)
+            elif feature.type in CDSFeature.types:
+                # are we about to associate this CDS with a non-coding transcript type? If so, don't do so
+                if any(NonCodingTranscriptFeatures.has_value(x.type) for x in group):
+                    yield group
+                    group = [feature]
+                else:
+                    group.append(feature)
+            else:
+                warnings.warn(
+                    f"Feature {feature} was associated with a gene but was not of a known type and will be ignored"
+                )
+        if group:
+            yield group
+
+    def _group_features_by_position(self, features: List[SeqFeature], seqrecord: SeqRecord):
+        for i, feature_group in enumerate(self._group_sorted_features_by_type(features)):
+            gene_features = []
+            transcript_features = []
+            cds_features = []
+            for feature in feature_group:
+                if feature.type in GeneFeature.types:
+                    gene_features.append(feature)
+                elif feature.type in TranscriptFeature.types:
+                    transcript_features.append(feature)
+                elif feature.type in CDSFeature.types:
+                    cds_features.append(feature)
+                else:
+                    warnings.warn(
+                        f"Feature {feature} was associated with a gene but was not of a known type "
+                        f"and will be ignored"
+                    )
+            # due to the grouping predicate in _group_position_sorted_by_gene_feature it is not possible
+            # for there to be more than one gene feature
+            if gene_features:
+                gene_feature = gene_features[0]
+            else:
+                gene_feature = None
+            if transcript_features:
+                if len(transcript_features) > 1:
+                    warnings.warn(
+                        GenBankUnknownFeatureWarning(
+                            f"Grouping by position found multiple transcript features associated with the same gene\n"
+                            f"{gene_feature}: {transcript_features}\n"
+                            f"Extra transcript will be ignored"
+                        )
+                    )
+                transcript_feature = transcript_features[0]
+            else:
+                transcript_feature = None
+            self.grouped_gene_features[f"{seqrecord.id}_{i}"] = GroupedGeneFeatures(
+                seqrecord, gene_feature, transcript_feature, cds_features
+            )
+
+    def _group_features_by_locus_tag(self, features: List[SeqFeature], seqrecord: SeqRecord):
+        for locus_tag, gene_features in itertools.groupby(
+            features,
+            key=lambda f: f.qualifiers[KnownQualifiers.LOCUS_TAG.value][0],
+        ):
+            gene_feature = None
+            transcript_feature = None
+            cds_features = []
+            for feature in gene_features:
+                if feature.type == GeneFeatures.GENE.value:
+                    if gene_feature is not None:
+                        raise GenBankLocusTagError(
+                            f"Grouping by locus tag found multiple gene features on the same sequence "
+                            f"with the same locus tag:"
+                            f"\n{gene_feature}\n{feature}"
+                        )
+                    else:
+                        gene_feature = feature
+                elif feature.type in TranscriptFeature.types:
+                    if transcript_feature is not None:
+                        warnings.warn(
+                            DuplicateTranscriptWarning(
+                                f"Grouping by locus tag found multiple transcript features on the same sequence "
+                                f"with the same locus tag:"
+                                f"\n{transcript_feature}\n{feature}\n"
+                                f"This transcript will be skipped"
+                            )
+                        )
+                    else:
+                        transcript_feature = feature
+                elif feature.type in CDSFeature.types:
+                    cds_features.append(feature)
+                else:
+                    warnings.warn(
+                        f"Feature {feature} was associated with a gene but was not of a known type "
+                        f"and will be ignored"
+                    )
+
+            self.grouped_gene_features[locus_tag] = GroupedGeneFeatures(
+                seqrecord, gene_feature, transcript_feature, cds_features
+            )
+
+    def _parse_features(
+        self,
+    ):
+        """
+        Extract all generic features from a SeqRecord. These are anything that did not qualify as a gene, based
+        on the feature type being one of the known members of :class:`biocantor.io.genbank.constants.GenBankFeatures`.
+
+        Feature collections are inferred through the ``locus_tag`` field. Any items without such a tag are treated
+        separately.
+
+        """
+        for seqrecord in self.seq_records:
+            for locus_tag, features in itertools.groupby(
+                self.feature_features[seqrecord.id],
+                key=lambda f: f.qualifiers.get(KnownQualifiers.LOCUS_TAG.value, [""])[0],
+            ):
+                if not locus_tag:
+                    # we are in the null scenario,
+                    # meaning that there are no locus tag information and thus no groupings.
+                    for feature in features:
+                        feature_collection = FeatureIntervalGenBankCollection([feature], seqrecord)
+                        if feature_collection:
+                            self.feature_collections[seqrecord.id].append(feature_collection)
+                else:
+                    feature_collection = FeatureIntervalGenBankCollection(list(features), seqrecord)
+                    if feature_collection:
+                        self.feature_collections[seqrecord.id].append(feature_collection)
+
+    def _convert_seqfeatures_to_genes(self):
+        """
+        After the gene-like features have been grouped by either position, locus tag, or both, the groups
+        are evaluated and converted into :class:`GeneFeature` objects.
+
+        Gene-level objects with no children (transcripts or CDSes) are skipped.
+        """
+        for locus_tag, grouped_gene_features in self.grouped_gene_features.items():
+            seqrecord = grouped_gene_features.seqrecord
+
+            # if there is no gene level feature, then it must be inferred
+            if not grouped_gene_features.gene_feature:
+                if grouped_gene_features.transcript_feature:
+                    gene = GeneFeature.from_transcript_or_cds_feature(
+                        grouped_gene_features.transcript_feature, seqrecord
+                    )
+                # CDS feature(s) must exist
+                else:
+                    gene = GeneFeature.from_transcript_or_cds_feature(grouped_gene_features.cds_features[0], seqrecord)
+            else:
+                gene = GeneFeature(grouped_gene_features.gene_feature, seqrecord)
+
+            if grouped_gene_features.transcript_feature and grouped_gene_features.cds_features:
+                for cds_feature in grouped_gene_features.cds_features:
+                    gene.add_child(grouped_gene_features.transcript_feature, cds_feature)
+            # this must be a non-coding gene
+            elif grouped_gene_features.transcript_feature:
+                gene.add_child(grouped_gene_features.transcript_feature)
+            # gene -> CDS without a transcript level feature
+            elif grouped_gene_features.cds_features:
+                for cds_feature in grouped_gene_features.cds_features:
+                    gene.add_child(cds_feature)
+
+            if gene.has_children:
+                self.genes[seqrecord.id].append(gene)
+            else:
+                warnings.warn(GenBankEmptyGeneWarning(f"Gene {gene} has no children features and will be skipped"))
+
+    def _export_annotation_collections(self) -> Iterator[ParsedAnnotationRecord]:
+        """
+        The final step of GenBank parsing is exporting the annotations as :class:`ParsedAnnotationRecord`.
+
+        These objects contain both the annotations as a :class:`AnnotationCollectionModel`, as well as the associated
+        :class:`SeqRecord`, which allows for construction of a `AnnotationCollection` with sequence information.
+        """
+        if self.num_genes + self.num_feature_collections == 0:
+            raise EmptyGenBankError("GenBank parsing produced zero genes and zero features.")
+
+        for seqrecord in self.seq_records:
+            genes = [GeneFeature.to_gene_model(x) for x in sorted(self.genes[seqrecord.id], key=lambda x: x.start)]
+            feature_collections = [
+                FeatureIntervalGenBankCollection.to_feature_model(x)
+                for x in sorted(self.feature_collections[seqrecord.id], key=lambda x: x.start)
+            ]
+            annotation = AnnotationCollectionModel.Schema().load(
+                dict(
+                    genes=genes if genes else None,
+                    feature_collections=feature_collections if feature_collections else None,
+                    name=seqrecord.id,
+                    sequence_name=seqrecord.id,
+                    start=0,
+                    end=len(seqrecord),
+                    qualifiers=self.sources[seqrecord.id].qualifiers if self.sources[seqrecord.id] else None,
+                )
+            )
+            yield ParsedAnnotationRecord(annotation=annotation, seqrecord=seqrecord)
+
+
+class SortedGenBankParser(BaseGenBankParser):
+    """
+    The Sorted GenBank parser relies entirely on increasing genomic position to partition features into genes or
+    feature groups. This is inherently challenging because of issues like overlapping genes or multiple isoforms.
+    """
+
+    genbank_parser_type = GenBankParserType.SORTED
+
+    def parse(self) -> Iterator[ParsedAnnotationRecord]:
+        self._extract_seqfeatures_from_seqrecords()
+        self._group_gene_features_by_position()
+        self._convert_seqfeatures_to_genes()
+        self._parse_features()
+        yield from self._export_annotation_collections()
+
+    def _extract_seqfeatures_from_seqrecords(self):
+        for seqrecord in self.seq_records:
+            gene_filtered_features = []
+            remaining_features = []
+            for f in seqrecord.features:
+                if not self.validate_seqfeature(f):
+                    continue
+                elif f.type in GENBANK_GENE_FEATURES:
+                    gene_filtered_features.append(f)
+                elif f.type == MetadataFeatures.SOURCE.value:
+                    self.sources[seqrecord.id] = f
+                else:
+                    remaining_features.append(f)
+
+            self.gene_filtered_features[seqrecord.id] = self._sort_features_by_position_and_type(gene_filtered_features)
+            self.feature_features[seqrecord.id] = remaining_features
+
+    def _group_gene_features_by_position(self):
+        """
+        Soerted parser groups features using :meth:`BaseGenBankParser._group_features_by_position()`.
+        """
+        for seqrecord in self.seq_records:
+            self._group_features_by_position(self.gene_filtered_features[seqrecord.id], seqrecord)
+
+
+class LocusTagGenBankParser(BaseGenBankParser):
+    """
+    The LocusTag parser expects that every gene feature in the GenBank file contains a /locus_tag qualifier.
+
+    Gene-type features without a locus tag qualifier are ignored, and an exception is raised if multiple
+    gene features have the same locus tag.
+    """
+
+    genbank_parser_type = GenBankParserType.LOCUS_TAG
+
+    def parse(self) -> Iterator[ParsedAnnotationRecord]:
+        self._extract_seqfeatures_from_seqrecords()
+        self._group_gene_features_by_locus_tag()
+        self._convert_seqfeatures_to_genes()
+        self._parse_features()
+        yield from self._export_annotation_collections()
+
+    def _extract_seqfeatures_from_seqrecords(self):
+        for seqrecord in self.seq_records:
+            gene_filtered_features = []
+            remaining_features = []
+            for f in seqrecord.features:
+                if not self.validate_seqfeature(f):
+                    continue
+                elif f.type in GENBANK_GENE_FEATURES and KnownQualifiers.LOCUS_TAG.value in f.qualifiers:
+                    gene_filtered_features.append(f)
+                elif f.type == MetadataFeatures.SOURCE.value:
+                    self.sources[seqrecord.id] = f
+                else:
+                    remaining_features.append(f)
+
+            locus_tag_sorted_gene_filtered_features = sorted(
+                gene_filtered_features, key=lambda f: f.qualifiers[KnownQualifiers.LOCUS_TAG.value]
+            )
+            self.gene_filtered_features[seqrecord.id] = locus_tag_sorted_gene_filtered_features
+            self.feature_features[seqrecord.id] = remaining_features
+
+    def _group_gene_features_by_locus_tag(self):
+        """
+        Locus tag parser groups features using :meth:`BaseGenBankParser._group_features_by_locus_tag()`.
+        """
+        for seqrecord in self.seq_records:
+            self._group_features_by_locus_tag(self.gene_filtered_features[seqrecord.id], seqrecord)
+
+
+class HybridGenBankParser(LocusTagGenBankParser, SortedGenBankParser):
+    """
+    The Hybrid parsing mode combines both LocusTag and Sorted parsing. LocusTag is preferentially used,
+    with features that either lack a locus tag or with duplicate tags are be sent to the Sorted parser.
+    """
+
+    genbank_parser_type = GenBankParserType.HYBRID
+
+    def __init__(
+        self,
+        seq_records: List[SeqRecord],
+        gene_parse_func: Callable[[GeneFeature], Dict[str, Any]],
+        feature_parse_func: Callable[[FeatureIntervalGenBankCollection], Dict[str, Any]],
+    ):
+        super().__init__(seq_records, gene_parse_func, feature_parse_func)
+        self.gene_filtered_features_without_locus_tag: Dict[str, List[SeqFeature]] = {}
+
+    def parse(self) -> Iterator[ParsedAnnotationRecord]:
+        self._extract_seqfeatures_from_seqrecords()
+        self._identify_locus_tag_collisions()
+        self._group_gene_features_by_locus_tag_and_position()
+        self._convert_seqfeatures_to_genes()
+        self._parse_features()
+        yield from self._export_annotation_collections()
+
+    def _extract_seqfeatures_from_seqrecords(self):
+        """
+        Hybrid parser partitions all features by locus tag, if they exist.
+        Any features without a locus tag or with duplicate tags will be sent to the Sorted parser.
+        """
+        for seqrecord in self.seq_records:
+            gene_filtered_features = []
+            gene_filtered_features_without_locus_tag = []
+            remaining_features = []
+            for f in seqrecord.features:
+                if not self.validate_seqfeature(f):
+                    continue
+                elif f.type in GENBANK_GENE_FEATURES:
+                    if KnownQualifiers.LOCUS_TAG.value in f.qualifiers:
+                        gene_filtered_features.append(f)
+                    else:
+                        gene_filtered_features_without_locus_tag.append(f)
+                elif f.type == MetadataFeatures.SOURCE.value:
+                    self.sources[seqrecord.id] = f
+                else:
+                    remaining_features.append(f)
+
+            sorted_gene_filtered_features = sorted(
+                gene_filtered_features, key=lambda f: f.qualifiers[KnownQualifiers.LOCUS_TAG.value]
+            )
+
+            self.gene_filtered_features[seqrecord.id] = sorted_gene_filtered_features
+            self.gene_filtered_features_without_locus_tag[seqrecord.id] = gene_filtered_features_without_locus_tag
+            self.feature_features[seqrecord.id] = remaining_features
+
+    def _identify_locus_tag_collisions(self):
+        """
+        Identify duplicated locus tags on gene features across all of the SeqRecords. Raise a warning for each
+        one, then reassign it to the Sorted parser.
+
+        Also sorts the objects in ``gene_filtered_features_without_locus_tag`` to prepare for sorted parsing.
+        """
+        bad_locus_tags = set()
+        for locus_tag, features in itertools.groupby(
+            itertools.chain.from_iterable(self.gene_filtered_features.values()),
+            key=lambda x: x.qualifiers[KnownQualifiers.LOCUS_TAG.value][0],
+        ):
+            if len([f for f in features if f.type == GeneFeatures.GENE.value]) > 1:
+                warnings.warn(
+                    GenBankDuplicateLocusTagWarning(
+                        f"Locus tag {locus_tag} seen on two or more gene features. "
+                        f"These features will be sent to the Sorted parser."
+                    )
+                )
+                bad_locus_tags.add(locus_tag)
+
+        for seq_id, recs in self.gene_filtered_features.items():
+            good_recs = []
+            bad_recs = []
+            for rec in recs:
+                if rec.qualifiers[KnownQualifiers.LOCUS_TAG.value][0] in bad_locus_tags:
+                    bad_recs.append(rec)
+                else:
+                    good_recs.append(rec)
+            self.gene_filtered_features[seq_id] = good_recs
+            self.gene_filtered_features_without_locus_tag[seq_id] = self._sort_features_by_position_and_type(
+                list(itertools.chain(self.gene_filtered_features_without_locus_tag[seq_id], bad_recs))
+            )
+
+    def _group_gene_features_by_locus_tag_and_position(self):
+        """
+        Hybrid parser groups genes by both position and locus tag, after they were partitioned by
+        :meth:`HybridGenBankParser._extract_seqfeatures_from_seqrecords()`.
+        """
+        for seqrecord in self.seq_records:
+            self._group_features_by_position(self.gene_filtered_features_without_locus_tag[seqrecord.id], seqrecord)
+            self._group_features_by_locus_tag(self.gene_filtered_features[seqrecord.id], seqrecord)
 
 
 def parse_genbank(
     genbank_handle_or_path: Union[TextIO, str, pathlib.Path],
-    parse_func: Optional[Callable[[GeneFeature], Dict[str, Any]]] = GeneFeature.to_gene_model,
+    gene_parse_func: Optional[Callable[[GeneFeature], Dict[str, Any]]] = GeneFeature.to_gene_model,
     feature_parse_func: Optional[
         Callable[[FeatureIntervalGenBankCollection], Dict[str, Any]]
     ] = FeatureIntervalGenBankCollection.to_feature_model,
@@ -554,9 +1054,11 @@ def parse_genbank(
 
     Args:
         genbank_handle_or_path: An open GenBank file or a path to a locally stored GenBank file.
-        parse_func: Optional parse function implementation.
+        gene_parse_func: Optional gene parse function implementation. Defaults to :meth:`GeneFeature.to_gene_model()`
+            implemented in this module.
         feature_parse_func: Optional feature interval parse function implementation.
-        gbk_type: Do we want to use model 1 or model 2? Must be one of ``sorted``, ``locus_tag``.
+            Defaults to :meth:`FeatureIntervalGenBankCollection.to_feature_model()` implemented in this module.
+        gbk_type: Use Hybrid, Sorted or LocusTag based parsing? Defaults to Hybrid.
 
     Yields:
          :class:`ParsedAnnotationRecord`.
@@ -570,354 +1072,9 @@ def parse_genbank(
         seqrecords_dict[rec.id] = rec
 
     if gbk_type == GenBankParserType.SORTED:
-        gene_records = group_gene_records_from_sorted_genbank(seq_records, parse_func, feature_parse_func)
+        parser = SortedGenBankParser(seq_records, gene_parse_func, feature_parse_func)
+    elif gbk_type == GenBankParserType.HYBRID:
+        parser = HybridGenBankParser(seq_records, gene_parse_func, feature_parse_func)
     else:
-        gene_records = group_gene_records_by_locus_tag(seq_records, parse_func, feature_parse_func, gbk_type)
-    yield from gene_records
-
-
-def group_gene_records_from_sorted_genbank(
-    record_iter: Iterator[SeqRecord],
-    parse_func: Callable[[GeneFeature], Dict[str, Any]],
-    feature_parse_func: Callable[[FeatureIntervalGenBankCollection], Dict[str, Any]],
-) -> Iterator[ParsedAnnotationRecord]:
-    """Model 1: position sorted GenBank.
-
-    This function looks for canonical gene records:
-        gene -> Optional(mRNA) -> CDS records
-    It also looks for canonical non-coding records:
-        gene -> {misc_RNA,tRNA,rRNA,etc)
-
-    It also will infer non-canonical record types, including non-coding transcripts and coding genes
-    from isolated CDS/non-coding features (those without a gene feature before them in the sort order).
-
-    Any features that do not fit the above bins are interpreted as generic features.
-
-    Some GenBank files are improperly ordered, and will have things like the CDS feature first, or the mRNA feature
-    first. To try and capture this, the full set of records are sorted first by position, then in the order:
-
-    gene
-    mRNA
-    CDS
-    exon
-    anything else
-
-    Args:
-        record_iter: Iterator of SeqRecord objects.
-        parse_func: Optional parse function implementation.
-        feature_parse_func: Optional feature interval parse function implementation.
-
-    Yields:
-        :class:`ParsedAnnotationRecord`.
-    """
-    tot_genes = 0
-    tot_features = 0
-    for seqrecord in record_iter:
-        gene = None
-        source = None
-        genes = []
-        # capture non-gene intervals downstream
-        feature_features = []
-
-        # sort features to try to capture weirdly ordered genbank files
-        sorted_features = sorted(
-            seqrecord.features,
-            key=lambda x: (
-                # features with invalid coordinates will have no location
-                # this will raise GenBankLocationException once it is consumed by a subclass of Feature
-                x.location.nofuzzy_start if x.location else -1,
-                x.type != GeneFeatures.GENE.value,
-                x.type != TranscriptFeatures.CODING_TRANSCRIPT.value,
-                x.type != GeneIntervalFeatures.CDS.value,
-                x.type != GeneIntervalFeatures.EXON.value,
-            ),
-        )
-        for feature in sorted_features:
-            # try to capture the Source field, if it exists
-            if feature.type == MetadataFeatures.SOURCE.value:
-                source = feature
-            # base case for start; iterate until we find a gene
-            elif gene is None:
-                if feature.type in GeneFeature.types:
-                    gene = _construct_gene_from_feature(feature, seqrecord, GeneFeature)
-                    # gene is None if it was not parseable
-                    if not gene:
-                        continue
-                # base case for starting with a isolated ncRNA or CDS feature; immediately add them
-                # and reset the gene to None
-                elif feature.type in TranscriptFeature.types or feature.type in IntervalFeature.types:
-                    gene = _construct_gene_from_feature(feature, seqrecord, GeneFeature.from_transcript_or_cds_feature)
-                    # gene is None if it was not parseable
-                    if gene:
-                        gene.finalize()
-                        gene = parse_func(gene)
-                        genes.append(gene)
-                        gene = None
-                # this must be a generic feature
-                else:
-                    feature_features.append(feature)
-            # next gene; re-set the gene object and report out the collection
-            elif feature.type in GeneFeature.types:
-                if gene.has_children:
-                    gene.finalize()
-                    gene = parse_func(gene)
-                    genes.append(gene)
-                gene = _construct_gene_from_feature(feature, seqrecord, GeneFeature)
-                if not gene:
-                    continue
-            elif feature.type in TranscriptFeature.types:
-                # if the current gene is non-empty, and the feature is not a mRNA, then this is a isolated ncRNA
-                # finish this gene and start a new one
-                if feature.type != TranscriptFeatures.CODING_TRANSCRIPT and gene.has_children:
-                    gene.finalize()
-                    gene = parse_func(gene)
-                    genes.append(gene)
-                    gene = _construct_gene_from_feature(feature, seqrecord, GeneFeature.from_transcript_or_cds_feature)
-                    # gene is None if it was not parseable
-                    if not gene:
-                        continue
-                elif not feature.strand:
-                    warnings.warn(
-                        StrandViolationWarning(
-                            f"Found multiple strands for feature {feature}. This feature will be skipped."
-                        )
-                    )
-                else:
-                    gene.add_child(feature)
-            elif feature.type in IntervalFeature.types:
-                if not feature.strand:
-                    warnings.warn(
-                        StrandViolationWarning(
-                            f"Found multiple strands for feature {feature}. This feature will be skipped."
-                        )
-                    )
-                elif not gene.has_children:
-                    gene.add_child(feature)
-                # if the most recent child of this gene already has exons and this is a exon, then this is a new isoform
-                elif gene.children[-1].has_exons and feature.type == GeneIntervalFeatures.EXON.value:
-                    gene.add_child(feature)
-                # if the most recent child of this gene already has a CDS and this is a CDS, then this is a new isoform
-                elif gene.children[-1].has_cds and feature.type == GeneIntervalFeatures.CDS.value:
-                    gene.add_child(feature)
-                else:
-                    gene.children[-1].add_child(feature)
-            else:
-                feature_features.append(feature)
-
-        # gene could be None if this record has no annotations
-        if gene is not None and gene.has_children:
-            gene.finalize()
-            gene = parse_func(gene)
-            genes.append(gene)
-
-        if source is not None:
-            source_qualifiers = source.qualifiers
-        else:
-            source_qualifiers = None
-
-        feature_collections = _extract_generic_features(seqrecord, feature_features, feature_parse_func)
-
-        tot_features += len(feature_collections) if feature_collections else 0
-        tot_genes += len(genes) if genes else 0
-
-        annotation = AnnotationCollectionModel.Schema().load(
-            dict(
-                genes=genes,
-                feature_collections=feature_collections,
-                sequence_name=seqrecord.id,
-                start=0,
-                end=len(seqrecord),
-                qualifiers=source_qualifiers,
-            )
-        )
-        yield ParsedAnnotationRecord(annotation=annotation, seqrecord=seqrecord)
-
-    if tot_genes + tot_features == 0:
-        raise EmptyGenBankError("GenBank parsing produced zero genes and zero features.")
-
-
-def group_gene_records_by_locus_tag(
-    record_iter: Iterator[SeqRecord],
-    parse_func: Callable[[GeneFeature], Dict[str, Any]],
-    feature_parse_func: Callable[[FeatureIntervalGenBankCollection], Dict[str, Any]],
-    genbank_parser_type: GenBankParserType = GenBankParserType.LOCUS_TAG,
-) -> Iterator[ParsedAnnotationRecord]:
-    """Model 2: ``locus_tag`` defined GenBank.
-
-    All feature types that qualify within the hierarchical structure, possess a locus_tag, and whose feature type
-    are valid for a known transcribed interval type, will be included in the gene parsing.
-
-    All other feature types will become generic features (FeatureIntervals), unless we are in hybrid mode.
-
-    In hybrid mode, locus_tag is used first, then all of the remaining features are sent to the
-    sorted parser.
-
-    Args:
-        record_iter: Iterator of SeqRecord objects.
-        parse_func: Optional parse function implementation.
-        feature_parse_func: Optional feature interval parse function implementation.
-        genbank_parser_type: Optional parser type. Changing this to GenBankParserType.HYBRID
-            will enable hybrid parsing mode.
-
-    Yields:
-        :class:`ParsedAnnotationRecord`.
-    """
-    if genbank_parser_type not in [GenBankParserType.LOCUS_TAG, GenBankParserType.HYBRID]:
-        raise GenBankParserError("Must use either locus_tag or hybrid")
-
-    tot_genes = 0
-    tot_features = 0
-    for seqrecord in record_iter:
-        gene_filtered_features = []
-        remaining_features = []
-        source = None
-        for f in seqrecord.features:
-            if f.type in GENBANK_GENE_FEATURES and KnownQualifiers.LOCUS_TAG.value in f.qualifiers:
-                gene_filtered_features.append(f)
-            elif f.type == MetadataFeatures.SOURCE.value:
-                source = f
-            else:
-                remaining_features.append(f)
-
-        sorted_gene_filtered_features = sorted(
-            gene_filtered_features, key=lambda f: f.qualifiers[KnownQualifiers.LOCUS_TAG.value]
-        )
-
-        genes = []
-        for locus_tag, gene_features in itertools.groupby(
-            sorted_gene_filtered_features, key=lambda f: f.qualifiers[KnownQualifiers.LOCUS_TAG.value][0]
-        ):
-            # sort the features for this locus tag to bubble the "gene" feature to the top, if it exists
-            gene_features = sorted(gene_features, key=lambda f: f.type != GeneFeatures.GENE.value)
-
-            # do we have more than one gene with this locus_tag?
-            if len(gene_features) > 1 and gene_features[1].type == GeneFeatures.GENE.value:
-                raise GenBankLocusTagError(
-                    f"Grouping by locus tag found multiple gene features with the same locus tag:"
-                    f"\n{gene_features[0]}\n{gene_features[1]}"
-                )
-
-            gene_feature = gene_features[0]
-            if gene_feature.type == GeneFeatures.GENE.value:
-                gene = _construct_gene_from_feature(gene_feature, seqrecord, GeneFeature)
-            else:
-                gene = _construct_gene_from_feature(gene_feature, seqrecord, GeneFeature.from_transcript_or_cds_feature)
-            # gene is None if it was not parseable
-            if not gene:
-                continue
-
-            for feature in gene_features[1:]:
-                if not feature.strand:
-                    warnings.warn(
-                        StrandViolationWarning(
-                            f"Found multiple strands for feature {feature}. This feature will be skipped."
-                        )
-                    )
-                elif feature.type in TranscriptFeature.types:
-                    gene.add_child(feature)
-                elif feature.type in IntervalFeature.types:
-                    if not gene.has_children:
-                        gene.add_child(feature)
-                    # if the most recent child of this gene already has exons and this is a exon,
-                    # then this is a new isoform
-                    elif gene.children[-1].has_exons and feature.type == GeneIntervalFeatures.EXON.value:
-                        gene.add_child(feature)
-                    # if the most recent child of this gene already has a CDS and this is a CDS,
-                    # then this is a new isoform
-                    elif gene.children[-1].has_cds and feature.type == GeneIntervalFeatures.CDS.value:
-                        gene.add_child(feature)
-                    else:
-                        gene.children[-1].add_child(feature)
-
-            if gene.has_children:
-                gene.finalize()
-                gene = parse_func(gene)
-                genes.append(gene)
-
-        if source is not None:
-            source_qualifiers = source.qualifiers
-        else:
-            source_qualifiers = None
-
-        if genbank_parser_type == GenBankParserType.LOCUS_TAG:
-            feature_collections = _extract_generic_features(seqrecord, remaining_features, feature_parse_func)
-        else:
-            # hybrid parsing mode
-            tmp_seqrecord = deepcopy(seqrecord)
-            tmp_seqrecord.features = remaining_features
-            tmp_annotation = next(
-                group_gene_records_from_sorted_genbank((tmp_seqrecord,), parse_func, feature_parse_func)
-            )
-            if tmp_annotation.annotation.feature_collections:
-                feature_collections = [
-                    FeatureIntervalCollectionModel.Schema().dump(x)
-                    for x in tmp_annotation.annotation.feature_collections
-                ]
-            else:
-                feature_collections = None
-            if tmp_annotation.annotation.genes:
-                genes.extend([GeneIntervalModel.Schema().dump(x) for x in tmp_annotation.annotation.genes])
-
-        tot_features += len(feature_collections) if feature_collections else 0
-        tot_genes += len(genes) if genes else 0
-
-        annotation = AnnotationCollectionModel.Schema().load(
-            dict(
-                genes=genes,
-                feature_collections=feature_collections,
-                name=seqrecord.id,
-                sequence_name=seqrecord.id,
-                start=0,
-                end=len(seqrecord),
-                qualifiers=source_qualifiers,
-            )
-        )
-        yield ParsedAnnotationRecord(annotation=annotation, seqrecord=seqrecord)
-
-    if tot_genes + tot_features == 0:
-        raise EmptyGenBankError("GenBank parsing produced zero genes and zero features.")
-
-
-def _extract_generic_features(
-    seqrecord: SeqRecord,
-    filtered_features: List[SeqFeature],
-    feature_parse_func: Callable[[FeatureIntervalGenBankCollection], Dict[str, Any]],
-) -> Optional[List[Dict[str, Any]]]:
-    """
-    Extract all generic features from a SeqRecord. These are anything that did not qualify as a gene, based
-    on the feature type being one of the known members of :class:`biocantor.io.genbank.constants.GenBankFeatures`.
-
-    Feature collections are inferred through the ``locus_tag`` field. Any items without such a tag are treated
-    separately.
-
-    Args:
-        seqrecord: A SeqRecord object.
-        filtered_features: List of SeqFeature objects associated with the SeqRecord that are not gene-like.
-        feature_parse_func: Optional feature interval parse function implementation.
-
-    Returns:
-        A list of dictionary representations of feature interval collections, or ``None`` if no feature intervals were
-        found.
-    """
-
-    # sort by locus tag, or null if no locus tag is provided.
-    sorted_filtered_features = sorted(
-        filtered_features, key=lambda f: f.qualifiers.get(KnownQualifiers.LOCUS_TAG.value, [""])[0]
-    )
-
-    feature_collections = []
-    for locus_tag, features in itertools.groupby(
-        sorted_filtered_features, key=lambda f: f.qualifiers.get(KnownQualifiers.LOCUS_TAG.value, [""])[0]
-    ):
-        if not locus_tag:
-            # we are in the null scenario, meaning that there are no locus tag information and thus no groupings.
-            for feature in features:
-                feature_collection = _construct_feature_collection_from_features([feature], seqrecord)
-                if feature_collection:
-                    feature_collections.append(feature_collection)
-        else:
-            feature_collection = _construct_feature_collection_from_features(list(features), seqrecord)
-            if feature_collection:
-                feature_collections.append(feature_collection)
-
-    return [feature_parse_func(fc) for fc in feature_collections] if feature_collections else None
+        parser = LocusTagGenBankParser(seq_records, gene_parse_func, feature_parse_func)
+    yield from parser.parse()

@@ -4,81 +4,6 @@
             "feature_intervals": [
                 {
                     "interval_starts": [
-                        9
-                    ],
-                    "interval_ends": [
-                        18
-                    ],
-                    "strand": "PLUS",
-                    "qualifiers": {
-                        "feature_collection_id": [
-                            "456"
-                        ],
-                        "feature_collection_name": [
-                            "featgrp2"
-                        ],
-                        "feature_type": [
-                            "a",
-                            "b"
-                        ],
-                        "feature_collection_type": [
-                            "group"
-                        ],
-                        "feature": [
-                            "featgrp1"
-                        ],
-                        "note": [
-                            "no locus tag"
-                        ]
-                    },
-                    "sequence_name": "chr1",
-                    "sequence_guid": null,
-                    "feature_interval_guid": "c80f1941-660c-a24a-6059-e17f2e2aa248",
-                    "feature_guid": null,
-                    "feature_types": [
-                        "a",
-                        "b",
-                        "group",
-                        "misc_feature"
-                    ],
-                    "feature_name": "no",
-                    "feature_id": "no",
-                    "is_primary_feature": false
-                }
-            ],
-            "feature_collection_name": "no",
-            "feature_collection_id": "no",
-            "locus_tag": null,
-            "feature_collection_type": null,
-            "sequence_name": "chr1",
-            "sequence_guid": null,
-            "feature_collection_guid": "8ec0ca88-0a61-b44c-ddc3-a0967b9961e4",
-            "qualifiers": {
-                "feature_collection_id": [
-                    "456"
-                ],
-                "feature_collection_name": [
-                    "featgrp2"
-                ],
-                "feature_type": [
-                    "a",
-                    "b"
-                ],
-                "feature_collection_type": [
-                    "group"
-                ],
-                "feature": [
-                    "featgrp1"
-                ],
-                "note": [
-                    "no locus tag"
-                ]
-            }
-        },
-        {
-            "feature_intervals": [
-                {
-                    "interval_starts": [
                         2
                     ],
                     "interval_ends": [
@@ -244,6 +169,81 @@
                     "featgrp1"
                 ]
             }
+        },
+        {
+            "feature_intervals": [
+                {
+                    "interval_starts": [
+                        9
+                    ],
+                    "interval_ends": [
+                        18
+                    ],
+                    "strand": "PLUS",
+                    "qualifiers": {
+                        "feature_collection_id": [
+                            "456"
+                        ],
+                        "feature_collection_name": [
+                            "featgrp2"
+                        ],
+                        "feature_type": [
+                            "a",
+                            "b"
+                        ],
+                        "feature_collection_type": [
+                            "group"
+                        ],
+                        "feature": [
+                            "featgrp1"
+                        ],
+                        "note": [
+                            "no locus tag"
+                        ]
+                    },
+                    "sequence_name": "chr1",
+                    "sequence_guid": null,
+                    "feature_interval_guid": "c80f1941-660c-a24a-6059-e17f2e2aa248",
+                    "feature_guid": null,
+                    "feature_types": [
+                        "a",
+                        "b",
+                        "group",
+                        "misc_feature"
+                    ],
+                    "feature_name": "no",
+                    "feature_id": "no",
+                    "is_primary_feature": false
+                }
+            ],
+            "feature_collection_name": "no",
+            "feature_collection_id": "no",
+            "locus_tag": null,
+            "feature_collection_type": null,
+            "sequence_name": "chr1",
+            "sequence_guid": null,
+            "feature_collection_guid": "8ec0ca88-0a61-b44c-ddc3-a0967b9961e4",
+            "qualifiers": {
+                "feature_collection_id": [
+                    "456"
+                ],
+                "feature_collection_name": [
+                    "featgrp2"
+                ],
+                "feature_type": [
+                    "a",
+                    "b"
+                ],
+                "feature_collection_type": [
+                    "group"
+                ],
+                "feature": [
+                    "featgrp1"
+                ],
+                "note": [
+                    "no locus tag"
+                ]
+            }
         }
     ],
     "genes": [
@@ -290,14 +290,10 @@
                 },
                 {
                     "exon_starts": [
-                        2,
-                        7,
-                        12
+                        2
                     ],
                     "exon_ends": [
-                        6,
-                        10,
-                        15
+                        18
                     ],
                     "strand": "PLUS",
                     "cds_starts": [
@@ -334,7 +330,7 @@
                     "transcript_type": "protein_coding",
                     "sequence_name": "chr1",
                     "sequence_guid": null,
-                    "transcript_interval_guid": "befa2ddc-ea89-e8ec-f52e-0e717351c956",
+                    "transcript_interval_guid": "94f44d48-389e-22ff-4d33-1d7d9dad5bd3",
                     "transcript_guid": null
                 }
             ],
@@ -358,7 +354,7 @@
             },
             "sequence_name": "chr1",
             "sequence_guid": null,
-            "gene_guid": "7dee3f32-7839-59aa-398a-0a351b012952"
+            "gene_guid": "cf081b3b-9dff-9c0d-5eb4-6a3b9f287a00"
         }
     ],
     "name": "chr1",
