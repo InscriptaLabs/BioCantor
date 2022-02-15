@@ -477,7 +477,13 @@ class CDSFeature(Feature):
 @dataclass
 class GroupedGeneFeatures:
     """
-    Container class for a grouping of gene-like SeqFeatures on their associated SeqRrecord
+    Container class for a grouping of gene-like SeqFeatures on their associated SeqRrecord.
+
+    This class is used by implementations of the :class:`BaseGenBankParser` to store groupings of features
+    that are considered to be part of a gene unit together with the `SeqRecord` they came from.
+
+    Due to the various flavors of GenBank files out there, any of the gene, transcript or CDS features might not
+    be present. The downstream usage of this class will infer the missing feature types.
     """
 
     seqrecord: SeqRecord
