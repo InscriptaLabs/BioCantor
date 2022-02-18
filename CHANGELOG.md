@@ -6,7 +6,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [UNRELEASED]
 ### Added
-- Alphabet module now supports `ATGCN`
+- Alphabet module now supports `NT_STRICT_UNKNOWN` (`ATGCN`)
 
 ## [0.13.1] 2022-2-04
 ### Fixed
