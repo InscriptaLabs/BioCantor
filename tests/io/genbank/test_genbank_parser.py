@@ -2,7 +2,8 @@ import json
 from collections import OrderedDict
 
 import pytest
-import warnings
+from Bio.SeqFeature import SeqFeature
+
 from inscripta.biocantor.gene.biotype import Biotype
 from inscripta.biocantor.gene.cds_frame import CDSFrame
 from inscripta.biocantor.io.exc import (
@@ -11,15 +12,72 @@ from inscripta.biocantor.io.exc import (
     InvalidCDSIntervalWarning,
     DuplicateFeatureWarning,
     DuplicateTranscriptWarning,
+    InvalidIntervalWarning,
 )
 from inscripta.biocantor.io.genbank.exc import (
     GenBankLocusTagError,
-    GenBankLocationException,
+    GenBankEmptyGeneWarning,
+    UnknownGenBankFeatureWarning,
+    GenBankDuplicateLocusTagWarning,
 )
-from inscripta.biocantor.io.genbank.parser import parse_genbank, GenBankParserType
+from inscripta.biocantor.io.genbank.parser import parse_genbank, GenBankParserType, SortedGenBankParser
 from inscripta.biocantor.io.models import AnnotationCollectionModel
 from inscripta.biocantor.io.parser import ParsedAnnotationRecord
 from inscripta.biocantor.location.location_impl import SingleInterval, CompoundInterval, Strand
+
+
+class TestSortedGenBankParser:
+    """
+    Test methods within the sorted parser
+    """
+
+    @pytest.mark.parametrize(
+        "features,expected_groups",
+        [
+            (
+                [
+                    SeqFeature(type="gene"),
+                    SeqFeature(type="mRNA"),
+                    SeqFeature(type="CDS"),
+                    SeqFeature(type="tRNA"),
+                    SeqFeature(type="rRNA"),
+                    SeqFeature(type="gene"),
+                    SeqFeature(type="CDS"),
+                ],
+                [
+                    ["gene", "mRNA", "CDS"],
+                    ["tRNA"],
+                    ["rRNA"],
+                    ["gene", "CDS"],
+                ],
+            ),
+            (
+                [
+                    SeqFeature(type="gene"),
+                    SeqFeature(type="mRNA"),
+                    SeqFeature(type="CDS"),
+                    SeqFeature(type="gene"),
+                    SeqFeature(type="ncRNA"),
+                    SeqFeature(type="gene"),
+                    SeqFeature(type="CDS"),
+                ],
+                [
+                    ["gene", "mRNA", "CDS"],
+                    ["gene", "ncRNA"],
+                    ["gene", "CDS"],
+                ],
+            ),
+            (
+                [SeqFeature(type="gene"), SeqFeature(type="tRNA"), SeqFeature(type="CDS")],
+                [["gene", "tRNA"], ["CDS"]],
+            ),
+        ],
+    )
+    def test__group_sorted_features_by_type(self, features, expected_groups):
+        vals = []
+        for x in SortedGenBankParser._group_sorted_features_by_type(features):
+            vals.append([v.type for v in x])
+        assert vals == expected_groups
 
 
 class TestEukaryoticGenbankParser:
@@ -30,7 +88,7 @@ class TestEukaryoticGenbankParser:
     GI526_G0000002: A eukaryotic style coding gene. Has 5' and 3' UTRs.
     GI526_G0000003: A prokaryotic style coding gene. Has no mRNA feature and must be inferred.
     GI526_G0000004: A coding gene with no CDS feature; gets parsed as a non-coding gene.
-    GI526_G0000005: Gene feature only; should not be parsed.
+    GI526_G0000005: Gene feature only; should not be parsed. Raises a warning.
 
     """
 
@@ -39,11 +97,7 @@ class TestEukaryoticGenbankParser:
     def test_parse_genbank_metadata(self, test_data_dir):
         gbk = test_data_dir / self.gbk
         with open(gbk, "r") as fh:
-            # this functionality will exist after pytest 7.0 is released
-            # https://stackoverflow.com/questions/45671803/how-to-use-pytest-to-assert-no-warning-is-raised
-            # with pytest.does_not_warn():
-            with warnings.catch_warnings():
-                warnings.simplefilter("error")
+            with pytest.warns(GenBankEmptyGeneWarning):
                 parsed = list(parse_genbank(fh))[0]
 
         assert parsed.annotation.feature_collections is None
@@ -486,8 +540,12 @@ class TestGenBankErrors:
         gbk = test_data_dir / "locus_tag_collision.gbk"
         with pytest.raises(GenBankLocusTagError):
             with open(gbk, "r") as fh:
-                _ = list(ParsedAnnotationRecord.parsed_annotation_records_to_model(parse_genbank(fh)))[0]
-        # works fine in sorted mode
+                _ = list(
+                    ParsedAnnotationRecord.parsed_annotation_records_to_model(
+                        parse_genbank(fh, gbk_type=GenBankParserType.LOCUS_TAG)
+                    )
+                )[0]
+        # # works fine in sorted mode
         with open(gbk, "r") as fh:
             rec = list(
                 ParsedAnnotationRecord.parsed_annotation_records_to_model(
@@ -495,17 +553,28 @@ class TestGenBankErrors:
                 )
             )[0]
             assert rec.genes[0].locus_tag == rec.genes[1].locus_tag
+        # also works fine in hybrid mode, but raises a warning this time because the duplicate locus tags were
+        # detected by the hybrid parser
+        with pytest.warns(GenBankDuplicateLocusTagWarning):
+            with open(gbk, "r") as fh:
+                rec = list(
+                    ParsedAnnotationRecord.parsed_annotation_records_to_model(
+                        parse_genbank(fh, gbk_type=GenBankParserType.HYBRID)
+                    )
+                )[0]
+                assert rec.genes[0].locus_tag == rec.genes[1].locus_tag
 
 
 class TestGenBankFeatures:
     def test_parse_feature_test_2(self, test_data_dir):
         genbank = "feature_test_2.gbk"
         json_file = "feature_test_2_gbk.json"
-        recs = list(parse_genbank(test_data_dir / genbank))
+        with pytest.warns(DuplicateTranscriptWarning):
+            recs = list(parse_genbank(test_data_dir / genbank))
         c = recs[0].annotation
         assert len(c.feature_collections) == 2
-        assert len(c.feature_collections[0].feature_intervals) == 1
-        assert len(c.feature_collections[1].feature_intervals) == 3
+        assert len(c.feature_collections[0].feature_intervals) == 3
+        assert len(c.feature_collections[1].feature_intervals) == 1
         assert len(c.genes) == 1
 
         with open(test_data_dir / json_file) as fh:
@@ -749,12 +818,13 @@ class TestGenBankFeatures:
         )
 
     def test_caret_coordinates(self, test_data_dir):
-        """Handle caret-containing coordinates just fine"""
+        """Features with caret-containing coordinates are ignored"""
         genbank = test_data_dir / "caret_coordinates.gbk"
-        recs = list(parse_genbank(test_data_dir / genbank))
+        with pytest.warns(InvalidIntervalWarning):
+            recs = list(parse_genbank(test_data_dir / genbank))
         c = recs[0].annotation
-        assert len(c.genes) == 0
-        assert len(c.feature_collections) == 2
+        assert not c.genes
+        assert len(c.feature_collections) == 1
 
 
 class TestSortedParser:
@@ -769,7 +839,8 @@ class TestSortedParser:
         ],
     )
     def test_missing_gene(self, test_data_dir, genbank):
-        recs = list(parse_genbank(test_data_dir / genbank, gbk_type=GenBankParserType.SORTED))
+        with pytest.warns(DuplicateTranscriptWarning):
+            recs = list(parse_genbank(test_data_dir / genbank, gbk_type=GenBankParserType.SORTED))
         c = recs[0].annotation
         assert len(c.genes) == 8
         assert len([x for x in c.genes if x.gene_type == Biotype.protein_coding]) == 6
@@ -780,9 +851,10 @@ class TestSortedParser:
         c = recs[0].annotation
         assert len(c.genes) == 4
 
-    def test_wrong_biotype(self, test_data_dir):
+    def test_wrong_biotype_locus_tag(self, test_data_dir):
+        """LocusTag parsing can handle the case where the biotype is incorrect"""
         genbank = test_data_dir / "INSC1006_wrong_feature_type.gbk"
-        recs = list(parse_genbank(test_data_dir / genbank, gbk_type=GenBankParserType.SORTED))
+        recs = list(parse_genbank(test_data_dir / genbank, gbk_type=GenBankParserType.LOCUS_TAG))
         c = recs[0].annotation
         assert len(c.genes) == 1
         gene = c.genes[0]
@@ -790,9 +862,23 @@ class TestSortedParser:
         tx = gene.transcripts[0].to_transcript_interval()
         assert tx.is_coding
 
+    def test_wrong_biotype_sorted(self, test_data_dir):
+        """Sorted parsing can sort of handle the case where the biotype is incorrect"""
+        genbank = test_data_dir / "INSC1006_wrong_feature_type.gbk"
+        with pytest.warns(DuplicateTranscriptWarning):
+            recs = list(parse_genbank(test_data_dir / genbank, gbk_type=GenBankParserType.SORTED))
+        c = recs[0].annotation
+        assert len(c.genes) == 2
+        gene = c.genes[0]
+        assert gene.gene_type == Biotype.ncRNA
+        gene2 = c.genes[1]
+        tx = gene2.transcripts[0].to_transcript_interval()
+        assert tx.is_coding
+
     def test_misordered(self, test_data_dir):
         genbank = test_data_dir / "INSC1003_misordered.gbk"
-        recs = list(parse_genbank(test_data_dir / genbank, gbk_type=GenBankParserType.SORTED))
+        with pytest.warns(UnknownGenBankFeatureWarning):
+            recs = list(parse_genbank(test_data_dir / genbank, gbk_type=GenBankParserType.SORTED))
         c = recs[0].annotation
         assert AnnotationCollectionModel.Schema().dump(c) == OrderedDict(
             [
@@ -807,8 +893,8 @@ class TestSortedParser:
                                     [
                                         OrderedDict(
                                             [
-                                                ("exon_starts", [329]),
-                                                ("exon_ends", [2800]),
+                                                ("exon_starts", [334]),
+                                                ("exon_ends", [2797]),
                                                 ("strand", "PLUS"),
                                                 ("cds_starts", [334]),
                                                 ("cds_ends", [2797]),
@@ -822,7 +908,7 @@ class TestSortedParser:
                                                 ("transcript_type", "protein_coding"),
                                                 ("sequence_name", "FEPOIHMA_1"),
                                                 ("sequence_guid", None),
-                                                ("transcript_interval_guid", "1885d4a8-3523-3584-1904-ab8ead6f1ec5"),
+                                                ("transcript_interval_guid", "059ff890-0a7c-0efd-23fb-301f8d35c31f"),
                                                 ("transcript_guid", None),
                                             ]
                                         )
@@ -835,7 +921,7 @@ class TestSortedParser:
                                 ("qualifiers", {"gene": ["thrA"]}),
                                 ("sequence_name", "FEPOIHMA_1"),
                                 ("sequence_guid", None),
-                                ("gene_guid", "2708950c-f1de-5100-abbf-42374a4e8b95"),
+                                ("gene_guid", "725d632a-3069-0bb1-417f-2a558ab0043b"),
                             ]
                         ),
                         OrderedDict(
@@ -914,47 +1000,9 @@ class TestSortedParser:
                                 ("gene_guid", "50e31c78-f5c7-3803-1311-b8d7e12c720e"),
                             ]
                         ),
-                        OrderedDict(
-                            [
-                                (
-                                    "transcripts",
-                                    [
-                                        OrderedDict(
-                                            [
-                                                ("exon_starts", [6899]),
-                                                ("exon_ends", [6950]),
-                                                ("strand", "PLUS"),
-                                                ("cds_starts", None),
-                                                ("cds_ends", None),
-                                                ("cds_frames", None),
-                                                ("qualifiers", {"gene": ["fake"]}),
-                                                ("is_primary_tx", False),
-                                                ("transcript_id", None),
-                                                ("protein_id", None),
-                                                ("product", None),
-                                                ("transcript_symbol", "fake"),
-                                                ("transcript_type", "protein_coding"),
-                                                ("sequence_name", "FEPOIHMA_1"),
-                                                ("sequence_guid", None),
-                                                ("transcript_interval_guid", "c90401f8-d6a2-cd99-85be-2fd71a059ee5"),
-                                                ("transcript_guid", None),
-                                            ]
-                                        )
-                                    ],
-                                ),
-                                ("gene_id", None),
-                                ("gene_symbol", "fake"),
-                                ("gene_type", "protein_coding"),
-                                ("locus_tag", None),
-                                ("qualifiers", {"gene": ["fake"]}),
-                                ("sequence_name", "FEPOIHMA_1"),
-                                ("sequence_guid", None),
-                                ("gene_guid", "19974310-8f9b-4cb6-6c4d-864fb4a217c9"),
-                            ]
-                        ),
                     ],
                 ),
-                ("name", None),
+                ("name", "FEPOIHMA_1"),
                 ("id", None),
                 ("sequence_name", "FEPOIHMA_1"),
                 ("sequence_guid", None),
@@ -1099,7 +1147,7 @@ class TestSortedParser:
                         ),
                     ],
                 ),
-                ("name", None),
+                ("name", "CM021111.1"),
                 ("id", None),
                 ("sequence_name", "CM021111.1"),
                 ("sequence_guid", None),
@@ -1131,11 +1179,12 @@ class TestSortedParser:
         but these still have the same locus tag. Show that this can be successfully parsed in all parser modes.
         """
         genbank = test_data_dir / "multiple_cds_same_gene.gb"
-        recs = list(
-            ParsedAnnotationRecord.parsed_annotation_records_to_model(
-                parse_genbank(test_data_dir / genbank, gbk_type=parser_mode)
+        with pytest.warns(UnknownGenBankFeatureWarning):
+            recs = list(
+                ParsedAnnotationRecord.parsed_annotation_records_to_model(
+                    parse_genbank(test_data_dir / genbank, gbk_type=parser_mode)
+                )
             )
-        )
         assert len(recs[0].genes[0].transcripts) == 2
         assert len(recs[0].genes[1].transcripts) == 2
 
@@ -1152,7 +1201,8 @@ class TestHybridParser:
 
     def test_toy_overlapping_genes_cds_only(self, test_data_dir):
         genbank = test_data_dir / "ToyChr_R64v5_overlapping_genes.gb"
-        recs = list(parse_genbank(test_data_dir / genbank, gbk_type=GenBankParserType.HYBRID))
+        with pytest.warns(DuplicateTranscriptWarning):
+            recs = list(parse_genbank(test_data_dir / genbank, gbk_type=GenBankParserType.HYBRID))
         c = recs[0].annotation
         with open(test_data_dir / "ToyChr_R64v5_overlapping_genes.json") as fh:
             assert AnnotationCollectionModel.Schema().load(json.load(fh)) == c
@@ -1164,12 +1214,12 @@ class TestExceptionsWarnings:
         with pytest.warns(StrandViolationWarning):
             recs = list(parse_genbank(test_data_dir / genbank, gbk_type=GenBankParserType.SORTED))
             c = recs[0].annotation
-            assert len(c.genes) == 0
+            assert not c.genes
             assert len(c.feature_collections) == 1
         with pytest.warns(StrandViolationWarning):
             recs = list(parse_genbank(test_data_dir / genbank))
             c = recs[0].annotation
-            assert len(c.genes) == 0
+            assert not c.genes
             assert len(c.feature_collections) == 1
 
     @pytest.mark.parametrize(
@@ -1183,7 +1233,7 @@ class TestExceptionsWarnings:
     )
     def test_broken_coordinates(self, test_data_dir, gbk):
         gbk = test_data_dir / gbk
-        with pytest.raises(GenBankLocationException):
+        with pytest.warns(InvalidIntervalWarning):
             with open(gbk, "r") as fh:
                 _ = list(parse_genbank(fh))
 
