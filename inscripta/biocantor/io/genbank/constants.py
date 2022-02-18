@@ -46,6 +46,16 @@ class TranscriptFeatures(str, HasMemberMixin):
     TM_RNA = "tmRNA"
 
 
+class NonCodingTranscriptFeatures(str, HasMemberMixin):
+    """Non-coding GenBank transcript features types BioCantor understands."""
+
+    NONCODING_TRANSCRIPT = "ncRNA"
+    TRANSFER_RNA = "tRNA"
+    RIBOSOMAL_RNA = "rRNA"
+    MISC_RNA = "misc_RNA"
+    TM_RNA = "tmRNA"
+
+
 class GeneIntervalFeatures(str, HasMemberMixin):
     """GenBank interval features types BioCantor understands. These do not match
 

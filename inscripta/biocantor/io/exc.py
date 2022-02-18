@@ -16,7 +16,11 @@ class StrandViolationWarning(UserWarning):
     pass
 
 
-class InvalidCDSIntervalWarning(UserWarning):
+class InvalidIntervalWarning(UserWarning):
+    pass
+
+
+class InvalidCDSIntervalWarning(InvalidIntervalWarning):
     pass
 
 
