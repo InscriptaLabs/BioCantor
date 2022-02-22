@@ -6,6 +6,7 @@ class Alphabet(Enum):
     NT_EXTENDED = "ATUCGNWSMKRYBDHV"
     NT_STRICT_GAPPED = "ACGT-"
     NT_EXTENDED_GAPPED = "ATUCGNWSMKRYBDHV-"
+    NT_STRICT_UNKNOWN = "ATGCN"
     AA = "GALMFWKQESPVICYHRNDT*"
     GENERIC = "ABCDEFGHIJKLMNOPQRSTUVWXYZ-"
 
@@ -15,6 +16,7 @@ class Alphabet(Enum):
             Alphabet.NT_EXTENDED,
             Alphabet.NT_STRICT_GAPPED,
             Alphabet.NT_EXTENDED_GAPPED,
+            Alphabet.NT_STRICT_UNKNOWN,
         ]:
             return True
         if self in [Alphabet.AA, Alphabet.GENERIC]:
@@ -68,6 +70,18 @@ ALPHABET_TO_NUCLEOTIDE_COMPLEMENT = {
         "T": "A",
         "t": "a",
         "-": "-",
+    },
+    Alphabet.NT_STRICT_UNKNOWN: {
+        "A": "T",
+        "a": "t",
+        "C": "G",
+        "c": "g",
+        "G": "C",
+        "g": "c",
+        "T": "A",
+        "t": "a",
+        "N": "N",
+        "n": "n",
     },
     Alphabet.NT_EXTENDED_GAPPED: {
         "A": "T",

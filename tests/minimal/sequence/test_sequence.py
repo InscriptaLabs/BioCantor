@@ -21,6 +21,7 @@ class TestAlphabet:
         assert Alphabet.NT_STRICT_GAPPED.is_nucleotide_alphabet()
         assert Alphabet.NT_EXTENDED.is_nucleotide_alphabet()
         assert Alphabet.NT_EXTENDED_GAPPED.is_nucleotide_alphabet()
+        assert Alphabet.NT_STRICT_UNKNOWN.is_nucleotide_alphabet()
         assert not Alphabet.AA.is_nucleotide_alphabet()
         assert not Alphabet.GENERIC.is_nucleotide_alphabet()
 

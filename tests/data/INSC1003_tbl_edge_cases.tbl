@@ -13,71 +13,71 @@
 			protein_id	gnl|inscripta|BICYNIDBMRRK
 			transcript_id	gnl|inscripta|KBFEKRKWHFAN
 			codon_start	1
-2799	3731	gene		
-			locus_tag	test_10
-			note	original locus_tag: FEPOIHMA_00002
-			note	original product: alpha
-			note	original protein_id: X:FEPOIHMA_00002
-2799	3731	CDS		
-			locus_tag	test_10
-			note	original locus_tag: FEPOIHMA_00002
-			note	original product: alpha
-			note	original protein_id: X:FEPOIHMA_00002
-			product	hypothetical protein
-			protein_id	gnl|inscripta|YCTMCAKXODBC
-			transcript_id	gnl|inscripta|VEEZAJNSPIPB
-			codon_start	1
-3732	5018	gene		
-			gene	thrC
-			locus_tag	test_15
-			note	original locus_tag: FEPOIHMA_00003
-			note	original protein_id: X:FEPOIHMA_00003
-3732	5018	CDS		
-			gene	thrC
-			locus_tag	test_15
-			note	original locus_tag: FEPOIHMA_00003
-			note	original protein_id: X:FEPOIHMA_00003
-			product	threonine synthase
-			protein_id	gnl|inscripta|YJKQZPGTUQSZ
-			transcript_id	gnl|inscripta|KAMYUQNVRUZV
-			codon_start	1
-5231	5527	gene		
-			locus_tag	test_20
-			note	original locus_tag: FEPOIHMA_00004
-			note	original protein_id: X:FEPOIHMA_00004
-5231	5527	CDS		
-			locus_tag	test_20
-			note	original locus_tag: FEPOIHMA_00004
-			note	original protein_id: X:FEPOIHMA_00004
-			product	hypothetical protein
-			protein_id	gnl|inscripta|TPQVNLQBYUFX
-			transcript_id	gnl|inscripta|CPVIFKKRMCXO
-			codon_start	1
-6456	5680	gene		
-			gene	yaaA
-			locus_tag	test_25
-			note	original locus_tag: FEPOIHMA_00005
-			note	original protein_id: X:FEPOIHMA_00005
-6456	5680	CDS		
-			gene	yaaA
-			locus_tag	test_25
-			note	original locus_tag: FEPOIHMA_00005
-			note	original protein_id: X:FEPOIHMA_00005
-			product	protein that reduces intracellular iron levels under peroxide stress
-			protein_id	gnl|inscripta|MSYKAGSCULAL
-			transcript_id	gnl|inscripta|HMRQXBUJPYUX
-			codon_start	1
 335	2797	gene		
 			gene	thrA
-			locus_tag	test_30
+			locus_tag	test_10
 			note	original locus_tag: FEPOIHMA_00010
 			note	original transcript_id: abc123
 335	2797	CDS		
 			gene	thrA
-			locus_tag	test_30
+			locus_tag	test_10
 			note	original locus_tag: FEPOIHMA_00010
 			note	original transcript_id: abc123
 			product	aspartate kinase / homoserine dehydrogenase
+			protein_id	gnl|inscripta|YCTMCAKXODBC
+			transcript_id	gnl|inscripta|VEEZAJNSPIPB
+			codon_start	1
+2799	3731	gene		
+			locus_tag	test_15
+			note	original locus_tag: FEPOIHMA_00002
+			note	original product: alpha
+			note	original protein_id: X:FEPOIHMA_00002
+2799	3731	CDS		
+			locus_tag	test_15
+			note	original locus_tag: FEPOIHMA_00002
+			note	original product: alpha
+			note	original protein_id: X:FEPOIHMA_00002
+			product	hypothetical protein
+			protein_id	gnl|inscripta|YJKQZPGTUQSZ
+			transcript_id	gnl|inscripta|KAMYUQNVRUZV
+			codon_start	1
+3732	5018	gene		
+			gene	thrC
+			locus_tag	test_20
+			note	original locus_tag: FEPOIHMA_00003
+			note	original protein_id: X:FEPOIHMA_00003
+3732	5018	CDS		
+			gene	thrC
+			locus_tag	test_20
+			note	original locus_tag: FEPOIHMA_00003
+			note	original protein_id: X:FEPOIHMA_00003
+			product	threonine synthase
+			protein_id	gnl|inscripta|TPQVNLQBYUFX
+			transcript_id	gnl|inscripta|CPVIFKKRMCXO
+			codon_start	1
+5231	5527	gene		
+			locus_tag	test_25
+			note	original locus_tag: FEPOIHMA_00004
+			note	original protein_id: X:FEPOIHMA_00004
+5231	5527	CDS		
+			locus_tag	test_25
+			note	original locus_tag: FEPOIHMA_00004
+			note	original protein_id: X:FEPOIHMA_00004
+			product	hypothetical protein
+			protein_id	gnl|inscripta|MSYKAGSCULAL
+			transcript_id	gnl|inscripta|HMRQXBUJPYUX
+			codon_start	1
+6456	5680	gene		
+			gene	yaaA
+			locus_tag	test_30
+			note	original locus_tag: FEPOIHMA_00005
+			note	original protein_id: X:FEPOIHMA_00005
+6456	5680	CDS		
+			gene	yaaA
+			locus_tag	test_30
+			note	original locus_tag: FEPOIHMA_00005
+			note	original protein_id: X:FEPOIHMA_00005
+			product	protein that reduces intracellular iron levels under peroxide stress
 			protein_id	gnl|inscripta|HRPFEROMYOBA
 			transcript_id	gnl|inscripta|EOGAIZLVINUN
 			codon_start	1
