@@ -1066,6 +1066,7 @@ def parse_genbank(
         Callable[[FeatureIntervalGenBankCollection], Dict[str, Any]]
     ] = FeatureIntervalGenBankCollection.to_feature_model,
     gbk_type: Optional[GenBankParserType] = GenBankParserType.HYBRID,
+        allow_duplicate_sequence_identifiers: bool = False,
 ) -> Iterator[ParsedAnnotationRecord]:
     """This is the main GenBank parsing function. The parse function implemented in :class:`GeneFeature` can be
     over-ridden to provide a custom implementation.
@@ -1077,17 +1078,20 @@ def parse_genbank(
         feature_parse_func: Optional feature interval parse function implementation.
             Defaults to :meth:`FeatureIntervalGenBankCollection.to_feature_model()` implemented in this module.
         gbk_type: Use Hybrid, Sorted or LocusTag based parsing? Defaults to Hybrid.
+        allow_duplicate_sequence_identifiers: Should this parser raise an exception if the same identifier is seen
+            twice? Defaults to `False`.
 
     Yields:
          :class:`ParsedAnnotationRecord`.
     """
     seq_records = list(SeqIO.parse(genbank_handle_or_path, format="genbank"))
 
-    seqrecords_dict = {}
-    for rec in seq_records:
-        if rec.id in seqrecords_dict:
-            raise DuplicateSequenceException(f"Sequence {rec.id} found twice in GenBank file.")
-        seqrecords_dict[rec.id] = rec
+    if allow_duplicate_sequence_identifiers is False:
+        seqrecords_dict = {}
+        for rec in seq_records:
+            if rec.id in seqrecords_dict:
+                raise DuplicateSequenceException(f"Sequence {rec.id} found twice in GenBank file.")
+            seqrecords_dict[rec.id] = rec
 
     if gbk_type == GenBankParserType.SORTED:
         parser = SortedGenBankParser(seq_records, gene_parse_func, feature_parse_func)
