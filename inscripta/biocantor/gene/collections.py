@@ -128,6 +128,12 @@ class AbstractFeatureIntervalCollection(AbstractInterval, ABC):
         """
         Used in object construction to find the primary feature. Shared between :class:`GeneInterval`
         and :class:`FeatureIntervalCollection`.
+
+        If not specified by the data source, primary features are determined by:
+
+        1. If the feature is coding, then its CDS size
+        2. The (spliced) feature size.
+        3. The *position* of the feature within the ordered list of features.
         """
         # see if we were given a primary feature
         primary_feature = None
