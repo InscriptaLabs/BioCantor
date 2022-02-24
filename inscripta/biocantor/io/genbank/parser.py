@@ -1066,7 +1066,7 @@ def parse_genbank(
         Callable[[FeatureIntervalGenBankCollection], Dict[str, Any]]
     ] = FeatureIntervalGenBankCollection.to_feature_model,
     gbk_type: Optional[GenBankParserType] = GenBankParserType.HYBRID,
-        allow_duplicate_sequence_identifiers: bool = False,
+    allow_duplicate_sequence_identifiers: bool = False,
 ) -> Iterator[ParsedAnnotationRecord]:
     """This is the main GenBank parsing function. The parse function implemented in :class:`GeneFeature` can be
     over-ridden to provide a custom implementation.
