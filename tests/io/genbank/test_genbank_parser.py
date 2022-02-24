@@ -1241,3 +1241,5 @@ class TestExceptionsWarnings:
         gbk = test_data_dir / "INSC1006_chrI_duplicate.gbff"
         with pytest.raises(DuplicateSequenceException):
             _ = list(parse_genbank(test_data_dir / gbk))
+        # turn off the flag and now there is no exception
+        _ = list(parse_genbank(test_data_dir / gbk, allow_duplicate_sequence_identifiers=True))
