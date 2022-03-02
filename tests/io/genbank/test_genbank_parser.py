@@ -88,7 +88,7 @@ class TestEukaryoticGenbankParser:
     GI526_G0000002: A eukaryotic style coding gene. Has 5' and 3' UTRs.
     GI526_G0000003: A prokaryotic style coding gene. Has no mRNA feature and must be inferred.
     GI526_G0000004: A coding gene with no CDS feature; gets parsed as a non-coding gene.
-    GI526_G0000005: Gene feature only; should not be parsed. Raises a warning.
+    GI526_G0000005: Gene feature only; parsed as a non-coding gene.
 
     """
 
@@ -102,13 +102,14 @@ class TestEukaryoticGenbankParser:
 
         assert parsed.annotation.feature_collections is None
         assert parsed.annotation.sequence_name == "CM021111.1"
-        assert len(parsed.annotation.genes) == 4
-        assert {x.gene_symbol for x in parsed.annotation.genes if x.gene_symbol} == {"GDH3", "BDH2", "BDH1"}
+        assert len(parsed.annotation.genes) == 5
+        assert {x.gene_symbol for x in parsed.annotation.genes if x.gene_symbol} == {"GDH3", "BDH2", "BDH1", "ECM1"}
         assert {x.locus_tag for x in parsed.annotation.genes} == {
             "GI526_G0000001",
             "GI526_G0000002",
             "GI526_G0000003",
             "GI526_G0000004",
+            "GI526_G0000005",
         }
 
 
@@ -181,7 +182,7 @@ class TestGenbank:
         with open(gbk, "r") as fh:
             parsed = list(ParsedAnnotationRecord.parsed_annotation_records_to_model(parse_genbank(fh)))[0]
 
-        assert len(parsed.genes) == 4
+        assert len(parsed.genes) == 5
         assert all(
             gene.transcripts[0]._location.parent.id == gene.sequence_name == "CM021111.1" for gene in parsed.genes
         )
@@ -220,7 +221,7 @@ class TestGenbank:
                 None,
                 False,
                 True,
-                {"GI526_G0000001", "GI526_G0000002", "GI526_G0000003", "GI526_G0000004"},
+                {"GI526_G0000001", "GI526_G0000002", "GI526_G0000003", "GI526_G0000004", "GI526_G0000005"},
             ),
             (
                 # just Seq ID is pass through
@@ -229,7 +230,7 @@ class TestGenbank:
                 None,
                 False,
                 True,
-                {"GI526_G0000001", "GI526_G0000002", "GI526_G0000003", "GI526_G0000004"},
+                {"GI526_G0000001", "GI526_G0000002", "GI526_G0000003", "GI526_G0000004", "GI526_G0000005"},
             ),
             (
                 # restrict by strict range
@@ -280,7 +281,7 @@ class TestGenbank:
             coding_only=coding_only,
             completely_within=completely_within,
         )
-        assert all(x.locus_tag in locus_tags for x in result.genes)
+        assert all([x.locus_tag in locus_tags for x in result.genes])
 
     @pytest.mark.parametrize(
         "seq_id,start,end,coding_only,completely_within,locus_tags",
@@ -1000,6 +1001,44 @@ class TestSortedParser:
                                 ("gene_guid", "50e31c78-f5c7-3803-1311-b8d7e12c720e"),
                             ]
                         ),
+                        OrderedDict(
+                            [
+                                (
+                                    "transcripts",
+                                    [
+                                        OrderedDict(
+                                            [
+                                                ("exon_starts", [6899]),
+                                                ("exon_ends", [6950]),
+                                                ("strand", "PLUS"),
+                                                ("cds_starts", None),
+                                                ("cds_ends", None),
+                                                ("cds_frames", None),
+                                                ("qualifiers", {"gene": ["fake"]}),
+                                                ("is_primary_tx", False),
+                                                ("transcript_id", None),
+                                                ("protein_id", None),
+                                                ("product", None),
+                                                ("transcript_symbol", "fake"),
+                                                ("transcript_type", "ncRNA"),
+                                                ("sequence_name", "FEPOIHMA_1"),
+                                                ("sequence_guid", None),
+                                                ("transcript_interval_guid", "cbb87015-fb21-5fb1-f4b8-1cc560fcec78"),
+                                                ("transcript_guid", None),
+                                            ]
+                                        )
+                                    ],
+                                ),
+                                ("gene_id", None),
+                                ("gene_symbol", "fake"),
+                                ("gene_type", "ncRNA"),
+                                ("locus_tag", None),
+                                ("qualifiers", {"gene": ["fake"]}),
+                                ("sequence_name", "FEPOIHMA_1"),
+                                ("sequence_guid", None),
+                                ("gene_guid", "8bac45cf-d105-2f35-b0e1-afab36a6ccdd"),
+                            ]
+                        ),
                     ],
                 ),
                 ("name", "FEPOIHMA_1"),
@@ -1214,13 +1253,14 @@ class TestExceptionsWarnings:
         with pytest.warns(StrandViolationWarning):
             recs = list(parse_genbank(test_data_dir / genbank, gbk_type=GenBankParserType.SORTED))
             c = recs[0].annotation
-            assert not c.genes
-            assert len(c.feature_collections) == 1
+            assert len(c.genes) == 3
+            # all genes that did get parsed get converted to ncRNA due to them being inferred from the gene feature
+            assert all([x.gene_type == Biotype.ncRNA for x in c.genes])
         with pytest.warns(StrandViolationWarning):
             recs = list(parse_genbank(test_data_dir / genbank))
             c = recs[0].annotation
-            assert not c.genes
-            assert len(c.feature_collections) == 1
+            assert len(c.genes) == 3
+            assert all([x.gene_type == Biotype.ncRNA for x in c.genes])
 
     @pytest.mark.parametrize(
         "gbk",
