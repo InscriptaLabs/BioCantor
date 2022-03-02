@@ -1283,3 +1283,11 @@ class TestExceptionsWarnings:
             _ = list(parse_genbank(test_data_dir / gbk))
         # turn off the flag and now there is no exception
         _ = list(parse_genbank(test_data_dir / gbk, allow_duplicate_sequence_identifiers=True))
+
+    def test_multiple_transcripts(self, test_data_dir):
+        gbk = test_data_dir / "INSC1003_test_multiple_transcripts.gbk"
+        with pytest.warns(DuplicateTranscriptWarning):
+            annot = list(parse_genbank(test_data_dir / gbk))[0].annotation
+        assert len(annot.genes) == 4
+        for gene in annot.genes:
+            assert len(gene.transcripts) == 2

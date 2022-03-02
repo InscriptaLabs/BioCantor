@@ -726,16 +726,15 @@ class BaseGenBankParser(ABC):
                 gene_feature = gene_features[0]
             else:
                 gene_feature = None
-            if transcript_features and cds_features:
-                if len(transcript_features) > 1:
-                    warnings.warn(
-                        GenBankUnknownFeatureWarning(
-                            f"Grouping by position found multiple transcript features associated with the same gene\n"
-                            f"{gene_feature}: {transcript_features}\n"
-                            f"Extra transcript will be ignored"
-                        )
+            if len(transcript_features) > 1 and len(cds_features) > 1:
+                warnings.warn(
+                    GenBankUnknownFeatureWarning(
+                        f"Grouping by position found multiple transcript features associated with the same gene\n"
+                        f"{gene_feature}: {transcript_features}\n"
+                        f"Extra transcript will be ignored"
                     )
-                transcript_features = transcript_features[0]
+                )
+                transcript_features = [transcript_features[0]]
             self.grouped_gene_features[f"{seqrecord.id}_{i}"] = GroupedGeneFeatures(
                 seqrecord, gene_feature, transcript_features, cds_features
             )
@@ -746,7 +745,7 @@ class BaseGenBankParser(ABC):
             key=lambda f: f.qualifiers[KnownQualifiers.LOCUS_TAG.value][0],
         ):
             gene_feature = None
-            transcript_feature = None
+            transcript_features = []
             cds_features = []
             for feature in gene_features:
                 if feature.type == GeneFeatures.GENE.value:
@@ -759,17 +758,7 @@ class BaseGenBankParser(ABC):
                     else:
                         gene_feature = feature
                 elif feature.type in TranscriptFeature.types:
-                    if transcript_feature is not None:
-                        warnings.warn(
-                            DuplicateTranscriptWarning(
-                                f"Grouping by locus tag found multiple transcript features on the same sequence "
-                                f"with the same locus tag:"
-                                f"\n{transcript_feature}\n{feature}\n"
-                                f"This transcript will be skipped"
-                            )
-                        )
-                    else:
-                        transcript_feature = feature
+                    transcript_features.append(feature)
                 elif feature.type in CDSFeature.types:
                     cds_features.append(feature)
                 else:
@@ -780,8 +769,19 @@ class BaseGenBankParser(ABC):
                         )
                     )
 
+            if len(transcript_features) > 1 and len(cds_features) > 1:
+                warnings.warn(
+                    DuplicateTranscriptWarning(
+                        f"Grouping by locus tag found multiple coding transcript features on the same sequence "
+                        f"with the same locus tag:"
+                        f"\n{transcript_features[0]}\n{transcript_features[1]}\n"
+                        f"Extra transcripts will be skipped"
+                    )
+                )
+                transcript_features = [transcript_features[0]]
+
             self.grouped_gene_features[locus_tag] = GroupedGeneFeatures(
-                seqrecord, gene_feature, transcript_feature, cds_features
+                seqrecord, gene_feature, transcript_features, cds_features
             )
 
     def _parse_features(
