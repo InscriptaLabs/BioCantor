@@ -270,6 +270,13 @@ class GeneFeature(Feature):
         else:
             raise GenBankParserError(f"Invalid feature type {feature.type}")
 
+    def infer_child(self):
+        """If this is an isolated gene feature, then construct a child transcript feature that is a copy"""
+        tx_feature = deepcopy(self._seq_feature)
+        tx_feature.type = TranscriptFeatures.NONCODING_TRANSCRIPT.value
+        tx = TranscriptFeature(tx_feature, self.record)
+        self.children.append(tx)
+
     @staticmethod
     def to_gene_model(cls: "GeneFeature") -> Dict[str, Any]:
         """Convert to a Dict representation of a :class:`biocantor.gene.collections.GeneInterval`
@@ -840,10 +847,10 @@ class BaseGenBankParser(ABC):
                 for cds_feature in grouped_gene_features.cds_features:
                     gene.add_child(cds_feature)
 
-            if gene.has_children:
-                self.genes[seqrecord.id].append(gene)
-            else:
-                warnings.warn(GenBankEmptyGeneWarning(f"Gene {gene} has no children features and will be skipped"))
+            if not gene.has_children:
+                gene.infer_child()
+                warnings.warn(GenBankEmptyGeneWarning(f"Gene {gene} has no valid children features"))
+            self.genes[seqrecord.id].append(gene)
 
     def _export_annotation_collections(self) -> Iterator[ParsedAnnotationRecord]:
         """

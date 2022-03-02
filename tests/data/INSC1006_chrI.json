@@ -201,6 +201,49 @@
             "sequence_name": "CM021111.1",
             "sequence_guid": null,
             "gene_guid": null
+        },
+        {
+            "transcripts": [
+                {
+                    "exon_starts": [
+                        42579
+                    ],
+                    "exon_ends": [
+                        43218
+                    ],
+                    "strand": "PLUS",
+                    "cds_starts": null,
+                    "cds_ends": null,
+                    "cds_frames": null,
+                    "qualifiers": {
+                        "gene": [
+                            "ECM1"
+                        ]
+                    },
+                    "is_primary_tx": false,
+                    "transcript_id": "GI526_G0000005",
+                    "protein_id": null,
+                    "product": null,
+                    "transcript_symbol": "ECM1",
+                    "transcript_type": "ncRNA",
+                    "sequence_name": "CM021111.1",
+                    "sequence_guid": null,
+                    "transcript_interval_guid": null,
+                    "transcript_guid": null
+                }
+            ],
+            "gene_id": "e8b37537-588b-43a2-eb26-c88883f06014",
+            "gene_symbol": "ECM1",
+            "gene_type": "ncRNA",
+            "locus_tag": "GI526_G0000005",
+            "qualifiers": {
+                "gene": [
+                    "ECM1"
+                ]
+            },
+            "sequence_name": "CM021111.1",
+            "sequence_guid": null,
+            "gene_guid": null
         }
     ],
     "name": null,

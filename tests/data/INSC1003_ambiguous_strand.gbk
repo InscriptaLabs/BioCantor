@@ -12,7 +12,7 @@ FEATURES             Location/Qualifiers
      gene            join(335..2797,complement(3000..3200))
                      /gene="thrA"
                      /locus_tag="FEPOIHMA_00001"
-                     /note="mixed strand on gene"
+                     /note="mixed strand on gene and CDS"
      CDS             join(335..2797,complement(3000..3200))
                      /gene="thrA"
                      /locus_tag="FEPOIHMA_00001"
@@ -42,9 +42,6 @@ FEATURES             Location/Qualifiers
                      /note="mixed strand on CDS and mRNA"
      CDS             join(6000..6500,complement(6600..7000))
                      /gene="test"
-     feature         6000..7000
-                     /gene="test"
-                     /note="need a feature to not raise a unparseable exception"
 ORIGIN
         1 gcttttcatt ctgactgcaa cgggcaatat gtctctgtgt ggattaaaaa aagagtgtct
        61 gatagcagct tctgaactgg ttacctgccg tgagtaaatt aaaattttat tgacttaggt
