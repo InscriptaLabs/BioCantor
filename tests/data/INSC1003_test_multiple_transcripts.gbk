@@ -9,39 +9,57 @@ SOURCE      Genus species
 COMMENT     Annotated using prokka 1.14.0 from
             https://github.com/tseemann/prokka.
 FEATURES             Location/Qualifiers
-     gene            join(335..2797,complement(3000..3200))
-                     /gene="thrA"
-                     /locus_tag="FEPOIHMA_00001"
-                     /note="mixed strand on gene and CDS"
-     CDS             join(335..2797,complement(3000..3200))
-                     /gene="thrA"
-                     /locus_tag="FEPOIHMA_00001"
-     gene            2799..3731
-                     /gene="thrB"
-                     /locus_tag="FEPOIHMA_00002"
-                     /note="mixed strand on CDS"
-     CDS             join(2790..2799,complement(3300..3731))
-                     /gene="thrB"
-                     /locus_tag="FEPOIHMA_00002"
-     gene            3732..5018
-                     /gene="thrC"
-                     /locus_tag="FEPOIHMA_00003"
-                     /note="mixed strand on CDS and mRNA"
-     mRNA            join(3732..3740,complement(3932..5018))
-                     /gene="thrC"
-                     /locus_tag="FEPOIHMA_00003"
-                     /note="mixed strand on CDS and mRNA"
-     CDS             join(3732..3740,complement(3932..5018))
-                     /gene="thrC"
-                     /locus_tag="FEPOIHMA_00003"
-     gene            6000..7000
-                     /gene="test"
-                     /note="mixed strand on CDS and mRNA without locus tag"
-     mRNA            join(6000..6500,complement(6600..7000))
-                     /gene="test"
-                     /note="mixed strand on CDS and mRNA"
-     CDS             join(6000..6500,complement(6600..7000))
-                     /gene="test"
+     gene            335..2797
+                     /gene="test1"
+                     /locus_tag="test1"
+                     /note="two CDS for one gene is OK"
+     CDS             335..2797
+                     /gene="test1"
+                     /locus_tag="test1"
+     CDS             400..2797
+                     /gene="test1"
+                     /locus_tag="test1"
+     gene            335..2797
+                     /gene="test2"
+                     /locus_tag="test2"
+                     /note="two CDS and one mRNA for one gene is OK"
+     mRNA            335..2797
+                     /gene="test2"
+                     /locus_tag="test2"
+     CDS             335..2797
+                     /gene="test2"
+                     /locus_tag="test2"
+     CDS             400..2797
+                     /gene="test2"
+                     /locus_tag="test2"
+     gene            335..2797
+                     /gene="test3"
+                     /locus_tag="test3"
+                     /note="two CDS and two mRNA for one gene is not OK"
+     mRNA            335..2797
+                     /gene="test3"
+                     /locus_tag="test3"
+     mRNA            335..2797
+                     /gene="test3"
+                     /locus_tag="test3"
+     CDS             335..2797
+                     /gene="test3"
+                     /locus_tag="test3"
+     CDS             400..2797
+                     /gene="test3"
+                     /locus_tag="test3"
+     gene            335..2797
+                     /gene="test4"
+                     /locus_tag="test4"
+                     /note="two non-coding is OK"
+     tRNA            335..2797
+                     /gene="test4"
+                     /locus_tag="test4"
+                     /note="two non-coding is OK"
+     tRNA            335..3000
+                     /gene="test4"
+                     /locus_tag="test4"
+                     /note="two non-coding is OK"
 ORIGIN
         1 gcttttcatt ctgactgcaa cgggcaatat gtctctgtgt ggattaaaaa aagagtgtct
        61 gatagcagct tctgaactgg ttacctgccg tgagtaaatt aaaattttat tgacttaggt

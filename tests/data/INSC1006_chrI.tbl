@@ -61,3 +61,12 @@
 			locus_tag	test_20
 			note	original locus_tag: GI526_G0000004
 			ncRNA_class	protein_coding
+42580	43218	gene		
+			gene	ECM1
+			locus_tag	test_25
+			note	original locus_tag: GI526_G0000005
+42580	43218	ncRNA		
+			gene	ECM1
+			locus_tag	test_25
+			note	original locus_tag: GI526_G0000005
+			ncRNA_class	ncRNA

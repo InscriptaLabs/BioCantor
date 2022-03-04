@@ -270,6 +270,13 @@ class GeneFeature(Feature):
         else:
             raise GenBankParserError(f"Invalid feature type {feature.type}")
 
+    def infer_child(self):
+        """If this is an isolated gene feature, then construct a child transcript feature that is a copy"""
+        tx_feature = deepcopy(self._seq_feature)
+        tx_feature.type = TranscriptFeatures.NONCODING_TRANSCRIPT.value
+        tx = TranscriptFeature(tx_feature, self.record)
+        self.children.append(tx)
+
     @staticmethod
     def to_gene_model(cls: "GeneFeature") -> Dict[str, Any]:
         """Convert to a Dict representation of a :class:`biocantor.gene.collections.GeneInterval`
@@ -488,7 +495,7 @@ class GroupedGeneFeatures:
 
     seqrecord: SeqRecord
     gene_feature: Optional[SeqFeature] = None
-    transcript_feature: Optional[SeqFeature] = None
+    transcript_features: Optional[List[SeqFeature]] = None
     cds_features: Optional[List[SeqFeature]] = None
 
 
@@ -719,20 +726,17 @@ class BaseGenBankParser(ABC):
                 gene_feature = gene_features[0]
             else:
                 gene_feature = None
-            if transcript_features:
-                if len(transcript_features) > 1:
-                    warnings.warn(
-                        GenBankUnknownFeatureWarning(
-                            f"Grouping by position found multiple transcript features associated with the same gene\n"
-                            f"{gene_feature}: {transcript_features}\n"
-                            f"Extra transcript will be ignored"
-                        )
+            if len(transcript_features) > 1 and len(cds_features) > 1:
+                warnings.warn(
+                    GenBankUnknownFeatureWarning(
+                        f"Grouping by position found multiple transcript features associated with the same gene\n"
+                        f"{gene_feature}: {transcript_features}\n"
+                        f"Extra transcript will be ignored"
                     )
-                transcript_feature = transcript_features[0]
-            else:
-                transcript_feature = None
+                )
+                transcript_features = [transcript_features[0]]
             self.grouped_gene_features[f"{seqrecord.id}_{i}"] = GroupedGeneFeatures(
-                seqrecord, gene_feature, transcript_feature, cds_features
+                seqrecord, gene_feature, transcript_features, cds_features
             )
 
     def _group_features_by_locus_tag(self, features: List[SeqFeature], seqrecord: SeqRecord):
@@ -741,7 +745,7 @@ class BaseGenBankParser(ABC):
             key=lambda f: f.qualifiers[KnownQualifiers.LOCUS_TAG.value][0],
         ):
             gene_feature = None
-            transcript_feature = None
+            transcript_features = []
             cds_features = []
             for feature in gene_features:
                 if feature.type == GeneFeatures.GENE.value:
@@ -754,17 +758,7 @@ class BaseGenBankParser(ABC):
                     else:
                         gene_feature = feature
                 elif feature.type in TranscriptFeature.types:
-                    if transcript_feature is not None:
-                        warnings.warn(
-                            DuplicateTranscriptWarning(
-                                f"Grouping by locus tag found multiple transcript features on the same sequence "
-                                f"with the same locus tag:"
-                                f"\n{transcript_feature}\n{feature}\n"
-                                f"This transcript will be skipped"
-                            )
-                        )
-                    else:
-                        transcript_feature = feature
+                    transcript_features.append(feature)
                 elif feature.type in CDSFeature.types:
                     cds_features.append(feature)
                 else:
@@ -775,8 +769,19 @@ class BaseGenBankParser(ABC):
                         )
                     )
 
+            if len(transcript_features) > 1 and len(cds_features) > 1:
+                warnings.warn(
+                    DuplicateTranscriptWarning(
+                        f"Grouping by locus tag found multiple coding transcript features on the same sequence "
+                        f"with the same locus tag:"
+                        f"\n{transcript_features[0]}\n{transcript_features[1]}\n"
+                        f"Extra transcripts will be skipped"
+                    )
+                )
+                transcript_features = [transcript_features[0]]
+
             self.grouped_gene_features[locus_tag] = GroupedGeneFeatures(
-                seqrecord, gene_feature, transcript_feature, cds_features
+                seqrecord, gene_feature, transcript_features, cds_features
             )
 
     def _parse_features(
@@ -819,9 +824,9 @@ class BaseGenBankParser(ABC):
 
             # if there is no gene level feature, then it must be inferred
             if not grouped_gene_features.gene_feature:
-                if grouped_gene_features.transcript_feature:
+                if grouped_gene_features.transcript_features:
                     gene = GeneFeature.from_transcript_or_cds_feature(
-                        grouped_gene_features.transcript_feature, seqrecord
+                        grouped_gene_features.transcript_features[0], seqrecord
                     )
                 # CDS feature(s) must exist
                 else:
@@ -829,21 +834,23 @@ class BaseGenBankParser(ABC):
             else:
                 gene = GeneFeature(grouped_gene_features.gene_feature, seqrecord)
 
-            if grouped_gene_features.transcript_feature and grouped_gene_features.cds_features:
+            if grouped_gene_features.transcript_features and grouped_gene_features.cds_features:
+                # there must be exactly one transcript_feature because cds_features exist
                 for cds_feature in grouped_gene_features.cds_features:
-                    gene.add_child(grouped_gene_features.transcript_feature, cds_feature)
+                    gene.add_child(grouped_gene_features.transcript_features[0], cds_feature)
             # this must be a non-coding gene
-            elif grouped_gene_features.transcript_feature:
-                gene.add_child(grouped_gene_features.transcript_feature)
+            elif grouped_gene_features.transcript_features:
+                for transcript_feature in grouped_gene_features.transcript_features:
+                    gene.add_child(transcript_feature)
             # gene -> CDS without a transcript level feature
             elif grouped_gene_features.cds_features:
                 for cds_feature in grouped_gene_features.cds_features:
                     gene.add_child(cds_feature)
 
-            if gene.has_children:
-                self.genes[seqrecord.id].append(gene)
-            else:
-                warnings.warn(GenBankEmptyGeneWarning(f"Gene {gene} has no children features and will be skipped"))
+            if not gene.has_children:
+                gene.infer_child()
+                warnings.warn(GenBankEmptyGeneWarning(f"Gene {gene} has no valid children features"))
+            self.genes[seqrecord.id].append(gene)
 
     def _export_annotation_collections(self) -> Iterator[ParsedAnnotationRecord]:
         """
