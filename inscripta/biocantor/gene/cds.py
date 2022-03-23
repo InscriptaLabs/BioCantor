@@ -11,7 +11,8 @@ from inscripta.biocantor.exc import (
     LocationOverlapException,
     MismatchedFrameException,
 )
-from inscripta.biocantor.gene import CDSPhase, CDSFrame, Codon, TranslationTable
+from inscripta.biocantor.gene.cds_frame import CDSPhase, CDSFrame
+from inscripta.biocantor.gene.codon import Codon, TranslationTable
 from inscripta.biocantor.gene.interval import AbstractFeatureInterval, QualifierValue
 from inscripta.biocantor.io.bed import RGB, BED12
 from inscripta.biocantor.io.gff3.constants import GFF_SOURCE, NULL_COLUMN, BioCantorFeatureTypes, BioCantorQualifiers

@@ -1,8 +1,8 @@
 """
 This module contains abstract base classes for interval types and interval collection types.
 """
-from enum import Enum
 from abc import ABC, abstractmethod
+from enum import Enum
 from typing import List, Union, Dict, Hashable, Set, Optional, Any, Iterable, TypeVar
 from uuid import UUID
 
@@ -31,6 +31,7 @@ class IntervalType(str, Enum):
 
     FEATURE = "feature"
     TRANSCRIPT = "transcript"
+    VARIANT = "variant"
 
 
 class AbstractInterval(ABC):
@@ -763,3 +764,124 @@ class AbstractFeatureInterval(AbstractInterval, ABC):
                     merged[key] = set()
                 merged[key].update(vals)
         return merged
+
+
+class AbstractFeatureIntervalCollection(AbstractInterval, ABC):
+    """
+    Abstract class for holding groups of feature intervals. The two implementations of this class
+    model Genes or non-transcribed FeatureCollections.
+
+    These are always on the same sequence, but can be on different strands.
+    """
+
+    def __iter__(self):
+        """Iterate over all children of this collection"""
+        yield from self.iter_children()
+
+    @property
+    def strand(self) -> Strand:
+        return self.chromosome_location.strand
+
+    @abstractmethod
+    def iter_children(self) -> Iterable["AbstractInterval"]:
+        """Iterate over the children"""
+
+    @abstractmethod
+    def children_guids(self) -> Set[UUID]:
+        """Get all of the GUIDs for children.
+
+        Returns: A set of UUIDs
+        """
+
+    @abstractmethod
+    def query_by_guids(self, ids: List[UUID]) -> "AbstractFeatureIntervalCollection":
+        """Filter this collection object by a list of unique IDs.
+
+        Args:
+            ids: List of GUIDs, or unique IDs.
+        """
+
+    def _reset_parent(self, parent: Optional[Parent] = None) -> None:
+        """Reset parent of this collection, and all of its children.
+
+        THIS FUNCTION IS ONLY INTENDED TO BE USED DURING INITIALIZATION OF A NEW INTERVAL OBJECT.
+        USING THIS FUNCTION AFTER THAT POINT RUNS THE RISK OF THE PARENT OF THE OBJECT NOT BEING REFLECTED
+        BY METHODS ON THIS FUNCTION THAT USE RESULT CACHING!
+
+        NOTE: This function modifies this collection in-place, and does not return a new copy. This is different
+        behavior than the base function, and is this way because all of the children of this collection are also
+        recursively modified.
+
+        NOTE: Using this function presents the risk that you will change the sequence of this interval. There are no
+        checks that the new parent provides the same sequence basis as the original parent.
+
+        This overrides :meth:`~biocantor.gene.feature.AbstractInterval.reset_parent()`. The original function
+        will remain applied on the leaf nodes.
+        """
+        self._location = self._location.reset_parent(parent)
+        for child in self:
+            child._reset_parent(parent)
+
+    def _initialize_location(self, start: int, end: int, parent_or_seq_chunk_parent: Optional[Parent] = None):
+        """
+        Initialize the location for this collection. Assumes that the start/end coordinates are genome-relative,
+        and builds a chunk-relative location for this.
+
+        Args:
+            start: genome-relative start
+            end: genome-relative end
+            parent_or_seq_chunk_parent: A parent that could be null, genome relative, or sequence chunk relative.
+        """
+        self._location = SingleInterval(start, end, Strand.PLUS)
+        if parent_or_seq_chunk_parent:
+            if parent_or_seq_chunk_parent.has_ancestor_of_type(SequenceType.SEQUENCE_CHUNK):
+                super()._liftover_this_location_to_seq_chunk_parent(parent_or_seq_chunk_parent)
+            else:
+                self._reset_parent(parent_or_seq_chunk_parent)
+
+    def get_reference_sequence(self) -> Sequence:
+        """Returns the *plus strand* sequence for this interval"""
+        return self.chunk_relative_location.extract_sequence()
+
+    @staticmethod
+    def _find_primary_feature(
+        intervals: Union[List["TranscriptInterval"], List["FeatureInterval"]]
+    ) -> Optional[Union["TranscriptInterval", "FeatureInterval"]]:
+        """
+        Used in object construction to find the primary feature. Shared between :class:`GeneInterval`
+        and :class:`FeatureIntervalCollection`.
+
+        If not specified by the data source, primary features are determined by:
+
+        1. If the feature is coding, then its CDS size
+        2. The (spliced) feature size.
+        3. The *position* of the feature within the ordered list of features.
+        """
+        # see if we were given a primary feature
+        primary_feature = None
+        for i, interval in enumerate(intervals):
+            if interval.is_primary_feature:
+                if primary_feature:
+                    raise ValidationException("Multiple primary features/transcripts found")
+                primary_feature = intervals[i]
+        # if no primary interval was given, then infer by longest CDS then longest interval
+        # if this is a feature, then there is no CDS, so set that value to 0
+        if primary_feature is None:
+            interval_sizes = sorted(
+                (
+                    [interval.cds_size if interval.interval_type == IntervalType.TRANSCRIPT else 0, len(interval), i]
+                    for i, interval in enumerate(intervals)
+                ),
+                key=lambda x: (-x[0], -x[1]),
+            )
+            primary_feature = intervals[interval_sizes[0][2]]
+        return primary_feature
+
+    def _liftover_this_location_to_seq_chunk_parent(
+        self,
+        parent_or_seq_chunk_parent: Parent,
+    ):
+        """Lift over this collection and all of its children"""
+        super()._liftover_this_location_to_seq_chunk_parent(parent_or_seq_chunk_parent)
+        for child in self:
+            child._liftover_this_location_to_seq_chunk_parent(parent_or_seq_chunk_parent)
