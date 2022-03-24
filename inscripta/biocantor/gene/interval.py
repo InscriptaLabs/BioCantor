@@ -3,7 +3,7 @@ This module contains abstract base classes for interval types and interval colle
 """
 from abc import ABC, abstractmethod
 from enum import Enum
-from typing import List, Union, Dict, Hashable, Set, Optional, Any, Iterable, TypeVar
+from typing import List, Union, Dict, Hashable, Set, Optional, Any, Iterable, TypeVar, TYPE_CHECKING
 from uuid import UUID
 
 from methodtools import lru_cache
@@ -24,6 +24,10 @@ from inscripta.biocantor.util.object_validation import ObjectValidation
 
 # primitive data types possible as values of the list in a qualifiers dictionary
 QualifierValue = TypeVar("QualifierValue", str, int, bool, float)
+
+if TYPE_CHECKING:
+    from inscripta.biocantor.gene.transcript import TranscriptInterval
+    from inscripta.biocantor.gene.feature import FeatureInterval
 
 
 class IntervalType(str, Enum):

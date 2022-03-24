@@ -13,18 +13,19 @@ such as promoters or transcription factor binding sites.
 Each object is capable of exporting itself to BED and GFF3.
 """
 import itertools
-from methodtools import lru_cache
 from typing import List, Iterable, Any, Dict, Set, Hashable, Optional, Union, Iterator
 from uuid import UUID
+
+from methodtools import lru_cache
 
 from inscripta.biocantor.exc import (
     InvalidAnnotationError,
     InvalidQueryError,
 )
-from inscripta.biocantor.gene.gene import GeneInterval
 from inscripta.biocantor.gene.feature import FeatureIntervalCollection
+from inscripta.biocantor.gene.gene import GeneInterval
 from inscripta.biocantor.gene.interval import QualifierValue, IntervalType, AbstractFeatureIntervalCollection
-from inscripta.biocantor.gene.variants import VariantIntervalCollection, VariantInterval
+from inscripta.biocantor.gene.variants import VariantIntervalCollection
 from inscripta.biocantor.io.gff3.rows import GFFRow
 from inscripta.biocantor.location import SingleInterval, EmptyLocation, Strand
 from inscripta.biocantor.parent import Parent, SequenceType
@@ -248,13 +249,17 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
             parent_or_seq_chunk_parent = None
 
         return dict(
-            genes=[gene.to_dict(chromosome_relative_coordinates) for gene in self.genes],
+            genes=[gene.to_dict(chromosome_relative_coordinates) for gene in self.genes] if self.genes else None,
             feature_collections=[
                 feature.to_dict(chromosome_relative_coordinates) for feature in self.feature_collections
-            ],
+            ]
+            if self.feature_collections
+            else None,
             variant_collections=[
                 variant.to_dict(chromosome_relative_coordinates) for variant in self.variant_collections
-            ],
+            ]
+            if self.variant_collections
+            else None,
             name=self.name,
             id=self.id,
             qualifiers=self._export_qualifiers_to_list(),
