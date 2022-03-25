@@ -53,6 +53,7 @@ from inscripta.biocantor.io.genbank.constants import (
     NonCodingTranscriptFeatures,
     GENBANK_GENE_FEATURES,
 )
+from inscripta.biocantor.io.vcf.parser import parse_vcf_file, VariantIntervalCollectionModel
 from inscripta.biocantor.io.genbank.exc import (
     GenBankParserError,
     EmptyGenBankError,
@@ -509,10 +510,12 @@ class BaseGenBankParser(ABC):
     def __init__(
         self,
         seq_records: List[SeqRecord],
+        parsed_variants: Dict[str, VariantIntervalCollectionModel],
         gene_parse_func: Callable[[GeneFeature], Dict[str, Any]],
         feature_parse_func: Callable[[FeatureIntervalGenBankCollection], Dict[str, Any]],
     ):
         self.seq_records = seq_records
+        self.parsed_variants = parsed_variants
         self.gene_parse_func = gene_parse_func
         self.feature_parse_func = feature_parse_func
 
@@ -868,10 +871,17 @@ class BaseGenBankParser(ABC):
                 FeatureIntervalGenBankCollection.to_feature_model(x)
                 for x in sorted(self.feature_collections[seqrecord.id], key=lambda x: x.start)
             ]
+
+            if self.parsed_variants:
+                variant_collections = self.parsed_variants.get(seqrecord.id)
+            else:
+                variant_collections = None
+
             annotation = AnnotationCollectionModel.Schema().load(
                 dict(
                     genes=genes if genes else None,
                     feature_collections=feature_collections if feature_collections else None,
+                    variant_collections=variant_collections,
                     name=seqrecord.id,
                     sequence_name=seqrecord.id,
                     start=0,
@@ -978,10 +988,11 @@ class HybridGenBankParser(LocusTagGenBankParser, SortedGenBankParser):
     def __init__(
         self,
         seq_records: List[SeqRecord],
+        parsed_variants: Dict[str, VariantIntervalCollectionModel],
         gene_parse_func: Callable[[GeneFeature], Dict[str, Any]],
         feature_parse_func: Callable[[FeatureIntervalGenBankCollection], Dict[str, Any]],
     ):
-        super().__init__(seq_records, gene_parse_func, feature_parse_func)
+        super().__init__(seq_records, parsed_variants, gene_parse_func, feature_parse_func)
         self.gene_filtered_features_without_locus_tag: Dict[str, List[SeqFeature]] = {}
 
     def parse(self) -> Iterator[ParsedAnnotationRecord]:
@@ -1068,6 +1079,8 @@ class HybridGenBankParser(LocusTagGenBankParser, SortedGenBankParser):
 
 def parse_genbank(
     genbank_handle_or_path: Union[TextIO, str, pathlib.Path],
+    variant_handle_or_path: Optional[Union[TextIO, str, pathlib.Path]] = None,
+    parsed_variants: Optional[Dict[str, VariantIntervalCollectionModel]] = None,
     gene_parse_func: Optional[Callable[[GeneFeature], Dict[str, Any]]] = GeneFeature.to_gene_model,
     feature_parse_func: Optional[
         Callable[[FeatureIntervalGenBankCollection], Dict[str, Any]]
@@ -1080,6 +1093,8 @@ def parse_genbank(
 
     Args:
         genbank_handle_or_path: An open GenBank file or a path to a locally stored GenBank file.
+        variant_handle_or_path: Optional open handle to a VCF file. Mutually exclusive with ``parsed_variants``.
+        parsed_variants: Optional parsed variants. Mutually exclusive with ``variant_handle_or_path``.
         gene_parse_func: Optional gene parse function implementation. Defaults to :meth:`GeneFeature.to_gene_model()`
             implemented in this module.
         feature_parse_func: Optional feature interval parse function implementation.
@@ -1093,6 +1108,11 @@ def parse_genbank(
     """
     seq_records = list(SeqIO.parse(genbank_handle_or_path, format="genbank"))
 
+    if variant_handle_or_path and parsed_variants:
+        raise RuntimeError("Cannot pass both a variant file and parsed variants")
+    elif variant_handle_or_path:
+        parsed_variants = parse_vcf_file(variant_handle_or_path)
+
     if allow_duplicate_sequence_identifiers is False:
         seqrecords_dict = {}
         for rec in seq_records:
@@ -1100,10 +1120,16 @@ def parse_genbank(
                 raise DuplicateSequenceException(f"Sequence {rec.id} found twice in GenBank file.")
             seqrecords_dict[rec.id] = rec
 
+    if parsed_variants:
+        seqrecord_ids = {x.id for x in seq_records}
+        for seq_id in parsed_variants:
+            if seq_id not in seqrecord_ids:
+                raise RuntimeError(f"Sequence ID {seq_id} found in variant file but not found in GenBank file.")
+
     if gbk_type == GenBankParserType.SORTED:
-        parser = SortedGenBankParser(seq_records, gene_parse_func, feature_parse_func)
+        parser = SortedGenBankParser(seq_records, parsed_variants, gene_parse_func, feature_parse_func)
     elif gbk_type == GenBankParserType.HYBRID:
-        parser = HybridGenBankParser(seq_records, gene_parse_func, feature_parse_func)
+        parser = HybridGenBankParser(seq_records, parsed_variants, gene_parse_func, feature_parse_func)
     else:
-        parser = LocusTagGenBankParser(seq_records, gene_parse_func, feature_parse_func)
+        parser = LocusTagGenBankParser(seq_records, parsed_variants, gene_parse_func, feature_parse_func)
     yield from parser.parse()

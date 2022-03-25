@@ -25,7 +25,7 @@ class VariantInterval(AbstractFeatureInterval):
         self,
         start: int,
         end: int,
-        sequence: Sequence,
+        sequence: str,
         variant_type: str,
         phase_block: Optional[int],
         guid: Optional[UUID],
@@ -36,7 +36,7 @@ class VariantInterval(AbstractFeatureInterval):
         parent_or_seq_chunk_parent: Optional[Parent] = None,
     ):
         self._location = SingleInterval(start, end, Strand.PLUS, parent_or_seq_chunk_parent)
-        self.sequence = sequence
+        self.sequence = Sequence(sequence, Alphabet.NT_STRICT_UNKNOWN)
         self.variant_type = variant_type
         self.phase_block = phase_block
         self.variant_name = variant_name

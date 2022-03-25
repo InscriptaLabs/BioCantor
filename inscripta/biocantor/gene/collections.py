@@ -348,13 +348,19 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
             parent_or_seq_chunk_parent = convert_parent_dict_to_parent(vals)
 
         return AnnotationCollection(
-            genes=[GeneInterval.from_dict(x, parent_or_seq_chunk_parent) for x in vals["genes"]],
+            genes=[GeneInterval.from_dict(x, parent_or_seq_chunk_parent) for x in vals["genes"]]
+            if vals["genes"]
+            else None,
             feature_collections=[
                 FeatureIntervalCollection.from_dict(x, parent_or_seq_chunk_parent) for x in vals["feature_collections"]
-            ],
+            ]
+            if vals["feature_collections"]
+            else None,
             variant_collections=[
                 VariantIntervalCollection.from_dict(x, parent_or_seq_chunk_parent) for x in vals["variant_collections"]
-            ],
+            ]
+            if vals["variant_collections"]
+            else None,
             name=vals["name"],
             id=vals["id"],
             qualifiers=vals["qualifiers"],

@@ -795,6 +795,7 @@ class TestGenBankFeatures:
                         )
                     ],
                 ),
+                ("variant_collections", None),
                 ("name", "CM021111.1"),
                 ("id", None),
                 ("sequence_name", "CM021111.1"),
@@ -1041,6 +1042,7 @@ class TestSortedParser:
                         ),
                     ],
                 ),
+                ("variant_collections", None),
                 ("name", "FEPOIHMA_1"),
                 ("id", None),
                 ("sequence_name", "FEPOIHMA_1"),
@@ -1186,6 +1188,7 @@ class TestSortedParser:
                         ),
                     ],
                 ),
+                ("variant_collections", None),
                 ("name", "CM021111.1"),
                 ("id", None),
                 ("sequence_name", "CM021111.1"),
