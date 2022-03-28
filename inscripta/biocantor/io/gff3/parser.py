@@ -24,7 +24,7 @@ from gffutils.feature import Feature
 from gffutils.interface import FeatureDB
 from inscripta.biocantor.gene import CDSInterval, CDSPhase, Biotype
 from inscripta.biocantor.location import CompoundInterval
-from inscripta.biocantor.io.exc import DuplicateSequenceException
+from inscripta.biocantor.io.exc import DuplicateSequenceException, InvalidInputError
 from inscripta.biocantor.io.gff3.constants import (
     GFF3Headers,
     BioCantorGFF3ReservedQualifiers,
@@ -540,7 +540,7 @@ def parse_standard_gff3(
     gffutil_parse_args: Optional[GffutilsParseArgs] = GffutilsParseArgs(),
     parse_func: Optional[Callable[[FeatureDB, List[str]], Iterable[AnnotationCollectionModel]]] = default_parse_func,
     gffutil_transform_func: Optional[Callable[[Feature], Feature]] = None,
-    db_fn: Optional[str] = ":memory:",
+    db_fn: str = ":memory:",
 ) -> Iterable[ParsedAnnotationRecord]:
     """Parses a GFF3 file using gffutils.
 
@@ -564,6 +564,8 @@ def parse_standard_gff3(
     """
     if db_fn == ":memory:" or not Path(db_fn).exists():
         db = gffutils.create_db(str(gff), db_fn, transform=gffutil_transform_func, **gffutil_parse_args.__dict__)
+    elif Path(db_fn).exists() and Path(db_fn).stat().st_size == 0:
+        raise InvalidInputError("The input database appears to be empty.")
     else:
         db = gffutils.FeatureDB(db_fn)
     if sum(db.count_features_of_type(i) for i in db.featuretypes()) == 0:
