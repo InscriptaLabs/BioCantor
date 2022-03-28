@@ -554,13 +554,18 @@ def parse_standard_gff3(
             unique.
         gffutil_parse_args: Parsing arguments to pass to gffutils.
         db_fn: Location to write a gffutils database. Defaults to `:memory:`, which means the database will be built
-            transiently. This value can be set to a file location if memory is a concern, or if you want to retain
-            the gffutils database. It will not be cleaned up.
+            transiently. If this value is not `:memory:`, and the file path exists, then it will be assumed
+            to be a GFFutils database that was built externally and that database will be used.
+            This value can be set to a file location if memory is a concern, or if you want to retain the gffutils
+            database. It will not be cleaned up.
 
     Yields:
         Iterable of ``ParsedAnnotationRecord`` objects.
     """
-    db = gffutils.create_db(str(gff), db_fn, transform=gffutil_transform_func, **gffutil_parse_args.__dict__)
+    if db_fn == ":memory:" or not Path(db_fn).exists():
+        db = gffutils.create_db(str(gff), db_fn, transform=gffutil_transform_func, **gffutil_parse_args.__dict__)
+    else:
+        db = gffutils.FeatureDB(db_fn)
     if sum(db.count_features_of_type(i) for i in db.featuretypes()) == 0:
         raise EmptyGFF3Exception("Parsing this GFF3 led to zero features. Is it empty or corrupted?")
     logger.info(f"Parsed {gff}")
@@ -612,8 +617,10 @@ def parse_gff3_embedded_fasta(
             cases where IDs are not unique.
         gffutil_parse_args: Parsing arguments to pass to gffutils.
         db_fn: Location to write a gffutils database. Defaults to `:memory:`, which means the database will be built
-            transiently. This value can be set to a file location if memory is a concern, or if you want to retain
-            the gffutils database. It will not be cleaned up.
+            transiently. If this value is not `:memory:`, and the file path exists, then it will be assumed
+            to be a GFFutils database that was built externally and that database will be used.
+            This value can be set to a file location if memory is a concern, or if you want to retain the gffutils
+            database. It will not be cleaned up.
 
     Raises:
         GFF3FastaException: if the GFF3 lacks a FASTA suffix.
@@ -661,9 +668,11 @@ def parse_gff3_fasta(
         gffutil_transform_func: Function that transforms feature keys. Can be necessary in
             cases where IDs are not unique.
         gffutil_parse_args: Parsing arguments to pass to gffutils.
-        db_fn: Location to write a gffutils database. Defaults to ``:memory:``, which means the database will be built
-            transiently. This value can be set to a file location if memory is a concern, or if you want to retain
-            the gffutils database. It will not be cleaned up.
+        db_fn: Location to write a gffutils database. Defaults to `:memory:`, which means the database will be built
+            transiently. If this value is not `:memory:`, and the file path exists, then it will be assumed
+            to be a GFFutils database that was built externally and that database will be used.
+            This value can be set to a file location if memory is a concern, or if you want to retain the gffutils
+            database. It will not be cleaned up.
 
     Raises:
         GFF3FastaException: if the GFF3 lacks a FASTA suffix.
