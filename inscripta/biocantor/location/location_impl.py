@@ -600,9 +600,15 @@ class CompoundInterval(Location):
     def relative_interval_to_parent_location(
         self, relative_start: int, relative_end: int, relative_strand: Strand
     ) -> Location:
+        # validate inputs
         if relative_start > relative_end:
             raise InvalidPositionException("Relative start must be <= relative end")
-        if relative_start == relative_end:
+        elif relative_start < 0:
+            raise InvalidPositionException("Relative start must be a positive value")
+        elif relative_end > len(self):
+            raise InvalidPositionException("Relative start must be within the size of the interval")
+        # if start == end, then just return a simple interval
+        elif relative_start == relative_end:
             start_on_parent = self.relative_to_parent_pos(relative_start)
             return SingleInterval(
                 start_on_parent,
@@ -610,66 +616,41 @@ class CompoundInterval(Location):
                 relative_strand.relative_to(self.strand),
                 parent=self.parent.strip_location_info() if self.parent else None,
             )
-        if self.is_overlapping:
-            return self._rel_interval_to_parent_location_overlapping(relative_start, relative_end, relative_strand)
-        else:
-            return self._rel_interval_to_parent_location_nonoverlapping(relative_start, relative_end, relative_strand)
 
-    def _rel_interval_to_parent_location_overlapping(
-        self, relative_start: int, relative_end: int, relative_strand: Strand
-    ) -> Location:
-        """Implementation of relative_interval_to_parent_location() in the case of overlapping blocks; less
-        efficient than the alternative non-overlap version"""
-
-        def compile_blocks(
-            remaining_len_till_start: int,
-            remaining_len_till_end: int,
-            remaining_blocks: List[SingleInterval],
-            existing_blocks: List[SingleInterval],
-        ) -> List[SingleInterval]:
-            """Returns the contiguous blocks that comprise the returned Location of the enclosing method"""
-            if remaining_len_till_end < 1:
-                return existing_blocks
-            block0 = remaining_blocks[0]
-            if len(block0) <= remaining_len_till_start:
-                return compile_blocks(
-                    remaining_len_till_start - len(block0),
-                    remaining_len_till_end,
-                    remaining_blocks[1:],
-                    existing_blocks,
+        # the number of relative bases we need to iterate through before starting
+        remaining_len_till_start = relative_start
+        # the number of relative bases we have left to consume before stopping
+        remaining_len_till_end = relative_end - relative_start
+        new_blocks = []
+        for block in self.scan_blocks():
+            # this block is to the left of the relative start, so decrement remaining_len_till_start and continue
+            if len(block) <= remaining_len_till_start:
+                remaining_len_till_start -= len(block)
+            else:
+                # this block is within the window; remaining_len_till_start might be non-zero the first time
+                # the loop hits this else block
+                new_sub_block_start = remaining_len_till_start
+                # if this block is smaller than the remaining bases, cut the value down to size
+                new_sub_block_end = min(len(block), remaining_len_till_start + remaining_len_till_end)
+                # lift over this block and keep it
+                sub_block = block.relative_interval_to_parent_location(
+                    new_sub_block_start, new_sub_block_end, Strand.PLUS
                 )
-            new_sub_block_start = remaining_len_till_start
-            new_sub_block_end = min(len(block0), remaining_len_till_start + remaining_len_till_end)
-            sub_block = block0.relative_interval_to_parent_location(new_sub_block_start, new_sub_block_end, Strand.PLUS)
-            return compile_blocks(
-                0, remaining_len_till_end - len(sub_block), remaining_blocks[1:], existing_blocks + [sub_block]
-            )
+                new_blocks.append(sub_block)
+                # all subsequent iterations will have remaining_len_till_start == 0
+                remaining_len_till_start = 0
+                # decrement remaining_len_till_end until nothing is left
+                remaining_len_till_end -= len(sub_block)
+            # remaining_len_till_end has nothing left, so exit the algorithm
+            if remaining_len_till_end < 1:
+                break
 
-        blocks = compile_blocks(relative_start, relative_end - relative_start, list(self.scan_blocks()), [])
+        # only run reset_strand() if the strands are not the same to save object construction overhead
         new_strand = relative_strand.relative_to(self.strand)
-        return CompoundInterval.from_single_intervals(blocks).reset_strand(new_strand).optimize_blocks()
-
-    def _rel_interval_to_parent_location_nonoverlapping(
-        self, relative_start: int, relative_end: int, relative_strand: Strand
-    ) -> Location:
-        """Implementation of relative_interval_to_parent_location() assuming no overlapping blocks"""
-        start_on_parent = self.relative_to_parent_pos(relative_start)
-        end_on_parent_inclusive = self.relative_to_parent_pos(relative_end - 1)
-        parent_start = min(start_on_parent, end_on_parent_inclusive)
-        parent_end = max(start_on_parent, end_on_parent_inclusive) + 1
-        intersect_same_strand = self.intersection(
-            SingleInterval(
-                parent_start,
-                parent_end,
-                self.strand,
-                parent=self.parent.strip_location_info() if self.parent else None,
-            )
-        )
-        new_strand = relative_strand.relative_to(self.strand)
-        if new_strand != intersect_same_strand.strand:
-            return intersect_same_strand.reset_strand(new_strand)
+        if new_strand != self.strand:
+            return CompoundInterval.from_single_intervals(new_blocks).reset_strand(new_strand).optimize_blocks()
         else:
-            return intersect_same_strand
+            return CompoundInterval.from_single_intervals(new_blocks).optimize_blocks()
 
     def has_overlap(
         self, other: Location, match_strand: bool = False, full_span: bool = False, strict_parent_compare: bool = False
