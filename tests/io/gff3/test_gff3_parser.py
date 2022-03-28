@@ -119,7 +119,7 @@ class TestGff3Parser:
     def test_parse_insc1006_prebuilt_db_does_not_exist(self, test_data_dir):
         with tempfile.TemporaryDirectory() as tmp_dir:
             single_temp_file = Path(tmp_dir) / "tmp.db"
-            with open(single_temp_file, "w") as fh:
+            with open(single_temp_file, "w") as _:
                 pass
             gff = test_data_dir / "INSC1006_chrI.gff3"
             with pytest.raises(InvalidInputError):
