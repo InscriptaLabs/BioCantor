@@ -536,7 +536,7 @@ def extract_seqrecords_from_gff3_fasta(gff3_with_fasta_handle: TextIO) -> List[S
 
 
 def parse_standard_gff3(
-    gff: Path,
+    gff: Optional[Path] = None,
     gffutil_parse_args: Optional[GffutilsParseArgs] = GffutilsParseArgs(),
     parse_func: Optional[Callable[[FeatureDB, List[str]], Iterable[AnnotationCollectionModel]]] = default_parse_func,
     gffutil_transform_func: Optional[Callable[[Feature], Feature]] = None,
@@ -548,13 +548,13 @@ def parse_standard_gff3(
     implementation exists in this module.
 
     Args:
-        gff: Path to a GFF. Must be local or HTTPS.
+        gff: Path to a GFF. Must be local or HTTPS. Optional only if ``db_fn`` is a pre-built GFFutils database.
         parse_func: Function that actually converts gffutils to BioCantor representation.
         gffutil_transform_func: Function that transforms feature keys. Can be necessary in cases where IDs are not
             unique.
         gffutil_parse_args: Parsing arguments to pass to gffutils.
-        db_fn: Location to write a gffutils database. Defaults to `:memory:`, which means the database will be built
-            transiently. If this value is not `:memory:`, and the file path exists, then it will be assumed
+        db_fn: Location to write a gffutils database. Defaults to ``:memory:``, which means the database will be built
+            transiently. If this value is not ``:memory:``, and the file path exists, then it will be assumed
             to be a GFFutils database that was built externally and that database will be used.
             This value can be set to a file location if memory is a concern, or if you want to retain the gffutils
             database. It will not be cleaned up.
@@ -563,6 +563,8 @@ def parse_standard_gff3(
         Iterable of ``ParsedAnnotationRecord`` objects.
     """
     if db_fn == ":memory:" or not Path(db_fn).exists():
+        if not gff:
+            raise InvalidInputError("Must provide a GFF file if the database is not pre-built.")
         db = gffutils.create_db(str(gff), db_fn, transform=gffutil_transform_func, **gffutil_parse_args.__dict__)
     elif Path(db_fn).exists() and Path(db_fn).stat().st_size == 0:
         raise InvalidInputError("The input database appears to be empty.")
@@ -613,13 +615,14 @@ def parse_gff3_embedded_fasta(
     Parses a GFF3 with an embedded FASTA. Wraps :meth:`parse_gff()` to produce ``ParsedAnnotationRecord``.
 
     Args:
-        gff3_with_fasta: Path to a GFF3 file with a FASTA suffix. Must be local or HTTPS.
+        gff3_with_fasta: Path to a GFF3 file with a FASTA suffix. Must be local or HTTPS. Is not optional because
+            GFFUtils databases do not contain sequence information.
         parse_func: Function that actually converts gffutils to BioCantor representation.
         gffutil_transform_func: Function that transforms feature keys. Can be necessary in
             cases where IDs are not unique.
         gffutil_parse_args: Parsing arguments to pass to gffutils.
-        db_fn: Location to write a gffutils database. Defaults to `:memory:`, which means the database will be built
-            transiently. If this value is not `:memory:`, and the file path exists, then it will be assumed
+        db_fn: Location to write a gffutils database. Defaults to ``:memory:``, which means the database will be built
+            transiently. If this value is not ``:memory:``, and the file path exists, then it will be assumed
             to be a GFFutils database that was built externally and that database will be used.
             This value can be set to a file location if memory is a concern, or if you want to retain the gffutils
             database. It will not be cleaned up.
@@ -670,8 +673,8 @@ def parse_gff3_fasta(
         gffutil_transform_func: Function that transforms feature keys. Can be necessary in
             cases where IDs are not unique.
         gffutil_parse_args: Parsing arguments to pass to gffutils.
-        db_fn: Location to write a gffutils database. Defaults to `:memory:`, which means the database will be built
-            transiently. If this value is not `:memory:`, and the file path exists, then it will be assumed
+        db_fn: Location to write a gffutils database. Defaults to ``:memory:``, which means the database will be built
+            transiently. If this value is not ``:memory:``, and the file path exists, then it will be assumed
             to be a GFFutils database that was built externally and that database will be used.
             This value can be set to a file location if memory is a concern, or if you want to retain the gffutils
             database. It will not be cleaned up.
