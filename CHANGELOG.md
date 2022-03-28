@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Fixed
 - Serialized and simplified the implementation of `CompoundLocation.relative_interval_to_parent_location`
 
+## [0.15.0] 2022-3-3
 ### Changed
 - Added flag `allow_duplicate_sequence_identifiers` to GenBank parser
 - GenBank parser now handles multiple isoforms of coding and non-coding genes
