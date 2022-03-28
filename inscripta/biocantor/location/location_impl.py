@@ -606,7 +606,7 @@ class CompoundInterval(Location):
         elif relative_start < 0:
             raise InvalidPositionException("Relative start must be a positive value")
         elif relative_end > len(self):
-            raise InvalidPositionException("Relative start must be within the size of the interval")
+            raise InvalidPositionException("Relative end must be within the size of the interval")
         # if start == end, then just return a simple interval
         elif relative_start == relative_end:
             start_on_parent = self.relative_to_parent_pos(relative_start)
