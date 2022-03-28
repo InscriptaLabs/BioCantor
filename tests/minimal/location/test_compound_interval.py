@@ -758,91 +758,91 @@ class TestCompoundInterval:
     @pytest.mark.parametrize(
         "location,window_size,step_size,start_pos,expected",
         [
-            # # 0. Step size greater than window size, windows go to end of location
-            # (
-            #     CompoundInterval([0, 20, 40], [10, 27, 53], Strand.PLUS),
-            #     2,
-            #     5,
-            #     3,
-            #     [
-            #         SingleInterval(3, 5, Strand.PLUS),
-            #         SingleInterval(8, 10, Strand.PLUS),
-            #         SingleInterval(23, 25, Strand.PLUS),
-            #         SingleInterval(41, 43, Strand.PLUS),
-            #         SingleInterval(46, 48, Strand.PLUS),
-            #         SingleInterval(51, 53, Strand.PLUS),
-            #     ],
-            # ),
-            # # 1. Start pos is in second exon; minus strand
-            # (
-            #     CompoundInterval([0, 20, 40], [10, 27, 54], Strand.MINUS),
-            #     5,
-            #     3,
-            #     18,
-            #     [
-            #         CompoundInterval([8, 20], [10, 23], Strand.MINUS),
-            #         SingleInterval(5, 10, Strand.MINUS),
-            #         SingleInterval(2, 7, Strand.MINUS),
-            #     ],
-            # ),
-            # # 2. Step size = 1; plus strand
-            # (
-            #     CompoundInterval([0, 7], [3, 10], Strand.PLUS),
-            #     2,
-            #     1,
-            #     0,
-            #     [
-            #         SingleInterval(0, 2, Strand.PLUS),
-            #         SingleInterval(1, 3, Strand.PLUS),
-            #         CompoundInterval([2, 7], [3, 8], Strand.PLUS),
-            #         SingleInterval(7, 9, Strand.PLUS),
-            #         SingleInterval(8, 10, Strand.PLUS),
-            #     ],
-            # ),
-            # # 3. Step size = 2; minus strand
-            # (
-            #     CompoundInterval([10, 30], [20, 37], Strand.MINUS),
-            #     5,
-            #     2,
-            #     4,
-            #     [
-            #         CompoundInterval([18, 30], [20, 33], Strand.MINUS),
-            #         CompoundInterval([16, 30], [20, 31], Strand.MINUS),
-            #         SingleInterval(14, 19, Strand.MINUS),
-            #         SingleInterval(12, 17, Strand.MINUS),
-            #         SingleInterval(10, 15, Strand.MINUS),
-            #     ],
-            # ),
-            # # 4. Window size = 1, step size = 1; minus strand
-            # (
-            #     CompoundInterval([3, 10], [5, 13], Strand.MINUS),
-            #     1,
-            #     1,
-            #     0,
-            #     [
-            #         SingleInterval(12, 13, Strand.MINUS),
-            #         SingleInterval(11, 12, Strand.MINUS),
-            #         SingleInterval(10, 11, Strand.MINUS),
-            #         SingleInterval(4, 5, Strand.MINUS),
-            #         SingleInterval(3, 4, Strand.MINUS),
-            #     ],
-            # ),
-            # # 5. Window size is equal to location length
-            # (
-            #     CompoundInterval([3, 10], [5, 13], Strand.PLUS),
-            #     5,
-            #     1,
-            #     0,
-            #     [CompoundInterval([3, 10], [5, 13], Strand.PLUS)],
-            # ),
-            # # 6. Start pos is last position of location, window size 1
-            # (
-            #     CompoundInterval([3, 10], [5, 13], Strand.PLUS),
-            #     1,
-            #     1,
-            #     4,
-            #     [SingleInterval(12, 13, Strand.PLUS)],
-            # ),
+            # 0. Step size greater than window size, windows go to end of location
+            (
+                CompoundInterval([0, 20, 40], [10, 27, 53], Strand.PLUS),
+                2,
+                5,
+                3,
+                [
+                    SingleInterval(3, 5, Strand.PLUS),
+                    SingleInterval(8, 10, Strand.PLUS),
+                    SingleInterval(23, 25, Strand.PLUS),
+                    SingleInterval(41, 43, Strand.PLUS),
+                    SingleInterval(46, 48, Strand.PLUS),
+                    SingleInterval(51, 53, Strand.PLUS),
+                ],
+            ),
+            # 1. Start pos is in second exon; minus strand
+            (
+                CompoundInterval([0, 20, 40], [10, 27, 54], Strand.MINUS),
+                5,
+                3,
+                18,
+                [
+                    CompoundInterval([8, 20], [10, 23], Strand.MINUS),
+                    SingleInterval(5, 10, Strand.MINUS),
+                    SingleInterval(2, 7, Strand.MINUS),
+                ],
+            ),
+            # 2. Step size = 1; plus strand
+            (
+                CompoundInterval([0, 7], [3, 10], Strand.PLUS),
+                2,
+                1,
+                0,
+                [
+                    SingleInterval(0, 2, Strand.PLUS),
+                    SingleInterval(1, 3, Strand.PLUS),
+                    CompoundInterval([2, 7], [3, 8], Strand.PLUS),
+                    SingleInterval(7, 9, Strand.PLUS),
+                    SingleInterval(8, 10, Strand.PLUS),
+                ],
+            ),
+            # 3. Step size = 2; minus strand
+            (
+                CompoundInterval([10, 30], [20, 37], Strand.MINUS),
+                5,
+                2,
+                4,
+                [
+                    CompoundInterval([18, 30], [20, 33], Strand.MINUS),
+                    CompoundInterval([16, 30], [20, 31], Strand.MINUS),
+                    SingleInterval(14, 19, Strand.MINUS),
+                    SingleInterval(12, 17, Strand.MINUS),
+                    SingleInterval(10, 15, Strand.MINUS),
+                ],
+            ),
+            # 4. Window size = 1, step size = 1; minus strand
+            (
+                CompoundInterval([3, 10], [5, 13], Strand.MINUS),
+                1,
+                1,
+                0,
+                [
+                    SingleInterval(12, 13, Strand.MINUS),
+                    SingleInterval(11, 12, Strand.MINUS),
+                    SingleInterval(10, 11, Strand.MINUS),
+                    SingleInterval(4, 5, Strand.MINUS),
+                    SingleInterval(3, 4, Strand.MINUS),
+                ],
+            ),
+            # 5. Window size is equal to location length
+            (
+                CompoundInterval([3, 10], [5, 13], Strand.PLUS),
+                5,
+                1,
+                0,
+                [CompoundInterval([3, 10], [5, 13], Strand.PLUS)],
+            ),
+            # 6. Start pos is last position of location, window size 1
+            (
+                CompoundInterval([3, 10], [5, 13], Strand.PLUS),
+                1,
+                1,
+                4,
+                [SingleInterval(12, 13, Strand.PLUS)],
+            ),
             # 7. Overlapping blocks
             (
                 CompoundInterval([0, 4], [5, 10], Strand.PLUS),

@@ -5,6 +5,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## [UNRELEASED]
+### Fixed
+- Serialized and simplified the implementation of `CompoundLocation.relative_interval_to_parent_location`
+
 ### Changed
 - Added flag `allow_duplicate_sequence_identifiers` to GenBank parser
 - GenBank parser now handles multiple isoforms of coding and non-coding genes
