@@ -118,7 +118,7 @@ class VariantInterval(AbstractFeatureInterval):
         return VariantInterval(
             vals["start"],
             vals["end"],
-            Sequence(vals["sequence"], Alphabet.NT_STRICT_UNKNOWN),
+            vals["sequence"],
             vals["variant_type"],
             vals["phase_block"],
             vals["guid"],
