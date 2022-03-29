@@ -633,9 +633,7 @@ class CompoundInterval(Location):
             # if this block is smaller than the remaining bases, cut the value down to size
             new_sub_block_end = min(len(block), remaining_len_till_start + remaining_len_till_end)
             # lift over this block and keep it
-            sub_block = block.relative_interval_to_parent_location(
-                new_sub_block_start, new_sub_block_end, Strand.PLUS
-            )
+            sub_block = block.relative_interval_to_parent_location(new_sub_block_start, new_sub_block_end, Strand.PLUS)
             new_blocks.append(sub_block)
             # all subsequent iterations will have remaining_len_till_start == 0
             remaining_len_till_start = 0
