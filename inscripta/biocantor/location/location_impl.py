@@ -626,31 +626,31 @@ class CompoundInterval(Location):
             # this block is to the left of the relative start, so decrement remaining_len_till_start and continue
             if len(block) <= remaining_len_till_start:
                 remaining_len_till_start -= len(block)
-            else:
-                # this block is within the window; remaining_len_till_start might be non-zero the first time
-                # the loop hits this else block
-                new_sub_block_start = remaining_len_till_start
-                # if this block is smaller than the remaining bases, cut the value down to size
-                new_sub_block_end = min(len(block), remaining_len_till_start + remaining_len_till_end)
-                # lift over this block and keep it
-                sub_block = block.relative_interval_to_parent_location(
-                    new_sub_block_start, new_sub_block_end, Strand.PLUS
-                )
-                new_blocks.append(sub_block)
-                # all subsequent iterations will have remaining_len_till_start == 0
-                remaining_len_till_start = 0
-                # decrement remaining_len_till_end until nothing is left
-                remaining_len_till_end -= len(sub_block)
+                continue
+            # this block is within the window; remaining_len_till_start might be non-zero the first time
+            # the loop hits this else block
+            new_sub_block_start = remaining_len_till_start
+            # if this block is smaller than the remaining bases, cut the value down to size
+            new_sub_block_end = min(len(block), remaining_len_till_start + remaining_len_till_end)
+            # lift over this block and keep it
+            sub_block = block.relative_interval_to_parent_location(
+                new_sub_block_start, new_sub_block_end, Strand.PLUS
+            )
+            new_blocks.append(sub_block)
+            # all subsequent iterations will have remaining_len_till_start == 0
+            remaining_len_till_start = 0
+            # decrement remaining_len_till_end until nothing is left
+            remaining_len_till_end -= len(sub_block)
             # remaining_len_till_end has nothing left, so exit the algorithm
             if remaining_len_till_end < 1:
                 break
 
         # only run reset_strand() if the strands are not the same to save object construction overhead
         new_strand = relative_strand.relative_to(self.strand)
+        relative_interval = CompoundInterval.from_single_intervals(new_blocks).optimize_blocks()
         if new_strand != self.strand:
-            return CompoundInterval.from_single_intervals(new_blocks).reset_strand(new_strand).optimize_blocks()
-        else:
-            return CompoundInterval.from_single_intervals(new_blocks).optimize_blocks()
+            relative_interval = relative_interval.reset_strand(new_strand)
+        return relative_interval
 
     def has_overlap(
         self, other: Location, match_strand: bool = False, full_span: bool = False, strict_parent_compare: bool = False
