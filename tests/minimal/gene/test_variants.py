@@ -8,9 +8,11 @@ from inscripta.biocantor.sequence import Sequence, Alphabet
 seq = Parent(sequence=Sequence("ACTCTCTCTATCTCATCCAC", Alphabet.NT_EXTENDED_GAPPED))
 snp_1 = VariantInterval(start=1, end=2, sequence="G", variant_type="SNV", parent_or_seq_chunk_parent=seq)
 insertion_5 = VariantInterval(start=5, end=5, sequence="GG", variant_type="insertion", parent_or_seq_chunk_parent=seq)
-deletion_10_13 = VariantInterval(
+# this deletion is VCF-style and contains a left-anchoring base
+deletion_11_13 = VariantInterval(
     start=10, end=13, sequence="T", variant_type="deletion", parent_or_seq_chunk_parent=seq
 )
+# these deletions are not VCF-style, and have an empty ALT
 deletion_12_13 = VariantInterval(start=12, end=13, sequence="", variant_type="deletion", parent_or_seq_chunk_parent=seq)
 deletion_13_15 = VariantInterval(start=13, end=15, sequence="", variant_type="deletion", parent_or_seq_chunk_parent=seq)
 
@@ -21,7 +23,7 @@ class TestVariants:
         [
             [snp_1, "AGTCTCTCTATCTCATCCAC"],
             [insertion_5, "ACTCTGGCTCTATCTCATCCAC"],
-            [deletion_10_13, "ACTCTCTCTATCATCCAC"],
+            [deletion_11_13, "ACTCTCTCTATCATCCAC"],
             [deletion_13_15, "ACTCTCTCTATCTTCCAC"],
         ],
     )
@@ -34,12 +36,12 @@ class TestVariantCollections:
         "variant_collection,expected",
         [
             [
-                VariantIntervalCollection([snp_1, insertion_5, deletion_10_13], parent_or_seq_chunk_parent=seq),
+                VariantIntervalCollection([snp_1, insertion_5, deletion_11_13], parent_or_seq_chunk_parent=seq),
                 "AGTCTGGCTCTATCATCCAC",
             ],
             [
                 VariantIntervalCollection(
-                    [snp_1, insertion_5, deletion_10_13, deletion_13_15], parent_or_seq_chunk_parent=seq
+                    [snp_1, insertion_5, deletion_11_13, deletion_13_15], parent_or_seq_chunk_parent=seq
                 ),
                 "AGTCTGGCTCTATTCCAC",
             ],
@@ -56,7 +58,7 @@ class TestVariantCollections:
                 LocationOverlapException,
             ],
             [
-                [deletion_10_13, deletion_12_13],
+                [deletion_11_13, deletion_12_13],
                 LocationOverlapException,
             ],
         ],
