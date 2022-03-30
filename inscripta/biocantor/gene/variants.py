@@ -8,8 +8,14 @@ from typing import Optional, Dict, Hashable, Any, Iterable, Set, List
 from uuid import UUID
 
 from inscripta.biocantor.exc import DuplicateFeatureError
-from inscripta.biocantor.gene.interval import AbstractFeatureIntervalCollection, IntervalType
-from inscripta.biocantor.gene.interval import AbstractInterval, AbstractFeatureInterval, QualifierValue
+from inscripta.biocantor.exc import LocationOverlapException
+from inscripta.biocantor.gene.interval import (
+    AbstractFeatureIntervalCollection,
+    IntervalType,
+    AbstractInterval,
+    AbstractFeatureInterval,
+    QualifierValue,
+)
 from inscripta.biocantor.io.bed import RGB, BED12
 from inscripta.biocantor.io.gff3.rows import GFFRow
 from inscripta.biocantor.location import Parent, SingleInterval, Strand
@@ -27,11 +33,11 @@ class VariantInterval(AbstractFeatureInterval):
         end: int,
         sequence: str,
         variant_type: str,
-        phase_block: Optional[int],
-        guid: Optional[UUID],
-        variant_guid: Optional[UUID],
-        variant_name: Optional[str],
-        variant_id: Optional[str],
+        phase_block: Optional[int] = None,
+        guid: Optional[UUID] = None,
+        variant_guid: Optional[UUID] = None,
+        variant_name: Optional[str] = None,
+        variant_id: Optional[str] = None,
         qualifiers: Optional[Dict[Hashable, QualifierValue]] = None,
         parent_or_seq_chunk_parent: Optional[Parent] = None,
     ):
@@ -44,7 +50,16 @@ class VariantInterval(AbstractFeatureInterval):
         self.variant_guid = variant_guid
         # qualifiers come in as a List, convert to Set
         self._import_qualifiers_from_list(qualifiers)
-        self.bin = bins(self.start, self.end, fmt="bed")
+        self.bin = bins(start, end, fmt="bed")
+        self.start = start
+        self.end = end
+        self._genomic_starts = [start]
+        self._genomic_ends = [end]
+        # variants are always + strand
+        self._strand = Strand.PLUS
+
+        # lazy loaded values
+        self._edited_sequence = None
 
         if guid is None:
             self.guid = digest_object(
@@ -138,6 +153,29 @@ class VariantInterval(AbstractFeatureInterval):
         """Returns the name of this feature. Provides a shared API across genes/transcripts and features."""
         return self.variant_name
 
+    @property
+    def edited_genomic_sequence(self) -> Sequence:
+        """Edited version of the original genomic sequence"""
+        if not self._edited_sequence:
+            original_sequence = self.chunk_relative_location.parent.sequence
+            original_sequence_str = str(original_sequence)
+            new_seq_string = "".join(
+                (
+                    original_sequence_str[: self.chunk_relative_location.start],
+                    str(self.sequence),
+                    original_sequence_str[self.chunk_relative_location.end :],
+                )
+            )
+            self._edited_sequence = Sequence(
+                data=new_seq_string,
+                alphabet=original_sequence.alphabet,
+                id=None,
+                type=self.variant_type,
+                parent=None,
+                validate_alphabet=False,
+            )
+        return self._edited_sequence
+
 
 class VariantIntervalCollection(AbstractFeatureIntervalCollection):
     """
@@ -158,7 +196,14 @@ class VariantIntervalCollection(AbstractFeatureIntervalCollection):
         qualifiers: Optional[Dict[Hashable, List[QualifierValue]]] = None,
         parent_or_seq_chunk_parent: Optional[Parent] = None,
     ):
-        self.variant_intervals = variant_intervals
+        self.variant_intervals = sorted(variant_intervals, key=lambda x: x.start)
+        # validate the variant intervals for not being overlapping
+        for i in range(len(self.variant_intervals) - 1):
+            if self.variant_intervals[i].chunk_relative_location.has_overlap(
+                self.variant_intervals[i + 1].chunk_relative_location
+            ):
+                raise LocationOverlapException("VariantInterval within a VariantIntervalCollection must not overlap")
+
         self.variant_collection_name = variant_collection_name
         self.variant_collection_id = variant_collection_id
         self.sequence_name = sequence_name
@@ -168,8 +213,10 @@ class VariantIntervalCollection(AbstractFeatureIntervalCollection):
         self.start = self.genomic_start = min(f.start for f in self.variant_intervals)
         self.end = self.genomic_end = max(f.end for f in self.variant_intervals)
         self._initialize_location(self.start, self.end, parent_or_seq_chunk_parent)
-
         self.variant_types = {x.variant_type for x in self.variant_intervals}
+
+        # lazy-loaded property
+        self._edited_genomic_sequence = None
 
         if guid is None:
             self.guid = digest_object(
@@ -249,3 +296,31 @@ class VariantIntervalCollection(AbstractFeatureIntervalCollection):
     @property
     def name(self) -> str:
         return self.variant_collection_name
+
+    @property
+    def edited_genomic_sequence(self) -> Sequence:
+        """Edited version of the original sequence"""
+        if not self._edited_genomic_sequence:
+            original_sequence = self.chunk_relative_location.parent.sequence
+            original_sequence_str = str(original_sequence)
+
+            edited_seq_data = original_sequence_str[: self.variant_intervals[0].chunk_relative_location.start]
+            for i in range(len(self.variant_intervals) - 1):
+                curr_edit = self.variant_intervals[i]
+                next_edit = self.variant_intervals[i + 1]
+                edited_seq_data += str(curr_edit.sequence)
+                edited_seq_data += original_sequence_str[
+                    curr_edit.chunk_relative_location.end : next_edit.chunk_relative_location.start
+                ]
+            edited_seq_data += str(self.variant_intervals[-1].sequence)
+            edited_seq_data += original_sequence_str[self.variant_intervals[-1].chunk_relative_location.end :]
+
+            self._edited_genomic_sequence = Sequence(
+                data=edited_seq_data,
+                alphabet=original_sequence.alphabet,
+                id=None,
+                type=",".join(sorted(self.variant_types)),
+                parent=None,
+                validate_alphabet=False,
+            )
+        return self._edited_genomic_sequence

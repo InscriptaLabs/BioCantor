@@ -41,6 +41,7 @@ from inscripta.biocantor.io.exc import (
     StrandViolationWarning,
     DuplicateFeatureWarning,
     DuplicateTranscriptWarning,
+    InvalidInputError,
 )
 from inscripta.biocantor.io.features import extract_feature_types, extract_feature_name_id, merge_qualifiers
 from inscripta.biocantor.io.genbank.constants import (
@@ -510,7 +511,7 @@ class BaseGenBankParser(ABC):
     def __init__(
         self,
         seq_records: List[SeqRecord],
-        parsed_variants: Dict[str, VariantIntervalCollectionModel],
+        parsed_variants: Dict[str, List[VariantIntervalCollectionModel]],
         gene_parse_func: Callable[[GeneFeature], Dict[str, Any]],
         feature_parse_func: Callable[[FeatureIntervalGenBankCollection], Dict[str, Any]],
     ):
@@ -873,7 +874,9 @@ class BaseGenBankParser(ABC):
             ]
 
             if self.parsed_variants:
-                variant_collections = self.parsed_variants.get(seqrecord.id)
+                variant_collections = VariantIntervalCollectionModel.Schema().dump(
+                    self.parsed_variants.get(seqrecord.id), many=True
+                )
             else:
                 variant_collections = None
 
@@ -988,7 +991,7 @@ class HybridGenBankParser(LocusTagGenBankParser, SortedGenBankParser):
     def __init__(
         self,
         seq_records: List[SeqRecord],
-        parsed_variants: Dict[str, VariantIntervalCollectionModel],
+        parsed_variants: Dict[str, List[VariantIntervalCollectionModel]],
         gene_parse_func: Callable[[GeneFeature], Dict[str, Any]],
         feature_parse_func: Callable[[FeatureIntervalGenBankCollection], Dict[str, Any]],
     ):
@@ -1080,7 +1083,7 @@ class HybridGenBankParser(LocusTagGenBankParser, SortedGenBankParser):
 def parse_genbank(
     genbank_handle_or_path: Union[TextIO, str, pathlib.Path],
     variant_handle_or_path: Optional[Union[TextIO, str, pathlib.Path]] = None,
-    parsed_variants: Optional[Dict[str, VariantIntervalCollectionModel]] = None,
+    parsed_variants: Optional[Dict[str, List[VariantIntervalCollectionModel]]] = None,
     gene_parse_func: Optional[Callable[[GeneFeature], Dict[str, Any]]] = GeneFeature.to_gene_model,
     feature_parse_func: Optional[
         Callable[[FeatureIntervalGenBankCollection], Dict[str, Any]]
@@ -1109,7 +1112,7 @@ def parse_genbank(
     seq_records = list(SeqIO.parse(genbank_handle_or_path, format="genbank"))
 
     if variant_handle_or_path and parsed_variants:
-        raise RuntimeError("Cannot pass both a variant file and parsed variants")
+        raise InvalidInputError("Cannot pass both a variant file and parsed variants")
     elif variant_handle_or_path:
         parsed_variants = parse_vcf_file(variant_handle_or_path)
 
@@ -1124,7 +1127,7 @@ def parse_genbank(
         seqrecord_ids = {x.id for x in seq_records}
         for seq_id in parsed_variants:
             if seq_id not in seqrecord_ids:
-                raise RuntimeError(f"Sequence ID {seq_id} found in variant file but not found in GenBank file.")
+                raise InvalidInputError(f"Sequence ID {seq_id} found in variant file but not found in GenBank file.")
 
     if gbk_type == GenBankParserType.SORTED:
         parser = SortedGenBankParser(seq_records, parsed_variants, gene_parse_func, feature_parse_func)

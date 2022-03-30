@@ -5,6 +5,9 @@ and deserializing the models.
 from typing import List, Optional, ClassVar, Type, Dict, Union
 from uuid import UUID
 
+from marshmallow import Schema  # noqa: F401
+from marshmallow_dataclass import dataclass
+
 from inscripta.biocantor.gene import GeneInterval, FeatureIntervalCollection
 from inscripta.biocantor.gene.biotype import Biotype
 from inscripta.biocantor.gene.cds_frame import CDSFrame
@@ -16,8 +19,6 @@ from inscripta.biocantor.io.exc import InvalidInputError
 from inscripta.biocantor.location.strand import Strand
 from inscripta.biocantor.parent import Parent
 from inscripta.biocantor.sequence.sequence import Alphabet, SequenceType
-from marshmallow import Schema  # noqa: F401
-from marshmallow_dataclass import dataclass
 
 
 @dataclass
@@ -198,6 +199,7 @@ class VariantIntervalModel(BaseModel):
     variant_guid: Optional[UUID] = None
     variant_name: Optional[str] = None
     variant_id: Optional[str] = None
+    qualifiers: Optional[Dict[str, List[Union[str, int, bool, float]]]] = None
 
     @staticmethod
     def from_variant_interval(variant_interval: VariantInterval) -> "VariantIntervalModel":
@@ -342,7 +344,7 @@ class VariantIntervalCollectionModel(BaseModel):
         """Produce a variant collection from a :class:`VariantIntervalCollectionModel`."""
 
         variant_intervals = [
-            variant.to_feature_interval(parent_or_seq_chunk_parent) for variant in self.variant_intervals
+            variant.to_variant_interval(parent_or_seq_chunk_parent) for variant in self.variant_intervals
         ]
         return VariantIntervalCollection(
             variant_intervals,
@@ -408,7 +410,7 @@ class AnnotationCollectionModel(BaseModel):
 
         if self.variant_collections:
             variant_collections = [
-                var.to_variant_collection(parent_or_seq_chunk_parent) for var in self.variant_collections
+                var.to_variant_interval_collection(parent_or_seq_chunk_parent) for var in self.variant_collections
             ]
         else:
             variant_collections = None
