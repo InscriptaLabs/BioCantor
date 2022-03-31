@@ -7,8 +7,7 @@ are always represented on the positive strand, and is loosely modeled after VCF 
 from typing import Optional, Dict, Hashable, Any, Iterable, Set, List
 from uuid import UUID
 
-from inscripta.biocantor.exc import DuplicateFeatureError
-from inscripta.biocantor.exc import LocationOverlapException
+from inscripta.biocantor.exc import DuplicateFeatureError, LocationOverlapException, EmptyLocationException
 from inscripta.biocantor.gene.interval import (
     AbstractFeatureIntervalCollection,
     IntervalType,
@@ -18,8 +17,8 @@ from inscripta.biocantor.gene.interval import (
 )
 from inscripta.biocantor.io.bed import RGB, BED12
 from inscripta.biocantor.io.gff3.rows import GFFRow
-from inscripta.biocantor.location import Parent, SingleInterval, Strand
-from inscripta.biocantor.sequence.sequence import Sequence, Alphabet
+from inscripta.biocantor.location import Parent, SingleInterval, Strand, Location, CompoundInterval, EmptyLocation
+from inscripta.biocantor.sequence.sequence import Sequence, Alphabet, SequenceType
 from inscripta.biocantor.util.bins import bins
 from inscripta.biocantor.util.hashing import digest_object
 
@@ -41,7 +40,11 @@ class VariantInterval(AbstractFeatureInterval):
         qualifiers: Optional[Dict[Hashable, QualifierValue]] = None,
         parent_or_seq_chunk_parent: Optional[Parent] = None,
     ):
-        self._location = SingleInterval(start, end, Strand.PLUS, parent_or_seq_chunk_parent)
+        if start == end:
+            raise EmptyLocationException(
+                "Variants must be defined over a window of at least 1bp. Indels should be left-padded."
+            )
+        self._location = VariantInterval.initialize_location([start], [end], Strand.PLUS, parent_or_seq_chunk_parent)
         self.sequence = Sequence(sequence, Alphabet.NT_STRICT_UNKNOWN)
         self.variant_type = variant_type
         self.phase_block = phase_block
@@ -51,8 +54,6 @@ class VariantInterval(AbstractFeatureInterval):
         # qualifiers come in as a List, convert to Set
         self._import_qualifiers_from_list(qualifiers)
         self.bin = bins(start, end, fmt="bed")
-        self.start = start
-        self.end = end
         self._genomic_starts = [start]
         self._genomic_ends = [end]
         # variants are always + strand
@@ -60,6 +61,7 @@ class VariantInterval(AbstractFeatureInterval):
 
         # lazy loaded values
         self._edited_sequence = None
+        self._parent_with_edited_sequence = None
 
         if guid is None:
             self.guid = digest_object(
@@ -175,6 +177,97 @@ class VariantInterval(AbstractFeatureInterval):
                 validate_alphabet=False,
             )
         return self._edited_sequence
+
+    @property
+    def parent_with_alternative_sequence(self) -> Parent:
+        if self._parent_with_edited_sequence is None:
+            # have to import here to avoid circular imports
+            from inscripta.biocantor.io.parser import seq_chunk_to_parent, seq_to_parent
+
+            if self.chunk_relative_location.has_ancestor_of_type(SequenceType.SEQUENCE_CHUNK):
+                self._parent_with_edited_sequence = seq_chunk_to_parent(
+                    str(self.edited_genomic_sequence),
+                    self.chunk_relative_location.parent.sequence.id,
+                    self.start,
+                    self.end + self.length_difference,
+                )
+            else:
+                self._parent_with_edited_sequence = seq_to_parent(str(self.edited_genomic_sequence))
+        return self._parent_with_edited_sequence
+
+    @property
+    def length_difference(self):
+        return len(self.sequence) - len(self.chromosome_location)
+
+    def lift_over_location(self, location: Location) -> Location:
+        if location is EmptyLocation():
+            return EmptyLocation()
+        if len(self.chromosome_location) == len(self.sequence) or location.end <= self.chromosome_location.start:
+            return location.reset_parent(self.parent_with_alternative_sequence)
+
+        if location.has_ancestor_of_type(SequenceType.SEQUENCE_CHUNK):
+            location = location.lift_over_to_first_ancestor_of_type(SequenceType.CHROMOSOME)
+
+        if type(location) is SingleInterval:
+            return self._lift_over_chromosome_location_single_interval(location).reset_parent(
+                self.parent_with_alternative_sequence
+            )
+        elif type(location) is CompoundInterval:
+            return self._lift_over_chromosome_location_compound_interval(location).reset_parent(
+                self.parent_with_alternative_sequence
+            )
+        else:
+            raise NotImplementedError("Location type {} not supported".format(str(type(location))))
+
+    def _lift_over_chromosome_location_single_interval(self, location: SingleInterval) -> Location:
+        len_diff = self.length_difference
+        old_start = location.start
+        old_end = location.end
+        if len_diff >= 0:
+            new_start = old_start if old_start < self.chromosome_location.end else old_start + len_diff
+            new_end = old_end if old_end < self.chromosome_location.end else old_end + len_diff
+        else:
+            if (
+                self.chromosome_location.start + len(self.sequence)
+                <= old_start
+                <= old_end
+                <= self.chromosome_location.end
+            ):
+                return EmptyLocation()
+            len_left_side_deleted = (
+                self.chromosome_location.end - old_start
+                if self.chromosome_location.start + len(self.sequence) <= old_start < self.chromosome_location.end
+                else 0
+            )
+            new_start = (
+                old_start
+                if old_start < self.chromosome_location.end + len_diff
+                else old_start + len_diff + len_left_side_deleted
+            )
+            new_end = (
+                old_end
+                if old_end <= self.chromosome_location.end + len_diff
+                else old_end + max(len_diff, len_diff - old_end + self.chromosome_location.end)
+            )
+        return SingleInterval(new_start, new_end, location.strand)
+
+    def _lift_over_chromosome_location_compound_interval(self, location: CompoundInterval) -> Location:
+        lifted_single_intervals = []
+        for single_interval in location.blocks:
+            try:
+                lifted_interval = self._lift_over_chromosome_location_single_interval(single_interval)
+                if lifted_interval is not EmptyLocation():
+                    lifted_single_intervals.append(lifted_interval)
+            except EmptyLocationException:
+                continue
+        if lifted_single_intervals:
+            return (
+                lifted_single_intervals[0]
+                if len(lifted_single_intervals) == 1
+                else CompoundInterval.from_single_intervals(lifted_single_intervals).optimize_blocks()
+            )
+        else:
+            return EmptyLocation()
 
 
 class VariantIntervalCollection(AbstractFeatureIntervalCollection):
