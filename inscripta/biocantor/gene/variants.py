@@ -54,6 +54,8 @@ class VariantInterval(AbstractFeatureInterval):
         # qualifiers come in as a List, convert to Set
         self._import_qualifiers_from_list(qualifiers)
         self.bin = bins(start, end, fmt="bed")
+        self.start = self.genomic_start = start
+        self.end = self.genomic_end = end
         self._genomic_starts = [start]
         self._genomic_ends = [end]
         # variants are always + strand
