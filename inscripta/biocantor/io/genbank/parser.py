@@ -812,8 +812,9 @@ class BaseGenBankParser(ABC):
                     if feature_collection:
                         self.feature_collections[seqrecord.id].append(feature_collection)
 
-    def _convert_seqfeature_to_gene(self, grouped_gene_features: GroupedGeneFeatures,
-                                    seqrecord: SeqRecord) -> GeneFeature:
+    def _convert_seqfeature_to_gene(
+        self, grouped_gene_features: GroupedGeneFeatures, seqrecord: SeqRecord
+    ) -> GeneFeature:
         # if there is no gene level feature, then it must be inferred
         if not grouped_gene_features.gene_feature:
             if grouped_gene_features.transcript_features:
