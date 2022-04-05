@@ -372,7 +372,7 @@ class TranscriptFeature(Feature):
     def __str__(self):
         as_str = f"--> {self._seq_feature.__repr__()}"
         if self.cds_feature:
-            as_str += f"---> {self.cds_feature._seq_feature.__repr__()}"
+            as_str += f"\n---> {self.cds_feature._seq_feature.__repr__()}"
         return as_str
 
     def construct_frames(self, cds_interval: Location) -> List[str]:
@@ -812,6 +812,37 @@ class BaseGenBankParser(ABC):
                     if feature_collection:
                         self.feature_collections[seqrecord.id].append(feature_collection)
 
+    def _convert_seqfeature_to_gene(self, grouped_gene_features: GroupedGeneFeatures,
+                                    seqrecord: SeqRecord) -> GeneFeature:
+        # if there is no gene level feature, then it must be inferred
+        if not grouped_gene_features.gene_feature:
+            if grouped_gene_features.transcript_features:
+                gene = GeneFeature.from_transcript_or_cds_feature(
+                    grouped_gene_features.transcript_features[0], seqrecord
+                )
+            # CDS feature(s) must exist
+            else:
+                gene = GeneFeature.from_transcript_or_cds_feature(grouped_gene_features.cds_features[0], seqrecord)
+        else:
+            gene = GeneFeature(grouped_gene_features.gene_feature, seqrecord)
+
+        if grouped_gene_features.transcript_features and grouped_gene_features.cds_features:
+            # there must be exactly one transcript_feature because cds_features exist
+            for cds_feature in grouped_gene_features.cds_features:
+                gene.add_child(grouped_gene_features.transcript_features[0], cds_feature)
+        # this must be a non-coding gene
+        elif grouped_gene_features.transcript_features:
+            for transcript_feature in grouped_gene_features.transcript_features:
+                gene.add_child(transcript_feature)
+        # gene -> CDS without a transcript level feature
+        elif grouped_gene_features.cds_features:
+            for cds_feature in grouped_gene_features.cds_features:
+                gene.add_child(cds_feature)
+        if not gene.has_children:
+            gene.infer_child()
+            warnings.warn(GenBankEmptyGeneWarning(f"Gene {gene} has no valid children features"))
+        return gene
+
     def _convert_seqfeatures_to_genes(self):
         """
         After the gene-like features have been grouped by either position, locus tag, or both, the groups
@@ -821,35 +852,7 @@ class BaseGenBankParser(ABC):
         """
         for locus_tag, grouped_gene_features in self.grouped_gene_features.items():
             seqrecord = grouped_gene_features.seqrecord
-
-            # if there is no gene level feature, then it must be inferred
-            if not grouped_gene_features.gene_feature:
-                if grouped_gene_features.transcript_features:
-                    gene = GeneFeature.from_transcript_or_cds_feature(
-                        grouped_gene_features.transcript_features[0], seqrecord
-                    )
-                # CDS feature(s) must exist
-                else:
-                    gene = GeneFeature.from_transcript_or_cds_feature(grouped_gene_features.cds_features[0], seqrecord)
-            else:
-                gene = GeneFeature(grouped_gene_features.gene_feature, seqrecord)
-
-            if grouped_gene_features.transcript_features and grouped_gene_features.cds_features:
-                # there must be exactly one transcript_feature because cds_features exist
-                for cds_feature in grouped_gene_features.cds_features:
-                    gene.add_child(grouped_gene_features.transcript_features[0], cds_feature)
-            # this must be a non-coding gene
-            elif grouped_gene_features.transcript_features:
-                for transcript_feature in grouped_gene_features.transcript_features:
-                    gene.add_child(transcript_feature)
-            # gene -> CDS without a transcript level feature
-            elif grouped_gene_features.cds_features:
-                for cds_feature in grouped_gene_features.cds_features:
-                    gene.add_child(cds_feature)
-
-            if not gene.has_children:
-                gene.infer_child()
-                warnings.warn(GenBankEmptyGeneWarning(f"Gene {gene} has no valid children features"))
+            gene = self._convert_seqfeature_to_gene(grouped_gene_features, seqrecord)
             self.genes[seqrecord.id].append(gene)
 
     def _export_annotation_collections(self) -> Iterator[ParsedAnnotationRecord]:
@@ -1031,7 +1034,10 @@ class HybridGenBankParser(LocusTagGenBankParser, SortedGenBankParser):
         """
         bad_locus_tags = set()
         for locus_tag, features in itertools.groupby(
-            itertools.chain.from_iterable(self.gene_filtered_features.values()),
+            sorted(
+                itertools.chain.from_iterable(self.gene_filtered_features.values()),
+                key=lambda x: x.qualifiers.get(KnownQualifiers.LOCUS_TAG.value, None)[0],
+            ),
             key=lambda x: x.qualifiers[KnownQualifiers.LOCUS_TAG.value][0],
         ):
             if len([f for f in features if f.type == GeneFeatures.GENE.value]) > 1:
@@ -1043,17 +1049,17 @@ class HybridGenBankParser(LocusTagGenBankParser, SortedGenBankParser):
                 )
                 bad_locus_tags.add(locus_tag)
 
-        for seq_id, recs in self.gene_filtered_features.items():
-            good_recs = []
-            bad_recs = []
-            for rec in recs:
-                if rec.qualifiers[KnownQualifiers.LOCUS_TAG.value][0] in bad_locus_tags:
-                    bad_recs.append(rec)
+        for seq_id, features in self.gene_filtered_features.items():
+            good_features = []
+            bad_features = []
+            for feature in features:
+                if feature.qualifiers[KnownQualifiers.LOCUS_TAG.value][0] in bad_locus_tags:
+                    bad_features.append(feature)
                 else:
-                    good_recs.append(rec)
-            self.gene_filtered_features[seq_id] = good_recs
+                    good_features.append(feature)
+            self.gene_filtered_features[seq_id] = good_features
             self.gene_filtered_features_without_locus_tag[seq_id] = self._sort_features_by_position_and_type(
-                list(itertools.chain(self.gene_filtered_features_without_locus_tag[seq_id], bad_recs))
+                list(itertools.chain(self.gene_filtered_features_without_locus_tag[seq_id], bad_features))
             )
 
     def _group_gene_features_by_locus_tag_and_position(self):
