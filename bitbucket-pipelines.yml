@@ -3,8 +3,6 @@ image: continuumio/miniconda3
 pipelines:
   default:
     - step:
-        caches:
-          - pip
         script:
           - mkdir test-results
           - conda create -y -n test python=3.8
