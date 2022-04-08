@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Fixed
 - Serialized and simplified the implementation of `CompoundLocation.relative_interval_to_parent_location`
 
+### Changed
+- Allow any version of python3 above 3.7
+
+
 ## [0.15.0] 2022-3-3
 ### Changed
 - Added flag `allow_duplicate_sequence_identifiers` to GenBank parser
