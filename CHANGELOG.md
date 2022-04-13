@@ -6,6 +6,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [0.16.0] 2022-4-13
 ### Fixed
+- Duplicate `/locus_tag` detection in GenBank parser was not working in all cases
 - Serialized and simplified the implementation of `CompoundLocation.relative_interval_to_parent_location`
 
 ### Changed
@@ -13,7 +14,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Added
 - GFF3 parsing now supports providing a pre-built gffutils database
-
 
 ## [0.15.0] 2022-3-3
 ### Changed
