@@ -168,7 +168,7 @@ class TestCDSInterval:
     @pytest.mark.parametrize(
         "cds,expected",
         [
-            # Contiguous CDS, plus strand, frame=0
+            # 0. Contiguous CDS, plus strand, frame=0
             (
                 CDSInterval.from_location(
                     SingleInterval(
@@ -178,7 +178,7 @@ class TestCDSInterval:
                 ),
                 [Codon.ATA, Codon.CGA, Codon.TCA],
             ),
-            # Discontiguous CDS, plus strand, frame=1, codons don't reach end of CDS
+            # 1 .Discontiguous CDS, plus strand, frame=1, codons don't reach end of CDS
             # Codon interval cleaning therefore removes the 1st codon entirely, because it is incomplete
             # Index:      0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20
             # Sequence:   A A A C A A A A G G G  A  C  C  C  A  A  A  A  A  A
@@ -199,7 +199,7 @@ class TestCDSInterval:
                 ),
                 [Codon.CAG, Codon.GGA, Codon.CCC],
             ),
-            # Discontiguous CDS, plus strand, frame=1, 1bp deletion at start of exon 2
+            # 2. Discontiguous CDS, plus strand, frame=1, 1bp deletion at start of exon 2
             # Codon interval cleaning therefore removes the 1st codon entirely, because it is incomplete
             # Index:      0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20
             # Sequence:   A A A C A A A A G G G  A  C  C  C  A  A  A  A  A  A
@@ -223,7 +223,7 @@ class TestCDSInterval:
                 ),
                 [Codon.GGG, Codon.ACC, Codon.CAA],
             ),
-            # Discontiguous CDS, plus strand, frame=1,
+            # 3. Discontiguous CDS, plus strand, frame=1,
             # 1bp insertion inside exon 2 relative to some canonical genome and we want to maintain original frame
             # Index:      0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20
             # Sequence:   A A A C A A A A G G G  A  T  C  C  C  A  A  A  A  A
@@ -246,7 +246,7 @@ class TestCDSInterval:
                 ),
                 [Codon.CAG, Codon.GGA, Codon.CCC],  # QGP
             ),
-            # Discontiguous CDS, minus strand, frame=2
+            # 4. Discontiguous CDS, minus strand, frame=2
             (
                 CDSInterval.from_location(
                     CompoundInterval(
@@ -259,7 +259,7 @@ class TestCDSInterval:
                 ),
                 [Codon.CAG, Codon.GGA, Codon.CCC],  # QGP
             ),
-            # Discontiguous CDS, minus strand, frame=2, with frameshift that leads to truncation
+            # 5. Discontiguous CDS, minus strand, frame=2, with frameshift that leads to truncation
             (
                 CDSInterval.from_location(
                     CompoundInterval(
@@ -272,7 +272,7 @@ class TestCDSInterval:
                 ),
                 [Codon.CAG, Codon.GGA],  # QG
             ),
-            # Discontiguous CDS, plus strand, with -1 bp programmed frameshift (overlapping interval)
+            # 6. Discontiguous CDS, plus strand, with -1 bp programmed frameshift (overlapping interval)
             (
                 CDSInterval.from_location(
                     CompoundInterval(

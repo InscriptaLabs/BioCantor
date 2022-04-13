@@ -1,11 +1,14 @@
 import json
+import tempfile
+from pathlib import Path
 
+import gffutils
 import pytest
 from Bio import SeqIO
 from inscripta.biocantor.gene.biotype import Biotype
 from inscripta.biocantor.gene.cds_frame import CDSFrame
+from inscripta.biocantor.io.exc import DuplicateSequenceException, InvalidInputError
 from inscripta.biocantor.io.gff3.exc import GFF3FastaException
-from inscripta.biocantor.io.exc import DuplicateSequenceException
 from inscripta.biocantor.io.gff3.parser import (
     parse_gff3_embedded_fasta,
     parse_gff3_fasta,
@@ -102,6 +105,25 @@ class TestGff3Parser:
         c = recs[0].annotation
         with open(test_data_dir / "INSC1006_chrI.json") as fh:
             assert AnnotationCollectionModel.Schema().load(json.load(fh)) == c
+
+    def test_parse_insc1006_prebuilt_db(self, test_data_dir):
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            single_temp_file = Path(tmp_dir) / "tmp.db"
+            gff = test_data_dir / "INSC1006_chrI.gff3"
+            _ = gffutils.create_db(str(gff), str(single_temp_file), merge_strategy="create_unique")
+            recs = list(parse_standard_gff3(gff, db_fn=str(single_temp_file)))
+            c = recs[0].annotation
+            with open(test_data_dir / "INSC1006_chrI.json") as fh:
+                assert AnnotationCollectionModel.Schema().load(json.load(fh)) == c
+
+    def test_parse_insc1006_prebuilt_db_does_not_exist(self, test_data_dir):
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            single_temp_file = Path(tmp_dir) / "tmp.db"
+            with open(single_temp_file, "w") as _:
+                pass
+            gff = test_data_dir / "INSC1006_chrI.gff3"
+            with pytest.raises(InvalidInputError):
+                _ = list(parse_standard_gff3(gff, db_fn=str(single_temp_file)))
 
     def test_parse_non_gene_locus_tag(self, test_data_dir):
         """Ran into bug in which non-gene feature with locus tag led to error, ensure handled correctly. Using cases
