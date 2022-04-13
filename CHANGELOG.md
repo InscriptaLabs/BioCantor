@@ -11,6 +11,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Changed
 - Allow any version of python3 above 3.7
 
+### Added
+- GFF3 parsing now supports providing a pre-built gffutils database
+
 
 ## [0.15.0] 2022-3-3
 ### Changed
