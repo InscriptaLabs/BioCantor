@@ -8,4 +8,4 @@ pipelines:
           - conda create -y -n test python=3.8
           - eval "$(conda shell.bash hook)" && conda activate test
           - pip install tox tox-conda
-          - tox -p2
+          - tox
