@@ -189,9 +189,9 @@ class VariantInterval(AbstractFeatureInterval):
             if self.chunk_relative_location.has_ancestor_of_type(SequenceType.SEQUENCE_CHUNK):
                 self._parent_with_alternative_sequence = seq_chunk_to_parent(
                     str(self.alternative_genomic_sequence),
-                    self.chunk_relative_location.parent.sequence.id,
-                    self.start,
-                    self.end + self.length_difference,
+                    self.chunk_relative_location.parent_id,
+                    self.chunk_relative_location.parent.parent.location.start,
+                    self.chunk_relative_location.parent.parent.location.start + len(self.alternative_genomic_sequence),
                 )
             else:
                 self._parent_with_alternative_sequence = seq_to_parent(str(self.alternative_genomic_sequence))
@@ -202,24 +202,30 @@ class VariantInterval(AbstractFeatureInterval):
         return len(self.sequence) - len(self.chromosome_location)
 
     def lift_over_location(self, location: Location) -> Location:
+        """
+        Construct a new Location that takes the alternative sequence defined by this VariantInterval into account.
+
+        The Location can be chunk-relative or chromosome-relative. It will be returned relative to the coordinate
+        system of this VariantInterval.
+        """
         if location is EmptyLocation():
             return EmptyLocation()
-        if len(self.chromosome_location) == len(self.sequence) or location.end <= self.chromosome_location.start:
-            return location.reset_parent(self.parent_with_alternative_sequence)
 
+        # all liftovers happen in chromosome coordinates
         if location.has_ancestor_of_type(SequenceType.SEQUENCE_CHUNK):
             location = location.lift_over_to_first_ancestor_of_type(SequenceType.CHROMOSOME)
 
+        if len(self.chromosome_location) == len(self.sequence) or location.end <= self.chromosome_location.start:
+            return self.liftover_location_to_seq_chunk_parent(location, self.parent_with_alternative_sequence)
+
         if type(location) is SingleInterval:
-            return self._lift_over_chromosome_location_single_interval(location).reset_parent(
-                self.parent_with_alternative_sequence
-            )
+            new_loc = self._lift_over_chromosome_location_single_interval(location)
         elif type(location) is CompoundInterval:
-            return self._lift_over_chromosome_location_compound_interval(location).reset_parent(
-                self.parent_with_alternative_sequence
-            )
+            new_loc = self._lift_over_chromosome_location_compound_interval(location)
         else:
             raise NotImplementedError("Location type {} not supported".format(str(type(location))))
+        # this lifts the chromosome coordinates back onto chunk coordinates, if we are chunk-relative
+        return self.liftover_location_to_seq_chunk_parent(new_loc, self.parent_with_alternative_sequence)
 
     def _lift_over_chromosome_location_single_interval(self, location: SingleInterval) -> Location:
         len_diff = self.length_difference
@@ -312,6 +318,7 @@ class VariantIntervalCollection(AbstractFeatureIntervalCollection):
 
         # lazy-loaded property
         self._alternative_genomic_sequence = None
+        self._parent_with_alternative_sequence = None
 
         if guid is None:
             self.guid = digest_object(
@@ -419,3 +426,37 @@ class VariantIntervalCollection(AbstractFeatureIntervalCollection):
                 validate_alphabet=False,
             )
         return self._alternative_genomic_sequence
+
+    @property
+    def parent_with_alternative_sequence(self) -> Parent:
+        if self._parent_with_alternative_sequence is None:
+            # have to import here to avoid circular imports
+            from inscripta.biocantor.io.parser import seq_chunk_to_parent, seq_to_parent
+
+            if self.chunk_relative_location.has_ancestor_of_type(SequenceType.SEQUENCE_CHUNK):
+                self._parent_with_alternative_sequence = seq_chunk_to_parent(
+                    str(self.alternative_genomic_sequence),
+                    self.chunk_relative_location.parent_id,
+                    self.chunk_relative_location.parent.parent.location.start,
+                    self.chunk_relative_location.parent.parent.location.start + len(self.alternative_genomic_sequence),
+                )
+            else:
+                self._parent_with_alternative_sequence = seq_to_parent(str(self.alternative_genomic_sequence))
+        return self._parent_with_alternative_sequence
+
+    def lift_over_location(self, location: Location) -> Location:
+        if location is EmptyLocation():
+            return EmptyLocation()
+
+        # all liftovers happen in chromosome coordinates
+        if location.has_ancestor_of_type(SequenceType.SEQUENCE_CHUNK):
+            location = location.lift_over_to_first_ancestor_of_type(SequenceType.CHROMOSOME)
+
+        # lift over sequenceless to avoid overhead
+        if isinstance(location, SingleInterval):
+            for variant in self.variant_intervals:
+                location = variant._lift_over_chromosome_location_single_interval(location)
+        else:
+            for variant in self.variant_intervals:
+                location = variant._lift_over_chromosome_location_compound_interval(location)
+        return self.liftover_location_to_seq_chunk_parent(location, self.parent_with_alternative_sequence)
