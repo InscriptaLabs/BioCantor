@@ -62,8 +62,8 @@ class VariantInterval(AbstractFeatureInterval):
         self._strand = Strand.PLUS
 
         # lazy loaded values
-        self._edited_sequence = None
-        self._parent_with_edited_sequence = None
+        self._alternative_sequence = None
+        self._parent_with_alternative_sequence = None
 
         if guid is None:
             self.guid = digest_object(
@@ -158,9 +158,9 @@ class VariantInterval(AbstractFeatureInterval):
         return self.variant_name
 
     @property
-    def edited_genomic_sequence(self) -> Sequence:
+    def alternative_genomic_sequence(self) -> Sequence:
         """Edited version of the original genomic sequence"""
-        if not self._edited_sequence:
+        if not self._alternative_sequence:
             original_sequence = self.chunk_relative_location.parent.sequence
             original_sequence_str = str(original_sequence)
             new_seq_string = "".join(
@@ -170,7 +170,7 @@ class VariantInterval(AbstractFeatureInterval):
                     original_sequence_str[self.chunk_relative_location.end :],
                 )
             )
-            self._edited_sequence = Sequence(
+            self._alternative_sequence = Sequence(
                 data=new_seq_string,
                 alphabet=original_sequence.alphabet,
                 id=None,
@@ -178,24 +178,24 @@ class VariantInterval(AbstractFeatureInterval):
                 parent=None,
                 validate_alphabet=False,
             )
-        return self._edited_sequence
+        return self._alternative_sequence
 
     @property
     def parent_with_alternative_sequence(self) -> Parent:
-        if self._parent_with_edited_sequence is None:
+        if self._parent_with_alternative_sequence is None:
             # have to import here to avoid circular imports
             from inscripta.biocantor.io.parser import seq_chunk_to_parent, seq_to_parent
 
             if self.chunk_relative_location.has_ancestor_of_type(SequenceType.SEQUENCE_CHUNK):
-                self._parent_with_edited_sequence = seq_chunk_to_parent(
-                    str(self.edited_genomic_sequence),
+                self._parent_with_alternative_sequence = seq_chunk_to_parent(
+                    str(self.alternative_genomic_sequence),
                     self.chunk_relative_location.parent.sequence.id,
                     self.start,
                     self.end + self.length_difference,
                 )
             else:
-                self._parent_with_edited_sequence = seq_to_parent(str(self.edited_genomic_sequence))
-        return self._parent_with_edited_sequence
+                self._parent_with_alternative_sequence = seq_to_parent(str(self.alternative_genomic_sequence))
+        return self._parent_with_alternative_sequence
 
     @property
     def length_difference(self):
@@ -311,7 +311,7 @@ class VariantIntervalCollection(AbstractFeatureIntervalCollection):
         self.variant_types = {x.variant_type for x in self.variant_intervals}
 
         # lazy-loaded property
-        self._edited_genomic_sequence = None
+        self._alternative_genomic_sequence = None
 
         if guid is None:
             self.guid = digest_object(
@@ -382,7 +382,7 @@ class VariantIntervalCollection(AbstractFeatureIntervalCollection):
         )
 
     def to_gff(self, chromosome_relative_coordinates: bool = True) -> Iterable[GFFRow]:
-        raise NotImplementedError
+        raise NotImplementedError("Cannot export Variants to GFF")
 
     @property
     def id(self) -> str:
@@ -393,29 +393,29 @@ class VariantIntervalCollection(AbstractFeatureIntervalCollection):
         return self.variant_collection_name
 
     @property
-    def edited_genomic_sequence(self) -> Sequence:
+    def alternative_genomic_sequence(self) -> Sequence:
         """Edited version of the original sequence"""
-        if not self._edited_genomic_sequence:
+        if not self._alternative_genomic_sequence:
             original_sequence = self.chunk_relative_location.parent.sequence
             original_sequence_str = str(original_sequence)
 
-            edited_seq_data = original_sequence_str[: self.variant_intervals[0].chunk_relative_location.start]
+            alternative_seq_data = original_sequence_str[: self.variant_intervals[0].chunk_relative_location.start]
             for i in range(len(self.variant_intervals) - 1):
                 curr_edit = self.variant_intervals[i]
                 next_edit = self.variant_intervals[i + 1]
-                edited_seq_data += str(curr_edit.sequence)
-                edited_seq_data += original_sequence_str[
+                alternative_seq_data += str(curr_edit.sequence)
+                alternative_seq_data += original_sequence_str[
                     curr_edit.chunk_relative_location.end : next_edit.chunk_relative_location.start
                 ]
-            edited_seq_data += str(self.variant_intervals[-1].sequence)
-            edited_seq_data += original_sequence_str[self.variant_intervals[-1].chunk_relative_location.end :]
+            alternative_seq_data += str(self.variant_intervals[-1].sequence)
+            alternative_seq_data += original_sequence_str[self.variant_intervals[-1].chunk_relative_location.end :]
 
-            self._edited_genomic_sequence = Sequence(
-                data=edited_seq_data,
+            self._alternative_genomic_sequence = Sequence(
+                data=alternative_seq_data,
                 alphabet=original_sequence.alphabet,
                 id=None,
                 type=",".join(sorted(self.variant_types)),
                 parent=None,
                 validate_alphabet=False,
             )
-        return self._edited_genomic_sequence
+        return self._alternative_genomic_sequence

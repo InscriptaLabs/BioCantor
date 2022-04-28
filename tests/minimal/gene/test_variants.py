@@ -81,8 +81,8 @@ class TestVariants:
             [deletion_13_15_chunk, "ACTCTCTCTATCTTCCAC"],
         ],
     )
-    def test_edited_sequence(self, variant, expected):
-        assert str(variant.edited_genomic_sequence) == expected
+    def test_alternative_sequence(self, variant, expected):
+        assert str(variant.alternative_genomic_sequence) == expected
 
 
 class TestVariantCollections:
@@ -116,8 +116,8 @@ class TestVariantCollections:
             ],
         ],
     )
-    def test_edited_sequence(self, variant_collection, expected):
-        assert str(variant_collection.edited_genomic_sequence) == expected
+    def test_alternative_sequence(self, variant_collection, expected):
+        assert str(variant_collection.alternative_genomic_sequence) == expected
 
     @pytest.mark.parametrize(
         "variants,expected_exception",
