@@ -7,7 +7,12 @@ are always represented on the positive strand, and is loosely modeled after VCF 
 from typing import Optional, Dict, Hashable, Any, Iterable, Set, List
 from uuid import UUID
 
-from inscripta.biocantor.exc import DuplicateFeatureError, LocationOverlapException, EmptyLocationException
+from inscripta.biocantor.exc import (
+    DuplicateFeatureError,
+    LocationOverlapException,
+    EmptyLocationException,
+    NullSequenceException,
+)
 from inscripta.biocantor.gene.interval import (
     AbstractFeatureIntervalCollection,
     IntervalType,
@@ -45,6 +50,7 @@ class VariantInterval(AbstractFeatureInterval):
                 "Variants must be defined over a window of at least 1bp. Indels should be left-padded."
             )
         self._location = VariantInterval.initialize_location([start], [end], Strand.PLUS, parent_or_seq_chunk_parent)
+        self._parent_or_seq_chunk_parent = parent_or_seq_chunk_parent
         self.sequence = Sequence(sequence, Alphabet.NT_STRICT_UNKNOWN)
         self.variant_type = variant_type
         self.phase_block = phase_block
@@ -160,6 +166,8 @@ class VariantInterval(AbstractFeatureInterval):
     @property
     def alternative_genomic_sequence(self) -> Sequence:
         """Edited version of the original genomic sequence"""
+        if not self.has_sequence:
+            raise NullSequenceException("This VariantInterval has no sequence information")
         if not self._alternative_sequence:
             original_sequence = self.chunk_relative_location.parent.sequence
             original_sequence_str = str(original_sequence)
@@ -182,6 +190,8 @@ class VariantInterval(AbstractFeatureInterval):
 
     @property
     def parent_with_alternative_sequence(self) -> Parent:
+        if not self.has_sequence:
+            raise NullSequenceException("This VariantInterval has no sequence information")
         if self._parent_with_alternative_sequence is None:
             # have to import here to avoid circular imports
             from inscripta.biocantor.io.parser import seq_chunk_to_parent, seq_to_parent
@@ -225,7 +235,10 @@ class VariantInterval(AbstractFeatureInterval):
         else:
             raise NotImplementedError("Location type {} not supported".format(str(type(location))))
         # this lifts the chromosome coordinates back onto chunk coordinates, if we are chunk-relative
-        return self.liftover_location_to_seq_chunk_parent(new_loc, self.parent_with_alternative_sequence)
+        if self.has_sequence:
+            return self.liftover_location_to_seq_chunk_parent(new_loc, self.parent_with_alternative_sequence)
+        else:
+            return new_loc
 
     def _lift_over_chromosome_location_single_interval(self, location: SingleInterval) -> Location:
         len_diff = self.length_difference
@@ -402,6 +415,8 @@ class VariantIntervalCollection(AbstractFeatureIntervalCollection):
     @property
     def alternative_genomic_sequence(self) -> Sequence:
         """Edited version of the original sequence"""
+        if not self.has_sequence:
+            raise NullSequenceException("This VariantInterval has no sequence information")
         if not self._alternative_genomic_sequence:
             original_sequence = self.chunk_relative_location.parent.sequence
             original_sequence_str = str(original_sequence)
@@ -429,6 +444,8 @@ class VariantIntervalCollection(AbstractFeatureIntervalCollection):
 
     @property
     def parent_with_alternative_sequence(self) -> Parent:
+        if not self.has_sequence:
+            raise NullSequenceException("This VariantInterval has no sequence information")
         if self._parent_with_alternative_sequence is None:
             # have to import here to avoid circular imports
             from inscripta.biocantor.io.parser import seq_chunk_to_parent, seq_to_parent
@@ -445,6 +462,13 @@ class VariantIntervalCollection(AbstractFeatureIntervalCollection):
         return self._parent_with_alternative_sequence
 
     def lift_over_location(self, location: Location) -> Location:
+        """
+        Construct a new Location that takes the alternative sequence defined by this VariantIntervalCollectrion into
+        account.
+
+        The Location can be chunk-relative or chromosome-relative. It will be returned relative to the coordinate
+        system of this VariantInterval.
+        """
         if location is EmptyLocation():
             return EmptyLocation()
 
@@ -456,7 +480,12 @@ class VariantIntervalCollection(AbstractFeatureIntervalCollection):
         if isinstance(location, SingleInterval):
             for variant in self.variant_intervals:
                 location = variant._lift_over_chromosome_location_single_interval(location)
-        else:
+        elif isinstance(location, CompoundInterval):
             for variant in self.variant_intervals:
                 location = variant._lift_over_chromosome_location_compound_interval(location)
-        return self.liftover_location_to_seq_chunk_parent(location, self.parent_with_alternative_sequence)
+        else:
+            raise ValueError("Invalid Location type passed")
+        if self.has_sequence:
+            return self.liftover_location_to_seq_chunk_parent(location, self.parent_with_alternative_sequence)
+        else:
+            return location

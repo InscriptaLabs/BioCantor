@@ -1,6 +1,6 @@
 import pytest
 
-from inscripta.biocantor.exc import LocationOverlapException
+from inscripta.biocantor.exc import LocationOverlapException, NullSequenceException
 from inscripta.biocantor.gene.variants import VariantInterval, VariantIntervalCollection
 from inscripta.biocantor.parent import Parent
 from inscripta.biocantor.sequence.sequence import SequenceType, Sequence, Alphabet
@@ -288,10 +288,18 @@ class TestVariants:
                     ),
                 ),
             ],
+            # sequenceless liftover has no Parent
+            [deletion_11_13, SingleInterval(0, 15, Strand.PLUS), SingleInterval(0, 13, Strand.PLUS)],
         ],
     )
     def test_lift_over_location(self, variant, location, expected):
         assert variant.lift_over_location(location) == expected
+
+    def test_sequenceless_exceptions(self):
+        with pytest.raises(NullSequenceException):
+            _ = snp_1.alternative_genomic_sequence
+        with pytest.raises(NullSequenceException):
+            _ = snp_1.parent_with_alternative_sequence
 
 
 class TestVariantCollections:
@@ -513,6 +521,13 @@ class TestVariantCollections:
             ],
         ],
     )
-    def test_exceptions(self, variants, expected_exception):
+    def test_constructor_exceptions(self, variants, expected_exception):
         with pytest.raises(expected_exception):
             _ = VariantIntervalCollection(variants)
+
+    def test_sequenceless_exceptions(self):
+        collection = VariantIntervalCollection([snp_1, deletion_11_13])
+        with pytest.raises(NullSequenceException):
+            _ = collection.alternative_genomic_sequence
+        with pytest.raises(NullSequenceException):
+            _ = collection.parent_with_alternative_sequence

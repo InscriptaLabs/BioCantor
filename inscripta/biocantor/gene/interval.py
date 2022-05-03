@@ -11,6 +11,7 @@ from methodtools import lru_cache
 from inscripta.biocantor.exc import (
     ValidationException,
     NullSequenceException,
+    NullParentException,
     NoSuchAncestorException,
     LocationOverlapException,
 )
@@ -186,6 +187,19 @@ class AbstractInterval(ABC):
     @property
     def chunk_relative_size(self) -> int:
         return len(self.chunk_relative_location)
+
+    @lru_cache(maxsize=1)
+    @property
+    def has_sequence(self) -> bool:
+        """Returns true if this Interval has an associated sequence of any type"""
+        try:
+            ObjectValidation.require_location_has_parent_with_sequence(self.chunk_relative_location)
+        except NullSequenceException:
+            return False
+        except NullParentException:
+            return False
+        else:
+            return True
 
     @property
     @abstractmethod
