@@ -1294,3 +1294,10 @@ class TestExceptionsWarnings:
         assert len(annot.genes) == 4
         for gene in annot.genes:
             assert len(gene.transcripts) == 2
+
+    def test_dupliate_locus_tag(self, test_data_dir):
+        gbk = test_data_dir / "INSC1003_duplicate_locus_tag.gb"
+        with pytest.warns(GenBankDuplicateLocusTagWarning):
+            annot = list(parse_genbank(test_data_dir / gbk))[0].annotation
+        assert len(annot.genes) == 3
+        assert annot.genes[-1].gene_symbol == "thrA_B"

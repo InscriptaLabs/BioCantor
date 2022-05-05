@@ -5,10 +5,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## [UNRELEASED]
-### Changed
-- Added flag `allow_duplicate_sequence_identifiers` to GenBank parser
-- GenBank parser now handles multiple isoforms of coding and non-coding genes
-
 ### Added
 - Implemented `VariantInterval` and `VariantIntervalCollection`
 - Implemented VCF parser
@@ -19,8 +15,24 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Fixed
 - `FeatureInterval.from_location` was not checking for chunk-relativity
 
+## [0.16.0] 2022-04-13
+### Fixed
+- Duplicate `/locus_tag` detection in GenBank parser was not working in all cases
+- Serialized and simplified the implementation of `CompoundLocation.relative_interval_to_parent_location`
 
-## [0.14.0] 2022-2-18
+### Changed
+- Allow any version of python3 above 3.7
+
+### Added
+- GFF3 parsing now supports providing a pre-built gffutils database
+
+## [0.15.0] 2022-03-3
+### Changed
+- Added flag `allow_duplicate_sequence_identifiers` to GenBank parser
+- GenBank parser now handles multiple isoforms of coding and non-coding genes
+
+
+## [0.14.0] 2022-02-18
 ### Added
 - Alphabet module now supports `NT_STRICT_UNKNOWN` (`ATGCN`)
 
@@ -30,12 +42,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Hybrid GenBank parsing now handles duplicate locus tags by shunting them to sorted mode
 
 
-## [0.13.1] 2022-2-04
+## [0.13.1] 2022-02-04
 ### Fixed
 - Both Sorted and LocusTag GenBank parser modes did not properly discard mixed-strand annotations if the strand-mixing was present on the `CDS` or `mRNA` feature
 
 
-## [0.13.0] 2022-1-28
+## [0.13.0] 2022-01-28
 ## Added
 - `AnnotationCollections` can now export their `Parent` objects in a dictionary representation
 - `AnnotationCollectionModel` have a new optional `Parent` member that represents a `Parent` object that can be serialized to disk

@@ -677,6 +677,38 @@ class TestCompoundInterval:
                 Strand.PLUS,
                 SingleInterval(16, 19, Strand.PLUS),
             ),
+            # 11. Overlapping blocks, requested interval cuts off 1bp on both sides
+            (
+                CompoundInterval([2, 8], [9, 17], Strand.PLUS),
+                1,
+                15,
+                Strand.PLUS,
+                CompoundInterval([3, 8], [9, 16], Strand.PLUS),
+            ),
+            # 12. Overlapping blocks, requested interval is immediately after overlap
+            (
+                CompoundInterval([0, 4], [5, 10], Strand.PLUS),
+                6,
+                9,
+                Strand.PLUS,
+                SingleInterval(5, 8, Strand.PLUS),
+            ),
+            # 13. Overlapping blocks, requested interval contains 2nd repeat of the same base at position 4
+            (
+                CompoundInterval([0, 4], [5, 10], Strand.PLUS),
+                5,
+                9,
+                Strand.PLUS,
+                SingleInterval(4, 8, Strand.PLUS),
+            ),
+            # 13. Overlapping blocks, requested interval contains both repeats of same base at position 4
+            (
+                CompoundInterval([0, 4], [5, 10], Strand.PLUS),
+                4,
+                9,
+                Strand.PLUS,
+                CompoundInterval([4, 4], [5, 8], Strand.PLUS),
+            ),
         ],
     )
     def test_relative_interval_to_parent_location(self, location, start, end, strand, expected):
