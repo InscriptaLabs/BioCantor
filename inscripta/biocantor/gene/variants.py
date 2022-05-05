@@ -4,7 +4,7 @@ This module contains :class:`~biocantor.gene.variants.VariantInterval`, which mo
 This model is intended to be as simple as possible, and represent a single alternative haplotype. Variants
 are always represented on the positive strand, and is loosely modeled after VCF files.
 """
-from typing import Optional, Dict, Hashable, Any, Iterable, Set, List, Union
+from typing import Optional, Dict, Hashable, Any, Iterable, Set, List
 from uuid import UUID
 
 from inscripta.biocantor.exc import (
