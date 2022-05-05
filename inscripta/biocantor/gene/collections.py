@@ -25,7 +25,7 @@ from inscripta.biocantor.exc import (
 from inscripta.biocantor.gene.feature import FeatureIntervalCollection
 from inscripta.biocantor.gene.gene import GeneInterval
 from inscripta.biocantor.gene.interval import QualifierValue, IntervalType, AbstractFeatureIntervalCollection
-from inscripta.biocantor.gene.variants import VariantIntervalCollection
+from inscripta.biocantor.gene.variants import VariantIntervalCollection, VariantInterval
 from inscripta.biocantor.io.gff3.rows import GFFRow
 from inscripta.biocantor.location import SingleInterval, EmptyLocation, Strand
 from inscripta.biocantor.parent import Parent, SequenceType
@@ -143,6 +143,8 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
             self._location, self.name, self.sequence_name, self.qualifiers, self.completely_within, self.children_guids
         )
 
+        self._associate_intervals_with_variant_intervals()
+
     def __repr__(self):
         return f"{self.__class__.__name__}({','.join(str(f) for f in self.iter_children())})"
 
@@ -169,6 +171,34 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
             ac.completely_within,
             ac._parent_or_seq_chunk_parent,
         )
+
+    def _associate_intervals_with_variant_intervals(self):
+        """
+        If the constructor for this AnnotationCollection was passed one or more VariantIntervalCollections,
+        then construct a mapping that associates them together. This produces new GeneInterval/FeatureIntervalCollection
+        objects whose Parent are the alternative haplotype defined by the VariantIntervalCollection.
+
+        If a GeneInterval or FeatureIntervalCollection overlap multiple VariantIntervalCollections, then they will
+        exist on sequence chunks that define the sub-fraction of the interval that the haplotype represents.
+
+        This is different from :meth:`incorporate_variants` because it is applying the variants within this collection,
+        enabling comparison of haplotypes rather than generating an entirely new AnnotationCollection centered
+        on the alternative haplotypes. :meth:`incorporate_variants` can only apply one VariantIntervalCollection
+        at a time to an entire Interval, whereas this will instead group them by haplotype.
+
+        TODO: Use an interval tree to make this not (N^2)
+        """
+        if not self.variant_collections:
+            return
+
+        self.alternative_haplotype_mapping = {}
+        for variant_collection in self.variant_collections:
+            for gene_or_feature in itertools.chain(self.genes, self.feature_collections):
+                if gene_or_feature.chunk_relative_location.has_overlap(variant_collection.chunk_relative_location):
+                    new_gene_or_feature = gene_or_feature.incorporate_variants(variant_collection)
+                    if variant_collection.guid not in self.alternative_haplotype_mapping:
+                        self.alternative_haplotype_mapping[variant_collection.guid] = []
+                    self.alternative_haplotype_mapping[variant_collection.guid].append(new_gene_or_feature)
 
     @property
     def is_empty(self) -> bool:
@@ -874,4 +904,33 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
         yield from sorted(
             self._unsorted_gff_iter(chromosome_relative_coordinates, raise_on_reserved_attributes),
             key=lambda x: x.start,
+        )
+
+    def incorporate_variants(
+        self, variants: Union[VariantInterval, VariantIntervalCollection]
+    ) -> "AnnotationCollection":
+        """
+        Incorporate all of the variant(s) for an input VariantInterval or VariantIntervalCollection,
+        producing a new AnnotationCollection with those changes incorporated on every child.
+        """
+        new_genes = [tx.incorporate_variants(variants) for tx in self.genes]
+        new_features = [feature.incorporate_variants(variants) for feature in self.feature_collections]
+        if variants.has_sequence:
+            new_parent = variants.parent_with_alternative_sequence
+        else:
+            new_parent = variants.chunk_relative_location.parent
+        return AnnotationCollection(
+            new_features,
+            new_genes,
+            variant_collections=None,
+            name=self.name,
+            id=self.id,
+            sequence_name=self.sequence_name,
+            sequence_guid=self.sequence_guid,
+            sequence_path=self.sequence_path,
+            qualifiers=self._export_qualifiers_to_list(),
+            start=None,  # recalculate start
+            end=None,  # recalculate end
+            completely_within=None,  # no longer can be sure
+            parent_or_seq_chunk_parent=new_parent,
         )

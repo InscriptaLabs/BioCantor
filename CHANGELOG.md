@@ -9,6 +9,17 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Added flag `allow_duplicate_sequence_identifiers` to GenBank parser
 - GenBank parser now handles multiple isoforms of coding and non-coding genes
 
+### Added
+- Implemented `VariantInterval` and `VariantIntervalCollection`
+- Implemented VCF parser
+- Added functionality to `AnnotationCollection` to automatically associated Variants with Intervals, generating alternative haplotypes to use
+- Added functionality to all implementations of `AbstractInterval` to take a Variant and convert to a new haplotype
+- Adding missing `from_chunk_relative_location` on `FeatureInterval`
+
+### Fixed
+- `FeatureInterval.from_location` was not checking for chunk-relativity
+
+
 ## [0.14.0] 2022-2-18
 ### Added
 - Alphabet module now supports `NT_STRICT_UNKNOWN` (`ATGCN`)

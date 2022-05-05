@@ -4,7 +4,7 @@ This module contains :class:`~biocantor.gene.variants.VariantInterval`, which mo
 This model is intended to be as simple as possible, and represent a single alternative haplotype. Variants
 are always represented on the positive strand, and is loosely modeled after VCF files.
 """
-from typing import Optional, Dict, Hashable, Any, Iterable, Set, List
+from typing import Optional, Dict, Hashable, Any, Iterable, Set, List, Union
 from uuid import UUID
 
 from inscripta.biocantor.exc import (
@@ -463,7 +463,7 @@ class VariantIntervalCollection(AbstractFeatureIntervalCollection):
 
     def lift_over_location(self, location: Location) -> Location:
         """
-        Construct a new Location that takes the alternative sequence defined by this VariantIntervalCollectrion into
+        Construct a new Location that takes the alternative sequence defined by this VariantIntervalCollection into
         account.
 
         The Location can be chunk-relative or chromosome-relative. It will be returned relative to the coordinate

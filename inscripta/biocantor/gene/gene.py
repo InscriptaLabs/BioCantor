@@ -1,5 +1,5 @@
 from functools import reduce
-from typing import List, Optional, Dict, Hashable, Iterable, Any, Union, Set
+from typing import List, Optional, Dict, Hashable, Iterable, Any, Union, Set, TYPE_CHECKING
 from uuid import UUID
 
 from inscripta.biocantor import SequenceType
@@ -21,6 +21,9 @@ from inscripta.biocantor.parent import Parent
 from inscripta.biocantor.sequence import Sequence
 from inscripta.biocantor.util.bins import bins
 from inscripta.biocantor.util.hashing import digest_object
+
+if TYPE_CHECKING:
+    from inscripta.biocantor.gene.variants import VariantIntervalCollection, VariantInterval
 
 
 class GeneInterval(AbstractFeatureIntervalCollection):
@@ -338,3 +341,26 @@ class GeneInterval(AbstractFeatureIntervalCollection):
                 chromosome_relative_coordinates=chromosome_relative_coordinates,
                 raise_on_reserved_attributes=raise_on_reserved_attributes,
             )
+
+    def incorporate_variants(self, variants: Union["VariantInterval", "VariantIntervalCollection"]) -> "GeneInterval":
+        """
+        Incorporate all of the variant(s) for an input VariantInterval or VariantIntervalCollection,
+        producing a new GeneInterval with those changes incorporated on every child.
+        """
+        new_transcripts = [tx.incorporate_variants(variants) for tx in self.transcripts]
+        if variants.has_sequence:
+            new_parent = variants.parent_with_alternative_sequence
+        else:
+            new_parent = variants.chunk_relative_location.parent
+        return GeneInterval(
+            new_transcripts,
+            guid=None,  # generate a new Interval GUID based on updated data
+            gene_id=self.gene_id,
+            gene_symbol=self.gene_symbol,
+            gene_type=self.gene_type,
+            locus_tag=self.locus_tag,
+            qualifiers=self._export_qualifiers_to_list(),
+            sequence_name=self.sequence_name,
+            sequence_guid=self.sequence_guid,
+            parent_or_seq_chunk_parent=new_parent,
+        )

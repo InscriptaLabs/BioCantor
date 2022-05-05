@@ -3,7 +3,7 @@ Object representation of Transcripts.
 
 Each object is capable of exporting itself to BED and GFF3.
 """
-from typing import Optional, Any, Dict, Iterable, Hashable, Set, List
+from typing import Optional, Any, Dict, Iterable, Hashable, Set, List, Union, TYPE_CHECKING
 from uuid import UUID
 
 from methodtools import lru_cache
@@ -31,6 +31,9 @@ from inscripta.biocantor.parent.parent import Parent, SequenceType
 from inscripta.biocantor.sequence.sequence import Sequence
 from inscripta.biocantor.util.bins import bins
 from inscripta.biocantor.util.hashing import digest_object
+
+if TYPE_CHECKING:
+    from inscripta.biocantor.gene.variants import VariantIntervalCollection, VariantInterval
 
 
 class TranscriptInterval(AbstractFeatureInterval):
@@ -851,4 +854,39 @@ class TranscriptInterval(AbstractFeatureInterval):
             num_blocks,
             block_sizes,
             block_starts,
+        )
+
+    def incorporate_variants(
+        self, variants: Union["VariantInterval", "VariantIntervalCollection"]
+    ) -> "TranscriptInterval":
+        """
+        Incorporate all of the variant(s) for an input VariantInterval or VariantIntervalCollection,
+        producing a new TranscriptInterval with those changes incorporated.
+        """
+        if self.is_coding:
+            new_cds = self.cds.incorporate_variants(variants)
+        else:
+            new_cds = None
+        new_loc = variants.lift_over_location(self.chunk_relative_location)
+        if new_loc.is_empty:
+            raise EmptyLocationException("Variant incorporation led to an EmptyLocation")
+        fn = (
+            TranscriptInterval.from_chunk_relative_location
+            if self.is_chunk_relative
+            else TranscriptInterval.from_location
+        )
+        return fn(
+            new_loc,
+            cds=new_cds,
+            qualifiers=self._export_qualifiers_to_list(),
+            is_primary_tx=self.is_primary_tx,
+            transcript_id=self.transcript_id,
+            transcript_symbol=self.transcript_symbol,
+            transcript_type=self.transcript_type,
+            sequence_guid=self.sequence_guid,
+            sequence_name=self.sequence_name,
+            protein_id=self.protein_id,
+            product=self.product,
+            guid=None,  # generate a new Interval GUID based on updated data
+            transcript_guid=self.transcript_guid,
         )

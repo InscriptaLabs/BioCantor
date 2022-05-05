@@ -29,10 +29,11 @@ QualifierValue = TypeVar("QualifierValue", str, int, bool, float)
 if TYPE_CHECKING:
     from inscripta.biocantor.gene.transcript import TranscriptInterval
     from inscripta.biocantor.gene.feature import FeatureInterval
+    from inscripta.biocantor.gene.variants import VariantIntervalCollection, VariantInterval
 
 
 class IntervalType(str, Enum):
-    """This enum differentiates the two main types of Intervals -- Features and Transcripts"""
+    """This enum differentiates the three main types of Intervals -- Features, Transcripts and Variants"""
 
     FEATURE = "feature"
     TRANSCRIPT = "transcript"
@@ -551,7 +552,9 @@ class AbstractInterval(ABC):
 
 class AbstractFeatureInterval(AbstractInterval, ABC):
     """This is a wrapper over :class:`~AbstractInterval` that adds functions shared across
-    :class:`~biocantor.gene.transcript.TranscriptInterval` and :class:`FeatureInterval`."""
+    :class:`~biocantor.gene.transcript.TranscriptInterval`,
+    :class:`~biocantor.gene.feature.FeatureInterval`,
+    and :class:`~biocantor.gene.variants.VariantInterval`."""
 
     _genomic_ends: List[int]
     _genomic_starts: List[int]

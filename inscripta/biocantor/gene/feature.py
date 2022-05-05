@@ -4,7 +4,7 @@ Object representation of features. Includes an abstract feature class that is al
 Each object is capable of exporting itself to BED and GFF3.
 """
 from functools import reduce
-from typing import Optional, Any, Dict, List, Set, Iterable, Hashable, Union
+from typing import Optional, Any, Dict, List, Set, Iterable, Hashable, Union, TYPE_CHECKING
 from uuid import UUID
 
 from inscripta.biocantor.exc import (
@@ -31,6 +31,9 @@ from inscripta.biocantor.parent.parent import Parent, SequenceType
 from inscripta.biocantor.sequence import Sequence
 from inscripta.biocantor.util.bins import bins
 from inscripta.biocantor.util.hashing import digest_object
+
+if TYPE_CHECKING:
+    from inscripta.biocantor.gene.variants import VariantIntervalCollection, VariantInterval
 
 
 class FeatureInterval(AbstractFeatureInterval):
@@ -203,12 +206,70 @@ class FeatureInterval(AbstractFeatureInterval):
         feature_types: Optional[List[str]] = None,
         feature_id: Optional[str] = None,
         feature_name: Optional[str] = None,
-        is_primary_feature: Optional[str] = None,
+        is_primary_feature: Optional[bool] = None,
     ) -> "FeatureInterval":
+        if location.has_ancestor_of_type(SequenceType.SEQUENCE_CHUNK):
+            raise NoSuchAncestorException(
+                "Cannot call from_location with a chunk-relative location. Use from_chunk_relative_location()."
+            )
 
         return FeatureInterval(
             interval_starts=[x.start for x in location.blocks],
             interval_ends=[x.end for x in location.blocks],
+            strand=location.strand,
+            guid=guid,
+            feature_guid=feature_guid,
+            qualifiers=qualifiers,
+            sequence_name=sequence_name,
+            sequence_guid=sequence_guid,
+            feature_types=feature_types,
+            feature_id=feature_id,
+            feature_name=feature_name,
+            is_primary_feature=is_primary_feature,
+            parent_or_seq_chunk_parent=location.parent,
+        )
+
+    @staticmethod
+    def from_chunk_relative_location(
+        location: Location,
+        qualifiers: Optional[Dict[Hashable, QualifierValue]] = None,
+        sequence_guid: Optional[UUID] = None,
+        sequence_name: Optional[str] = None,
+        guid: Optional[UUID] = None,
+        feature_guid: Optional[UUID] = None,
+        feature_types: Optional[List[str]] = None,
+        feature_id: Optional[str] = None,
+        feature_name: Optional[str] = None,
+        is_primary_feature: Optional[bool] = None,
+    ) -> "FeatureInterval":
+        """
+        Allows construction of a FeatureInterval from a chunk-relative location. This is a location
+        present on a sequence chunk, which could be a sequence produced
+
+        This location should
+        be built by something like this:
+
+        .. code-block:: python
+
+            from inscripta.biocantor.io.parser import seq_chunk_to_parent
+            parent = seq_chunk_to_parent('AANAAATGGCGAGCACCTAACCCCCNCC', "NC_000913.3", 222213, 222241)
+            loc = SingleInterval(5, 20, Strand.PLUS, parent=parent)
+
+        And then, this can be lifted back to chromosomal coordinates like such:
+
+        .. code-block:: python
+
+            loc.lift_over_to_first_ancestor_of_type("chromosome")
+
+        """
+        if not location.has_ancestor_of_type(SequenceType.SEQUENCE_CHUNK):
+            raise NoSuchAncestorException("Must have a sequence chunk in the parent hierarchy.")
+
+        chromosome_location = location.lift_over_to_first_ancestor_of_type("chromosome")
+
+        return FeatureInterval(
+            interval_starts=[x.start for x in chromosome_location.blocks],
+            interval_ends=[x.end for x in chromosome_location.blocks],
             strand=location.strand,
             guid=guid,
             feature_guid=feature_guid,
@@ -419,6 +480,30 @@ class FeatureInterval(AbstractFeatureInterval):
             num_blocks,
             block_sizes,
             block_starts,
+        )
+
+    def incorporate_variants(
+        self, variants: Union["VariantInterval", "VariantIntervalCollection"]
+    ) -> "FeatureInterval":
+        """
+        Incorporate all of the variant(s) for an input VariantInterval or VariantIntervalCollection,
+        producing a new FeatureInterval with those changes incorporated.
+        """
+        new_loc = variants.lift_over_location(self.chunk_relative_location)
+        if new_loc.is_empty:
+            raise EmptyLocationException("Variant incorporation led to an EmptyLocation")
+        fn = FeatureInterval.from_chunk_relative_location if self.is_chunk_relative else FeatureInterval.from_location
+        return fn(
+            new_loc,
+            qualifiers=self._export_qualifiers_to_list(),
+            sequence_guid=self.sequence_guid,
+            sequence_name=self.sequence_name,
+            guid=None,
+            feature_guid=self.feature_guid,
+            feature_types=sorted(self.feature_types) if self.feature_types else None,
+            feature_id=self.feature_id,
+            feature_name=self.feature_name,
+            is_primary_feature=self.is_primary_feature,
         )
 
 
@@ -698,3 +783,28 @@ class FeatureIntervalCollection(AbstractFeatureIntervalCollection):
                 chromosome_relative_coordinates=chromosome_relative_coordinates,
                 raise_on_reserved_attributes=raise_on_reserved_attributes,
             )
+
+    def incorporate_variants(
+        self, variants: Union["VariantInterval", "VariantIntervalCollection"]
+    ) -> "FeatureIntervalCollection":
+        """
+        Incorporate all of the variant(s) for an input VariantInterval or VariantIntervalCollection,
+        producing a new FeatureIntervalCollection with those changes incorporated on every child.
+        """
+        new_features = [feature.incorporate_variants(variants) for feature in self.feature_intervals]
+        if variants.has_sequence:
+            new_parent = variants.parent_with_alternative_sequence
+        else:
+            new_parent = variants.chunk_relative_location.parent
+        return FeatureIntervalCollection(
+            new_features,
+            feature_collection_name=self.feature_collection_name,
+            feature_collection_id=self.feature_collection_id,
+            feature_collection_type=self.feature_collection_type,
+            locus_tag=self.locus_tag,
+            sequence_guid=self.sequence_guid,
+            sequence_name=self.sequence_name,
+            guid=None,  # generate a new Interval GUID based on updated data
+            qualifiers=self._export_qualifiers_to_list(),
+            parent_or_seq_chunk_parent=new_parent,
+        )
