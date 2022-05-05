@@ -882,7 +882,7 @@ class TranscriptInterval(AbstractFeatureInterval):
             is_primary_tx=self.is_primary_tx,
             transcript_id=self.transcript_id,
             transcript_symbol=self.transcript_symbol,
-            transcript_type=self.transcript_type.name,
+            transcript_type=self.transcript_type.name if self.transcript_type else None,
             sequence_guid=self.sequence_guid,
             sequence_name=self.sequence_name,
             protein_id=self.protein_id,
