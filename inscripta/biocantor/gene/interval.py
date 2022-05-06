@@ -29,7 +29,6 @@ QualifierValue = TypeVar("QualifierValue", str, int, bool, float)
 if TYPE_CHECKING:
     from inscripta.biocantor.gene.transcript import TranscriptInterval
     from inscripta.biocantor.gene.feature import FeatureInterval
-    from inscripta.biocantor.gene.variants import VariantIntervalCollection, VariantInterval
 
 
 class IntervalType(str, Enum):
