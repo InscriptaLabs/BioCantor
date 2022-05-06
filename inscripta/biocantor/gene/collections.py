@@ -43,7 +43,7 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
     If no start/end points are provided, the interval for this collection is the min/max of the data it contains. The
     interval for an AnnotationCollection is always on the plus strand.
 
-    An AnnotationCollection can be empty (both ``feature_collections``, ``genes`` and ``variant_collections``
+    An AnnotationCollection can be empty (``feature_collections``, ``genes``, and ``variant_collections``
     can be ``None``).
 
     The object provided to ``parent_or_seq_chunk_parent`` must have a ``chromosome`` sequence-type in its ancestry,
@@ -186,7 +186,7 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
         on the alternative haplotypes. :meth:`incorporate_variants` can only apply one VariantIntervalCollection
         at a time to an entire Interval, whereas this will instead group them by haplotype.
 
-        TODO: Use an interval tree to make this not (N^2)
+        TODO: Use an interval tree to make this not O(N^2)
         """
         if not self.variant_collections:
             return
@@ -279,15 +279,15 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
             parent_or_seq_chunk_parent = None
 
         return dict(
-            genes=[gene.to_dict(chromosome_relative_coordinates) for gene in self.genes] if self.genes else None,
-            feature_collections=[
-                feature.to_dict(chromosome_relative_coordinates) for feature in self.feature_collections
-            ]
+            genes=([gene.to_dict(chromosome_relative_coordinates) for gene in self.genes] if self.genes else None),
+            feature_collections=(
+                [feature.to_dict(chromosome_relative_coordinates) for feature in self.feature_collections]
+            )
             if self.feature_collections
             else None,
-            variant_collections=[
-                variant.to_dict(chromosome_relative_coordinates) for variant in self.variant_collections
-            ]
+            variant_collections=(
+                [variant.to_dict(chromosome_relative_coordinates) for variant in self.variant_collections]
+            )
             if self.variant_collections
             else None,
             name=self.name,
@@ -595,7 +595,7 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
 
             # my_bins only exists if completely_within, start and end
             # if no children match these bins, skip
-            elif my_bins and not any(child.bin in my_bins for child in child):
+            elif my_bins and not any(grandchild.bin in my_bins for grandchild in child):
                 continue
 
             # regardless of completely_within flag, first just look for overlaps on the gene/feature collection level
@@ -682,7 +682,7 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
         variant_collections_to_keep = []
         for i in ids:
             child = self.guid_map.get(i)
-            if not child:
+            if child is None:
                 continue
             elif child.interval_type == IntervalType.FEATURE:
                 features_collections_to_keep.append(child)
