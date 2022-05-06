@@ -15,6 +15,21 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Fixed
 - `FeatureInterval.from_location` was not checking for chunk-relativity
 
+### Known Issues
+- Including `pysam` and `pyvcf` led to conda version dependency issues:
+```
+UnsatisfiableError: The following specifications were found to be incompatible with a past
+explicit spec that is not an explicit spec in this operation (python):
+
+  - biopython -> python[version='2.7.*|3.5.*|3.6.*|>=2.7,<2.8.0a0|>=3.10,<3.11.0a0|>=3.9,<3.10.0a0|>=3.8,<3.9.0a0|>=3.7,<3.8.0a0|>=3.6,<3.7.0a0|>=3.5,<3.6.0a0|3.4.*']
+  - biopython -> python_abi=3.9[build=*_cp39] -> python[version='3.10.*|3.9.*|3.8.*|3.7.*']
+  - pysam -> python[version='2.7.*|3.5.*|3.6.*|>=2.7,<2.8.0a0|>=3.6,<3.7.0a0|>=3.9,<3.10.0a0|>=3.7,<3.8.0a0|>=3.8,<3.9.0a0|>=3.5,<3.6.0a0|3.4.*|<3.0.0']
+  - pysam -> python_abi=3.9[build=*_cp39] -> python[version='3.7.*|3.9.*|3.8.*']
+  - python=3.10
+  - pyvcf -> python[version='2.7.*|3.4.*|3.5.*|3.6.*|>=2.7,<2.8.0a0|>=3.6,<3.7.0a0|>=3.7,<3.8.0a0|>=3.9,<3.10.0a0|>=3.8,<3.9.0a0|>=3.5,<3.6.0a0']
+  - pyvcf -> python_abi=3.7[build=*_cp37m] -> python[version='3.7.*|3.9.*|3.8.*']
+```
+
 ## [0.16.0] 2022-04-13
 ### Fixed
 - Duplicate `/locus_tag` detection in GenBank parser was not working in all cases

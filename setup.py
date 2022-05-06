@@ -39,7 +39,7 @@ setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     author="Inscripta, Inc.",
-    python_requires=">=3.7",
+    python_requires=">=3.7,<=3.10",
     url="https://github.com/InscriptaLabs/BioCantor",
     test_suite="pytest",
     packages=find_namespace_packages(include=["inscripta.*"]),
