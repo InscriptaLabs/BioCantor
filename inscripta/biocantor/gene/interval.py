@@ -3,7 +3,7 @@ This module contains abstract base classes for interval types and interval colle
 """
 from abc import ABC, abstractmethod
 from enum import Enum
-from typing import List, Union, Dict, Hashable, Set, Optional, Any, Iterable, TypeVar, TYPE_CHECKING
+from typing import List, Union, Dict, Hashable, Set, Optional, Any, Iterable, Iterator, TypeVar, TYPE_CHECKING
 from uuid import UUID
 
 from methodtools import lru_cache
@@ -164,7 +164,7 @@ class AbstractInterval(ABC):
     def to_gff(
         self,
         chromosome_relative_coordinates: bool = True,
-    ) -> Iterable[GFFRow]:
+    ) -> Iterator[GFFRow]:
         """Writes a GFF format list of lists for this feature.
 
         Args:
@@ -693,7 +693,7 @@ class AbstractFeatureInterval(AbstractInterval, ABC):
         parent: Optional[str] = None,
         parent_qualifiers: Optional[Dict] = None,
         chromosome_relative_coordinates: bool = True,
-    ) -> Iterable[GFFRow]:
+    ) -> Iterator[GFFRow]:
         """Writes a GFF format list of lists for this feature.
 
         The additional qualifiers are used when writing a hierarchical relationship back to files. GFF files

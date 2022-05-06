@@ -1,5 +1,5 @@
 from functools import reduce
-from typing import List, Optional, Dict, Hashable, Iterable, Any, Union, Set, TYPE_CHECKING
+from typing import List, Optional, Dict, Hashable, Iterable, Iterator, Any, Union, Set, TYPE_CHECKING
 from uuid import UUID
 
 from inscripta.biocantor import SequenceType
@@ -145,7 +145,7 @@ class GeneInterval(AbstractFeatureIntervalCollection):
 
     @staticmethod
     def from_dict(vals: Dict[str, Any], parent_or_seq_chunk_parent: Optional[Parent] = None) -> "GeneInterval":
-        """Build an :class:`GeneInterval` from a dictionary representation"""
+        """Build a :class:`GeneInterval` from a dictionary representation"""
         return GeneInterval(
             transcripts=[TranscriptInterval.from_dict(x, parent_or_seq_chunk_parent) for x in vals["transcripts"]],
             gene_id=vals["gene_id"],
@@ -287,7 +287,7 @@ class GeneInterval(AbstractFeatureIntervalCollection):
         self,
         chromosome_relative_coordinates: bool = True,
         raise_on_reserved_attributes: Optional[bool] = True,
-    ) -> Iterable[GFFRow]:
+    ) -> Iterator[GFFRow]:
         """Produces iterable of :class:`~biocantor.io.gff3.rows.GFFRow` for this gene and its children.
 
         Args:

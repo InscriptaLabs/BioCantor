@@ -4,7 +4,7 @@ Object representation of features. Includes an abstract feature class that is al
 Each object is capable of exporting itself to BED and GFF3.
 """
 from functools import reduce
-from typing import Optional, Any, Dict, List, Set, Iterable, Hashable, Union, TYPE_CHECKING
+from typing import Optional, Any, Dict, List, Set, Iterable, Iterator, Hashable, Union, TYPE_CHECKING
 from uuid import UUID
 
 from inscripta.biocantor.exc import (
@@ -338,7 +338,7 @@ class FeatureInterval(AbstractFeatureInterval):
         parent_qualifiers: Optional[Dict[Hashable, Set[str]]] = None,
         chromosome_relative_coordinates: bool = True,
         raise_on_reserved_attributes: Optional[bool] = True,
-    ) -> Iterable[GFFRow]:
+    ) -> Iterator[GFFRow]:
         """Writes a GFF format list of lists for this feature.
 
         The additional qualifiers are used when writing a hierarchical relationship back to files. GFF files
@@ -664,7 +664,7 @@ class FeatureIntervalCollection(AbstractFeatureIntervalCollection):
     def from_dict(
         vals: Dict[str, Any], parent_or_seq_chunk_parent: Optional[Parent] = None
     ) -> "FeatureIntervalCollection":
-        """Build an :class:`FeatureIntervalCollection` from a dictionary representation"""
+        """Build a :class:`FeatureIntervalCollection` from a dictionary representation"""
         return FeatureIntervalCollection(
             feature_intervals=[
                 FeatureInterval.from_dict(x, parent_or_seq_chunk_parent) for x in vals["feature_intervals"]
@@ -726,7 +726,7 @@ class FeatureIntervalCollection(AbstractFeatureIntervalCollection):
         self,
         chromosome_relative_coordinates: bool = True,
         raise_on_reserved_attributes: Optional[bool] = True,
-    ) -> Iterable[GFFRow]:
+    ) -> Iterator[GFFRow]:
         """Produces iterable of :class:`~biocantor.io.gff3.rows.GFFRow` for this feature collection and its
         children.
 

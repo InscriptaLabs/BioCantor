@@ -3,7 +3,7 @@ Object representation of Transcripts.
 
 Each object is capable of exporting itself to BED and GFF3.
 """
-from typing import Optional, Any, Dict, Iterable, Hashable, Set, List, Union, TYPE_CHECKING
+from typing import Optional, Any, Dict, Iterable, Iterator, Hashable, Set, List, Union, TYPE_CHECKING
 from uuid import UUID
 
 from methodtools import lru_cache
@@ -695,7 +695,7 @@ class TranscriptInterval(AbstractFeatureInterval):
         parent_qualifiers: Optional[Dict[Hashable, Set[str]]] = None,
         chromosome_relative_coordinates: bool = True,
         raise_on_reserved_attributes: Optional[bool] = True,
-    ) -> Iterable[GFFRow]:
+    ) -> Iterator[GFFRow]:
         """Writes a GFF format list of lists for this transcript.
 
         The additional qualifiers are used when writing a hierarchical relationship back to files. GFF files

@@ -111,7 +111,7 @@ class VariantInterval(AbstractFeatureInterval):
         parent: Optional[str] = None,
         parent_qualifiers: Optional[Dict] = None,
         chromosome_relative_coordinates: bool = True,
-    ) -> Iterable[GFFRow]:
+    ) -> Iterator[GFFRow]:
         raise NotImplementedError
 
     def to_vcf(self):
@@ -387,7 +387,7 @@ class VariantIntervalCollection(AbstractFeatureIntervalCollection):
     def from_dict(
         vals: Dict[str, Any], parent_or_seq_chunk_parent: Optional[Parent] = None
     ) -> "VariantIntervalCollection":
-        """Build an :class:`VariantIntervalCollection` from a dictionary representation"""
+        """Build a :class:`VariantIntervalCollection` from a dictionary representation"""
         return VariantIntervalCollection(
             variant_intervals=[
                 VariantInterval.from_dict(x, parent_or_seq_chunk_parent) for x in vals["variant_intervals"]
@@ -401,7 +401,7 @@ class VariantIntervalCollection(AbstractFeatureIntervalCollection):
             parent_or_seq_chunk_parent=parent_or_seq_chunk_parent,
         )
 
-    def to_gff(self, chromosome_relative_coordinates: bool = True) -> Iterable[GFFRow]:
+    def to_gff(self, chromosome_relative_coordinates: bool = True) -> Iterator[GFFRow]:
         raise NotImplementedError("Cannot export Variants to GFF")
 
     @property

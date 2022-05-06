@@ -329,7 +329,7 @@ class CDSInterval(AbstractFeatureInterval):
         parent_qualifiers: Optional[Dict[Hashable, Set[str]]] = None,
         chromosome_relative_coordinates: bool = True,
         raise_on_reserved_attributes: Optional[bool] = True,
-    ) -> Iterable[GFFRow]:
+    ) -> Iterator[GFFRow]:
         """Writes a GFF format list of lists for this CDS.
 
         The additional qualifiers are used when writing a hierarchical relationship back to files. GFF files

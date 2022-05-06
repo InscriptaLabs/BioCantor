@@ -189,6 +189,7 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
         TODO: Use an interval tree to make this not O(N^2)
         """
         if not self.variant_collections:
+            self.alternative_haplotype_mapping = None
             return
 
         self.alternative_haplotype_mapping = {}
@@ -262,6 +263,17 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
         sort_iter = sorted(chain_iter, key=lambda x: x.start)
         yield from sort_iter
 
+    def iter_non_variant_children(self) -> Iterator[Union[GeneInterval, FeatureIntervalCollection]]:
+        """Iterate over all intervals in this collection, in sorted order."""
+        chain_iter = itertools.chain(self.genes, self.feature_collections)
+        sort_iter = sorted(chain_iter, key=lambda x: x.start)
+        yield from sort_iter
+
+    def iter_alternative_haplotype_children(self) -> Iterator[Union[GeneInterval, FeatureIntervalCollection]]:
+        """Iterate over all intervals in this collection, in sorted order."""
+        sort_iter = sorted(self.alternative_haplotype_mapping.values(), key=lambda x: x.start)
+        yield from sort_iter
+
     def to_dict(self, chromosome_relative_coordinates: bool = True, export_parent: bool = False) -> Dict[str, Any]:
         """Convert to a dict usable by :class:`~biocantor.io.models.AnnotationCollectionModel`.
 
@@ -304,7 +316,7 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
 
     @staticmethod
     def from_dict(vals: Dict[str, Any], parent_or_seq_chunk_parent: Optional[Parent] = None) -> "AnnotationCollection":
-        """Build an :class:`AnnotationCollection` from a dictionary representation.
+        """Build a :class:`AnnotationCollection` from a dictionary representation.
 
         Will use the ``parent_or_seq_chunk_parent`` value encoded in the dict if it exists,
         but this will be overridden by anything passed to the parameter.
@@ -859,7 +871,7 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
 
     def _unsorted_gff_iter(
         self, chromosome_relative_coordinates: bool = True, raise_on_reserved_attributes: bool = True
-    ) -> Iterable[GFFRow]:
+    ) -> Iterator[GFFRow]:
         """Produces iterable of :class:`~biocantor.io.gff3.rows.GFFRow` for this annotation collection and its
         children.
 
@@ -884,7 +896,7 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
 
     def to_gff(
         self, chromosome_relative_coordinates: bool = True, raise_on_reserved_attributes: Optional[bool] = True
-    ) -> Iterable[GFFRow]:
+    ) -> Iterator[GFFRow]:
         """Produces iterable of :class:`~biocantor.io.gff3.rows.GFFRow` for this annotation collection and its
         children.
 
