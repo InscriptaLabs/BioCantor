@@ -13,7 +13,7 @@ such as promoters or transcription factor binding sites.
 Each object is capable of exporting itself to BED and GFF3.
 """
 import itertools
-from typing import List, Iterable, Any, Dict, Set, Hashable, Optional, Union, Iterator
+from typing import List, Any, Dict, Set, Hashable, Optional, Union, Iterator
 from uuid import UUID
 
 from methodtools import lru_cache
@@ -267,11 +267,6 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
         """Iterate over all intervals in this collection, in sorted order."""
         chain_iter = itertools.chain(self.genes, self.feature_collections)
         sort_iter = sorted(chain_iter, key=lambda x: x.start)
-        yield from sort_iter
-
-    def iter_alternative_haplotype_children(self) -> Iterator[Union[GeneInterval, FeatureIntervalCollection]]:
-        """Iterate over all intervals in this collection, in sorted order."""
-        sort_iter = sorted(self.alternative_haplotype_mapping.values(), key=lambda x: x.start)
         yield from sort_iter
 
     def to_dict(self, chromosome_relative_coordinates: bool = True, export_parent: bool = False) -> Dict[str, Any]:
@@ -611,7 +606,9 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
                 continue
 
             # regardless of completely_within flag, first just look for overlaps on the gene/feature collection level
-            elif coordinate_fn(child.chromosome_location, match_strand=False, full_span=True):
+            elif coordinate_fn(
+                child.chromosome_location, match_strand=False, full_span=True, strict_parent_compare=True
+            ):
                 if child.interval_type == IntervalType.FEATURE:
                     features_collections_to_keep.append(child)
                 elif child.interval_type == IntervalType.TRANSCRIPT:

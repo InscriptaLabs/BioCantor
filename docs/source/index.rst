@@ -32,6 +32,7 @@ BioCantor annotation model examples
     file_parsing.md
     parsing_genbank.ipynb
     parsing_gff3.ipynb
+    parsing_variants.ipynb
     exporting_to_files.ipynb
     annotation_collections.ipynb
 

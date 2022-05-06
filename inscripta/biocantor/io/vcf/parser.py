@@ -27,6 +27,9 @@ def convert_vcf_records_to_model(recs: List[vcf.model._Record]) -> Dict[str, Lis
                 warnings.warn(f"Variant at {seq_variant.POS} has more than one call. Extra calls will be ignored.")
             start = seq_variant.affected_start
             end = seq_variant.affected_end
+            # variants always exist on an interval in BioCantor language
+            if start == end:
+                end += 1
             sample = seq_variant.samples[0]
 
             # construct one VariantInterval for each alternative haplotype

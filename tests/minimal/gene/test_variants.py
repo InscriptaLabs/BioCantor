@@ -842,68 +842,66 @@ class TestVariantIncorporation:
 
 
 class TestAnnotationCollection:
+    ac1 = AnnotationCollection(
+        [FeatureIntervalCollection([FeatureInterval([0], [15], Strand.PLUS)])],
+        [
+            GeneInterval(
+                [
+                    # this transcript does not overlap the variant, however ends up in the map
+                    # because the gene does
+                    TranscriptInterval([17], [20], Strand.PLUS, parent_or_seq_chunk_parent=seq),
+                    TranscriptInterval([0, 5, 12], [3, 10, 18], Strand.PLUS, parent_or_seq_chunk_parent=seq),
+                ],
+                parent_or_seq_chunk_parent=seq,
+            ),
+            # this gene does not overlap, does not end up in the map
+            GeneInterval(
+                [
+                    # this transcript does not overlap the variant, however ends up in the map
+                    # because the gene does
+                    TranscriptInterval([17], [20], Strand.PLUS, parent_or_seq_chunk_parent=seq),
+                ],
+                parent_or_seq_chunk_parent=seq,
+            ),
+        ],
+        [
+            VariantIntervalCollection(
+                [
+                    VariantInterval(start=1, end=2, sequence="G", variant_type="SNV", parent_or_seq_chunk_parent=seq),
+                    VariantInterval(
+                        start=5,
+                        end=6,
+                        sequence="GGC",
+                        variant_type="insertion",
+                        parent_or_seq_chunk_parent=seq,
+                    ),
+                    VariantInterval(
+                        start=10,
+                        end=13,
+                        sequence="T",
+                        variant_type="deletion",
+                        parent_or_seq_chunk_parent=seq,
+                    ),
+                    VariantInterval(
+                        start=13,
+                        end=15,
+                        sequence="",
+                        variant_type="deletion",
+                        parent_or_seq_chunk_parent=seq,
+                    ),
+                ],
+                guid=UUID("d972d0aa-ca79-9f2e-e985-86c16f23797e"),
+                parent_or_seq_chunk_parent=seq,
+            )
+        ],
+        parent_or_seq_chunk_parent=seq,
+    )
+
     @pytest.mark.parametrize(
         "annotation_collection_with_variant,expected_map",
         [
             (
-                AnnotationCollection(
-                    [FeatureIntervalCollection([FeatureInterval([0], [15], Strand.PLUS)])],
-                    [
-                        GeneInterval(
-                            [
-                                # this transcript does not overlap the variant, however ends up in the map
-                                # because the gene does
-                                TranscriptInterval([17], [20], Strand.PLUS, parent_or_seq_chunk_parent=seq),
-                                TranscriptInterval(
-                                    [0, 5, 12], [3, 10, 18], Strand.PLUS, parent_or_seq_chunk_parent=seq
-                                ),
-                            ],
-                            parent_or_seq_chunk_parent=seq,
-                        ),
-                        # this gene does not overlap, does not end up in the map
-                        GeneInterval(
-                            [
-                                # this transcript does not overlap the variant, however ends up in the map
-                                # because the gene does
-                                TranscriptInterval([17], [20], Strand.PLUS, parent_or_seq_chunk_parent=seq),
-                            ],
-                            parent_or_seq_chunk_parent=seq,
-                        ),
-                    ],
-                    [
-                        VariantIntervalCollection(
-                            [
-                                VariantInterval(
-                                    start=1, end=2, sequence="G", variant_type="SNV", parent_or_seq_chunk_parent=seq
-                                ),
-                                VariantInterval(
-                                    start=5,
-                                    end=6,
-                                    sequence="GGC",
-                                    variant_type="insertion",
-                                    parent_or_seq_chunk_parent=seq,
-                                ),
-                                VariantInterval(
-                                    start=10,
-                                    end=13,
-                                    sequence="T",
-                                    variant_type="deletion",
-                                    parent_or_seq_chunk_parent=seq,
-                                ),
-                                VariantInterval(
-                                    start=13,
-                                    end=15,
-                                    sequence="",
-                                    variant_type="deletion",
-                                    parent_or_seq_chunk_parent=seq,
-                                ),
-                            ],
-                            guid=UUID("d972d0aa-ca79-9f2e-e985-86c16f23797e"),
-                            parent_or_seq_chunk_parent=seq,
-                        )
-                    ],
-                    parent_or_seq_chunk_parent=seq,
-                ),
+                ac1,
                 "{UUID('d972d0aa-ca79-9f2e-e985-86c16f23797e'): "
                 "[GeneInterval(identifiers=set(), Intervals:TranscriptInterval((15-18:+), cds=[None], symbol=None),"
                 "TranscriptInterval((0-3:+, 5-11:+, 12-16:+), cds=[None], symbol=None)), "

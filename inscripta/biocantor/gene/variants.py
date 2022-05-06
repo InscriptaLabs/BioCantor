@@ -328,6 +328,7 @@ class VariantIntervalCollection(AbstractFeatureIntervalCollection):
         self.end = self.genomic_end = max(f.end for f in self.variant_intervals)
         self._initialize_location(self.start, self.end, parent_or_seq_chunk_parent)
         self.variant_types = {x.variant_type for x in self.variant_intervals}
+        self._parent_or_seq_chunk_parent = parent_or_seq_chunk_parent
 
         # lazy-loaded property
         self._alternative_genomic_sequence = None
@@ -351,11 +352,18 @@ class VariantIntervalCollection(AbstractFeatureIntervalCollection):
                 raise DuplicateFeatureError(f"Guid {feat.guid} found more than once in this VariantIntervalCollection")
             self.guid_map[feat.guid] = feat
 
+    def __repr__(self):
+        return (
+            f"{self.__class__.__name__}(identifiers={self.identifiers}, "
+            f"Intervals:{','.join(str(f) for f in self.variant_intervals)})"
+        )
+
     def iter_children(self) -> Iterable["AbstractInterval"]:
         yield from self.variant_intervals
 
+    @property
     def children_guids(self) -> Set[UUID]:
-        return set(self.guid_map.keys())
+        return {x.guid for x in self.variant_intervals}
 
     def query_by_guids(self, ids: List[UUID]) -> "VariantIntervalCollection":
         variant_intervals = [self.guid_map[i] for i in ids if i in self.guid_map]
@@ -397,7 +405,7 @@ class VariantIntervalCollection(AbstractFeatureIntervalCollection):
             qualifiers=vals["qualifiers"],
             sequence_name=vals["sequence_name"],
             sequence_guid=vals["sequence_guid"],
-            guid=vals["feature_collection_guid"],
+            guid=vals["variant_collection_guid"],
             parent_or_seq_chunk_parent=parent_or_seq_chunk_parent,
         )
 
