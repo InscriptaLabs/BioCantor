@@ -7,6 +7,9 @@ import pytest
 from inscripta.biocantor.io.genbank.parser import parse_genbank, GenBankParserType
 from inscripta.biocantor.io.genbank.writer import collection_to_genbank, GenbankFlavor
 from inscripta.biocantor.io.parser import ParsedAnnotationRecord
+from inscripta.biocantor.gene import AnnotationCollection, GeneInterval, TranscriptInterval
+from inscripta.biocantor.location import Strand
+from inscripta.biocantor.sequence import Sequence, Parent, Alphabet
 
 
 @pytest.mark.parametrize(
@@ -97,3 +100,47 @@ def test_missing_translation(test_data_dir, tmp_path):
             "NDIISQQVPGFDEWLWVLAYPGIKVSTAEARAILPAQYRRQDCIAHGRHLAGFIHACYSRQPELAAKLMKDVIAEPYRE"
             "RLLPGFRQARQAVAEIGAVASGISGSGPTLFALCDKPDTAQRVADWLGKNYLQNQEGFVHICRLDTAGARVLEN*"
         }
+
+
+def test_locus_tag(tmp_path):
+    """Null locus_tag should lead to gene symbol as locus tag on every feature"""
+    parent = Parent(sequence=Sequence("A" * 10, Alphabet.NT_EXTENDED_GAPPED, id="chr"))
+    a = AnnotationCollection(
+        None,
+        [
+            GeneInterval(
+                [TranscriptInterval([0], [10], Strand.PLUS, parent_or_seq_chunk_parent=parent)],
+                parent_or_seq_chunk_parent=parent,
+                gene_symbol="mygene",
+            )
+        ],
+        parent_or_seq_chunk_parent=parent,
+        sequence_name="chr",
+    )
+    tmp_gb = tmp_path / "tmp.gb"
+    collection_to_genbank([a], tmp_gb, genbank_type=GenbankFlavor.EUKARYOTIC)
+    assert (
+        open(tmp_gb).read()
+        == """LOCUS       chr                       10 bp    DNA              UNK 01-JAN-1980
+DEFINITION  GenBank produced by BioCantor.
+ACCESSION   chr
+VERSION     chr
+KEYWORDS    .
+SOURCE      .
+  ORGANISM  .
+            .
+FEATURES             Location/Qualifiers
+     gene            1..10
+                     /gene_name="mygene"
+                     /gene_biotype="unspecified"
+                     /gene="mygene"
+                     /locus_tag="mygene"
+     misc_RNA        1..10
+                     /transcript_biotype="unspecified"
+                     /gene="mygene"
+                     /locus_tag="mygene"
+ORIGIN
+        1 aaaaaaaaaa
+//
+"""
+    )

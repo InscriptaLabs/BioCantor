@@ -169,9 +169,13 @@ def gene_to_feature(
 
     if symbol:
         qualifiers[feature_type] = [symbol]
+
+    locus_tag = None
     if gene_or_feature.locus_tag:
-        qualifiers[KnownQualifiers.LOCUS_TAG.value] = [gene_or_feature.locus_tag]
+        locus_tag = gene_or_feature.locus_tag
+        qualifiers[KnownQualifiers.LOCUS_TAG.value] = [locus_tag]
     elif symbol:
+        locus_tag = symbol
         qualifiers[KnownQualifiers.LOCUS_TAG.value] = [symbol]
 
     feature = SeqFeature(location, type=feature_type, strand=strand.value)
@@ -187,7 +191,7 @@ def gene_to_feature(
             force_strand,
             translation_table,
             symbol,
-            gene_or_feature.locus_tag,
+            locus_tag,
             update_translations,
         )
     else:
