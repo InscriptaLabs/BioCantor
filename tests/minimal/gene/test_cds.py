@@ -3128,12 +3128,12 @@ class TestCDSInterval:
         "start,end,cds_start,cds_end,frame,strand,expected",
         [
             # this chunk is beyond the CDS on both sides, so the translation is full length
-            # (0, 27, 3, 24, CDSFrame.ZERO, Strand.PLUS, "MPGFHP*"),
-            # # this chunk exactly bounds the CDS
-            # (3, 27, 3, 24, CDSFrame.ZERO, Strand.PLUS, "MPGFHP*"),
+            (0, 27, 3, 24, CDSFrame.ZERO, Strand.PLUS, "MPGFHP*"),
+            # this chunk exactly bounds the CDS
+            (3, 27, 3, 24, CDSFrame.ZERO, Strand.PLUS, "MPGFHP*"),
             # this chunk cuts the first off codon exactly
-            # (6, 27, 3, 24, CDSFrame.ZERO, Strand.PLUS, "PGFHP*"),
-            # # this chunk cuts off the 1st base of the 1st codon, so the translation starts from the 2nd codon
+            (6, 27, 3, 24, CDSFrame.ZERO, Strand.PLUS, "PGFHP*"),
+            # this chunk cuts off the 1st base of the 1st codon, so the translation starts from the 2nd codon
             (4, 27, 3, 24, CDSFrame.ZERO, Strand.PLUS, "PGFHP*"),
             # this chunk cuts off the 2nd base of the 1st codon, so the translation starts from the 2nd codon
             (5, 27, 3, 24, CDSFrame.ZERO, Strand.PLUS, "PGFHP*"),
