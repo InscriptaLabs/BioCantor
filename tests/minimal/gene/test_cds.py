@@ -1515,20 +1515,20 @@ class TestCDSInterval:
             # single exon, even though the CDS exists on a chunk because these are chromosome codons
             # we get the full set of codons, sequenceless
             (
-                    CDSInterval(
-                        [2],
-                        [17],
-                        Strand.PLUS,
-                        [CDSFrame.ZERO],
-                        parent_or_seq_chunk_parent=chunk_parent2_12,
-                    ),
-                    [
-                        SingleInterval(2, 5, Strand.PLUS, sequenceless_chrom_parent),
-                        SingleInterval(5, 8, Strand.PLUS, sequenceless_chrom_parent),
-                        SingleInterval(8, 11, Strand.PLUS, sequenceless_chrom_parent),
-                        SingleInterval(11, 14, Strand.PLUS, sequenceless_chrom_parent),
-                        SingleInterval(14, 17, Strand.PLUS, sequenceless_chrom_parent),
-                    ],
+                CDSInterval(
+                    [2],
+                    [17],
+                    Strand.PLUS,
+                    [CDSFrame.ZERO],
+                    parent_or_seq_chunk_parent=chunk_parent2_12,
+                ),
+                [
+                    SingleInterval(2, 5, Strand.PLUS, sequenceless_chrom_parent),
+                    SingleInterval(5, 8, Strand.PLUS, sequenceless_chrom_parent),
+                    SingleInterval(8, 11, Strand.PLUS, sequenceless_chrom_parent),
+                    SingleInterval(11, 14, Strand.PLUS, sequenceless_chrom_parent),
+                    SingleInterval(14, 17, Strand.PLUS, sequenceless_chrom_parent),
+                ],
             ),
             # chunk relative, so the returned codons are sequenceless but still the whole thing
             (
@@ -1549,20 +1549,20 @@ class TestCDSInterval:
             ),
             # genome relative, so returned codons are identical but have sequence
             (
-                    CDSInterval(
-                        [2],
-                        [17],
-                        Strand.PLUS,
-                        [CDSFrame.ZERO],
-                        parent_or_seq_chunk_parent=chrom_parent,
-                    ),
-                    [
-                        SingleInterval(2, 5, Strand.PLUS, chrom_parent),
-                        SingleInterval(5, 8, Strand.PLUS, chrom_parent),
-                        SingleInterval(8, 11, Strand.PLUS, chrom_parent),
-                        SingleInterval(11, 14, Strand.PLUS, chrom_parent),
-                        SingleInterval(14, 17, Strand.PLUS, chrom_parent),
-                    ],
+                CDSInterval(
+                    [2],
+                    [17],
+                    Strand.PLUS,
+                    [CDSFrame.ZERO],
+                    parent_or_seq_chunk_parent=chrom_parent,
+                ),
+                [
+                    SingleInterval(2, 5, Strand.PLUS, chrom_parent),
+                    SingleInterval(5, 8, Strand.PLUS, chrom_parent),
+                    SingleInterval(8, 11, Strand.PLUS, chrom_parent),
+                    SingleInterval(11, 14, Strand.PLUS, chrom_parent),
+                    SingleInterval(14, 17, Strand.PLUS, chrom_parent),
+                ],
             ),
             # genome relative, so returned codons are identical but have sequence
             (
