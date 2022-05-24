@@ -599,7 +599,10 @@ class CDSInterval(AbstractFeatureInterval):
         self, relative_window: Optional[SingleInterval] = None, chunk_relative_coordinates: bool = True
     ) -> Iterator[Location]:
         """
-        Returns an iterator over codon locations in *chunk relative* coordinates.
+        Returns an iterator over codon locations.
+
+        ``relative_window`` must be in *chromosome* coordinates, ideally built by
+        ``_convert_chromosome_start_end_to_relative_window``.
 
         Any leading or trailing bases that are annotated as CDS but cannot form a full codon
         are excluded.
@@ -622,23 +625,33 @@ class CDSInterval(AbstractFeatureInterval):
         This function exists to prepare a Location object to pass to the iterator ``_scan_codon_locations``.
         By placing the logic in this function, the result can be cached, as you cannot cache iterators.
 
+        ``relative_window`` must be in *chromosome* coordinates, ideally built by
+        ``_convert_chromosome_start_end_to_relative_window``.
+
         Returns a tuple of the Location to be iterated over, and its offset.
         """
-        loc = self.chunk_relative_location
+        # do all initial work in chromosome coordinates
+        loc = self.chromosome_location
+        offset = self.frames[0].value
 
         if relative_window:
             relative_loc = loc.intersection(relative_window)
         else:
             relative_loc = loc
 
-        offset = self.frames[0].value
         if chunk_relative_coordinates and self.is_chunk_relative:
-            # calculate offset for this chunk that may be out of frame
-            loc_on_chrom = relative_loc.lift_over_to_first_ancestor_of_type(SequenceType.CHROMOSOME)
-            offset += self._calculate_frame_offset(self.chromosome_location, loc_on_chrom)
+            # lift the cleaned window on to chunk relative coordinate system
+            chunk_relative_cleaned_location = self.liftover_location_to_seq_chunk_parent(
+                relative_loc, self.chunk_relative_location.parent
+            )
+            # lift this back to chromosome coordinates -- this produces a chromosome coordinate Location
+            # whose bounds are the portion of this CDS that are contained on the sequence chunk
+            loc_on_chrom = chunk_relative_cleaned_location.lift_over_to_first_ancestor_of_type(SequenceType.CHROMOSOME)
+            offset += self._calculate_frame_offset(relative_loc, loc_on_chrom)
+            return chunk_relative_cleaned_location, offset
         else:
-            offset += self._calculate_frame_offset(self.chromosome_location, relative_loc)
-        return relative_loc, offset
+            offset += self._calculate_frame_offset(loc, relative_loc)
+            return relative_loc, offset
 
     @lru_cache(maxsize=20)
     def _prepare_multi_exon_window_for_scan_codon_locations(

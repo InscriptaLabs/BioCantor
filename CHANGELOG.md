@@ -30,6 +30,11 @@ explicit spec that is not an explicit spec in this operation (python):
   - pyvcf -> python_abi=3.7[build=*_cp37m] -> python[version='3.7.*|3.9.*|3.8.*']
 ```
 
+## [0.16.1] 2022-05-10
+### Fixed
+- GenBank writer module was not propagating locus tags to child features if the locus tag was derived from the gene symbol because the feature lacked a locus tag
+
+
 ## [0.16.0] 2022-04-13
 ### Fixed
 - Duplicate `/locus_tag` detection in GenBank parser was not working in all cases

@@ -1512,6 +1512,24 @@ class TestCDSInterval:
     @pytest.mark.parametrize(
         "cds,expected",
         [
+            # single exon, even though the CDS exists on a chunk because these are chromosome codons
+            # we get the full set of codons, sequenceless
+            (
+                CDSInterval(
+                    [2],
+                    [17],
+                    Strand.PLUS,
+                    [CDSFrame.ZERO],
+                    parent_or_seq_chunk_parent=chunk_parent2_12,
+                ),
+                [
+                    SingleInterval(2, 5, Strand.PLUS, sequenceless_chrom_parent),
+                    SingleInterval(5, 8, Strand.PLUS, sequenceless_chrom_parent),
+                    SingleInterval(8, 11, Strand.PLUS, sequenceless_chrom_parent),
+                    SingleInterval(11, 14, Strand.PLUS, sequenceless_chrom_parent),
+                    SingleInterval(14, 17, Strand.PLUS, sequenceless_chrom_parent),
+                ],
+            ),
             # chunk relative, so the returned codons are sequenceless but still the whole thing
             (
                 CDSInterval(
@@ -1527,6 +1545,23 @@ class TestCDSInterval:
                     CompoundInterval([8, 8], [9, 10], Strand.PLUS, sequenceless_chrom_parent),
                     SingleInterval(10, 13, Strand.PLUS, sequenceless_chrom_parent),
                     SingleInterval(13, 16, Strand.PLUS, sequenceless_chrom_parent),
+                ],
+            ),
+            # genome relative, so returned codons are identical but have sequence
+            (
+                CDSInterval(
+                    [2],
+                    [17],
+                    Strand.PLUS,
+                    [CDSFrame.ZERO],
+                    parent_or_seq_chunk_parent=chrom_parent,
+                ),
+                [
+                    SingleInterval(2, 5, Strand.PLUS, chrom_parent),
+                    SingleInterval(5, 8, Strand.PLUS, chrom_parent),
+                    SingleInterval(8, 11, Strand.PLUS, chrom_parent),
+                    SingleInterval(11, 14, Strand.PLUS, chrom_parent),
+                    SingleInterval(14, 17, Strand.PLUS, chrom_parent),
                 ],
             ),
             # genome relative, so returned codons are identical but have sequence
@@ -1550,6 +1585,7 @@ class TestCDSInterval:
     )
     def test_scan_chromosome_codon_locations(self, cds, expected):
         assert list(cds.scan_chromosome_codon_locations()) == expected
+        # test that caching doesn't break the iterator
         assert list(cds.scan_chromosome_codon_locations()) == expected
         assert cds.chromosome_codon_locations == tuple(expected)
 
@@ -3257,7 +3293,7 @@ class TestCDSInterval:
     ],
 )
 def test_translation_tables(sequence, translation_table, expected):
-    s = Sequence(sequence, Alphabet.NT_EXTENDED)
+    s = Sequence(sequence, Alphabet.NT_EXTENDED, type=SequenceType.CHROMOSOME)
     i = SingleInterval(0, len(sequence), Strand.PLUS, parent=s)
     cds = CDSInterval.from_location(i, cds_frames=[CDSFrame.ZERO])
     assert str(cds.translate(translation_table=translation_table)) == expected
