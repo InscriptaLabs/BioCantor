@@ -369,7 +369,10 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
             NOTE: This function copies the input dictionary, stripping out null values.
             """
             # copy the input parent dictionary, stripping out null values
-            parent_dict = {k: v for k, v in vals["parent_or_seq_chunk_parent"].items() if v is not None}
+            if "parent_or_seq_chunk_parent" in vals and vals["parent_or_seq_chunk_parent"] is not None:
+                parent_dict = {k: v for k, v in vals["parent_or_seq_chunk_parent"].items() if v is not None}
+            else:
+                parent_dict = {}
 
             if parent_dict.get("alphabet"):
                 parent_dict["alphabet"] = Alphabet[parent_dict["alphabet"]]

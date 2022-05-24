@@ -30,6 +30,14 @@ explicit spec that is not an explicit spec in this operation (python):
   - pyvcf -> python_abi=3.7[build=*_cp37m] -> python[version='3.7.*|3.9.*|3.8.*']
 ```
 
+## [0.17.0] 2022-05-24
+### Fixed
+- `CDSInterval._prepare_single_exon_window_for_scan_codon_locations()` would improperly raise exceptions when operating in genome-relative coordinates
+-  Fixed jupyter notebooks in documentation
+
+### Added
+- More documentation
+
 ## [0.16.1] 2022-05-10
 ### Fixed
 - GenBank writer module was not propagating locus tags to child features if the locus tag was derived from the gene symbol because the feature lacked a locus tag
