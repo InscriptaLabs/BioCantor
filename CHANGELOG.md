@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [0.17.0] 2022-05-24
+### Fixed
+- `CDSInterval._prepare_single_exon_window_for_scan_codon_locations()` would improperly raise exceptions when operating in genome-relative coordinates
+-  Fixed jupyter notebooks in documentation
+
+### Added
+- More documentation
+
 ## [0.16.1] 2022-05-10
 ### Fixed
 - GenBank writer module was not propagating locus tags to child features if the locus tag was derived from the gene symbol because the feature lacked a locus tag
