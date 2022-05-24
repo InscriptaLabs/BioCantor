@@ -31,6 +31,9 @@ This is intended to model an arbitrary genomic interval *on a single sequence/ch
 methods that allow a user to subquery the interval by position or by identifiers of constituent objects. This object
 is produced when parsing annotation file formats.
 
+.. image:: annotation_collection_overview.png
+    :width: 600
+    :alt: Annotation Collection Hierarchy
 
 Interval Hierarchies
 ====================
