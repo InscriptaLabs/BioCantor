@@ -603,6 +603,7 @@ class BaseGenBankParser(ABC):
         As an example, take this set of ordered features:
 
         .. code-block::
+
             gene
             mRNA
             CDS
@@ -614,6 +615,7 @@ class BaseGenBankParser(ABC):
         This would be grouped as:
 
         .. code-block::
+
             [gene, mRNA, CDS]
             [tRNA]
             [rRNA]
@@ -622,6 +624,7 @@ class BaseGenBankParser(ABC):
         However, sometimes non-coding genes still have the gene feature. Take this example:
 
         .. code-block::
+
             gene
             mRNA
             CDS
@@ -633,6 +636,7 @@ class BaseGenBankParser(ABC):
         This would be grouped as:
 
         .. code-block::
+
             [gene, mRNA, CDS]
             [gene, ncRNA]
             [gene, CDS]
@@ -640,6 +644,7 @@ class BaseGenBankParser(ABC):
         Now consider this problematic ordering, where a non-coding object interrupts a coding object:
 
         .. code-block::
+
             gene
             tRNA
             CDS
@@ -647,6 +652,7 @@ class BaseGenBankParser(ABC):
         This is ambiguous -- is the gene meant to go with the tRNA, or the CDS? This would be grouped as:
 
         .. code-block::
+
             [gene, tRNA]
             [CDS]
 
