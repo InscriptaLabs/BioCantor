@@ -36,7 +36,7 @@ is produced when parsing annotation file formats.
     :alt: Annotation Collection Hierarchy
 
 Interval Hierarchies
-====================
+--------------------
 
 All interval types in BioCantor can be arbitrarily joined ("spliced"), including overlapping intervals and 0-bp gaps,
 except for :class:`biocantor.gene.collections.AnnotationCollection`, which are always unjoined intervals representing
@@ -44,7 +44,7 @@ the bounds of their constituents, the bounds of the sequence they derived from, 
 depending on the source of the object.
 
 Genes
------
+~~~~~
 
 BioCantor models the concept of *genes* as a three layer hierarchy:
 
@@ -64,7 +64,7 @@ to the interval. :class:`~biocantor.gene.transcript.TranscriptInterval` objects 
 as their parent gene. This follows the GENCODE/Ensembl model for biotype assignment, rather than the NCBI model.
 
 Non-transcribed intervals (Features)
-------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 BioCantor models the concept of generic intervals as a two layer hierarchy:
 
