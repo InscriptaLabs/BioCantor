@@ -1084,11 +1084,11 @@ class HybridGenBankParser(LocusTagGenBankParser, SortedGenBankParser):
 
 def parse_genbank(
     genbank_handle_or_path: Union[TextIO, str, pathlib.Path],
-    gene_parse_func: Optional[Callable[[GeneFeature], Dict[str, Any]]] = GeneFeature.to_gene_model,
-    feature_parse_func: Optional[
-        Callable[[FeatureIntervalGenBankCollection], Dict[str, Any]]
+    gene_parse_func: Callable[[GeneFeature], Dict[str, Any]] = GeneFeature.to_gene_model,
+    feature_parse_func: Callable[
+        [FeatureIntervalGenBankCollection], Dict[str, Any]
     ] = FeatureIntervalGenBankCollection.to_feature_model,
-    gbk_type: Optional[GenBankParserType] = GenBankParserType.HYBRID,
+    gbk_type: GenBankParserType = GenBankParserType.HYBRID,
     allow_duplicate_sequence_identifiers: bool = False,
 ) -> Iterator[ParsedAnnotationRecord]:
     """This is the main GenBank parsing function. The parse function implemented in :class:`GeneFeature` can be
