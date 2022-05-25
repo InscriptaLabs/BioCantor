@@ -518,13 +518,13 @@ class BaseGenBankParser(ABC):
 
         self.sources: List[Optional[SeqFeature]] = [None] * len(seq_records)
         # this is the filtered set of SeqFeatures in the same order as the SeqRecords
-        self.gene_filtered_features: List[List[SeqFeature]] = [[]] * len(self.seq_records)
-        self.feature_features: List[List[SeqFeature]] = [[]] * len(self.seq_records)
+        self.gene_filtered_features: List[List[SeqFeature]] = [list() for _ in self.seq_records]
+        self.feature_features: List[List[SeqFeature]] = [list() for _ in self.seq_records]
 
-        self.grouped_gene_features: List[List[GroupedGeneFeatures]] = [[]] * len(self.seq_records)
+        self.grouped_gene_features: List[List[GroupedGeneFeatures]] = [list() for _ in self.seq_records]
 
-        self.genes: List[List[GeneFeature]] = [[]] * len(self.seq_records)
-        self.feature_collections: List[List[FeatureIntervalGenBankCollection]] = [[]] * len(self.seq_records)
+        self.genes: List[List[GeneFeature]] = [list() for _ in self.seq_records]
+        self.feature_collections: List[List[FeatureIntervalGenBankCollection]] = [list() for _ in self.seq_records]
 
     @property
     def num_genes(self) -> int:
@@ -995,7 +995,7 @@ class HybridGenBankParser(LocusTagGenBankParser, SortedGenBankParser):
         feature_parse_func: Callable[[FeatureIntervalGenBankCollection], Dict[str, Any]],
     ):
         super().__init__(seq_records, gene_parse_func, feature_parse_func)
-        self.gene_filtered_features_without_locus_tag: List[List[SeqFeature]] = [[]] * len(self.seq_records)
+        self.gene_filtered_features_without_locus_tag: List[List[SeqFeature]] = [list() for _ in self.seq_records]
 
     def parse(self) -> Iterator[ParsedAnnotationRecord]:
         self._extract_seqfeatures_from_seqrecords()

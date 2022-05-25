@@ -141,6 +141,7 @@ class TestProkaryoticGenBankParser:
         with open(gbk, "r") as fh:
             parsed = list(parse_genbank(fh))[0]
 
+        assert len(parsed.annotation.genes) == 7
         assert {x.gene_symbol for x in parsed.annotation.genes if x.gene_symbol} == {
             "thrA",
             "thrB",
@@ -1282,7 +1283,13 @@ class TestExceptionsWarnings:
         with pytest.raises(DuplicateSequenceException):
             _ = list(parse_genbank(test_data_dir / gbk))
         # turn off the flag and now there is no exception
-        _ = list(parse_genbank(test_data_dir / gbk, allow_duplicate_sequence_identifiers=True))
+        recs = list(parse_genbank(test_data_dir / gbk, allow_duplicate_sequence_identifiers=True))
+        # there are 2 records with genes
+        assert len(recs) == 2
+        assert len(recs[0].annotation.genes) == 5
+        assert len(recs[1].annotation.genes) == 1
+        assert recs[0].annotation.qualifiers
+        assert not recs[1].annotation.qualifiers
 
     def test_multiple_transcripts(self, test_data_dir):
         gbk = test_data_dir / "INSC1003_test_multiple_transcripts.gbk"
