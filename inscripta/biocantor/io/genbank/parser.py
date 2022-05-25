@@ -24,7 +24,7 @@ import itertools
 import pathlib
 import warnings
 from abc import ABC, abstractmethod
-from collections import Counter, OrderedDict
+from collections import Counter
 from copy import deepcopy
 from dataclasses import dataclass
 from typing import Optional, TextIO, Iterator, List, Dict, Callable, Any, Union
@@ -516,15 +516,15 @@ class BaseGenBankParser(ABC):
         self.gene_parse_func = gene_parse_func
         self.feature_parse_func = feature_parse_func
 
-        self.sources = []
+        self.sources: List[Optional[SeqFeature]] = [None] * len(seq_records)
         # this is the filtered set of SeqFeatures in the same order as the SeqRecords
-        self.gene_filtered_features: List[List[SeqFeature]] = []
-        self.feature_features: List[List[SeqFeature]] = []
+        self.gene_filtered_features: List[List[SeqFeature]] = [[]] * len(self.seq_records)
+        self.feature_features: List[List[SeqFeature]] = [[]] * len(self.seq_records)
 
-        self.grouped_gene_features: List[List[GroupedGeneFeatures]] = []
+        self.grouped_gene_features: List[List[GroupedGeneFeatures]] = [[]] * len(self.seq_records)
 
-        self.genes: List[List[GeneFeature]] = []
-        self.feature_collections: List[List[FeatureIntervalGenBankCollection]] = []
+        self.genes: List[List[GeneFeature]] = [[]] * len(self.seq_records)
+        self.feature_collections: List[List[FeatureIntervalGenBankCollection]] = [[]] * len(self.seq_records)
 
     @property
     def num_genes(self) -> int:
@@ -700,7 +700,12 @@ class BaseGenBankParser(ABC):
             yield group
 
     def _group_features_by_position(self, features: List[SeqFeature], seqrecord: SeqRecord, idx: int):
-        for i, feature_group in enumerate(self._group_sorted_features_by_type(features)):
+        """
+        Group features by position. Since this function is always called in `seqrecord` order,
+        `self.grouped_gene_features` is incremented here.
+        """
+        grouped_features = []
+        for feature_group in self._group_sorted_features_by_type(features):
             gene_features = []
             transcript_features = []
             cds_features = []
@@ -733,11 +738,15 @@ class BaseGenBankParser(ABC):
                     )
                 )
                 transcript_features = [transcript_features[0]]
-            self.grouped_gene_features[f"{seqrecord.id}_{i}"] = GroupedGeneFeatures(
-                seqrecord, gene_feature, transcript_features, cds_features
-            )
+            grouped_features.append(GroupedGeneFeatures(seqrecord, gene_feature, transcript_features, cds_features))
+        self.grouped_gene_features[idx].extend(grouped_features)
 
-    def _group_features_by_locus_tag(self, features: List[SeqFeature], seqrecord: SeqRecord):
+    def _group_features_by_locus_tag(self, features: List[SeqFeature], seqrecord: SeqRecord, idx: int):
+        """
+        Group features by locus tag. Since this function is always called in `seqrecord` order,
+        `self.grouped_gene_features` is incremented here.
+        """
+        grouped_features = []
         for locus_tag, gene_features in itertools.groupby(
             features,
             key=lambda f: f.qualifiers[KnownQualifiers.LOCUS_TAG.value][0],
@@ -778,9 +787,8 @@ class BaseGenBankParser(ABC):
                 )
                 transcript_features = [transcript_features[0]]
 
-            self.grouped_gene_features.append(GroupedGeneFeatures(
-                seqrecord, gene_feature, transcript_features, cds_features
-            ))
+            grouped_features.append(GroupedGeneFeatures(seqrecord, gene_feature, transcript_features, cds_features))
+        self.grouped_gene_features[idx].extend(grouped_features)
 
     def _parse_features(
         self,
@@ -795,7 +803,7 @@ class BaseGenBankParser(ABC):
         """
         for idx, seqrecord in enumerate(self.seq_records):
             for locus_tag, features in itertools.groupby(
-                self.feature_features[],
+                self.feature_features[idx],
                 key=lambda f: f.qualifiers.get(KnownQualifiers.LOCUS_TAG.value, [""])[0],
             ):
                 if not locus_tag:
@@ -804,11 +812,11 @@ class BaseGenBankParser(ABC):
                     for feature in features:
                         feature_collection = FeatureIntervalGenBankCollection([feature], seqrecord)
                         if feature_collection:
-                            self.feature_collections[seqrecord.id].append(feature_collection)
+                            self.feature_collections[idx].append(feature_collection)
                 else:
                     feature_collection = FeatureIntervalGenBankCollection(list(features), seqrecord)
                     if feature_collection:
-                        self.feature_collections[seqrecord.id].append(feature_collection)
+                        self.feature_collections[idx].append(feature_collection)
 
     def _convert_seqfeature_to_gene(
         self, grouped_gene_features: GroupedGeneFeatures, seqrecord: SeqRecord
@@ -849,10 +857,13 @@ class BaseGenBankParser(ABC):
 
         Gene-level objects with no children (transcripts or CDSes) are skipped.
         """
-        for locus_tag, grouped_gene_features in self.grouped_gene_features.items():
-            seqrecord = grouped_gene_features.seqrecord
-            gene = self._convert_seqfeature_to_gene(grouped_gene_features, seqrecord)
-            self.genes[seqrecord.id].append(gene)
+        for i, seqrecord_grouped_gene_features in enumerate(self.grouped_gene_features):
+            genes = []
+            for grouped_gene_features in seqrecord_grouped_gene_features:
+                seqrecord = grouped_gene_features.seqrecord
+                gene = self._convert_seqfeature_to_gene(grouped_gene_features, seqrecord)
+                genes.append(gene)
+            self.genes[i].extend(genes)
 
     def _export_annotation_collections(self) -> Iterator[ParsedAnnotationRecord]:
         """
@@ -864,11 +875,11 @@ class BaseGenBankParser(ABC):
         if self.num_genes + self.num_feature_collections == 0:
             raise EmptyGenBankError("GenBank parsing produced zero genes and zero features.")
 
-        for seqrecord in self.seq_records:
-            genes = [GeneFeature.to_gene_model(x) for x in sorted(self.genes[seqrecord.id], key=lambda x: x.start)]
+        for i, seqrecord in enumerate(self.seq_records):
+            genes = [GeneFeature.to_gene_model(x) for x in sorted(self.genes[i], key=lambda x: x.start)]
             feature_collections = [
                 FeatureIntervalGenBankCollection.to_feature_model(x)
-                for x in sorted(self.feature_collections[seqrecord.id], key=lambda x: x.start)
+                for x in sorted(self.feature_collections[i], key=lambda x: x.start)
             ]
             annotation = AnnotationCollectionModel.Schema().load(
                 dict(
@@ -878,7 +889,7 @@ class BaseGenBankParser(ABC):
                     sequence_name=seqrecord.id,
                     start=0,
                     end=len(seqrecord),
-                    qualifiers=self.sources[seqrecord.id].qualifiers if self.sources[seqrecord.id] else None,
+                    qualifiers=self.sources[i].qualifiers if self.sources[i] else None,
                 )
             )
             yield ParsedAnnotationRecord(annotation=annotation, seqrecord=seqrecord)
@@ -900,7 +911,7 @@ class SortedGenBankParser(BaseGenBankParser):
         yield from self._export_annotation_collections()
 
     def _extract_seqfeatures_from_seqrecords(self):
-        for seqrecord in self.seq_records:
+        for i, seqrecord in enumerate(self.seq_records):
             gene_filtered_features = []
             remaining_features = []
             for f in seqrecord.features:
@@ -909,19 +920,19 @@ class SortedGenBankParser(BaseGenBankParser):
                 elif f.type in GENBANK_GENE_FEATURES:
                     gene_filtered_features.append(f)
                 elif f.type == MetadataFeatures.SOURCE.value:
-                    self.sources[seqrecord.id] = f
+                    self.sources[i] = f
                 else:
                     remaining_features.append(f)
 
-            self.gene_filtered_features[seqrecord.id] = self._sort_features_by_position_and_type(gene_filtered_features)
-            self.feature_features[seqrecord.id] = remaining_features
+            self.gene_filtered_features[i].extend(self._sort_features_by_position_and_type(gene_filtered_features))
+            self.feature_features[i].extend(remaining_features)
 
     def _group_gene_features_by_position(self):
         """
         Soerted parser groups features using :meth:`BaseGenBankParser._group_features_by_position()`.
         """
-        for seqrecord in self.seq_records:
-            self._group_features_by_position(self.gene_filtered_features[seqrecord.id], seqrecord)
+        for i, seqrecord in enumerate(self.seq_records):
+            self._group_features_by_position(self.gene_filtered_features[i], seqrecord, i)
 
 
 class LocusTagGenBankParser(BaseGenBankParser):
@@ -942,7 +953,7 @@ class LocusTagGenBankParser(BaseGenBankParser):
         yield from self._export_annotation_collections()
 
     def _extract_seqfeatures_from_seqrecords(self):
-        for seqrecord in self.seq_records:
+        for i, seqrecord in enumerate(self.seq_records):
             gene_filtered_features = []
             remaining_features = []
             for f in seqrecord.features:
@@ -951,22 +962,22 @@ class LocusTagGenBankParser(BaseGenBankParser):
                 elif f.type in GENBANK_GENE_FEATURES and KnownQualifiers.LOCUS_TAG.value in f.qualifiers:
                     gene_filtered_features.append(f)
                 elif f.type == MetadataFeatures.SOURCE.value:
-                    self.sources[seqrecord.id] = f
+                    self.sources[i] = f
                 else:
                     remaining_features.append(f)
 
             locus_tag_sorted_gene_filtered_features = sorted(
                 gene_filtered_features, key=lambda f: f.qualifiers[KnownQualifiers.LOCUS_TAG.value]
             )
-            self.gene_filtered_features.append(locus_tag_sorted_gene_filtered_features)
-            self.feature_features.append(remaining_features)
+            self.gene_filtered_features[i].extend(locus_tag_sorted_gene_filtered_features)
+            self.feature_features[i].extend(remaining_features)
 
     def _group_gene_features_by_locus_tag(self):
         """
         Locus tag parser groups features using :meth:`BaseGenBankParser._group_features_by_locus_tag()`.
         """
-        for seqrecord in self.seq_records:
-            self._group_features_by_locus_tag(self.gene_filtered_features[seqrecord.id], seqrecord)
+        for i, seqrecord in enumerate(self.seq_records):
+            self._group_features_by_locus_tag(self.gene_filtered_features[i], seqrecord, i)
 
 
 class HybridGenBankParser(LocusTagGenBankParser, SortedGenBankParser):
@@ -984,7 +995,7 @@ class HybridGenBankParser(LocusTagGenBankParser, SortedGenBankParser):
         feature_parse_func: Callable[[FeatureIntervalGenBankCollection], Dict[str, Any]],
     ):
         super().__init__(seq_records, gene_parse_func, feature_parse_func)
-        self.gene_filtered_features_without_locus_tag: List[List[SeqFeature]] = []
+        self.gene_filtered_features_without_locus_tag: List[List[SeqFeature]] = [[]] * len(self.seq_records)
 
     def parse(self) -> Iterator[ParsedAnnotationRecord]:
         self._extract_seqfeatures_from_seqrecords()
@@ -999,7 +1010,7 @@ class HybridGenBankParser(LocusTagGenBankParser, SortedGenBankParser):
         Hybrid parser partitions all features by locus tag, if they exist.
         Any features without a locus tag or with duplicate tags will be sent to the Sorted parser.
         """
-        for seqrecord in self.seq_records:
+        for i, seqrecord in enumerate(self.seq_records):
             gene_filtered_features = []
             gene_filtered_features_without_locus_tag = []
             remaining_features = []
@@ -1012,17 +1023,17 @@ class HybridGenBankParser(LocusTagGenBankParser, SortedGenBankParser):
                     else:
                         gene_filtered_features_without_locus_tag.append(f)
                 elif f.type == MetadataFeatures.SOURCE.value:
-                    self.sources[seqrecord.id] = f
+                    self.sources[i] = f
                 else:
                     remaining_features.append(f)
 
-            sorted_gene_filtered_features = sorted
+            sorted_gene_filtered_features = sorted(
                 gene_filtered_features, key=lambda f: f.qualifiers[KnownQualifiers.LOCUS_TAG.value]
             )
 
-            self.gene_filtered_features.append(sorted_gene_filtered_features)
-            self.gene_filtered_features_without_locus_tag.append(gene_filtered_features_without_locus_tag)
-            self.feature_features.append(remaining_features)
+            self.gene_filtered_features[i].extend(sorted_gene_filtered_features)
+            self.gene_filtered_features_without_locus_tag[i].extend(gene_filtered_features_without_locus_tag)
+            self.feature_features[i].extend(remaining_features)
 
     def _identify_locus_tag_collisions(self):
         """
@@ -1056,10 +1067,10 @@ class HybridGenBankParser(LocusTagGenBankParser, SortedGenBankParser):
                     bad_features.append(feature)
                 else:
                     good_features.append(feature)
-            self.gene_filtered_features.append(good_features)
-            self.gene_filtered_features_without_locus_tag.append(self._sort_features_by_position_and_type(
+            self.gene_filtered_features[i] = good_features
+            self.gene_filtered_features_without_locus_tag[i] = self._sort_features_by_position_and_type(
                 list(itertools.chain(self.gene_filtered_features_without_locus_tag[i], bad_features))
-            ))
+            )
 
     def _group_gene_features_by_locus_tag_and_position(self):
         """
