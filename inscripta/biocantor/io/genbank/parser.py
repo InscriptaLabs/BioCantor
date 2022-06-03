@@ -24,7 +24,7 @@ import itertools
 import pathlib
 import warnings
 from abc import ABC, abstractmethod
-from collections import Counter, OrderedDict
+from collections import Counter
 from copy import deepcopy
 from dataclasses import dataclass
 from typing import Optional, TextIO, Iterator, List, Dict, Callable, Any, Union
