@@ -1,6 +1,6 @@
 import warnings
 from itertools import count, zip_longest
-from typing import Iterator, List, Union, Optional, Dict, Hashable, Any, Iterable, Set, Tuple, TYPE_CHECKING
+from typing import Iterator, List, Union, Optional, Dict, Hashable, Any, Set, Tuple, TYPE_CHECKING
 from uuid import UUID
 
 from methodtools import lru_cache

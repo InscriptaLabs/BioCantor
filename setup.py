@@ -10,7 +10,7 @@ with open(os.path.join(os.path.dirname(__file__), "inscripta", "biocantor", "__i
     VERSION = re.compile(r""".*__version__ = ["'](.*?)['"]""", re.S).match(v_file.read()).group(1)
 
 extra_dependencies = {
-    "io": ["gffutils", "pyvcf", "pysam"],
+    "io": ["gffutils", "pyvcf3", "pysam"],
     "test": ["black", "flake8", "pytest", "pytest-cov", "pytest-error-for-skips"],
     "docs": [
         "Sphinx",
@@ -22,7 +22,6 @@ extra_dependencies = {
         "ipykernel",
         "pandoc",
         "recommonmark",
-        "biopython",
     ],
     "optional": ["tornado>=5.1"],
 }
@@ -39,7 +38,7 @@ setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     author="Inscripta, Inc.",
-    python_requires=">=3.7,<=3.10",
+    python_requires=">=3.7,<3.10",
     url="https://github.com/InscriptaLabs/BioCantor",
     test_suite="pytest",
     packages=find_namespace_packages(include=["inscripta.*"]),
