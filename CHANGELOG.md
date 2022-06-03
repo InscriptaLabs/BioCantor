@@ -15,6 +15,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Fixed
 - `FeatureInterval.from_location` was not checking for chunk-relativity
 
+### Dependency notes
+- Python3.10 cannot be supported until `pysam` supports python3.10
+
+
 ## [0.17.0] 2022-05-24
 ### Fixed
 - `CDSInterval._prepare_single_exon_window_for_scan_codon_locations()` would improperly raise exceptions when operating in genome-relative coordinates
