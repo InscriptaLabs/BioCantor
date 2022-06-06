@@ -3,6 +3,44 @@ This module contains :class:`~biocantor.gene.variants.VariantInterval`, which mo
 
 This model is intended to be as simple as possible, and represent a single alternative haplotype. Variants
 are always represented on the positive strand, and is loosely modeled after VCF files.
+
+Variants must be represented by intervals of at least length 1 in all cases. It is better to left-pad indels,
+but it is not required.
+
+Here are examples of how variants can be represented.
+
+A SNV:
+
+.. code-block:: python
+
+    # ref: ACTCTCTCTATCTCATCCAC
+    # alt: AGTCTCTCTATCTCATCCAC
+    snp_1 = VariantInterval(start=1, end=2, sequence="G", variant_type="SNV")
+
+A GG insertion at position 5
+
+.. code-block:: python
+
+    # ref: ACTCT  CTCTATCTCATCCAC
+    # alt: ACTCTGGCTCTATCTCATCCAC
+    insertion_5 = VariantInterval(start=5, end=6, sequence="GGC", variant_type="insertion")
+
+A left-padded deletion from 10 to 13:
+
+.. code-block:: python
+
+    # ref: ACTCTCTCTATCTCATCCAC
+    # alt: ACTCTCTCTAT  CATCCAC
+    deletion_11_13 = VariantInterval(start=10, end=13, sequence="T", variant_type="deletion")
+
+A deletion from 13 to 15 without padding:
+
+.. code-block:: python
+
+    # ref: ACTCTCTCTATCTCATCCAC
+    # alt: ACTCTCTCTATCT  TCCAC
+    deletion_13_15 = VariantInterval(start=13, end=15, sequence="", variant_type="deletion")
+
 """
 from typing import Optional, Dict, Hashable, Any, Iterable, Iterator, Set, List
 from uuid import UUID

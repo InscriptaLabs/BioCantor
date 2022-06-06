@@ -244,10 +244,7 @@ class FeatureInterval(AbstractFeatureInterval):
     ) -> "FeatureInterval":
         """
         Allows construction of a FeatureInterval from a chunk-relative location. This is a location
-        present on a sequence chunk, which could be a sequence produced
-
-        This location should
-        be built by something like this:
+        present on a sequence chunk, which should be built by the convenience function seq_chunk_to_parent:
 
         .. code-block:: python
 
