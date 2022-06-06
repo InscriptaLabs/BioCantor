@@ -20,6 +20,13 @@ from inscripta.biocantor.util.object_validation import ObjectValidation
 from inscripta.biocantor.util.ordering import RelativeOrder
 from inscripta.biocantor.util.types import ParentInputType
 
+try:
+    import cgranges
+except ImportError:
+    HAS_CGRANGES = False
+else:
+    HAS_CGRANGES = True
+
 
 @total_ordering
 class SingleInterval(Location):
@@ -843,23 +850,41 @@ class CompoundInterval(Location):
 
     def _intersection_compound_interval(self, other: Location, match_strand: bool, full_span: bool = False) -> Location:
         ObjectValidation.require_object_has_type(other, CompoundInterval)
-        if full_span:
+        if full_span is True:
             fs = SingleInterval(self.start, self.end, self.strand, parent=self.parent)
-            return fs.intersection(other, match_strand, full_span=full_span)
+            return fs.intersection(other, match_strand, full_span=True)
+        elif match_strand is True and self.strand != other.strand:
+            return EmptyLocation()
         else:
-            interval_intersections = []
-            for self_single_interval in self._single_intervals:
-                if self_single_interval.has_overlap(other, match_strand=match_strand, full_span=full_span):
-                    for other_single_interval in other.blocks:
-                        if self_single_interval.has_overlap(
-                            other_single_interval, match_strand=match_strand, full_span=full_span
-                        ):
-                            interval_intersections.append(
-                                self_single_interval.intersection(
-                                    other_single_interval, match_strand=match_strand, full_span=full_span
+            if HAS_CGRANGES is False:
+                interval_intersections = []
+                for self_single_interval in self._single_intervals:
+                    if self_single_interval.has_overlap(other, match_strand=match_strand, full_span=False):
+                        for other_single_interval in other.blocks:
+                            if self_single_interval.has_overlap(
+                                other_single_interval, match_strand=match_strand, full_span=False
+                            ):
+                                interval_intersections.append(
+                                    self_single_interval.intersection(
+                                        other_single_interval, match_strand=match_strand, full_span=False
+                                    )
                                 )
+                return CompoundInterval._from_single_intervals_no_validation(interval_intersections).optimize_blocks()
+            else:
+                # construct a tree from self
+                tree = cgranges.cgranges()
+                for i, self_single_interval in enumerate(self._single_intervals):
+                    tree.add("", self_single_interval.start, self_single_interval.end, i)
+                tree.index()
+                interval_intersections = []
+                for other_single_interval in other.blocks:
+                    for _, __, idx in tree.overlap("", other_single_interval.start, other_single_interval.end):
+                        interval_intersections.append(
+                            self._single_intervals[idx].intersection(
+                                other_single_interval, match_strand=match_strand, full_span=False
                             )
-            return CompoundInterval._from_single_intervals_no_validation(interval_intersections).optimize_blocks()
+                        )
+                return CompoundInterval._from_single_intervals_no_validation(interval_intersections).optimize_blocks()
 
     def union(self, other: Location) -> Location:
         if self.strand != other.strand:
