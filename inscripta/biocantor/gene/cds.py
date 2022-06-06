@@ -1,6 +1,6 @@
 import warnings
 from itertools import count, zip_longest
-from typing import Iterator, List, Union, Optional, Dict, Hashable, Any, Iterable, Set, Tuple
+from typing import Iterator, List, Union, Optional, Dict, Hashable, Any, Set, Tuple, TYPE_CHECKING
 from uuid import UUID
 
 from methodtools import lru_cache
@@ -10,8 +10,10 @@ from inscripta.biocantor.exc import (
     NoSuchAncestorException,
     LocationOverlapException,
     MismatchedFrameException,
+    EmptyLocationException,
 )
-from inscripta.biocantor.gene import CDSPhase, CDSFrame, Codon, TranslationTable
+from inscripta.biocantor.gene.cds_frame import CDSPhase, CDSFrame
+from inscripta.biocantor.gene.codon import Codon, TranslationTable
 from inscripta.biocantor.gene.interval import AbstractFeatureInterval, QualifierValue
 from inscripta.biocantor.io.bed import RGB, BED12
 from inscripta.biocantor.io.gff3.constants import GFF_SOURCE, NULL_COLUMN, BioCantorFeatureTypes, BioCantorQualifiers
@@ -20,6 +22,9 @@ from inscripta.biocantor.location import Location, Strand, SingleInterval, Compo
 from inscripta.biocantor.parent import Parent, SequenceType
 from inscripta.biocantor.sequence import Sequence, Alphabet
 from inscripta.biocantor.util.hashing import digest_object
+
+if TYPE_CHECKING:
+    from inscripta.biocantor.gene.variants import VariantIntervalCollection, VariantInterval
 
 
 class CDSInterval(AbstractFeatureInterval):
@@ -266,10 +271,7 @@ class CDSInterval(AbstractFeatureInterval):
     ) -> "CDSInterval":
         """
         Allows construction of a TranscriptInterval from a chunk-relative location. This is a location
-        present on a sequence chunk, which could be a sequence produced
-
-        This location should
-        be built by something like this:
+        present on a sequence chunk, which should be built by the convenience function seq_chunk_to_parent:
 
         .. code-block:: python
 
@@ -324,7 +326,7 @@ class CDSInterval(AbstractFeatureInterval):
         parent_qualifiers: Optional[Dict[Hashable, Set[str]]] = None,
         chromosome_relative_coordinates: bool = True,
         raise_on_reserved_attributes: Optional[bool] = True,
-    ) -> Iterable[GFFRow]:
+    ) -> Iterator[GFFRow]:
         """Writes a GFF format list of lists for this CDS.
 
         The additional qualifiers are used when writing a hierarchical relationship back to files. GFF files
@@ -938,3 +940,24 @@ class CDSInterval(AbstractFeatureInterval):
             InvalidPositionException: If the position provided is not part of this CDSInterval.
         """
         return self.sequence_pos_to_cds(pos) // 3
+
+    def incorporate_variants(self, variants: Union["VariantInterval", "VariantIntervalCollection"]) -> "CDSInterval":
+        """
+        Incorporate all of the variant(s) for an input VariantInterval or VariantIntervalCollection,
+        producing a new CDSInterval with those changes incorporated.
+        """
+        new_loc = variants.lift_over_location(self.chunk_relative_location)
+        if new_loc.is_empty:
+            raise EmptyLocationException("Variant incorporation led to an EmptyLocation")
+        fn = CDSInterval.from_chunk_relative_location if self.is_chunk_relative else CDSInterval.from_location
+        new_frames = CDSInterval.construct_frames_from_location(new_loc, self.frames[0])
+        return fn(
+            new_loc,
+            cds_frames=new_frames,
+            sequence_guid=self.sequence_guid,
+            sequence_name=self.sequence_name,
+            protein_id=self.protein_id,
+            product=self.product,
+            qualifiers=self._export_qualifiers_to_list(),
+            guid=None,  # generate a new Interval GUID based on updated data
+        )

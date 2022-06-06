@@ -4,6 +4,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [UNRELEASED]
+### Added
+- Implemented `VariantInterval` and `VariantIntervalCollection`
+- Implemented VCF parser
+- Added functionality to `AnnotationCollection` to automatically associated Variants with Intervals, generating alternative haplotypes to use
+- Added functionality to all implementations of `AbstractInterval` to take a Variant and convert to a new haplotype
+- Adding missing `from_chunk_relative_location` on `FeatureInterval`
+
+### Fixed
+- `FeatureInterval.from_location` was not checking for chunk-relativity
+
+### Dependency notes
+- Python3.10 cannot be supported until `pysam` supports python3.10
+
+
 ## [0.17.0] 2022-05-24
 ### Fixed
 - `CDSInterval._prepare_single_exon_window_for_scan_codon_locations()` would improperly raise exceptions when operating in genome-relative coordinates
@@ -15,6 +30,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [0.16.1] 2022-05-10
 ### Fixed
 - GenBank writer module was not propagating locus tags to child features if the locus tag was derived from the gene symbol because the feature lacked a locus tag
+
 
 ## [0.16.0] 2022-04-13
 ### Fixed
@@ -31,6 +47,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Changed
 - Added flag `allow_duplicate_sequence_identifiers` to GenBank parser
 - GenBank parser now handles multiple isoforms of coding and non-coding genes
+
 
 ## [0.14.0] 2022-02-18
 ### Added

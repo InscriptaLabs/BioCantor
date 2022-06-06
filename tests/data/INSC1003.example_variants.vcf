@@ -1,0 +1,7 @@
+##fileformat=VCFv4.2
+##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">
+##FORMAT=<ID=PS,Number=1,Type=Integer,Description="Phase set identifier">
+#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	INSC1003
+FEPOIHMA_1	338	1	C	G	.	.	.	GT:PS	1|1:1
+FEPOIHMA_1	350	2	T	TGGG	.	.	.	GT:PS	1|1:1
+FEPOIHMA_1	450	3	C	A	.	.	.	GT:PS	0|1:2
