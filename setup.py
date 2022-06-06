@@ -12,7 +12,6 @@ with open(os.path.join(os.path.dirname(__file__), "inscripta", "biocantor", "__i
 extra_dependencies = {
     "io": ["gffutils", "pyvcf3", "pysam"],
     "test": ["black", "flake8", "pytest", "pytest-cov", "pytest-error-for-skips"],
-    "cgranges": ["cgranges"],
     "docs": [
         "Sphinx",
         "sphinx_rtd_theme",
