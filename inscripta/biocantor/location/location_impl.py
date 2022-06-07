@@ -1,6 +1,5 @@
 from functools import total_ordering, reduce
 from itertools import chain, islice
-from methodtools import lru_cache
 from typing import Optional, List, Iterator, Union, Tuple
 
 from Bio.SeqFeature import FeatureLocation, CompoundLocation
