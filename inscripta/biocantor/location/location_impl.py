@@ -1,5 +1,6 @@
 from functools import total_ordering, reduce
 from itertools import chain, islice
+from methodtools import lru_cache
 from typing import Optional, List, Iterator, Union, Tuple
 
 from Bio.SeqFeature import FeatureLocation, CompoundLocation
@@ -422,7 +423,7 @@ class SingleInterval(Location):
 class CompoundInterval(Location):
     """A location consisting of multiple intervals"""
 
-    __slots__ = ["__single_intervals", "_is_overlapping", "_starts", "_ends"]
+    __slots__ = ["_single_interval_store", "_is_overlapping", "_starts", "_ends"]
 
     def __init__(
         self,
@@ -465,6 +466,8 @@ class CompoundInterval(Location):
         self.strand = strand
         self._starts = tuple(sorted(starts))
         self._ends = tuple(sorted(ends))
+        self._single_interval_store = None
+        self._is_overlapping = None
 
         if any(start > end for start, end in zip(self._starts, self._ends)):
             raise InvalidPositionException("Block starts must be less than block ends")
@@ -476,11 +479,11 @@ class CompoundInterval(Location):
     @property
     def _single_intervals(self):
         """Lazy evaluation; cached result"""
-        if not hasattr(self, "__single_intervals"):
-            self.__single_intervals = [
+        if self._single_interval_store is None:
+            self._single_interval_store = [
                 SingleInterval(self._starts[i], self._ends[i], self.strand, self.parent) for i in range(self.num_blocks)
             ]
-        return self.__single_intervals
+        return self._single_interval_store
 
     @classmethod
     def from_single_intervals(cls, intervals: List[SingleInterval]) -> "CompoundInterval":
@@ -533,7 +536,7 @@ class CompoundInterval(Location):
     @property
     def is_overlapping(self) -> bool:
         """Does this interval have overlaps?"""
-        if not hasattr(self, "_is_overlapping"):
+        if self._is_overlapping is None:
             self._is_overlapping = any(
                 end > next_start for next_start, end in zip(islice(self._starts, 1, None), self._ends)
             )
