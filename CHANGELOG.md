@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Added functionality to `AnnotationCollection` to automatically associated Variants with Intervals, generating alternative haplotypes to use
 - Added functionality to all implementations of `AbstractInterval` to take a Variant and convert to a new haplotype
 - Adding missing `from_chunk_relative_location` on `FeatureInterval`
+- If the library `cgranges` is installed, intersection operations will make use if it to improve runtime
 
 ### Fixed
 - `FeatureInterval.from_location` was not checking for chunk-relativity
