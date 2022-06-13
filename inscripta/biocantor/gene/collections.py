@@ -33,6 +33,13 @@ from inscripta.biocantor.sequence import Alphabet
 from inscripta.biocantor.util.bins import bins
 from inscripta.biocantor.util.hashing import digest_object
 
+try:
+    import cgranges
+except ImportError:
+    HAS_CGRANGES = False
+else:
+    HAS_CGRANGES = True
+
 
 class AnnotationCollection(AbstractFeatureIntervalCollection):
     """An AnnotationCollection is a container to contain :class:`GeneInterval`,
@@ -185,17 +192,36 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
         enabling comparison of haplotypes rather than generating an entirely new AnnotationCollection centered
         on the alternative haplotypes. :meth:`incorporate_variants` can only apply one VariantIntervalCollection
         at a time to an entire Interval, whereas this will instead group them by haplotype.
-
-        TODO: Use an interval tree to make this not O(N^2)
         """
         if not self.variant_collections:
             self.alternative_haplotype_mapping = None
             return
 
         self.alternative_haplotype_mapping = {}
-        for variant_collection in self.variant_collections:
+
+        if HAS_CGRANGES is False:
+            for variant_collection in self.variant_collections:
+                for gene_or_feature in itertools.chain(self.genes, self.feature_collections):
+                    if gene_or_feature.chunk_relative_location.has_overlap(variant_collection.chunk_relative_location):
+                        new_gene_or_feature = gene_or_feature.incorporate_variants(variant_collection)
+                        if variant_collection.guid not in self.alternative_haplotype_mapping:
+                            self.alternative_haplotype_mapping[variant_collection.guid] = []
+                        self.alternative_haplotype_mapping[variant_collection.guid].append(new_gene_or_feature)
+        else:
+            tree = cgranges.cgranges()
+            for i, variant_collection in enumerate(self.variant_collections):
+                tree.add(
+                    "",
+                    variant_collection.genomic_start,
+                    variant_collection.genomic_end,
+                    i,
+                )
+            tree.index()
             for gene_or_feature in itertools.chain(self.genes, self.feature_collections):
-                if gene_or_feature.chunk_relative_location.has_overlap(variant_collection.chunk_relative_location):
+                for _, __, variant_collection_idx in tree.overlap(
+                    "", gene_or_feature.genomic_start, gene_or_feature.genomic_end
+                ):
+                    variant_collection = self.variant_collections[variant_collection_idx]
                     new_gene_or_feature = gene_or_feature.incorporate_variants(variant_collection)
                     if variant_collection.guid not in self.alternative_haplotype_mapping:
                         self.alternative_haplotype_mapping[variant_collection.guid] = []

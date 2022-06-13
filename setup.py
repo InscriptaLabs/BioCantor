@@ -25,7 +25,6 @@ extra_dependencies = {
     ],
     "optional": ["tornado>=5.1"],
 }
-
 all_dependencies = list(itertools.chain.from_iterable(extra_dependencies.values()))
 extra_dependencies["all"] = all_dependencies
 
