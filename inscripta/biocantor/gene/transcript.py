@@ -549,50 +549,50 @@ class TranscriptInterval(AbstractFeatureInterval):
         """Converts a relative position along the CDS to sequence coordinate."""
         if not self.is_coding:
             raise NoncodingTranscriptError("No CDS positions on non-coding transcript")
-        return self.cds.chromosome_location.relative_to_parent_pos(pos)
+        return self.cds.cds_pos_to_sequence(pos)
 
     def cds_pos_to_chunk_relative(self, pos: int) -> int:
         """Converts a relative position along the CDS to chunk-relative sequence coordinate."""
         if not self.is_coding:
             raise NoncodingTranscriptError("No CDS positions on non-coding transcript")
-        return self.cds.chunk_relative_location.relative_to_parent_pos(pos)
+        return self.cds.cds_pos_to_chunk_relative(pos)
 
     def cds_interval_to_sequence(self, rel_start: int, rel_end: int, rel_strand: Strand) -> Location:
         """Converts a contiguous interval relative to the CDS to a spliced location on the sequence."""
         if not self.is_coding:
             raise NoncodingTranscriptError("No CDS positions on non-coding transcript")
-        return self.cds.chromosome_location.relative_interval_to_parent_location(rel_start, rel_end, rel_strand)
+        return self.cds.cds_interval_to_sequence(rel_start, rel_end, rel_strand)
 
     def cds_interval_to_chunk_relative(self, rel_start: int, rel_end: int, rel_strand: Strand) -> Location:
         """Converts a contiguous interval relative to the CDS to a spliced location on the chunk-relative sequence."""
         if not self.is_coding:
             raise NoncodingTranscriptError("No CDS positions on non-coding transcript")
-        return self.cds.chunk_relative_location.relative_interval_to_parent_location(rel_start, rel_end, rel_strand)
+        return self.cds.cds_interval_to_chunk_relative(rel_start, rel_end, rel_strand)
 
     def sequence_pos_to_cds(self, pos: int) -> int:
         """Converts sequence position to relative position along the CDS."""
         if not self.is_coding:
             raise NoncodingTranscriptError("No CDS positions on non-coding transcript")
-        return self.cds.chromosome_location.parent_to_relative_pos(pos)
+        return self.cds.sequence_pos_to_cds(pos)
 
     def chunk_relative_pos_to_cds(self, pos: int) -> int:
         """Converts chunk-relative sequence position to relative position along the CDS."""
         if not self.is_coding:
             raise NoncodingTranscriptError("No CDS positions on non-coding transcript")
-        return self.cds.chunk_relative_location.parent_to_relative_pos(pos)
+        return self.cds.chunk_relative_pos_to_cds(pos)
 
     def sequence_interval_to_cds(self, chr_start: int, chr_end: int, chr_strand: Strand) -> Location:
         """Converts a contiguous interval on the sequence to a relative location within the CDS."""
         if not self.is_coding:
             raise NoncodingTranscriptError("No CDS positions on non-coding transcript")
         i = SingleInterval(chr_start, chr_end, chr_strand, parent=self.cds.chromosome_location.parent)
-        return self.cds.chromosome_location.parent_to_relative_location(i)
+        return self.cds.sequence_interval_to_cdsn(i)
 
     def chunk_relative_interval_to_cds(self, chr_start: int, chr_end: int, chr_strand: Strand) -> Location:
         """Converts a contiguous interval on the chunk-relative sequence to a relative location within the CDS."""
         if not self.is_coding:
             raise NoncodingTranscriptError("No CDS positions on non-coding transcript")
-        return self.cds.chunk_relative_location.parent_to_relative_location(
+        return self.cds.chunk_relative_interval_to_cds(
             SingleInterval(chr_start, chr_end, chr_strand, parent=self.cds.chunk_relative_location.parent)
         )
 
