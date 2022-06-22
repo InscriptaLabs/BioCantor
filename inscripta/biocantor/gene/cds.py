@@ -536,8 +536,8 @@ class CDSInterval(AbstractFeatureInterval):
 
     def _expand_coordinates_to_codons(self, chromosome_start: int, chromosome_end: int) -> Tuple[int, int]:
         """
-        Convenience function to take a pair of optional chromosome coordinates and return new coordinates
-        that contain only full codons.
+        Convenience function to take a pair of chromosome coordinates and return new coordinates that contain only
+        full codons.
         """
 
         if chromosome_start < self.chromosome_location.start:
