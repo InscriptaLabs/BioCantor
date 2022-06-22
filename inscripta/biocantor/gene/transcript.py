@@ -585,16 +585,13 @@ class TranscriptInterval(AbstractFeatureInterval):
         """Converts a contiguous interval on the sequence to a relative location within the CDS."""
         if not self.is_coding:
             raise NoncodingTranscriptError("No CDS positions on non-coding transcript")
-        i = SingleInterval(chr_start, chr_end, chr_strand, parent=self.cds.chromosome_location.parent)
-        return self.cds.sequence_interval_to_cds(i)
+        return self.cds.sequence_interval_to_cds(chr_start, chr_end, chr_strand)
 
     def chunk_relative_interval_to_cds(self, chr_start: int, chr_end: int, chr_strand: Strand) -> Location:
         """Converts a contiguous interval on the chunk-relative sequence to a relative location within the CDS."""
         if not self.is_coding:
             raise NoncodingTranscriptError("No CDS positions on non-coding transcript")
-        return self.cds.chunk_relative_interval_to_cds(
-            SingleInterval(chr_start, chr_end, chr_strand, parent=self.cds.chunk_relative_location.parent)
-        )
+        return self.cds.chunk_relative_interval_to_cds(chr_start, chr_end, chr_strand)
 
     def cds_pos_to_transcript(self, pos: int) -> int:
         """Converts a relative position along the CDS to a relative position along this transcript."""
