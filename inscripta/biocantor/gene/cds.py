@@ -527,7 +527,7 @@ class CDSInterval(AbstractFeatureInterval):
             return None
         if chromosome_start is None:
             chromosome_start = self.start
-        if not chromosome_end:
+        if chromosome_end is None:
             chromosome_end = self.end
         if expand_window_to_partial_codons:
             chromosome_start, chromosome_end = self._expand_coordinates_to_codons(chromosome_start, chromosome_end)
