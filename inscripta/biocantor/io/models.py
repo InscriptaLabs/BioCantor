@@ -5,7 +5,7 @@ and deserializing the models.
 from typing import List, Optional, ClassVar, Type, Dict, Union
 from uuid import UUID
 
-from marshmallow import Schema, post_dump # noqa: F401
+from marshmallow import Schema, post_dump  # noqa: F401
 from marshmallow_dataclass import dataclass
 
 from inscripta.biocantor.gene import GeneInterval, FeatureIntervalCollection
