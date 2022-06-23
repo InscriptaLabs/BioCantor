@@ -12,6 +12,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Added functionality to all implementations of `AbstractInterval` to take a Variant and convert to a new haplotype
 - Adding missing `from_chunk_relative_location` on `FeatureInterval`
 - If the library `cgranges` is installed, intersection operations will make use if it to improve runtime
+- Added ability to expand window when scanning codons on `CSInterval` rather than the default behavior (to only include complete codons)
+
+### Changed
+- Moved CDS coordinate conversion logic from `TranscriptInterval` to `CDSInterval`. The original functions on `TranscriptInterval` still exist, and call the new child functions.
 
 ### Fixed
 - `FeatureInterval.from_location` was not checking for chunk-relativity
