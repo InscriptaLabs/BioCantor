@@ -5,7 +5,7 @@ and deserializing the models.
 from typing import List, Optional, ClassVar, Type, Dict, Union
 from uuid import UUID
 
-from marshmallow import Schema  # noqa: F401
+from marshmallow import Schema, post_dump # noqa: F401
 from marshmallow_dataclass import dataclass
 
 from inscripta.biocantor.gene import GeneInterval, FeatureIntervalCollection
@@ -389,6 +389,16 @@ class AnnotationCollectionModel(BaseModel):
     end: Optional[int] = None
     completely_within: Optional[bool] = None
     parent_or_seq_chunk_parent: Optional[ParentModel] = None
+
+    @post_dump(pass_original=True, pass_many=False)
+    def post_dump(self, data, model, many=False):
+        """
+        If the object being dumped is an AnnotationCollection, convert the ``_parent_or_seq_chunk_parent``
+        value to ``parent_or_seq_chunk_parent``.
+        """
+        if isinstance(model, AnnotationCollection):
+            data["parent_or_seq_chunk_parent"] = model._parent_to_dict()
+        return data
 
     def to_annotation_collection(self, parent_or_seq_chunk_parent: Optional[Parent] = None) -> "AnnotationCollection":
         """Produce an :class:`~biocantor.gene.collections.AnnotationCollection` from this model."""

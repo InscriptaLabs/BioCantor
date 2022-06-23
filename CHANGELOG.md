@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Fixed
 - `FeatureInterval.from_location` was not checking for chunk-relativity
 - `CompondInterval._single_intervals` caching was not working as intended
+- Serializing `AnnotationCollection` to disk via `AnnotationCollectionModel.Schema().dump()` was not serializing sequence information
 
 ### Dependency notes
 - Python3.10 cannot be supported until `pysam` supports python3.10
