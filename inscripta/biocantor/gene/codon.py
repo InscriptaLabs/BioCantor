@@ -114,9 +114,11 @@ class Codon(Enum):
         include_self
             Include this codon in returned list
         """
-        codons = [Codon(codon_str) for codon_str in aacodons[self.translate()]]
-        if not include_self:
-            codons.remove(self)
+        codons = [
+            Codon(codon_str)
+            for codon_str in aacodons[self.translate()]
+            if include_self is True or codon_str != self.value
+        ]
         return codons
 
     @property
