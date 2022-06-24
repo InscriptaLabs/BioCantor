@@ -3,6 +3,7 @@ Data models. These models allow for validation of inputs to a BioCantor model, a
 and deserializing the models.
 """
 from typing import List, Optional, ClassVar, Type, Dict, Union
+from dataclasses import field
 from uuid import UUID
 
 from marshmallow import Schema, post_dump  # noqa: F401
@@ -37,7 +38,7 @@ class ParentModel(BaseModel):
 
     seq: Optional[str] = None
     alphabet: Optional[Alphabet] = Alphabet.NT_EXTENDED_GAPPED
-    sequence_name: Optional[Union[UUID, str]] = None
+    sequence_name: Optional[str] = None
     type: Optional[Union[SequenceType, str]] = SequenceType.CHROMOSOME
     start: Optional[int] = None
     end: Optional[int] = None
@@ -376,9 +377,9 @@ class AnnotationCollectionModel(BaseModel):
     ``end``.
     """
 
-    feature_collections: Optional[List[FeatureIntervalCollectionModel]] = None
-    genes: Optional[List[GeneIntervalModel]] = None
-    variant_collections: Optional[List[VariantIntervalCollectionModel]] = None
+    feature_collections: List[FeatureIntervalCollectionModel] = field(default_factory=list)
+    genes: List[GeneIntervalModel] = field(default_factory=list)
+    variant_collections: List[VariantIntervalCollectionModel] = field(default_factory=list)
     name: Optional[str] = None
     id: Optional[str] = None
     sequence_name: Optional[str] = None
@@ -406,24 +407,13 @@ class AnnotationCollectionModel(BaseModel):
         if not parent_or_seq_chunk_parent and self.parent_or_seq_chunk_parent:
             parent_or_seq_chunk_parent = self.parent_or_seq_chunk_parent.to_parent()
 
-        if self.genes:
-            genes = [gene.to_gene_interval(parent_or_seq_chunk_parent) for gene in self.genes]
-        else:
-            genes = None
-
-        if self.feature_collections:
-            feature_collections = [
-                feat.to_feature_collection(parent_or_seq_chunk_parent) for feat in self.feature_collections
-            ]
-        else:
-            feature_collections = None
-
-        if self.variant_collections:
-            variant_collections = [
-                var.to_variant_interval_collection(parent_or_seq_chunk_parent) for var in self.variant_collections
-            ]
-        else:
-            variant_collections = None
+        genes = [gene.to_gene_interval(parent_or_seq_chunk_parent) for gene in self.genes]
+        feature_collections = [
+            feat.to_feature_collection(parent_or_seq_chunk_parent) for feat in self.feature_collections
+        ]
+        variant_collections = [
+            var.to_variant_interval_collection(parent_or_seq_chunk_parent) for var in self.variant_collections
+        ]
 
         return AnnotationCollection(
             feature_collections=feature_collections,

@@ -20,7 +20,7 @@ from inscripta.biocantor.io.models import (
 
 
 model_without_parent = AnnotationCollectionModel(
-    feature_collections=None,
+    feature_collections=[],
     genes=[
         GeneIntervalModel(
             transcripts=[

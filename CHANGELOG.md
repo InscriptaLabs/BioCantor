@@ -16,6 +16,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Changed
 - Moved CDS coordinate conversion logic from `TranscriptInterval` to `CDSInterval`. The original functions on `TranscriptInterval` still exist, and call the new child functions.
+- Default value for all children of `AnnotationCollectionModel` are now an empty list instead of None
+- `UUID` is no longer a valid `sequence_name` of `ParentModel`
 
 ### Fixed
 - `FeatureInterval.from_location` was not checking for chunk-relativity
