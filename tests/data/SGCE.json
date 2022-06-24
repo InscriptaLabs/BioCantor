@@ -1,5 +1,5 @@
 {
-    "feature_collections": null,
+    "feature_collections": [],
     "genes": [
         {
             "transcripts": [
@@ -2050,6 +2050,7 @@
             "gene_guid": null
         }
     ],
+    "variant_collections": [],
     "name": null,
     "id": null,
     "sequence_name": "NC_000007.14",

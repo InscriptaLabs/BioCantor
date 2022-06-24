@@ -897,12 +897,12 @@ class BaseGenBankParser(ABC):
                     self.parsed_variants.get(seqrecord.id), many=True
                 )
             else:
-                variant_collections = None
+                variant_collections = []
 
             annotation = AnnotationCollectionModel.Schema().load(
                 dict(
-                    genes=genes if genes else None,
-                    feature_collections=feature_collections if feature_collections else None,
+                    genes=genes,
+                    feature_collections=feature_collections,
                     variant_collections=variant_collections,
                     name=seqrecord.id,
                     sequence_name=seqrecord.id,
