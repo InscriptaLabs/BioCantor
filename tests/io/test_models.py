@@ -10,6 +10,8 @@ from inscripta.biocantor.io.models import (
     AnnotationCollectionModel,
     TranscriptIntervalModel,
     GeneIntervalModel,
+    FeatureIntervalCollectionModel,
+    FeatureIntervalModel,
     Strand,
     CDSFrame,
     Biotype,
@@ -18,6 +20,22 @@ from inscripta.biocantor.io.models import (
     ParentModel,
 )
 
+
+empty_model = AnnotationCollectionModel()
+
+geneless_model = AnnotationCollectionModel(
+    feature_collections=[
+        FeatureIntervalCollectionModel(
+            feature_intervals=[
+                FeatureIntervalModel(
+                    interval_starts=[0],
+                    interval_ends=[10],
+                    strand=Strand.PLUS,
+                )
+            ]
+        )
+    ]
+)
 
 model_without_parent = AnnotationCollectionModel(
     feature_collections=[],
@@ -343,3 +361,15 @@ class TestAnnotationCollectionModel:
         assert dumped[0]["parent_or_seq_chunk_parent"] is not None
         dumped = AnnotationCollectionModel.Schema().dump([model_without_parent], many=True)
         assert dumped[0]["parent_or_seq_chunk_parent"] is None
+
+    def test_empty_model(self):
+        dumped = AnnotationCollectionModel.Schema().dump(empty_model)
+        assert dumped
+        loaded = AnnotationCollectionModel.Schema().load(dumped)
+        assert loaded
+
+    def test_geneless_model(self):
+        dumped = AnnotationCollectionModel.Schema().dump(geneless_model)
+        assert dumped
+        loaded = AnnotationCollectionModel.Schema().load(dumped)
+        assert loaded
