@@ -1,5 +1,5 @@
 {
-    "feature_collections": null,
+    "feature_collections": [],
     "genes": [
         {
             "transcripts": [
@@ -155,6 +155,7 @@
             "gene_guid": null
         }
     ],
+    "variant_collections": [],
     "name": null,
     "id": null,
     "sequence_name": "chr1",
@@ -163,5 +164,6 @@
     "qualifiers": null,
     "start": null,
     "end": null,
-    "completely_within": null
+    "completely_within": null,
+    "parent_or_seq_chunk_parent": null
 }

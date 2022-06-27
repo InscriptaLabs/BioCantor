@@ -312,17 +312,13 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
             parent_or_seq_chunk_parent = None
 
         return dict(
-            genes=([gene.to_dict(chromosome_relative_coordinates) for gene in self.genes] if self.genes else None),
+            genes=([gene.to_dict(chromosome_relative_coordinates) for gene in self.genes]),
             feature_collections=(
                 [feature.to_dict(chromosome_relative_coordinates) for feature in self.feature_collections]
-            )
-            if self.feature_collections
-            else None,
+            ),
             variant_collections=(
                 [variant.to_dict(chromosome_relative_coordinates) for variant in self.variant_collections]
-            )
-            if self.variant_collections
-            else None,
+            ),
             name=self.name,
             id=self.id,
             qualifiers=self._export_qualifiers_to_list(),
