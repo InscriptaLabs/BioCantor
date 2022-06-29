@@ -8,6 +8,7 @@ from uuid import UUID
 
 from Bio import SeqIO
 from Bio.SeqRecord import SeqRecord
+
 from inscripta.biocantor.gene.collections import AnnotationCollection
 from inscripta.biocantor.io.fasta.exc import FastaExportError
 from inscripta.biocantor.io.models import AnnotationCollectionModel

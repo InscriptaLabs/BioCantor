@@ -43,7 +43,7 @@ class TestGff3Parser:
         rec = recs[0]
         genes = rec.annotation.genes
         assert len(genes) == 1
-        assert rec.annotation.feature_collections is None
+        assert not rec.annotation.feature_collections
         gene = genes[0]
         txs = gene.transcripts
         assert len(txs) == 1

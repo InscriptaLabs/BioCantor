@@ -100,7 +100,7 @@ class TestEukaryoticGenbankParser:
             with pytest.warns(GenBankEmptyGeneWarning):
                 parsed = list(parse_genbank(fh))[0]
 
-        assert parsed.annotation.feature_collections is None
+        assert not parsed.annotation.feature_collections
         assert parsed.annotation.sequence_name == "CM021111.1"
         assert len(parsed.annotation.genes) == 5
         assert {x.gene_symbol for x in parsed.annotation.genes if x.gene_symbol} == {"GDH3", "BDH2", "BDH1", "ECM1"}
@@ -141,6 +141,7 @@ class TestProkaryoticGenBankParser:
         with open(gbk, "r") as fh:
             parsed = list(parse_genbank(fh))[0]
 
+        assert len(parsed.annotation.genes) == 7
         assert {x.gene_symbol for x in parsed.annotation.genes if x.gene_symbol} == {
             "thrA",
             "thrB",
@@ -795,6 +796,7 @@ class TestGenBankFeatures:
                         )
                     ],
                 ),
+                ("variant_collections", []),
                 ("name", "CM021111.1"),
                 ("id", None),
                 ("sequence_name", "CM021111.1"),
@@ -883,7 +885,7 @@ class TestSortedParser:
         c = recs[0].annotation
         assert AnnotationCollectionModel.Schema().dump(c) == OrderedDict(
             [
-                ("feature_collections", None),
+                ("feature_collections", []),
                 (
                     "genes",
                     [
@@ -1041,6 +1043,7 @@ class TestSortedParser:
                         ),
                     ],
                 ),
+                ("variant_collections", []),
                 ("name", "FEPOIHMA_1"),
                 ("id", None),
                 ("sequence_name", "FEPOIHMA_1"),
@@ -1060,7 +1063,7 @@ class TestSortedParser:
         c = recs[0].annotation
         assert AnnotationCollectionModel.Schema().dump(c) == OrderedDict(
             [
-                ("feature_collections", None),
+                ("feature_collections", []),
                 (
                     "genes",
                     [
@@ -1186,6 +1189,7 @@ class TestSortedParser:
                         ),
                     ],
                 ),
+                ("variant_collections", []),
                 ("name", "CM021111.1"),
                 ("id", None),
                 ("sequence_name", "CM021111.1"),
@@ -1236,7 +1240,7 @@ class TestHybridParser:
         assert len(hybrid_recs[0].annotation.genes) == 7
         assert len(lt_recs[0].annotation.genes) == 5
         assert len(lt_recs[0].annotation.feature_collections) == 4
-        assert hybrid_recs[0].annotation.feature_collections is None
+        assert not hybrid_recs[0].annotation.feature_collections
 
     def test_toy_overlapping_genes_cds_only(self, test_data_dir):
         genbank = test_data_dir / "ToyChr_R64v5_overlapping_genes.gb"
@@ -1282,7 +1286,13 @@ class TestExceptionsWarnings:
         with pytest.raises(DuplicateSequenceException):
             _ = list(parse_genbank(test_data_dir / gbk))
         # turn off the flag and now there is no exception
-        _ = list(parse_genbank(test_data_dir / gbk, allow_duplicate_sequence_identifiers=True))
+        recs = list(parse_genbank(test_data_dir / gbk, allow_duplicate_sequence_identifiers=True))
+        # there are 2 records with genes
+        assert len(recs) == 2
+        assert len(recs[0].annotation.genes) == 5
+        assert len(recs[1].annotation.genes) == 1
+        assert recs[0].annotation.qualifiers
+        assert not recs[1].annotation.qualifiers
 
     def test_multiple_transcripts(self, test_data_dir):
         gbk = test_data_dir / "INSC1003_test_multiple_transcripts.gbk"

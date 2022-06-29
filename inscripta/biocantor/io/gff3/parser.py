@@ -497,7 +497,7 @@ def default_parse_func(db: FeatureDB, chroms: List[str]) -> Iterable[AnnotationC
         if non_gene_feature_types:
             parsed_features = _parse_features(chrom, db, non_gene_feature_types)
         else:
-            parsed_features = None
+            parsed_features = []
 
         annot = AnnotationCollectionModel.Schema().load(
             dict(genes=parsed_genes, feature_collections=parsed_features, sequence_name=chrom)

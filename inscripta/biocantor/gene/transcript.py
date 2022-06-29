@@ -3,7 +3,7 @@ Object representation of Transcripts.
 
 Each object is capable of exporting itself to BED and GFF3.
 """
-from typing import Optional, Any, Dict, Iterable, Hashable, Set, List
+from typing import Optional, Any, Dict, Iterable, Iterator, Hashable, Set, List, Union, TYPE_CHECKING
 from uuid import UUID
 
 from methodtools import lru_cache
@@ -31,6 +31,9 @@ from inscripta.biocantor.parent.parent import Parent, SequenceType
 from inscripta.biocantor.sequence.sequence import Sequence
 from inscripta.biocantor.util.bins import bins
 from inscripta.biocantor.util.hashing import digest_object
+
+if TYPE_CHECKING:
+    from inscripta.biocantor.gene.variants import VariantIntervalCollection, VariantInterval
 
 
 class TranscriptInterval(AbstractFeatureInterval):
@@ -427,10 +430,7 @@ class TranscriptInterval(AbstractFeatureInterval):
     ) -> "TranscriptInterval":
         """
         Allows construction of a TranscriptInterval from a chunk-relative location. This is a location
-        present on a sequence chunk, which could be a sequence produced
-
-        This location should
-        be built by something like this:
+        present on a sequence chunk, which should be built by the convenience function seq_chunk_to_parent:
 
         .. code-block:: python
 
@@ -549,52 +549,49 @@ class TranscriptInterval(AbstractFeatureInterval):
         """Converts a relative position along the CDS to sequence coordinate."""
         if not self.is_coding:
             raise NoncodingTranscriptError("No CDS positions on non-coding transcript")
-        return self.cds.chromosome_location.relative_to_parent_pos(pos)
+        return self.cds.cds_pos_to_sequence(pos)
 
     def cds_pos_to_chunk_relative(self, pos: int) -> int:
         """Converts a relative position along the CDS to chunk-relative sequence coordinate."""
         if not self.is_coding:
             raise NoncodingTranscriptError("No CDS positions on non-coding transcript")
-        return self.cds.chunk_relative_location.relative_to_parent_pos(pos)
+        return self.cds.cds_pos_to_chunk_relative(pos)
 
     def cds_interval_to_sequence(self, rel_start: int, rel_end: int, rel_strand: Strand) -> Location:
         """Converts a contiguous interval relative to the CDS to a spliced location on the sequence."""
         if not self.is_coding:
             raise NoncodingTranscriptError("No CDS positions on non-coding transcript")
-        return self.cds.chromosome_location.relative_interval_to_parent_location(rel_start, rel_end, rel_strand)
+        return self.cds.cds_interval_to_sequence(rel_start, rel_end, rel_strand)
 
     def cds_interval_to_chunk_relative(self, rel_start: int, rel_end: int, rel_strand: Strand) -> Location:
         """Converts a contiguous interval relative to the CDS to a spliced location on the chunk-relative sequence."""
         if not self.is_coding:
             raise NoncodingTranscriptError("No CDS positions on non-coding transcript")
-        return self.cds.chunk_relative_location.relative_interval_to_parent_location(rel_start, rel_end, rel_strand)
+        return self.cds.cds_interval_to_chunk_relative(rel_start, rel_end, rel_strand)
 
     def sequence_pos_to_cds(self, pos: int) -> int:
         """Converts sequence position to relative position along the CDS."""
         if not self.is_coding:
             raise NoncodingTranscriptError("No CDS positions on non-coding transcript")
-        return self.cds.chromosome_location.parent_to_relative_pos(pos)
+        return self.cds.sequence_pos_to_cds(pos)
 
     def chunk_relative_pos_to_cds(self, pos: int) -> int:
         """Converts chunk-relative sequence position to relative position along the CDS."""
         if not self.is_coding:
             raise NoncodingTranscriptError("No CDS positions on non-coding transcript")
-        return self.cds.chunk_relative_location.parent_to_relative_pos(pos)
+        return self.cds.chunk_relative_pos_to_cds(pos)
 
     def sequence_interval_to_cds(self, chr_start: int, chr_end: int, chr_strand: Strand) -> Location:
         """Converts a contiguous interval on the sequence to a relative location within the CDS."""
         if not self.is_coding:
             raise NoncodingTranscriptError("No CDS positions on non-coding transcript")
-        i = SingleInterval(chr_start, chr_end, chr_strand, parent=self.cds.chromosome_location.parent)
-        return self.cds.chromosome_location.parent_to_relative_location(i)
+        return self.cds.sequence_interval_to_cds(chr_start, chr_end, chr_strand)
 
     def chunk_relative_interval_to_cds(self, chr_start: int, chr_end: int, chr_strand: Strand) -> Location:
         """Converts a contiguous interval on the chunk-relative sequence to a relative location within the CDS."""
         if not self.is_coding:
             raise NoncodingTranscriptError("No CDS positions on non-coding transcript")
-        return self.cds.chunk_relative_location.parent_to_relative_location(
-            SingleInterval(chr_start, chr_end, chr_strand, parent=self.cds.chunk_relative_location.parent)
-        )
+        return self.cds.chunk_relative_interval_to_cds(chr_start, chr_end, chr_strand)
 
     def cds_pos_to_transcript(self, pos: int) -> int:
         """Converts a relative position along the CDS to a relative position along this transcript."""
@@ -692,7 +689,7 @@ class TranscriptInterval(AbstractFeatureInterval):
         parent_qualifiers: Optional[Dict[Hashable, Set[str]]] = None,
         chromosome_relative_coordinates: bool = True,
         raise_on_reserved_attributes: Optional[bool] = True,
-    ) -> Iterable[GFFRow]:
+    ) -> Iterator[GFFRow]:
         """Writes a GFF format list of lists for this transcript.
 
         The additional qualifiers are used when writing a hierarchical relationship back to files. GFF files
@@ -851,4 +848,39 @@ class TranscriptInterval(AbstractFeatureInterval):
             num_blocks,
             block_sizes,
             block_starts,
+        )
+
+    def incorporate_variants(
+        self, variants: Union["VariantInterval", "VariantIntervalCollection"]
+    ) -> "TranscriptInterval":
+        """
+        Incorporate all of the variant(s) for an input VariantInterval or VariantIntervalCollection,
+        producing a new TranscriptInterval with those changes incorporated.
+        """
+        if self.is_coding:
+            new_cds = self.cds.incorporate_variants(variants)
+        else:
+            new_cds = None
+        new_loc = variants.lift_over_location(self.chunk_relative_location)
+        if new_loc.is_empty:
+            raise EmptyLocationException("Variant incorporation led to an EmptyLocation")
+        fn = (
+            TranscriptInterval.from_chunk_relative_location
+            if self.is_chunk_relative
+            else TranscriptInterval.from_location
+        )
+        return fn(
+            new_loc,
+            cds=new_cds,
+            qualifiers=self._export_qualifiers_to_list(),
+            is_primary_tx=self.is_primary_tx,
+            transcript_id=self.transcript_id,
+            transcript_symbol=self.transcript_symbol,
+            transcript_type=self.transcript_type.name if self.transcript_type else None,
+            sequence_guid=self.sequence_guid,
+            sequence_name=self.sequence_name,
+            protein_id=self.protein_id,
+            product=self.product,
+            guid=None,  # generate a new Interval GUID based on updated data
+            transcript_guid=self.transcript_guid,
         )

@@ -3,20 +3,23 @@ Data models. These models allow for validation of inputs to a BioCantor model, a
 and deserializing the models.
 """
 from typing import List, Optional, ClassVar, Type, Dict, Union
+from dataclasses import field
 from uuid import UUID
 
-from marshmallow import Schema  # noqa: F401
+from marshmallow import Schema, post_dump  # noqa: F401
 from marshmallow_dataclass import dataclass
 
+from inscripta.biocantor.gene import GeneInterval, FeatureIntervalCollection
 from inscripta.biocantor.gene.biotype import Biotype
 from inscripta.biocantor.gene.cds_frame import CDSFrame
-from inscripta.biocantor.gene.collections import GeneInterval, FeatureIntervalCollection, AnnotationCollection
+from inscripta.biocantor.gene.collections import AnnotationCollection
 from inscripta.biocantor.gene.feature import FeatureInterval
 from inscripta.biocantor.gene.transcript import TranscriptInterval
+from inscripta.biocantor.gene.variants import VariantInterval, VariantIntervalCollection
+from inscripta.biocantor.io.exc import InvalidInputError
 from inscripta.biocantor.location.strand import Strand
 from inscripta.biocantor.parent import Parent
 from inscripta.biocantor.sequence.sequence import Alphabet, SequenceType
-from inscripta.biocantor.io.exc import InvalidInputError
 
 
 @dataclass
@@ -35,7 +38,7 @@ class ParentModel(BaseModel):
 
     seq: Optional[str] = None
     alphabet: Optional[Alphabet] = Alphabet.NT_EXTENDED_GAPPED
-    sequence_name: Optional[Union[UUID, str]] = None
+    sequence_name: Optional[str] = None
     type: Optional[Union[SequenceType, str]] = SequenceType.CHROMOSOME
     start: Optional[int] = None
     end: Optional[int] = None
@@ -177,9 +180,48 @@ class TranscriptIntervalModel(BaseModel):
 
     @staticmethod
     def from_transcript_interval(transcript_interval: TranscriptInterval) -> "TranscriptIntervalModel":
-        """Convert to a :class:`~biocantor.models.TranscriptIntervalModel`"""
+        """Convert to a :class:`~biocantor.io.models.TranscriptIntervalModel`"""
 
         return TranscriptIntervalModel.Schema().load(transcript_interval.to_dict())
+
+
+@dataclass
+class VariantIntervalModel(BaseModel):
+    """
+    Data model that allows construction of :class:`~biocantor.gene.variants.VariantInterval` object.
+    """
+
+    start: int
+    end: int
+    sequence: str
+    variant_type: str
+    phase_block: Optional[int] = None
+    variant_interval_guid: Optional[UUID] = None
+    variant_guid: Optional[UUID] = None
+    variant_name: Optional[str] = None
+    variant_id: Optional[str] = None
+    qualifiers: Optional[Dict[str, List[Union[str, int, bool, float]]]] = None
+
+    @staticmethod
+    def from_variant_interval(variant_interval: VariantInterval) -> "VariantIntervalModel":
+        """Convert to a :class:`~biocantor.io.models.VariantIntervalModel`"""
+
+        return VariantIntervalModel.Schema().load(variant_interval.to_dict())
+
+    def to_variant_interval(self, parent_or_seq_chunk_parent: Optional[Parent] = None) -> VariantInterval:
+        return VariantInterval(
+            self.start,
+            self.end,
+            self.sequence,
+            self.variant_type,
+            self.phase_block,
+            self.variant_interval_guid,
+            self.variant_guid,
+            self.variant_name,
+            self.variant_id,
+            self.qualifiers,
+            parent_or_seq_chunk_parent,
+        )
 
 
 @dataclass
@@ -272,6 +314,52 @@ class FeatureIntervalCollectionModel(BaseModel):
 
 
 @dataclass
+class VariantIntervalCollectionModel(BaseModel):
+    """
+    Data model that allows construction of :class:`~biocantor.gene.collections.VariantCollection` object.
+
+    This is a container for one or more :class:`~biocantor.gene.variants.VariantInterval` objects.
+
+    VariantIntervalCollection stores one or more variants on a phase block.
+    """
+
+    variant_intervals: List[VariantIntervalModel]
+    variant_collection_name: Optional[str] = None
+    variant_collection_id: Optional[str] = None
+    sequence_name: Optional[str] = None
+    sequence_guid: Optional[UUID] = None
+    variant_collection_guid: Optional[UUID] = None
+    qualifiers: Optional[Dict[str, List[Union[str, int, bool, float]]]] = None
+
+    @staticmethod
+    def from_variant_interval_collection(
+        variant_collection: VariantIntervalCollection,
+    ) -> "VariantIntervalCollectionModel":
+        """Convert to a :class:`~biocantor.io.models.VariantIntervalModel`"""
+
+        return VariantIntervalCollectionModel.Schema().load(variant_collection.to_dict())
+
+    def to_variant_interval_collection(
+        self, parent_or_seq_chunk_parent: Optional[Parent] = None
+    ) -> VariantIntervalCollection:
+        """Produce a variant collection from a :class:`VariantIntervalCollectionModel`."""
+
+        variant_intervals = [
+            variant.to_variant_interval(parent_or_seq_chunk_parent) for variant in self.variant_intervals
+        ]
+        return VariantIntervalCollection(
+            variant_intervals,
+            self.variant_collection_name,
+            self.variant_collection_id,
+            self.sequence_name,
+            self.sequence_guid,
+            self.variant_collection_guid,
+            self.qualifiers,
+            parent_or_seq_chunk_parent,
+        )
+
+
+@dataclass
 class AnnotationCollectionModel(BaseModel):
     """
     Data model that allows construction of :class:`~biocantor.gene.collections.AnnotationCollection` object.
@@ -289,8 +377,9 @@ class AnnotationCollectionModel(BaseModel):
     ``end``.
     """
 
-    feature_collections: Optional[List[FeatureIntervalCollectionModel]] = None
-    genes: Optional[List[GeneIntervalModel]] = None
+    feature_collections: List[FeatureIntervalCollectionModel] = field(default_factory=list)
+    genes: List[GeneIntervalModel] = field(default_factory=list)
+    variant_collections: List[VariantIntervalCollectionModel] = field(default_factory=list)
     name: Optional[str] = None
     id: Optional[str] = None
     sequence_name: Optional[str] = None
@@ -302,27 +391,34 @@ class AnnotationCollectionModel(BaseModel):
     completely_within: Optional[bool] = None
     parent_or_seq_chunk_parent: Optional[ParentModel] = None
 
+    @post_dump(pass_original=True, pass_many=False)
+    def post_dump(self, data, model, many=False):
+        """
+        If the object being dumped is an AnnotationCollection, convert the ``_parent_or_seq_chunk_parent``
+        value to ``parent_or_seq_chunk_parent``.
+        """
+        if isinstance(model, AnnotationCollection):
+            data["parent_or_seq_chunk_parent"] = model._parent_to_dict()
+        return data
+
     def to_annotation_collection(self, parent_or_seq_chunk_parent: Optional[Parent] = None) -> "AnnotationCollection":
         """Produce an :class:`~biocantor.gene.collections.AnnotationCollection` from this model."""
 
         if not parent_or_seq_chunk_parent and self.parent_or_seq_chunk_parent:
             parent_or_seq_chunk_parent = self.parent_or_seq_chunk_parent.to_parent()
 
-        if self.genes:
-            genes = [gene.to_gene_interval(parent_or_seq_chunk_parent) for gene in self.genes]
-        else:
-            genes = None
-
-        if self.feature_collections:
-            feature_collections = [
-                feat.to_feature_collection(parent_or_seq_chunk_parent) for feat in self.feature_collections
-            ]
-        else:
-            feature_collections = None
+        genes = [gene.to_gene_interval(parent_or_seq_chunk_parent) for gene in self.genes]
+        feature_collections = [
+            feat.to_feature_collection(parent_or_seq_chunk_parent) for feat in self.feature_collections
+        ]
+        variant_collections = [
+            var.to_variant_interval_collection(parent_or_seq_chunk_parent) for var in self.variant_collections
+        ]
 
         return AnnotationCollection(
             feature_collections=feature_collections,
             genes=genes,
+            variant_collections=variant_collections,
             name=self.name,
             id=self.id,
             qualifiers=self.qualifiers,

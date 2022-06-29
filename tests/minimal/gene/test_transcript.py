@@ -895,6 +895,21 @@ class TestTranscript:
         with pytest.raises(NoncodingTranscriptError):
             _ = tx.has_in_frame_stop
 
+    @pytest.mark.parametrize(
+        "parent,expected",
+        [
+            (parent, True),
+            (parent_genome2_1_15, True),
+            (parent_no_seq, False),
+            (parent_no_seq_with_id, False),
+            (parent_nonstandard_type, False),
+            (parent_nonstandard_type_with_sequence, True),
+        ],
+    )
+    def test_has_sequence(self, parent, expected):
+        interval = e3_spliced.to_transcript_interval(parent_or_seq_chunk_parent=parent)
+        assert interval.has_sequence == expected
+
 
 class TestTranscriptWithoutModel:
     @pytest.mark.parametrize(

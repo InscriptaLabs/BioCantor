@@ -1,6 +1,6 @@
 import warnings
 from itertools import count, zip_longest
-from typing import Iterator, List, Union, Optional, Dict, Hashable, Any, Iterable, Set, Tuple
+from typing import Iterator, List, Union, Optional, Dict, Hashable, Any, Set, Tuple, TYPE_CHECKING
 from uuid import UUID
 
 from methodtools import lru_cache
@@ -10,8 +10,10 @@ from inscripta.biocantor.exc import (
     NoSuchAncestorException,
     LocationOverlapException,
     MismatchedFrameException,
+    EmptyLocationException,
 )
-from inscripta.biocantor.gene import CDSPhase, CDSFrame, Codon, TranslationTable
+from inscripta.biocantor.gene.cds_frame import CDSPhase, CDSFrame
+from inscripta.biocantor.gene.codon import Codon, TranslationTable
 from inscripta.biocantor.gene.interval import AbstractFeatureInterval, QualifierValue
 from inscripta.biocantor.io.bed import RGB, BED12
 from inscripta.biocantor.io.gff3.constants import GFF_SOURCE, NULL_COLUMN, BioCantorFeatureTypes, BioCantorQualifiers
@@ -20,6 +22,9 @@ from inscripta.biocantor.location import Location, Strand, SingleInterval, Compo
 from inscripta.biocantor.parent import Parent, SequenceType
 from inscripta.biocantor.sequence import Sequence, Alphabet
 from inscripta.biocantor.util.hashing import digest_object
+
+if TYPE_CHECKING:
+    from inscripta.biocantor.gene.variants import VariantIntervalCollection, VariantInterval
 
 
 class CDSInterval(AbstractFeatureInterval):
@@ -266,10 +271,7 @@ class CDSInterval(AbstractFeatureInterval):
     ) -> "CDSInterval":
         """
         Allows construction of a TranscriptInterval from a chunk-relative location. This is a location
-        present on a sequence chunk, which could be a sequence produced
-
-        This location should
-        be built by something like this:
+        present on a sequence chunk, which should be built by the convenience function seq_chunk_to_parent:
 
         .. code-block:: python
 
@@ -324,7 +326,7 @@ class CDSInterval(AbstractFeatureInterval):
         parent_qualifiers: Optional[Dict[Hashable, Set[str]]] = None,
         chromosome_relative_coordinates: bool = True,
         raise_on_reserved_attributes: Optional[bool] = True,
-    ) -> Iterable[GFFRow]:
+    ) -> Iterator[GFFRow]:
         """Writes a GFF format list of lists for this CDS.
 
         The additional qualifiers are used when writing a hierarchical relationship back to files. GFF files
@@ -512,23 +514,47 @@ class CDSInterval(AbstractFeatureInterval):
         return tuple(self._scan_codon_locations(chunk_relative_coordinates=False))
 
     def _convert_chromosome_start_end_to_relative_window(
-        self, chromosome_start: Optional[int] = None, chromosome_end: Optional[int] = None
+        self,
+        chromosome_start: Optional[int] = None,
+        chromosome_end: Optional[int] = None,
+        expand_window_to_partial_codons: bool = False,
     ) -> Optional[SingleInterval]:
         """
         Converts possibly null chromosomal start/end positions to a SingleInterval representing the genomic
         span of that window. Null start/end values default to the start/end of this CDS.
         """
-        if not chromosome_start and not chromosome_end:
+        if chromosome_start is None and chromosome_end is None:
             return None
-        if not chromosome_start:
+        if chromosome_start is None:
             chromosome_start = self.start
-        if not chromosome_end:
+        if chromosome_end is None:
             chromosome_end = self.end
+        if expand_window_to_partial_codons:
+            chromosome_start, chromosome_end = self._expand_coordinates_to_codons(chromosome_start, chromosome_end)
         relative_window = SingleInterval(chromosome_start, chromosome_end, self.strand, self.chromosome_location.parent)
         return relative_window
 
+    def _expand_coordinates_to_codons(self, chromosome_start: int, chromosome_end: int) -> Tuple[int, int]:
+        """
+        Convenience function to take a pair of chromosome coordinates and return new coordinates that contain only
+        full codons.
+        """
+
+        if chromosome_start < self.chromosome_location.start:
+            chromosome_start = self.start
+        if chromosome_end > self.chromosome_location.end:
+            chromosome_end = self.end
+        cds_interval = self.sequence_interval_to_cds(chromosome_start, chromosome_end, Strand.PLUS)
+        adjusted_cds_start = cds_interval.start - (cds_interval.start % 3)
+        adjusted_cds_end = cds_interval.end - (cds_interval.end % -3)
+        chromosome_interval = self.cds_interval_to_sequence(adjusted_cds_start, adjusted_cds_end, Strand.PLUS)
+        return chromosome_interval.start, chromosome_interval.end
+
     def scan_chunk_relative_codon_locations(
-        self, chromosome_start: Optional[int] = None, chromosome_end: Optional[int] = None
+        self,
+        chromosome_start: Optional[int] = None,
+        chromosome_end: Optional[int] = None,
+        expand_window_to_partial_codons: bool = False,
     ) -> Iterator[Location]:
         """
         Returns an iterator over codon locations in *chunk relative* coordinates.
@@ -545,14 +571,22 @@ class CDSInterval(AbstractFeatureInterval):
                 will maintain frame.
             chromosome_end: An optional *chromosome* position to offset the iteration to end at. The resulting codons
                 will maintain frame. This number can be larger than the chromosome end position.
+            expand_window_to_partial_codons: If ``True``, and the ``chromosome_start`` or ``chromosome_end`` parameters
+                are set to values within a codon, the full codon will be retained. If ``False``, partial codons
+                will be eliminated.
         """
         yield from self._scan_codon_locations(
-            self._convert_chromosome_start_end_to_relative_window(chromosome_start, chromosome_end),
+            self._convert_chromosome_start_end_to_relative_window(
+                chromosome_start, chromosome_end, expand_window_to_partial_codons
+            ),
             chunk_relative_coordinates=True,
         )
 
     def scan_chromosome_codon_locations(
-        self, chromosome_start: Optional[int] = None, chromosome_end: Optional[int] = None
+        self,
+        chromosome_start: Optional[int] = None,
+        chromosome_end: Optional[int] = None,
+        expand_window_to_partial_codons: bool = False,
     ) -> Iterator[Location]:
         """
         Returns an iterator over codon locations in *chromosome* coordinates.
@@ -571,9 +605,14 @@ class CDSInterval(AbstractFeatureInterval):
                 will maintain frame.
             chromosome_end: An optional *chromosome* position to offset the iteration to end at. The resulting codons
                 will maintain frame. This number can be larger than the chromosome end position.
+            expand_window_to_partial_codons: If ``True``, and the ``chromosome_start`` or ``chromosome_end`` parameters
+                are set to values within a codon, the full codon will be retained. If ``False``, partial codons
+                will be eliminated.
         """
         yield from self._scan_codon_locations(
-            self._convert_chromosome_start_end_to_relative_window(chromosome_start, chromosome_end),
+            self._convert_chromosome_start_end_to_relative_window(
+                chromosome_start, chromosome_end, expand_window_to_partial_codons
+            ),
             chunk_relative_coordinates=False,
         )
 
@@ -594,7 +633,10 @@ class CDSInterval(AbstractFeatureInterval):
         self, relative_window: Optional[SingleInterval] = None, chunk_relative_coordinates: bool = True
     ) -> Iterator[Location]:
         """
-        Returns an iterator over codon locations in *chunk relative* coordinates.
+        Returns an iterator over codon locations.
+
+        ``relative_window`` must be in *chromosome* coordinates, ideally built by
+        ``_convert_chromosome_start_end_to_relative_window``.
 
         Any leading or trailing bases that are annotated as CDS but cannot form a full codon
         are excluded.
@@ -617,23 +659,33 @@ class CDSInterval(AbstractFeatureInterval):
         This function exists to prepare a Location object to pass to the iterator ``_scan_codon_locations``.
         By placing the logic in this function, the result can be cached, as you cannot cache iterators.
 
+        ``relative_window`` must be in *chromosome* coordinates, ideally built by
+        ``_convert_chromosome_start_end_to_relative_window``.
+
         Returns a tuple of the Location to be iterated over, and its offset.
         """
-        loc = self.chunk_relative_location
+        # do all initial work in chromosome coordinates
+        loc = self.chromosome_location
+        offset = self.frames[0].value
 
         if relative_window:
             relative_loc = loc.intersection(relative_window)
         else:
             relative_loc = loc
 
-        offset = self.frames[0].value
         if chunk_relative_coordinates and self.is_chunk_relative:
-            # calculate offset for this chunk that may be out of frame
-            loc_on_chrom = relative_loc.lift_over_to_first_ancestor_of_type(SequenceType.CHROMOSOME)
-            offset += self._calculate_frame_offset(self.chromosome_location, loc_on_chrom)
+            # lift the cleaned window on to chunk relative coordinate system
+            chunk_relative_cleaned_location = self.liftover_location_to_seq_chunk_parent(
+                relative_loc, self.chunk_relative_location.parent
+            )
+            # lift this back to chromosome coordinates -- this produces a chromosome coordinate Location
+            # whose bounds are the portion of this CDS that are contained on the sequence chunk
+            loc_on_chrom = chunk_relative_cleaned_location.lift_over_to_first_ancestor_of_type(SequenceType.CHROMOSOME)
+            offset += self._calculate_frame_offset(relative_loc, loc_on_chrom)
+            return chunk_relative_cleaned_location, offset
         else:
-            offset += self._calculate_frame_offset(self.chromosome_location, relative_loc)
-        return relative_loc, offset
+            offset += self._calculate_frame_offset(loc, relative_loc)
+            return relative_loc, offset
 
     @lru_cache(maxsize=20)
     def _prepare_multi_exon_window_for_scan_codon_locations(
@@ -903,6 +955,22 @@ class CDSInterval(AbstractFeatureInterval):
     ) -> BED12:
         raise NotImplementedError
 
+    def cds_pos_to_sequence(self, pos: int) -> int:
+        """Converts a relative position along the CDS to sequence coordinate."""
+        return self.chromosome_location.relative_to_parent_pos(pos)
+
+    def cds_pos_to_chunk_relative(self, pos: int) -> int:
+        """Converts a relative position along the CDS to chunk-relative sequence coordinate."""
+        return self.chunk_relative_location.relative_to_parent_pos(pos)
+
+    def cds_interval_to_sequence(self, rel_start: int, rel_end: int, rel_strand: Strand) -> Location:
+        """Converts a contiguous interval relative to the CDS to a spliced location on the sequence."""
+        return self.chromosome_location.relative_interval_to_parent_location(rel_start, rel_end, rel_strand)
+
+    def cds_interval_to_chunk_relative(self, rel_start: int, rel_end: int, rel_strand: Strand) -> Location:
+        """Converts a contiguous interval relative to the CDS to a spliced location on the chunk-relative sequence."""
+        return self.chunk_relative_location.relative_interval_to_parent_location(rel_start, rel_end, rel_strand)
+
     def sequence_pos_to_cds(self, pos: int) -> int:
         """
         Converts a *sequence* relative position to a CDS position. This is the distance from the translation
@@ -915,6 +983,21 @@ class CDSInterval(AbstractFeatureInterval):
         """
         return self.chromosome_location.parent_to_relative_pos(pos)
 
+    def chunk_relative_pos_to_cds(self, pos: int) -> int:
+        """Converts chunk-relative sequence position to relative position along the CDS."""
+        return self.chunk_relative_location.parent_to_relative_pos(pos)
+
+    def sequence_interval_to_cds(self, chr_start: int, chr_end: int, chr_strand: Strand) -> Location:
+        """Converts a contiguous interval on the sequence to a relative location within the CDS."""
+        i = SingleInterval(chr_start, chr_end, chr_strand, parent=self.chromosome_location.parent)
+        return self.chromosome_location.parent_to_relative_location(i)
+
+    def chunk_relative_interval_to_cds(self, chr_start: int, chr_end: int, chr_strand: Strand) -> Location:
+        """Converts a contiguous interval on the chunk-relative sequence to a relative location within the CDS."""
+        return self.chunk_relative_location.parent_to_relative_location(
+            SingleInterval(chr_start, chr_end, chr_strand, parent=self.chunk_relative_location.parent)
+        )
+
     def sequence_pos_to_amino_acid(self, pos: int) -> int:
         """
         Converts a *sequence* relative position to amino acid. The resulting value is always left-aligned.
@@ -925,3 +1008,24 @@ class CDSInterval(AbstractFeatureInterval):
             InvalidPositionException: If the position provided is not part of this CDSInterval.
         """
         return self.sequence_pos_to_cds(pos) // 3
+
+    def incorporate_variants(self, variants: Union["VariantInterval", "VariantIntervalCollection"]) -> "CDSInterval":
+        """
+        Incorporate all of the variant(s) for an input VariantInterval or VariantIntervalCollection,
+        producing a new CDSInterval with those changes incorporated.
+        """
+        new_loc = variants.lift_over_location(self.chunk_relative_location)
+        if new_loc.is_empty:
+            raise EmptyLocationException("Variant incorporation led to an EmptyLocation")
+        fn = CDSInterval.from_chunk_relative_location if self.is_chunk_relative else CDSInterval.from_location
+        new_frames = CDSInterval.construct_frames_from_location(new_loc, self.frames[0])
+        return fn(
+            new_loc,
+            cds_frames=new_frames,
+            sequence_guid=self.sequence_guid,
+            sequence_name=self.sequence_name,
+            protein_id=self.protein_id,
+            product=self.product,
+            qualifiers=self._export_qualifiers_to_list(),
+            guid=None,  # generate a new Interval GUID based on updated data
+        )

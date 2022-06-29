@@ -1512,6 +1512,24 @@ class TestCDSInterval:
     @pytest.mark.parametrize(
         "cds,expected",
         [
+            # single exon, even though the CDS exists on a chunk because these are chromosome codons
+            # we get the full set of codons, sequenceless
+            (
+                CDSInterval(
+                    [2],
+                    [17],
+                    Strand.PLUS,
+                    [CDSFrame.ZERO],
+                    parent_or_seq_chunk_parent=chunk_parent2_12,
+                ),
+                [
+                    SingleInterval(2, 5, Strand.PLUS, sequenceless_chrom_parent),
+                    SingleInterval(5, 8, Strand.PLUS, sequenceless_chrom_parent),
+                    SingleInterval(8, 11, Strand.PLUS, sequenceless_chrom_parent),
+                    SingleInterval(11, 14, Strand.PLUS, sequenceless_chrom_parent),
+                    SingleInterval(14, 17, Strand.PLUS, sequenceless_chrom_parent),
+                ],
+            ),
             # chunk relative, so the returned codons are sequenceless but still the whole thing
             (
                 CDSInterval(
@@ -1527,6 +1545,23 @@ class TestCDSInterval:
                     CompoundInterval([8, 8], [9, 10], Strand.PLUS, sequenceless_chrom_parent),
                     SingleInterval(10, 13, Strand.PLUS, sequenceless_chrom_parent),
                     SingleInterval(13, 16, Strand.PLUS, sequenceless_chrom_parent),
+                ],
+            ),
+            # genome relative, so returned codons are identical but have sequence
+            (
+                CDSInterval(
+                    [2],
+                    [17],
+                    Strand.PLUS,
+                    [CDSFrame.ZERO],
+                    parent_or_seq_chunk_parent=chrom_parent,
+                ),
+                [
+                    SingleInterval(2, 5, Strand.PLUS, chrom_parent),
+                    SingleInterval(5, 8, Strand.PLUS, chrom_parent),
+                    SingleInterval(8, 11, Strand.PLUS, chrom_parent),
+                    SingleInterval(11, 14, Strand.PLUS, chrom_parent),
+                    SingleInterval(14, 17, Strand.PLUS, chrom_parent),
                 ],
             ),
             # genome relative, so returned codons are identical but have sequence
@@ -1550,6 +1585,7 @@ class TestCDSInterval:
     )
     def test_scan_chromosome_codon_locations(self, cds, expected):
         assert list(cds.scan_chromosome_codon_locations()) == expected
+        # test that caching doesn't break the iterator
         assert list(cds.scan_chromosome_codon_locations()) == expected
         assert cds.chromosome_codon_locations == tuple(expected)
 
@@ -1844,6 +1880,118 @@ class TestCDSInterval:
     )
     def test_scan_chromosome_codon_locations_sliced(self, cds, start, end, expected):
         assert list(cds.scan_chromosome_codon_locations(start, end)) == expected
+
+    @pytest.mark.parametrize(
+        "cds,start,end,expected",
+        (
+            # no slicing, so comes back as full length
+            [
+                CDSInterval([2], [17], Strand.PLUS, [CDSFrame.ZERO], parent_or_seq_chunk_parent=chrom_parent),
+                None,
+                None,
+                [
+                    SingleInterval(2, 5, Strand.PLUS, chrom_parent),
+                    SingleInterval(5, 8, Strand.PLUS, chrom_parent),
+                    SingleInterval(8, 11, Strand.PLUS, chrom_parent),
+                    SingleInterval(11, 14, Strand.PLUS, chrom_parent),
+                    SingleInterval(14, 17, Strand.PLUS, chrom_parent),
+                ],
+            ],
+            # 1bp slicing from front, so comes back as full length
+            [
+                CDSInterval([2], [17], Strand.PLUS, [CDSFrame.ZERO], parent_or_seq_chunk_parent=chrom_parent),
+                3,
+                None,
+                [
+                    SingleInterval(2, 5, Strand.PLUS, chrom_parent),
+                    SingleInterval(5, 8, Strand.PLUS, chrom_parent),
+                    SingleInterval(8, 11, Strand.PLUS, chrom_parent),
+                    SingleInterval(11, 14, Strand.PLUS, chrom_parent),
+                    SingleInterval(14, 17, Strand.PLUS, chrom_parent),
+                ],
+            ],
+            # 1bp slicing from end, so comes back as full length
+            [
+                CDSInterval([2], [17], Strand.PLUS, [CDSFrame.ZERO], parent_or_seq_chunk_parent=chrom_parent),
+                None,
+                16,
+                [
+                    SingleInterval(2, 5, Strand.PLUS, chrom_parent),
+                    SingleInterval(5, 8, Strand.PLUS, chrom_parent),
+                    SingleInterval(8, 11, Strand.PLUS, chrom_parent),
+                    SingleInterval(11, 14, Strand.PLUS, chrom_parent),
+                    SingleInterval(14, 17, Strand.PLUS, chrom_parent),
+                ],
+            ],
+            # 1bp slicing from both ends, so comes back as full length
+            [
+                CDSInterval([2], [17], Strand.PLUS, [CDSFrame.ZERO], parent_or_seq_chunk_parent=chrom_parent),
+                3,
+                16,
+                [
+                    SingleInterval(2, 5, Strand.PLUS, chrom_parent),
+                    SingleInterval(5, 8, Strand.PLUS, chrom_parent),
+                    SingleInterval(8, 11, Strand.PLUS, chrom_parent),
+                    SingleInterval(11, 14, Strand.PLUS, chrom_parent),
+                    SingleInterval(14, 17, Strand.PLUS, chrom_parent),
+                ],
+            ],
+            # 3bp slicing from both ends, so comes back missing 1st and last codon
+            [
+                CDSInterval([2], [17], Strand.PLUS, [CDSFrame.ZERO], parent_or_seq_chunk_parent=chrom_parent),
+                5,
+                13,
+                [
+                    SingleInterval(5, 8, Strand.PLUS, chrom_parent),
+                    SingleInterval(8, 11, Strand.PLUS, chrom_parent),
+                    SingleInterval(11, 14, Strand.PLUS, chrom_parent),
+                ],
+            ],
+            # 4bp slicing from both ends, so comes back missing 1st and last codon
+            [
+                CDSInterval([2], [17], Strand.PLUS, [CDSFrame.ZERO], parent_or_seq_chunk_parent=chrom_parent),
+                6,
+                12,
+                [
+                    SingleInterval(5, 8, Strand.PLUS, chrom_parent),
+                    SingleInterval(8, 11, Strand.PLUS, chrom_parent),
+                    SingleInterval(11, 14, Strand.PLUS, chrom_parent),
+                ],
+            ],
+            # 5bp slicing from both ends, so comes back missing 1st and last 2 codons
+            # this is because these coordinates are half-open
+            [
+                CDSInterval([2], [17], Strand.PLUS, [CDSFrame.ZERO], parent_or_seq_chunk_parent=chrom_parent),
+                7,
+                11,
+                [
+                    SingleInterval(5, 8, Strand.PLUS, chrom_parent),
+                    SingleInterval(8, 11, Strand.PLUS, chrom_parent),
+                ],
+            ],
+        ),
+    )
+    def test_scan_chromosome_codon_locations_sliced_expand_coordinates(self, cds, start, end, expected):
+        assert list(cds.scan_chromosome_codon_locations(start, end, expand_window_to_partial_codons=True)) == expected
+
+    @pytest.mark.parametrize(
+        "start,end,expected",
+        (
+            # no slicing
+            [2, 17, (2, 17)],
+            # 1bp off 1st codon -> full length
+            [3, 17, (2, 17)],
+            # 1bp off last codon -> full length
+            [3, 16, (2, 17)],
+            # 1bp off first codon and 2bp off last codon -> full length
+            [3, 15, (2, 17)],
+            # 4bp off 5' codon and 1bp off last codon -> lose 1st codon
+            [6, 16, (5, 17)],
+        ),
+    )
+    def test__expand_coordinates_to_codons(self, start, end, expected):
+        cds = CDSInterval([2], [17], Strand.PLUS, [CDSFrame.ZERO], parent_or_seq_chunk_parent=self.chrom_parent)
+        assert cds._expand_coordinates_to_codons(start, end) == expected
 
     @pytest.mark.parametrize(
         "cds,expected",
@@ -3257,7 +3405,7 @@ class TestCDSInterval:
     ],
 )
 def test_translation_tables(sequence, translation_table, expected):
-    s = Sequence(sequence, Alphabet.NT_EXTENDED)
+    s = Sequence(sequence, Alphabet.NT_EXTENDED, type=SequenceType.CHROMOSOME)
     i = SingleInterval(0, len(sequence), Strand.PLUS, parent=s)
     cds = CDSInterval.from_location(i, cds_frames=[CDSFrame.ZERO])
     assert str(cds.translate(translation_table=translation_table)) == expected

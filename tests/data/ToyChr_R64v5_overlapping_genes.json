@@ -1,5 +1,5 @@
 {
-    "feature_collections": null,
+    "feature_collections": [],
     "genes": [
         {
             "transcripts": [
@@ -1197,6 +1197,7 @@
             "gene_guid": "e4fd6b77-631b-a46c-55d8-1b606770f323"
         }
     ],
+    "variant_collections": [],
     "name": "CM021127.1",
     "id": null,
     "sequence_name": "CM021127.1",

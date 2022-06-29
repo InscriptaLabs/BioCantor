@@ -10,6 +10,8 @@ from inscripta.biocantor.io.models import (
     AnnotationCollectionModel,
     TranscriptIntervalModel,
     GeneIntervalModel,
+    FeatureIntervalCollectionModel,
+    FeatureIntervalModel,
     Strand,
     CDSFrame,
     Biotype,
@@ -18,6 +20,22 @@ from inscripta.biocantor.io.models import (
     ParentModel,
 )
 
+
+empty_model = AnnotationCollectionModel()
+
+geneless_model = AnnotationCollectionModel(
+    feature_collections=[
+        FeatureIntervalCollectionModel(
+            feature_intervals=[
+                FeatureIntervalModel(
+                    interval_starts=[0],
+                    interval_ends=[10],
+                    strand=Strand.PLUS,
+                )
+            ]
+        )
+    ]
+)
 
 model_without_parent = AnnotationCollectionModel(
     feature_collections=[],
@@ -320,3 +338,38 @@ class TestAnnotationCollectionModel:
         # not exporting parent leads to it looking like the non-parent version
         new_model_without_parent = AnnotationCollectionModel.from_annotation_collection(ac, export_parent=False)
         assert new_model_without_parent == model_without_parent
+
+    def test_dump_annotation_collection(self):
+        """Model dumping should retain parent information, if it exists, and should work
+        on AnnotationCollection as well as AnnotationCollectionModel"""
+        dumped = AnnotationCollectionModel.Schema().dump(model_with_parent.to_annotation_collection())
+        assert dumped["parent_or_seq_chunk_parent"] is not None
+        dumped = AnnotationCollectionModel.Schema().dump(model_without_parent.to_annotation_collection())
+        assert dumped["parent_or_seq_chunk_parent"] is None
+        dumped = AnnotationCollectionModel.Schema().dump([model_with_parent.to_annotation_collection()], many=True)
+        assert dumped[0]["parent_or_seq_chunk_parent"] is not None
+        dumped = AnnotationCollectionModel.Schema().dump([model_without_parent.to_annotation_collection()], many=True)
+        assert dumped[0]["parent_or_seq_chunk_parent"] is None
+
+    def test_dump_annotation_collection_model(self):
+        """Model dumping should retain parent information, if it exist"""
+        dumped = AnnotationCollectionModel.Schema().dump(model_with_parent)
+        assert dumped["parent_or_seq_chunk_parent"] is not None
+        dumped = AnnotationCollectionModel.Schema().dump(model_without_parent)
+        assert dumped["parent_or_seq_chunk_parent"] is None
+        dumped = AnnotationCollectionModel.Schema().dump([model_with_parent], many=True)
+        assert dumped[0]["parent_or_seq_chunk_parent"] is not None
+        dumped = AnnotationCollectionModel.Schema().dump([model_without_parent], many=True)
+        assert dumped[0]["parent_or_seq_chunk_parent"] is None
+
+    def test_empty_model(self):
+        dumped = AnnotationCollectionModel.Schema().dump(empty_model)
+        assert dumped
+        loaded = AnnotationCollectionModel.Schema().load(dumped)
+        assert loaded
+
+    def test_geneless_model(self):
+        dumped = AnnotationCollectionModel.Schema().dump(geneless_model)
+        assert dumped
+        loaded = AnnotationCollectionModel.Schema().load(dumped)
+        assert loaded
