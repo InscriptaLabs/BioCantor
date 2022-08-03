@@ -50,6 +50,7 @@ class ParentModel(BaseModel):
 
         # avoid circular imports
         from inscripta.biocantor.io.parser import seq_chunk_to_parent, seq_to_parent
+
         seq_type = SequenceType.sequence_type_str_to_type(self.type)
         if seq_type == SequenceType.SEQUENCE_CHUNK:
             if not self.sequence_name:
