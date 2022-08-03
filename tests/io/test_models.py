@@ -285,6 +285,27 @@ dumped["parent_or_seq_chunk_parent"] = ParentModel.Schema().dump(parent_model)
 model_with_parent = AnnotationCollectionModel.Schema().load(dumped)
 
 
+class TestParentModel:
+    def test_to_parent_seq_chunk_type_casing(self):
+        chunk_parent = ParentModel(
+            seq="GCTTTTCATT",
+            alphabet=Alphabet.NT_EXTENDED_GAPPED,
+            sequence_name="test_chunk",
+            type="SeqUEnCE_ChuNk",
+            start=1200,
+            end=1210,
+            strand=Strand.PLUS,
+        )
+        obs = chunk_parent.to_parent()
+        assert obs.sequence_type == SequenceType.SEQUENCE_CHUNK
+        assert obs.parent.sequence_type == SequenceType.CHROMOSOME
+
+    def test_to_parent_seq_chunk_type_casing(self):
+        obs = parent_model.to_parent()
+        assert obs.sequence_type == SequenceType.CHROMOSOME
+        assert obs.parent is None
+
+
 class TestAnnotationCollectionModel:
     @pytest.mark.parametrize(
         "json_file,model",
