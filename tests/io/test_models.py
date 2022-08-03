@@ -300,9 +300,32 @@ class TestParentModel:
         assert obs.sequence_type == SequenceType.SEQUENCE_CHUNK
         assert obs.parent.sequence_type == SequenceType.CHROMOSOME
 
-    def test_to_parent_seq_chunk_type_casing(self):
-        obs = parent_model.to_parent()
+    def test_to_parent_chromosome_type_casing(self):
+        chrom_parent = ParentModel(
+            seq="GCTTTTCATT",
+            alphabet=Alphabet.NT_EXTENDED_GAPPED,
+            sequence_name="test_chunk",
+            type="ChroMOSoME",
+            start=1200,
+            end=1210,
+            strand=Strand.PLUS,
+        )
+        obs = chrom_parent.to_parent()
         assert obs.sequence_type == SequenceType.CHROMOSOME
+        assert obs.parent is None
+
+    def test_to_parent_random_type_casing(self):
+        chrom_parent = ParentModel(
+            seq="GCTTTTCATT",
+            alphabet=Alphabet.NT_EXTENDED_GAPPED,
+            sequence_name="test_chunk",
+            type="SomeTYPE",
+            start=1200,
+            end=1210,
+            strand=Strand.PLUS,
+        )
+        obs = chrom_parent.to_parent()
+        assert obs.sequence_type == "SomeTYPE"
         assert obs.parent is None
 
 
