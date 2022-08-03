@@ -51,7 +51,8 @@ class ParentModel(BaseModel):
         # avoid circular imports
         from inscripta.biocantor.io.parser import seq_chunk_to_parent, seq_to_parent
 
-        if self.type == SequenceType.SEQUENCE_CHUNK:
+        seq_type = SequenceType.sequence_type_str_to_type(self.type)
+        if seq_type == SequenceType.SEQUENCE_CHUNK:
             if not self.sequence_name:
                 raise InvalidInputError("Cannot construct sequence chunk parent without a sequence name")
             elif self.start is None or self.end is None:
@@ -69,7 +70,7 @@ class ParentModel(BaseModel):
             )
         else:
             fn = seq_to_parent
-            fn_call = dict(seq=self.seq, alphabet=self.alphabet, seq_id=self.sequence_name, seq_type=self.type)
+            fn_call = dict(seq=self.seq, alphabet=self.alphabet, seq_id=self.sequence_name, seq_type=seq_type)
         return fn(**{k: v for k, v in fn_call.items() if v is not None})
 
 
