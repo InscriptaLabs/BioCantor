@@ -5,6 +5,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Added
+- `AnnotationCollection.query_by_position()` will now perform faster queries when `cgranges` is installed.
+
 ### Fixed
 - ParentModel.to_parent() is no longer case sensitive for type parameter, and will create sequence chunk parents correctly regardless of string casing.
 
