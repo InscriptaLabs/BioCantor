@@ -259,15 +259,20 @@ class GeneInterval(AbstractFeatureIntervalCollection):
             qualifiers[key].add(val)
         return qualifiers
 
-    def query_by_guids(self, ids: List[UUID]) -> Optional["GeneInterval"]:
+    def query_by_guids(self, id_or_ids: Union[UUID, List[UUID]]) -> Optional["GeneInterval"]:
         """Filter this gene interval object by a list of unique IDs.
 
         Args:
-            ids: List of GUIDs, or unique IDs.
+            id_or_ids: List of GUIDs, or unique IDs. Can also be a single ID.
 
         Returns:
            :class:`GeneInterval`, or None if there are no matching guids.
         """
+        if isinstance(id_or_ids, UUID):
+            ids = [id_or_ids]
+        else:
+            ids = id_or_ids
+
         txs = [self.guid_map[i] for i in ids if i in self.guid_map]
         if txs:
             return GeneInterval(

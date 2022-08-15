@@ -22,9 +22,10 @@ from inscripta.biocantor.exc import (
     InvalidAnnotationError,
     InvalidQueryError,
 )
-from inscripta.biocantor.gene.feature import FeatureIntervalCollection
+from inscripta.biocantor.gene.feature import FeatureIntervalCollection, FeatureInterval
 from inscripta.biocantor.gene.gene import GeneInterval
 from inscripta.biocantor.gene.interval import QualifierValue, IntervalType, AbstractFeatureIntervalCollection
+from inscripta.biocantor.gene.transcript import TranscriptInterval
 from inscripta.biocantor.gene.variants import VariantIntervalCollection, VariantInterval
 from inscripta.biocantor.io.gff3.rows import GFFRow
 from inscripta.biocantor.location import SingleInterval, EmptyLocation, Strand
@@ -808,11 +809,28 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
             genes_to_keep, features_collections_to_keep, variant_collections_to_keep
         )
 
+    @lru_cache(maxsize=1)
+    @property
+    def _child_interval_guid_map(
+        self,
+    ) -> Dict[
+        UUID,
+        Tuple[
+            Union[GeneInterval, FeatureIntervalCollection, VariantIntervalCollection],
+            Union[TranscriptInterval, FeatureInterval, VariantInterval],
+        ],
+    ]:
+        """
+        Construct a dictionary mapping grandchildren (interval GUIDs) to the children themselves.
+        """
+        guid_map = {}
+        for child in self.iter_children():
+            for grandchild in child.iter_children():
+                guid_map[grandchild.guid] = (child, grandchild)
+        return guid_map
+
     def query_by_interval_guids(self, id_or_ids: Union[UUID, List[UUID]]) -> "AnnotationCollection":
         """Filter this annotation collection object by a list of unique *interval* IDs.
-
-        This function wraps the ``query_by_guid`` function of child GeneInterval/FeatureIntervalCollection
-        objects.
 
         NOTE: If the children of this collection have GUID collisions, either across genes or features or
         within genes and features, this function will return all members with the matching GUID.
@@ -828,41 +846,26 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
         else:
             ids = id_or_ids
 
-        genes_to_keep = []
-        features_collections_to_keep = []
-        variant_collections_to_keep = []
-        for child in self.iter_children():
-            filtered_child = child.query_by_guids(ids)
-            if not filtered_child:
+        gene_guids_to_keep = set()
+        features_collection_guids_to_keep = set()
+        variant_collection_guids_to_keep = set()
+        for guid in ids:
+            if guid not in self._child_interval_guid_map:
                 continue
-            elif filtered_child.interval_type == IntervalType.FEATURE:
-                features_collections_to_keep.append(filtered_child)
-            elif filtered_child.interval_type == IntervalType.TRANSCRIPT:
-                genes_to_keep.append(filtered_child)
+            child, _ = self._child_interval_guid_map[guid]
+            if child.interval_type == IntervalType.FEATURE:
+                features_collection_guids_to_keep.add(child.guid)
+            elif child.interval_type == IntervalType.TRANSCRIPT:
+                gene_guids_to_keep.add(child.guid)
             else:
-                variant_collections_to_keep.append(filtered_child)
+                variant_collection_guids_to_keep.add(child.guid)
 
+        genes_to_keep = [self.guid_map[x].query_by_guids(ids) for x in gene_guids_to_keep]
+        features_collections_to_keep = [self.guid_map[x].query_by_guids(ids) for x in features_collection_guids_to_keep]
+        variant_collections_to_keep = [self.guid_map[x].query_by_guids(ids) for x in variant_collection_guids_to_keep]
         return self._return_collection_for_id_queries(
             genes_to_keep, features_collections_to_keep, variant_collections_to_keep
         )
-
-    def _query_by_guids(self, id_or_ids: Union[UUID, List[UUID]], interval_type: IntervalType):
-        """Convenience function for query_by_transcript_interval_guids(),
-        query_by_feature_interval_guids() and query_by_variant_interval_guids()"""
-        if isinstance(id_or_ids, UUID):
-            ids = [id_or_ids]
-        else:
-            ids = id_or_ids
-
-        children_to_keep = []
-        for child in self.iter_children():
-            gene_or_feature_collection = child.query_by_guids(ids)
-            if not gene_or_feature_collection:
-                continue
-            elif gene_or_feature_collection.interval_type == interval_type:
-                children_to_keep.append(gene_or_feature_collection)
-
-        return self._return_collection_for_id_queries(children_to_keep, [], [])
 
     def query_by_transcript_interval_guids(self, id_or_ids: Union[UUID, List[UUID]]) -> "AnnotationCollection":
         """Filter this annotation collection object by a list of unique *TranscriptInterval* IDs.
@@ -883,14 +886,15 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
         else:
             ids = id_or_ids
 
-        genes_to_keep = []
-        for child in self.iter_children():
-            gene_or_feature_collection = child.query_by_guids(ids)
-            if not gene_or_feature_collection:
+        gene_guids_to_keep = set()
+        for guid in ids:
+            if guid not in self._child_interval_guid_map:
                 continue
-            elif gene_or_feature_collection.interval_type == IntervalType.TRANSCRIPT:
-                genes_to_keep.append(gene_or_feature_collection)
+            child, _ = self._child_interval_guid_map[guid]
+            if child.interval_type == IntervalType.TRANSCRIPT:
+                gene_guids_to_keep.add(child.guid)
 
+        genes_to_keep = [self.guid_map[x] for x in gene_guids_to_keep]
         return self._return_collection_for_id_queries(genes_to_keep, [], [])
 
     def query_by_feature_interval_guids(self, id_or_ids: Union[UUID, List[UUID]]) -> "AnnotationCollection":
@@ -912,14 +916,15 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
         else:
             ids = id_or_ids
 
-        features_collections_to_keep = []
-        for child in self.iter_children():
-            gene_or_feature_collection = child.query_by_guids(ids)
-            if not gene_or_feature_collection:
+        features_collection_guids_to_keep = set()
+        for guid in ids:
+            if guid not in self._child_interval_guid_map:
                 continue
-            elif gene_or_feature_collection.interval_type == IntervalType.FEATURE:
-                features_collections_to_keep.append(gene_or_feature_collection)
+            child, _ = self._child_interval_guid_map[guid]
+            if child.interval_type == IntervalType.FEATURE:
+                features_collection_guids_to_keep.add(child.guid)
 
+        features_collections_to_keep = [self.guid_map[x] for x in features_collection_guids_to_keep]
         return self._return_collection_for_id_queries([], features_collections_to_keep, [])
 
     def query_by_feature_identifiers(self, id_or_ids: Union[str, List[str]]) -> "AnnotationCollection":
