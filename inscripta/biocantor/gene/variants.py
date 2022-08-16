@@ -42,7 +42,7 @@ A deletion from 13 to 15 without padding:
     deletion_13_15 = VariantInterval(start=13, end=15, sequence="", variant_type="deletion")
 
 """
-from typing import Optional, Dict, Hashable, Any, Iterable, Iterator, Set, List
+from typing import Optional, Dict, Hashable, Any, Iterable, Iterator, Set, List, Union
 from uuid import UUID
 
 from inscripta.biocantor.exc import (
@@ -403,7 +403,11 @@ class VariantIntervalCollection(AbstractFeatureIntervalCollection):
     def children_guids(self) -> Set[UUID]:
         return {x.guid for x in self.variant_intervals}
 
-    def query_by_guids(self, ids: List[UUID]) -> "VariantIntervalCollection":
+    def query_by_guids(self, id_or_ids: Union[UUID, List[UUID]]) -> "VariantIntervalCollection":
+        if isinstance(id_or_ids, UUID):
+            ids = [id_or_ids]
+        else:
+            ids = id_or_ids
         variant_intervals = [self.guid_map[i] for i in ids if i in self.guid_map]
         if variant_intervals:
             return VariantIntervalCollection(

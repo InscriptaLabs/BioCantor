@@ -13,7 +13,7 @@ such as promoters or transcription factor binding sites.
 Each object is capable of exporting itself to BED and GFF3.
 """
 import itertools
-from typing import List, Any, Dict, Set, Hashable, Optional, Union, Iterator
+from typing import List, Any, Dict, Set, Hashable, Optional, Union, Iterator, Tuple
 from uuid import UUID
 
 from methodtools import lru_cache
@@ -22,9 +22,10 @@ from inscripta.biocantor.exc import (
     InvalidAnnotationError,
     InvalidQueryError,
 )
-from inscripta.biocantor.gene.feature import FeatureIntervalCollection
+from inscripta.biocantor.gene.feature import FeatureIntervalCollection, FeatureInterval
 from inscripta.biocantor.gene.gene import GeneInterval
 from inscripta.biocantor.gene.interval import QualifierValue, IntervalType, AbstractFeatureIntervalCollection
+from inscripta.biocantor.gene.transcript import TranscriptInterval
 from inscripta.biocantor.gene.variants import VariantIntervalCollection, VariantInterval
 from inscripta.biocantor.io.gff3.rows import GFFRow
 from inscripta.biocantor.location import SingleInterval, EmptyLocation, Strand
@@ -283,17 +284,31 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
         """Returns the name of this collection. Provides a shared API across genes/transcripts and features."""
         return self._name
 
+    @lru_cache(maxsize=1)
+    @property
+    def children(self) -> List[Union[GeneInterval, FeatureIntervalCollection, VariantIntervalCollection]]:
+        """
+        Sorted list of all children. Cached.
+        """
+        chain_iter = itertools.chain(self.genes, self.feature_collections, self.variant_collections)
+        return sorted(chain_iter, key=lambda x: x.start)
+
+    @lru_cache(maxsize=1)
+    @property
+    def non_variant_children(self) -> List[Union[GeneInterval, FeatureIntervalCollection, VariantIntervalCollection]]:
+        """
+        Sorted list of all non-variant children. Cached.
+        """
+        chain_iter = itertools.chain(self.genes, self.feature_collections)
+        return sorted(chain_iter, key=lambda x: x.start)
+
     def iter_children(self) -> Iterator[Union[GeneInterval, FeatureIntervalCollection, VariantIntervalCollection]]:
         """Iterate over all intervals in this collection, in sorted order."""
-        chain_iter = itertools.chain(self.genes, self.feature_collections, self.variant_collections)
-        sort_iter = sorted(chain_iter, key=lambda x: x.start)
-        yield from sort_iter
+        yield from self.children
 
     def iter_non_variant_children(self) -> Iterator[Union[GeneInterval, FeatureIntervalCollection]]:
         """Iterate over all intervals in this collection, in sorted order."""
-        chain_iter = itertools.chain(self.genes, self.feature_collections)
-        sort_iter = sorted(chain_iter, key=lambda x: x.start)
-        yield from sort_iter
+        yield from self.non_variant_children
 
     def to_dict(self, chromosome_relative_coordinates: bool = True, export_parent: bool = False) -> Dict[str, Any]:
         """Convert to a dict usable by :class:`~biocantor.io.models.AnnotationCollectionModel`.
@@ -587,12 +602,6 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
             bounds of the current interval. It could also happen if ``expand_location_to_children`` is ``True``
             and the new expanded range would exceed the range of an associated sequence chunk.
         """
-        # bins are only valid if we have start, end and completely_within
-        if completely_within and start and end:
-            my_bins = bins(start, end, fmt="bed", one=False)
-        else:
-            my_bins = None
-
         # after bins were decided, we can now force start/end to min/max values
         # for exact checking
         start = self.start if start is None else start
@@ -609,6 +618,98 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
             raise InvalidQueryError(f"End {end} must be within bounds of current interval [{self.start}-{self.end})")
         elif start == end:
             raise InvalidQueryError("Cannot query a 0bp interval (start must not be the same as end).")
+
+        if HAS_CGRANGES:
+            (
+                genes_to_keep,
+                features_collections_to_keep,
+                variant_collections_to_keep,
+            ) = self._optimized_query_by_position(start, end, completely_within, coding_only)
+        else:
+            genes_to_keep, features_collections_to_keep, variant_collections_to_keep = self._query_by_position(
+                start, end, completely_within, coding_only
+            )
+
+        # if completely within is False, expand the range of seq_chunk_parent to retain the full span
+        # of all child intervals. This prevents features getting cut in half.
+        if expand_location_to_children is True and completely_within is False:
+            for g_or_fc in itertools.chain(features_collections_to_keep, genes_to_keep):
+                if g_or_fc.start < start:
+                    start = g_or_fc.start
+                if g_or_fc.end > end:
+                    end = g_or_fc.end
+
+        # if there is a sequence chunk, then some validation checks must be performed
+        if self.chunk_relative_location.parent and self.chunk_relative_location.parent.sequence:
+            # not possible to expand range if it exceeds parent bounds
+            if start < self.start or end > self.end:
+                raise InvalidQueryError(
+                    f"Cannot expand range of location to {start}-{end} because the associated sequence chunk "
+                    f"lies from {self.start}-{self.end}"
+                )
+
+        return self._build_new_collection_from_query(
+            genes_to_keep, features_collections_to_keep, variant_collections_to_keep, start, end, completely_within
+        )
+
+    @lru_cache(maxsize=1)
+    def _build_position_interval_tree(self):
+        """
+        Build a position tree of every child interval.
+        """
+        tree = cgranges.cgranges()
+        for i, child in enumerate(self.children):
+            tree.add("", child.genomic_start, child.genomic_end, i)
+        tree.index()
+        return tree
+
+    def _optimized_query_by_position(
+        self, start: int, end: int, completely_within: bool, coding_only: bool
+    ) -> Tuple[List[GeneInterval], List[FeatureIntervalCollection], List[VariantIntervalCollection]]:
+        """
+        Optimized implementation of position query. Used when `cgranges` is installed. The tree is cached
+        if this is the first time it is being built.
+        """
+        if not HAS_CGRANGES:
+            raise RuntimeError("Cannot use this query mode without cgranges")
+        tree = self._build_position_interval_tree()
+
+        # cgranges only does .overlap() so need to restrict search when completely_within is True
+        if completely_within is True:
+            query_loc = SingleInterval(start, end, Strand.PLUS, parent=self.chromosome_location.parent)
+            coordinate_fn = query_loc.contains
+
+        genes_to_keep = []
+        features_collections_to_keep = []
+        variant_collections_to_keep = []
+        for _, __, result_idx in tree.overlap("", start, end):
+            child = self.children[result_idx]
+            # if completely_within is true, need to restrict further
+            if completely_within is True and not coordinate_fn(
+                child.chromosome_location, match_strand=False, full_span=True, strict_parent_compare=True
+            ):
+                continue
+            elif coding_only is True and child.is_coding is False:
+                continue
+            if child.interval_type == IntervalType.FEATURE:
+                features_collections_to_keep.append(child)
+            elif child.interval_type == IntervalType.TRANSCRIPT:
+                genes_to_keep.append(child)
+            else:
+                variant_collections_to_keep.append(child)
+        return genes_to_keep, features_collections_to_keep, variant_collections_to_keep
+
+    def _query_by_position(
+        self, start: int, end: int, completely_within: bool, coding_only: bool
+    ) -> Tuple[List[GeneInterval], List[FeatureIntervalCollection], List[VariantIntervalCollection]]:
+        """
+        Non-optimized implementation of position query. Used when `cgranges` is not installed.
+        """
+        # bins are only valid if we have start, end and completely_within
+        if completely_within and start and end:
+            my_bins = bins(start, end, fmt="bed", one=False)
+        else:
+            my_bins = None
 
         # coordinate_fn will be applied when filtering specific transcripts/features
         query_loc = SingleInterval(start, end, Strand.PLUS, parent=self.chromosome_location.parent)
@@ -640,28 +741,7 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
                     genes_to_keep.append(child)
                 else:
                     variant_collections_to_keep.append(child)
-
-        # if completely within is False, expand the range of seq_chunk_parent to retain the full span
-        # of all child intervals. This prevents features getting cut in half.
-        if expand_location_to_children is True and completely_within is False:
-            for g_or_fc in itertools.chain(features_collections_to_keep, genes_to_keep):
-                if g_or_fc.start < start:
-                    start = g_or_fc.start
-                if g_or_fc.end > end:
-                    end = g_or_fc.end
-
-        # if there is a sequence chunk, then some validation checks must be performed
-        if self.chunk_relative_location.parent and self.chunk_relative_location.parent.sequence:
-            # not possible to expand range if it exceeds parent bounds
-            if start < self.start or end > self.end:
-                raise InvalidQueryError(
-                    f"Cannot expand range of location to {start}-{end} because the associated sequence chunk "
-                    f"lies from {self.start}-{self.end}"
-                )
-
-        return self._build_new_collection_from_query(
-            genes_to_keep, features_collections_to_keep, variant_collections_to_keep, start, end, completely_within
-        )
+        return genes_to_keep, features_collections_to_keep, variant_collections_to_keep
 
     def _return_collection_for_id_queries(
         self,
@@ -729,11 +809,28 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
             genes_to_keep, features_collections_to_keep, variant_collections_to_keep
         )
 
+    @lru_cache(maxsize=1)
+    @property
+    def _child_interval_guid_map(
+        self,
+    ) -> Dict[
+        UUID,
+        Tuple[
+            Union[GeneInterval, FeatureIntervalCollection, VariantIntervalCollection],
+            Union[TranscriptInterval, FeatureInterval, VariantInterval],
+        ],
+    ]:
+        """
+        Construct a dictionary mapping grandchildren (interval GUIDs) to the children themselves.
+        """
+        guid_map = {}
+        for child in self.iter_children():
+            for grandchild in child.iter_children():
+                guid_map[grandchild.guid] = (child, grandchild)
+        return guid_map
+
     def query_by_interval_guids(self, id_or_ids: Union[UUID, List[UUID]]) -> "AnnotationCollection":
         """Filter this annotation collection object by a list of unique *interval* IDs.
-
-        This function wraps the ``query_by_guid`` function of child GeneInterval/FeatureIntervalCollection
-        objects.
 
         NOTE: If the children of this collection have GUID collisions, either across genes or features or
         within genes and features, this function will return all members with the matching GUID.
@@ -749,41 +846,26 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
         else:
             ids = id_or_ids
 
-        genes_to_keep = []
-        features_collections_to_keep = []
-        variant_collections_to_keep = []
-        for child in self.iter_children():
-            filtered_child = child.query_by_guids(ids)
-            if not filtered_child:
+        gene_guids_to_keep = set()
+        features_collection_guids_to_keep = set()
+        variant_collection_guids_to_keep = set()
+        for guid in ids:
+            if guid not in self._child_interval_guid_map:
                 continue
-            elif filtered_child.interval_type == IntervalType.FEATURE:
-                features_collections_to_keep.append(filtered_child)
-            elif filtered_child.interval_type == IntervalType.TRANSCRIPT:
-                genes_to_keep.append(filtered_child)
+            child, _ = self._child_interval_guid_map[guid]
+            if child.interval_type == IntervalType.FEATURE:
+                features_collection_guids_to_keep.add(child.guid)
+            elif child.interval_type == IntervalType.TRANSCRIPT:
+                gene_guids_to_keep.add(child.guid)
             else:
-                variant_collections_to_keep.append(filtered_child)
+                variant_collection_guids_to_keep.add(child.guid)
 
+        genes_to_keep = [self.guid_map[x].query_by_guids(ids) for x in gene_guids_to_keep]
+        features_collections_to_keep = [self.guid_map[x].query_by_guids(ids) for x in features_collection_guids_to_keep]
+        variant_collections_to_keep = [self.guid_map[x].query_by_guids(ids) for x in variant_collection_guids_to_keep]
         return self._return_collection_for_id_queries(
             genes_to_keep, features_collections_to_keep, variant_collections_to_keep
         )
-
-    def _query_by_guids(self, id_or_ids: Union[UUID, List[UUID]], interval_type: IntervalType):
-        """Convenience function for query_by_transcript_interval_guids(),
-        query_by_feature_interval_guids() and query_by_variant_interval_guids()"""
-        if isinstance(id_or_ids, UUID):
-            ids = [id_or_ids]
-        else:
-            ids = id_or_ids
-
-        children_to_keep = []
-        for child in self.iter_children():
-            gene_or_feature_collection = child.query_by_guids(ids)
-            if not gene_or_feature_collection:
-                continue
-            elif gene_or_feature_collection.interval_type == interval_type:
-                children_to_keep.append(gene_or_feature_collection)
-
-        return self._return_collection_for_id_queries(children_to_keep, [], [])
 
     def query_by_transcript_interval_guids(self, id_or_ids: Union[UUID, List[UUID]]) -> "AnnotationCollection":
         """Filter this annotation collection object by a list of unique *TranscriptInterval* IDs.
@@ -804,14 +886,15 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
         else:
             ids = id_or_ids
 
-        genes_to_keep = []
-        for child in self.iter_children():
-            gene_or_feature_collection = child.query_by_guids(ids)
-            if not gene_or_feature_collection:
+        gene_guids_to_keep = set()
+        for guid in ids:
+            if guid not in self._child_interval_guid_map:
                 continue
-            elif gene_or_feature_collection.interval_type == IntervalType.TRANSCRIPT:
-                genes_to_keep.append(gene_or_feature_collection)
+            child, _ = self._child_interval_guid_map[guid]
+            if child.interval_type == IntervalType.TRANSCRIPT:
+                gene_guids_to_keep.add(child.guid)
 
+        genes_to_keep = [self.guid_map[x] for x in gene_guids_to_keep]
         return self._return_collection_for_id_queries(genes_to_keep, [], [])
 
     def query_by_feature_interval_guids(self, id_or_ids: Union[UUID, List[UUID]]) -> "AnnotationCollection":
@@ -833,14 +916,15 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
         else:
             ids = id_or_ids
 
-        features_collections_to_keep = []
-        for child in self.iter_children():
-            gene_or_feature_collection = child.query_by_guids(ids)
-            if not gene_or_feature_collection:
+        features_collection_guids_to_keep = set()
+        for guid in ids:
+            if guid not in self._child_interval_guid_map:
                 continue
-            elif gene_or_feature_collection.interval_type == IntervalType.FEATURE:
-                features_collections_to_keep.append(gene_or_feature_collection)
+            child, _ = self._child_interval_guid_map[guid]
+            if child.interval_type == IntervalType.FEATURE:
+                features_collection_guids_to_keep.add(child.guid)
 
+        features_collections_to_keep = [self.guid_map[x] for x in features_collection_guids_to_keep]
         return self._return_collection_for_id_queries([], features_collections_to_keep, [])
 
     def query_by_feature_identifiers(self, id_or_ids: Union[str, List[str]]) -> "AnnotationCollection":
