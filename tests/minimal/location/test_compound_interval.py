@@ -701,7 +701,7 @@ class TestCompoundInterval:
                 Strand.PLUS,
                 SingleInterval(4, 8, Strand.PLUS),
             ),
-            # 13. Overlapping blocks, requested interval contains both repeats of same base at position 4
+            # 14. Overlapping blocks, requested interval contains both repeats of same base at position 4
             (
                 CompoundInterval([0, 4], [5, 10], Strand.PLUS),
                 4,
@@ -709,10 +709,55 @@ class TestCompoundInterval:
                 Strand.PLUS,
                 CompoundInterval([4, 4], [5, 8], Strand.PLUS),
             ),
+            # 15. 2bp overlapping blocks on negative strand
+            (
+                CompoundInterval([0, 4], [6, 12], Strand.MINUS),
+                7,
+                10,
+                Strand.PLUS,
+                CompoundInterval([4, 4], [5, 6], Strand.MINUS),
+            ),
         ],
     )
     def test_relative_interval_to_parent_location(self, location, start, end, strand, expected):
         assert location.relative_interval_to_parent_location(start, end, strand) == expected
+
+    @pytest.mark.parametrize(
+        "location,start,end,strand,expected_sequence",
+        [
+            # this test currently produces "ATT" as the output, when it should be "ATA"
+            #         A T C G A T C G A T C  G
+            #         0 1 2 3 4 5 6 7 8 9 10 11
+            #                 8 7 6 5 4 3 2  1
+            #              1110 9
+            #
+            #         which reverse complements into:
+            #         CGATCGATATCGAT
+            #                 ^^        << duplicated "AT"
+            # the blocks produced currently are: [<SingleInterval 4-5:->, <SingleInterval 4-6:->]
+            # which in (-) strand sequence space looks like: ["T", "AT"] -> "ATT"
+            # the blocks I think we really want are:
+            # [<SingleInterval 5-6:->, <SingleInterval 4-6:->]
+            # which has sequences ['A', 'AT']
+            # HOWEVER, this then returns the combined sequence "AAT" because of the way the blocks are reversed
+            # which is why I also think that an issue here is how we represent the ordering of overlapping blocks
+            # the CompoundInterval constructor always sorts starts and ends, independently
+            # What we really want is the sequence from 4-6 BEFORE the sequence from 5-6
+            # Should this be implemented on the extract_sequence side?
+            (
+                CompoundInterval([0, 4], [6, 12], Strand.MINUS, parent=Sequence("ATCGATCGATCG", Alphabet.NT_STRICT)),
+                7,
+                10,
+                Strand.PLUS,
+                "ATA",
+            )
+        ],
+    )
+    def test_relative_interval_to_parent_location_sequence(self, location, start, end, strand, expected_sequence):
+        assert (
+            str(location.relative_interval_to_parent_location(start, end, strand).extract_sequence())
+            == expected_sequence
+        )
 
     @pytest.mark.parametrize(
         "location,start,end,strand,expected_exception",
