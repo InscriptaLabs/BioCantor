@@ -1,6 +1,3 @@
-from contextlib import ExitStack
-from unittest.mock import patch
-
 import pytest
 from inscripta.biocantor.exc import NoSuchAncestorException, MismatchedFrameException, InvalidPositionException
 from inscripta.biocantor.gene.cds import CDSInterval, TranslationTable
