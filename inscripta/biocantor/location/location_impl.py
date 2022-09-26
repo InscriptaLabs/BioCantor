@@ -463,8 +463,7 @@ class CompoundInterval(Location):
         else:
             self.parent = None
         self.strand = strand
-        self._starts = tuple(sorted(starts))
-        self._ends = tuple(sorted(ends))
+        self._starts, self._ends = self._sort_starts_ends(starts, ends, strand)
         self._single_interval_store = None
         self._is_overlapping = None
 
@@ -477,6 +476,21 @@ class CompoundInterval(Location):
 
         self.start = self._starts[0]
         self.end = self._ends[-1]
+
+    @staticmethod
+    def _sort_starts_ends(
+        starts: List[int], ends: List[int], strand: Strand
+    ) -> Tuple[Tuple[int, ...], Tuple[int, ...]]:
+        """
+        Given an array of positions and an orientation, sort the positions such that they are in incrementing order
+        *relative to the orientation*.
+        """
+        blocks = ((start, end) for start, end in zip(starts, ends))
+        if strand == Strand.PLUS:
+            blocks = sorted(blocks, key=lambda x: (x[0], x[1]))
+        else:
+            blocks = sorted(blocks, key=lambda x: (x[0], -x[1]))
+        return tuple(zip(*blocks))
 
     @property
     def _single_intervals(self):

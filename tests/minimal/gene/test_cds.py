@@ -3051,12 +3051,8 @@ class TestCDSInterval:
         assert str(cds.get_spliced_sequence()) == "AGGGTCCCCTGAAA"
         assert str(cds.extract_sequence()) == "AGGGTCCCCTGA"
 
-    def test_negative_strand_overlapping_codon_iterator_bug(self):
+    def test_negative_strand_overlapping_codon_iterator(self):
         """
-        During optimization of cds.extract_sequence() I noticed a bug uncovered by the test_overlapping_cds_parser()
-        test in test_genbank_parser.py. This test recreates that specific issue in a more controlled fashion,
-        with redundant bases removed to make it easier to interpret
-
         This CDS has a 2bp overlap. In chunk relative coordinates, it looks like this:
 
         A T C G A T C G A T C  G
@@ -3068,7 +3064,6 @@ class TestCDSInterval:
         CGATCGATATCGAT
                 ^^        << duplicated "AT"
          GATCGATATCGA     << ORF is taken into account, these are actual codons in the chunk frame
-         GATCGAATTCGA
         """
         cds = CDSInterval(
             **dict(
@@ -3095,11 +3090,13 @@ class TestCDSInterval:
                 ),
             )
         )
+        orf = "GATCGATATCGA"
         assert str(cds.chunk_relative_location.extract_sequence()) == "CGATCGATATCGAT"
-        assert str(cds.extract_sequence()) == "GATCGATATCGA"
+        assert str(cds.extract_sequence()) == orf
+        # using codon iterator still produces the same result
         codons = (str(codon_location.extract_sequence()) for codon_location in cds.chunk_relative_codon_locations)
         old_seq = "".join(codons)
-        assert old_seq == "GATCGAATTCGA"
+        assert old_seq == orf
 
     def test_equality_different_parents(self):
         cds1 = CDSInterval(

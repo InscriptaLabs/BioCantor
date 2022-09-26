@@ -725,31 +725,22 @@ class TestCompoundInterval:
     @pytest.mark.parametrize(
         "location,start,end,strand,expected_sequence",
         [
-            # this test currently produces "ATT" as the output, when it should be "ATA"
-            #         A T C G A T C G A T C  G
-            #         0 1 2 3 4 5 6 7 8 9 10 11
-            #                 8 7 6 5 4 3 2  1
-            #              1110 9
+            #  SEQ    A  T  C  G A T C G A T C  G
+            #  POS    0  1  2  3 4 5 6 7 8 9 10 11
+            # TX_POS             7 6 5 4 3 2 1  0
+            #        13 12 11 10 9 8
             #
             #         which reverse complements into:
             #         CGATCGATATCGAT
             #                 ^^        << duplicated "AT"
-            # the blocks produced currently are: [<SingleInterval 4-5:->, <SingleInterval 4-6:->]
-            # which in (-) strand sequence space looks like: ["T", "AT"] -> "ATT"
-            # the blocks I think we really want are:
-            # [<SingleInterval 5-6:->, <SingleInterval 4-6:->]
-            # which has sequences ['A', 'AT']
-            # HOWEVER, this then returns the combined sequence "AAT" because of the way the blocks are reversed
-            # which is why I also think that an issue here is how we represent the ordering of overlapping blocks
-            # the CompoundInterval constructor always sorts starts and ends, independently
-            # What we really want is the sequence from 4-6 BEFORE the sequence from 5-6
-            # Should this be implemented on the extract_sequence side?
+            # pulling down the region from 7-10 should grab the bases at 4-5-4, which reverse complements into
+            # "TAT"
             (
                 CompoundInterval([0, 4], [6, 12], Strand.MINUS, parent=Sequence("ATCGATCGATCG", Alphabet.NT_STRICT)),
                 7,
                 10,
                 Strand.PLUS,
-                "ATA",
+                "TAT",
             )
         ],
     )
@@ -3552,3 +3543,29 @@ class TestCompoundInterval:
         assert ci1.contains(ci2, full_span=True) == contains
         ci1.strand = Strand.MINUS
         assert ci1.contains(ci2, full_span=True, match_strand=False) == contains
+
+    @pytest.mark.parametrize(
+        "starts,ends,strand,expected",
+        [
+            # single block intervals behave normally
+            ([0], [10], Strand.PLUS, ((0,), (10,))),
+            ([0], [10], Strand.MINUS, ((0,), (10,))),
+            # single block intervals instantiated 'backwards' come out 'backwards'
+            ([10], [0], Strand.PLUS, ((10,), (0,))),
+            ([10], [0], Strand.MINUS, ((10,), (0,))),
+            # [0-3], [5-10] is a normal interval on both strands
+            ([0, 5], [3, 10], Strand.PLUS, ((0, 5), (3, 10))),
+            ([0, 5], [3, 10], Strand.MINUS, ((0, 5), (3, 10))),
+            # [0-6], [4-12], overlaps on + strand are oriented from left to right
+            ([0, 4], [6, 12], Strand.PLUS, ((0, 4), (6, 12))),
+            # [0-6], [4-12] overlaps on - strand are oriented from left to right
+            ([0, 4], [6, 12], Strand.MINUS, ((0, 4), (6, 12))),
+            # when the overlapping intervals share start positions, then the orientation affects the ordering
+            # [4-5], [4-6] on plus strand remains as-is
+            # [4-5], [4-6] on minus strand becomes [4-6], [4-5]
+            ([4, 4], [5, 6], Strand.PLUS, ((4, 4), (5, 6))),
+            ([4, 4], [5, 6], Strand.MINUS, ((4, 4), (6, 5))),
+        ],
+    )
+    def test__sort_starts_ends(self, starts, ends, strand, expected):
+        assert CompoundInterval._sort_starts_ends(starts, ends, strand) == expected
