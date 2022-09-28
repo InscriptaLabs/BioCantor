@@ -56,6 +56,13 @@ class GenBankSequenceExtraction:
             for gene in rec.genes:
                 _ = gene.get_primary_transcript_sequence()
 
+    def time_scan_codons(self, gb):
+        for rec in self.recs:
+            for gene in rec.genes:
+                if not gene.is_coding:
+                    continue
+                _ = list(gene.get_primary_transcript().cds.scan_codon_locations)
+
 
 class AnnotationCollectionIntervalQuery:
     params = [

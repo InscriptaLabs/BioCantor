@@ -34,6 +34,7 @@ class Sequence(AbstractSequence):
         type: Optional[Union[SequenceType, str]] = None,
         parent: Optional[ParentInputType] = None,
         validate_alphabet: bool = True,
+        validate_parent: bool = True,
     ):
         """
             Parameters
@@ -50,6 +51,8 @@ class Sequence(AbstractSequence):
                 Parent
             validate_alphabet
                 Whether to validate this sequence against its alphabet
+            validate_parent
+                Whether to validate the parents of this sequence
         """
         self.sequence = Seq(data)
         self.alphabet = alphabet
@@ -57,7 +60,7 @@ class Sequence(AbstractSequence):
         self.sequence_type = type
         self.parent = make_parent(parent) if parent else None
         self._len = len(self.sequence)
-        if self.parent and self.parent.location and len(self.parent.location) != len(self):
+        if validate_parent and self.parent and self.parent.location and len(self.parent.location) != len(self):
             raise MismatchedParentException(
                 "Sequence length ({}) does not equal parent location length ({})".format(
                     len(self), len(self.parent.location)
@@ -104,7 +107,14 @@ class Sequence(AbstractSequence):
         else:
             new_parent = self.parent
 
-        return Sequence(subseq, self.alphabet, type=self.sequence_type, parent=new_parent, validate_alphabet=False)
+        return Sequence(
+            subseq,
+            self.alphabet,
+            type=self.sequence_type,
+            parent=new_parent,
+            validate_alphabet=False,
+            validate_parent=False,
+        )
 
     def __repr__(self):
         return "<{}>".format(self.summary())
@@ -182,6 +192,7 @@ class Sequence(AbstractSequence):
             type=new_type,
             parent=rc_parent,
             validate_alphabet=False,
+            validate_parent=False,
         )
 
     def append(self, other: Sequence, new_id: Optional[str] = None, data_only: bool = False) -> Sequence:

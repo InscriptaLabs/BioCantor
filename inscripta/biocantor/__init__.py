@@ -442,7 +442,7 @@ class AbstractSequence(ABC):
 class AbstractParent(ABC):
     """Shared AbstractParent base class simplifies imports for type checking"""
 
-    __slots__ = ["parent", "id", "sequence_type", "_strand", "location", "sequence"]
+    __slots__ = ["parent", "id", "sequence_type", "_strand", "location", "sequence", "_strand_property"]
 
     id: Optional[str]
     sequence_type: Optional[SequenceType]
