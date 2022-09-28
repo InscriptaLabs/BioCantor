@@ -97,6 +97,8 @@ class CDSInterval(AbstractFeatureInterval):
         else:
             self.guid = guid
 
+        self._chunk_relative_codon_locations_cached = False
+
     def __str__(self):
         frame_str = ", ".join([str(p) for p in self.frames])
         return f"CDS(({self.chromosome_location}), ({frame_str})"
@@ -446,14 +448,21 @@ class CDSInterval(AbstractFeatureInterval):
         Incomplete internal codons are determined by comparing the CDSFrame of each exon
         as annotated, to the expected value of the CDSFrame. This allows for an annotation
         to model things like programmed frameshifts and indels that may be assembly errors.
+
+        This function has been optimized to run as fast as possible. The original implementation iterated
+        over every codon, but this is slower because it has a lot of object instantiation overhead. However,
+        if those objects have already been instantiated and cached, then it is faster to just re-use them.
         """
+        if self._chunk_relative_codon_locations_cached is True:
+            codons = (str(codon_location.extract_sequence()) for codon_location in self.chunk_relative_codon_locations)
+            seq = "".join(codons)
+            return seq
         if self.num_blocks > 1:
             window_fn = self._prepare_multi_exon_window_for_scan_codon_locations
         else:
             window_fn = self._prepare_single_exon_window_for_scan_codon_locations
         location, offset = window_fn(relative_window=None, chunk_relative_coordinates=True)
         seq = str(location.extract_sequence())[offset : len(location) - ((len(location) - offset) % 3)]
-        assert len(seq) % 3 == 0
         return Sequence(seq, Alphabet.NT_EXTENDED, validate_alphabet=False)
 
     @property
@@ -502,6 +511,7 @@ class CDSInterval(AbstractFeatureInterval):
         This function calls ``scan_codon_locations`` and stores the full result as a cached
         tuple.
         """
+        self._chunk_relative_codon_locations_cached = True
         return tuple(self.scan_chunk_relative_codon_locations())
 
     @lru_cache(maxsize=1)
