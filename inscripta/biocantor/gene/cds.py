@@ -447,8 +447,12 @@ class CDSInterval(AbstractFeatureInterval):
         as annotated, to the expected value of the CDSFrame. This allows for an annotation
         to model things like programmed frameshifts and indels that may be assembly errors.
         """
-        codons = (str(codon_location.extract_sequence()) for codon_location in self.chunk_relative_codon_locations)
-        seq = "".join(codons)
+        if self.num_blocks > 1:
+            window_fn = self._prepare_multi_exon_window_for_scan_codon_locations
+        else:
+            window_fn = self._prepare_single_exon_window_for_scan_codon_locations
+        location, offset = window_fn(relative_window=None, chunk_relative_coordinates=True)
+        seq = str(location.extract_sequence())[offset : len(location) - ((len(location) - offset) % 3)]
         assert len(seq) % 3 == 0
         return Sequence(seq, Alphabet.NT_EXTENDED, validate_alphabet=False)
 
@@ -810,6 +814,20 @@ class CDSInterval(AbstractFeatureInterval):
         translation tables will change the set of start codons that code for Methionine,
         and will not change any other codons.
         """
+        seq = str(self.extract_sequence()).upper()
+        codons = []
+        for i in range(0, len(seq), 3):
+            codon_str = seq[i : i + 3]
+            codon = Codon(codon_str)
+            if truncate_at_in_frame_stop and codon.is_stop_codon and i != len(seq) - 3:
+                break
+            if i == 0:
+                if codon.is_start_codon_in_specific_translation_table(translation_table):
+                    codons.append(Codon.ATG.translate())
+                else:
+                    codons.append(codon.translate())
+            else:
+                codons.append(codon.translate())
         aa_seq_str = "".join(self._translate_iter(truncate_at_in_frame_stop, translation_table))
         return Sequence(aa_seq_str, Alphabet.AA, validate_alphabet=False)
 

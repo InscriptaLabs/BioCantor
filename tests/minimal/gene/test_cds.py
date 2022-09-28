@@ -1,6 +1,3 @@
-from contextlib import ExitStack
-from unittest.mock import patch
-
 import pytest
 from inscripta.biocantor.exc import NoSuchAncestorException, MismatchedFrameException, InvalidPositionException
 from inscripta.biocantor.gene.cds import CDSInterval, TranslationTable
@@ -3051,6 +3048,53 @@ class TestCDSInterval:
         assert str(cds.get_spliced_sequence()) == "AGGGTCCCCTGAAA"
         assert str(cds.extract_sequence()) == "AGGGTCCCCTGA"
 
+    def test_negative_strand_overlapping_codon_iterator(self):
+        """
+        This CDS has a 2bp overlap. In chunk relative coordinates, it looks like this:
+
+        A T C G A T C G A T C  G
+        0 1 2 3 4 5 6 7 8 9 10 11
+                8 7 6 5 4 3 2  1
+             1110 9
+
+        which reverse complements into:
+        CGATCGATATCGAT
+                ^^        << duplicated "AT"
+         GATCGATATCGA     << ORF is taken into account, these are actual codons in the chunk frame
+        """
+        cds = CDSInterval(
+            **dict(
+                cds_starts=[9, 202],
+                cds_ends=[204, 587],
+                strand=Strand.MINUS,
+                frames_or_phases=[CDSFrame.ONE, CDSFrame.ZERO],
+                parent_or_seq_chunk_parent=Parent(
+                    id="chrVI.0:198-210",
+                    sequence=Sequence(
+                        "ATCGATCGATCG",
+                        Alphabet.NT_EXTENDED_GAPPED,
+                        id="chrVI.0:198-210",
+                        type=SequenceType.SEQUENCE_CHUNK,
+                        parent=Parent(
+                            location=SingleInterval(
+                                198,
+                                210,
+                                Strand.PLUS,
+                                parent=Parent(id="test", sequence_type=SequenceType.CHROMOSOME),
+                            )
+                        ),
+                    ),
+                ),
+            )
+        )
+        orf = "GATCGATATCGA"
+        assert str(cds.chunk_relative_location.extract_sequence()) == "CGATCGATATCGAT"
+        assert str(cds.extract_sequence()) == orf
+        # using codon iterator still produces the same result
+        codons = (str(codon_location.extract_sequence()) for codon_location in cds.chunk_relative_codon_locations)
+        old_seq = "".join(codons)
+        assert old_seq == orf
+
     def test_equality_different_parents(self):
         cds1 = CDSInterval(
             **dict(
@@ -3102,11 +3146,6 @@ class TestCDSInterval:
                 ),
             ),
         )
-        # show that calling translate() calls _scan_codon_locations()
-        with ExitStack() as stack:
-            overlapping = stack.enter_context(patch("inscripta.biocantor.gene.cds.CDSInterval._scan_codon_locations"))
-            _ = list(cds.translate())
-        overlapping.assert_called()
         # show that the function returns a sensible translation that starts from the 1st in-frame codon
         # need to re-build the CDS because the cache now contains the empty version caused by the mock
         cds = CDSInterval.from_dict(cds.to_dict(), parent_or_seq_chunk_parent=cds.chunk_relative_location.parent)
@@ -3141,11 +3180,6 @@ class TestCDSInterval:
                 ),
             ),
         )
-        # show that calling translate() calls _scan_codon_locations()
-        with ExitStack() as stack:
-            overlapping = stack.enter_context(patch("inscripta.biocantor.gene.cds.CDSInterval._scan_codon_locations"))
-            _ = list(cds.translate())
-        overlapping.assert_called()
         # show that the function returns a sensible translation that starts from the 1st in-frame codon
         # need to re-build the CDS because the cache now contains the empty version caused by the mock
         cds = CDSInterval.from_dict(cds.to_dict(), parent_or_seq_chunk_parent=cds.chunk_relative_location.parent)

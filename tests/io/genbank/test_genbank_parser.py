@@ -1208,10 +1208,18 @@ class TestSortedParser:
         do not have the necessary information to properly encode overlapping ORFs."""
         genbank = test_data_dir / "overlapping_cds_feature.gb"
         recs = list(ParsedAnnotationRecord.parsed_annotation_records_to_model(parse_genbank(test_data_dir / genbank)))
+        cds = recs[0].genes[0].transcripts[0].cds
+
+        # TODO: the old method and new method disagree here
+        codons = (str(codon_location.extract_sequence()) for codon_location in cds.chunk_relative_codon_locations)
+        old_seq = "".join(codons)
+        new_seq = str(cds.extract_sequence())
+        assert old_seq == new_seq
+
         assert recs[0].genes[0].transcripts[0].cds.num_blocks > 1
         assert (
             str(recs[0].genes[0].transcripts[0].cds.translate())
-            == "MLFAYSGCLAPQCIPDISSFKALPFRDTESRFTTDSSVISSRFSSSFTSSSSKIIIITSIFSSKMDNEHVGASLIVSLSMASLILTNVFSFSSTSYSSQPSDYIACSPSGIDDQPVAEPSGYTPVGSPSSTFWLYYFWFGCNRLPIFT**RPIDECIFQIRHKSLQSFCLNSYNFTFTQYPSEVLPTSKHHFL"  # noqa: E501
+            == "MLFAYSGCLAPQCIPDISSFKALPFRDTESRFTTDSSVISSRFSSSFTSSSSKIIIITSIFSSKMDNEHVGASLIVSLSMASLILTNVFSFSSTSYSSQPSDYIACSPSGIDDQPVAEPSGYTPVGSPLSTFWLYYFWFGCNRLPIFT**RPIDECIFQIRHKSLQSFCLNSYNFTFTQYPSEVLPTSKHHFL"  # noqa: E501
         )
 
     @pytest.mark.parametrize(
