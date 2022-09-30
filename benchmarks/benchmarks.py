@@ -1,6 +1,7 @@
 from pathlib import Path
+import json
 
-from inscripta.biocantor.io.genbank.parser import parse_genbank, ParsedAnnotationRecord
+from inscripta.biocantor.io.genbank.parser import parse_genbank, ParsedAnnotationRecord, AnnotationCollectionModel
 from inscripta.biocantor.io.gff3.parser import parse_standard_gff3
 
 DATA_DIR = Path(__file__).parent.parent / "tests/data"
@@ -87,30 +88,32 @@ class GenBankSequenceExtraction:
 
     def setup(self, *args, **kwargs):
         self.recs = list(
-            ParsedAnnotationRecord.parsed_annotation_records_to_model(parse_genbank(DATA_DIR / "R64_subset.gbff"))
+            ParsedAnnotationRecord.parsed_annotation_records_to_model(parse_genbank(DATA_DIR / "MG1655_subset.gbff"))
         )
+        # Make sure we always use the same gene for GeneInterval based tests
+        self.gene = self.recs[0].query_by_feature_identifiers("carB").genes[0]
+        self.transcript = self.gene.get_primary_transcript()
 
     def time_get_primary_protein(self):
-        for rec in self.recs:
-            for gene in rec.genes:
-                gene.get_primary_protein()
+        self.gene.get_primary_protein()
 
     def time_get_primary_transcript_sequence(self):
-        for rec in self.recs:
-            for gene in rec.genes:
-                gene.get_primary_transcript_sequence()
+        self.gene.get_primary_transcript_sequence()
 
-    def time_get_transcript_sequence(self):
-        self.recs[0].genes[20].transcripts[0].get_transcript_sequence()
+    def time_get_spliced_sequence(self):
+        self.transcript.get_spliced_sequence()
+
+    def time_get_protein_sequence(self):
+        self.transcript.get_protein_sequence()
 
     def time_scan_codon_locations(self):
-        [x for x in self.recs[0].genes[20].transcripts[0].cds.scan_codon_locations()]
+        [x for x in self.transcript.cds.scan_codon_locations()]
 
     def time_chromosome_codon_locations(self):
-        self.recs[0].genes[20].transcripts[0].cds.chromosome_codon_locations
+        self.transcript.cds.chromosome_codon_locations
 
     def time_chunk_relative_codon_locations(self):
-        self.recs[0].genes[20].transcripts[0].cds.chunk_relative_codon_locations
+        self.transcript.cds.chunk_relative_codon_locations
 
 
 class AnnotationCollectionIntervalQuery:
