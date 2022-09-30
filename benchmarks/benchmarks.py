@@ -33,42 +33,62 @@ class ParseGenBank:
         list(ParsedAnnotationRecord.parsed_annotation_records_to_model(parse_genbank(DATA_DIR / "INSC1006_chrI.gbff")))
 
     def mem_parse_genbank_INSC1006_chrI(self):
-        return list(ParsedAnnotationRecord.parsed_annotation_records_to_model(parse_genbank(DATA_DIR / "INSC1006_chrI.gbff")))
+        return list(
+            ParsedAnnotationRecord.parsed_annotation_records_to_model(parse_genbank(DATA_DIR / "INSC1006_chrI.gbff"))
+        )
 
     def time_parse_genbank_MG1655_subset(self):
         list(ParsedAnnotationRecord.parsed_annotation_records_to_model(parse_genbank(DATA_DIR / "MG1655_subset.gbff")))
 
     def mem_parse_genbank_MG1655_subset(self):
-        return list(ParsedAnnotationRecord.parsed_annotation_records_to_model(parse_genbank(DATA_DIR / "MG1655_subset.gbff")))
+        return list(
+            ParsedAnnotationRecord.parsed_annotation_records_to_model(parse_genbank(DATA_DIR / "MG1655_subset.gbff"))
+        )
 
     def time_parse_genbank_R64_subset(self):
         list(ParsedAnnotationRecord.parsed_annotation_records_to_model(parse_genbank(DATA_DIR / "R64_subset.gbff")))
 
     def mem_parse_genbank_R64_subset(self):
-        return list(ParsedAnnotationRecord.parsed_annotation_records_to_model(parse_genbank(DATA_DIR / "R64_subset.gbff")))
+        return list(
+            ParsedAnnotationRecord.parsed_annotation_records_to_model(parse_genbank(DATA_DIR / "R64_subset.gbff"))
+        )
 
 
 class ParseGFF3:
     repeat = (1, 5, 20.0)
 
     def time_parse_gff3_INSC1003(self):
-        _ = list(ParsedAnnotationRecord.parsed_annotation_records_to_model(parse_standard_gff3(DATA_DIR / "INSC1003.gff3")))
+        _ = list(
+            ParsedAnnotationRecord.parsed_annotation_records_to_model(parse_standard_gff3(DATA_DIR / "INSC1003.gff3"))
+        )
 
     def mem_parse_gff3_INSC1003(self):
-        return list(ParsedAnnotationRecord.parsed_annotation_records_to_model(parse_standard_gff3(DATA_DIR / "INSC1003.gff3")))
+        return list(
+            ParsedAnnotationRecord.parsed_annotation_records_to_model(parse_standard_gff3(DATA_DIR / "INSC1003.gff3"))
+        )
 
     def time_parse_gff3_INSC1006_chrI(self):
-        _ = list(ParsedAnnotationRecord.parsed_annotation_records_to_model(parse_standard_gff3(DATA_DIR / "INSC1006_chrI.gff3")))
+        _ = list(
+            ParsedAnnotationRecord.parsed_annotation_records_to_model(
+                parse_standard_gff3(DATA_DIR / "INSC1006_chrI.gff3")
+            )
+        )
 
     def mem_parse_gff3_INSC1006_chrI(self):
-        return list(ParsedAnnotationRecord.parsed_annotation_records_to_model(parse_standard_gff3(DATA_DIR / "INSC1006_chrI.gff3")))
+        return list(
+            ParsedAnnotationRecord.parsed_annotation_records_to_model(
+                parse_standard_gff3(DATA_DIR / "INSC1006_chrI.gff3")
+            )
+        )
 
 
 class GenBankSequenceExtraction:
     repeat = (1, 10, 10.0)
 
     def setup(self, *args, **kwargs):
-        self.recs = list(ParsedAnnotationRecord.parsed_annotation_records_to_model(parse_genbank(DATA_DIR / "R64_subset.gbff")))
+        self.recs = list(
+            ParsedAnnotationRecord.parsed_annotation_records_to_model(parse_genbank(DATA_DIR / "R64_subset.gbff"))
+        )
 
     def time_get_primary_protein(self):
         for rec in self.recs:
