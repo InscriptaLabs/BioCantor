@@ -1,8 +1,11 @@
 from pathlib import Path
-import json
 
-from inscripta.biocantor.io.genbank.parser import parse_genbank, ParsedAnnotationRecord, AnnotationCollectionModel
+from inscripta.biocantor.gene import CDSInterval
+from inscripta.biocantor.io.genbank.parser import parse_genbank, ParsedAnnotationRecord
 from inscripta.biocantor.io.gff3.parser import parse_standard_gff3
+from inscripta.biocantor.location import Strand, SingleInterval
+from inscripta.biocantor.parent import Parent, SequenceType
+from inscripta.biocantor.sequence import Sequence, Alphabet
 
 DATA_DIR = Path(__file__).parent.parent / "tests/data"
 
@@ -19,6 +22,147 @@ GFF3 = [
     "INSC1003.gff3",
     "INSC1006_chrI.gff3",
 ]
+
+SEQ_PARENT = Parent(sequence=Sequence("ATGC" * 1000, Alphabet.NT_STRICT))
+
+CHUNK_SEQ_PARENT = Parent(
+    id="chunk:1000-4000",
+    sequence=Sequence(
+        "ATGC" * 1000,
+        Alphabet.NT_STRICT,
+        id="chunk:1000-4000",
+        type=SequenceType.SEQUENCE_CHUNK,
+        parent=Parent(
+            location=SingleInterval(
+                1000,
+                5000,
+                Strand.PLUS,
+                parent=Parent(id="chunk", sequence_type=SequenceType.CHROMOSOME),
+            )
+        ),
+    ),
+)
+
+
+SINGLE_EXON_CDS_ZERO_FRAME = dict(
+    cds_starts=[0],
+    cds_ends=[1000],
+    strand="PLUS",
+    cds_frames=["ZERO"],
+    qualifiers=None,
+    sequence_name=None,
+    sequence_guid=None,
+    protein_id=None,
+    product=None,
+)
+
+SINGLE_EXON_CDS_ONE_FRAME = dict(
+    cds_starts=[0],
+    cds_ends=[1000],
+    strand="PLUS",
+    cds_frames=["ONE"],
+    qualifiers=None,
+    sequence_name=None,
+    sequence_guid=None,
+    protein_id=None,
+    product=None,
+)
+
+
+class TestSingleExonZeroFrameNoParent:
+
+    def setup(self):
+        self.cds = CDSInterval.from_dict(SINGLE_EXON_CDS_ZERO_FRAME)
+        self.rel_window = self.cds._convert_chromosome_start_end_to_relative_window(100, 200)
+
+    def time__prepare_single_exon_window_for_scan_codon_locations(self):
+        _ = self.cds._prepare_single_exon_window_for_scan_codon_locations()
+
+    def time__prepare_single_exon_window_for_scan_codon_locations_chrom_rel(self):
+        _ = self.cds._prepare_single_exon_window_for_scan_codon_locations(chunk_relative_coordinates=False)
+
+    def time__prepare_single_exon_window_for_scan_codon_locations_rel_window(self):
+        _ = self.cds._prepare_single_exon_window_for_scan_codon_locations(self.rel_window)
+
+
+class TestSingleExonZeroFrameChromParent:
+
+    def setup(self):
+        self.cds = CDSInterval.from_dict(SINGLE_EXON_CDS_ZERO_FRAME, SEQ_PARENT)
+        self.rel_window = self.cds._convert_chromosome_start_end_to_relative_window(100, 200)
+
+    def time__prepare_single_exon_window_for_scan_codon_locations(self):
+        _ = self.cds._prepare_single_exon_window_for_scan_codon_locations()
+
+    def time__prepare_single_exon_window_for_scan_codon_locations_chrom_rel(self):
+        _ = self.cds._prepare_single_exon_window_for_scan_codon_locations(chunk_relative_coordinates=False)
+
+    def time__prepare_single_exon_window_for_scan_codon_locations_rel_window(self):
+        _ = self.cds._prepare_single_exon_window_for_scan_codon_locations(self.rel_window)
+
+
+class TestSingleExonZeroFrameChunkParent:
+
+    def setup(self):
+        self.cds = CDSInterval.from_dict(SINGLE_EXON_CDS_ZERO_FRAME, CHUNK_SEQ_PARENT)
+        self.rel_window = self.cds._convert_chromosome_start_end_to_relative_window(100, 200)
+
+    def time__prepare_single_exon_window_for_scan_codon_locations(self):
+        _ = self.cds._prepare_single_exon_window_for_scan_codon_locations()
+
+    def time__prepare_single_exon_window_for_scan_codon_locations_chrom_rel(self):
+        _ = self.cds._prepare_single_exon_window_for_scan_codon_locations(chunk_relative_coordinates=False)
+
+    def time__prepare_single_exon_window_for_scan_codon_locations_rel_window(self):
+        _ = self.cds._prepare_single_exon_window_for_scan_codon_locations(self.rel_window)
+
+
+class TestSingleExonOneFrameNoParent:
+
+    def setup(self):
+        self.cds = CDSInterval.from_dict(SINGLE_EXON_CDS_ONE_FRAME)
+        self.rel_window = self.cds._convert_chromosome_start_end_to_relative_window(100, 200)
+
+    def time__prepare_single_exon_window_for_scan_codon_locations(self):
+        _ = self.cds._prepare_single_exon_window_for_scan_codon_locations()
+
+    def time__prepare_single_exon_window_for_scan_codon_locations_chrom_rel(self):
+        _ = self.cds._prepare_single_exon_window_for_scan_codon_locations(chunk_relative_coordinates=False)
+
+    def time__prepare_single_exon_window_for_scan_codon_locations_rel_window(self):
+        _ = self.cds._prepare_single_exon_window_for_scan_codon_locations(self.rel_window)
+
+
+class TestSingleExonOneFrameChromParent:
+
+    def setup(self):
+        self.cds = CDSInterval.from_dict(SINGLE_EXON_CDS_ONE_FRAME, SEQ_PARENT)
+        self.rel_window = self.cds._convert_chromosome_start_end_to_relative_window(100, 200)
+
+    def time__prepare_single_exon_window_for_scan_codon_locations(self):
+        _ = self.cds._prepare_single_exon_window_for_scan_codon_locations()
+
+    def time__prepare_single_exon_window_for_scan_codon_locations_chrom_rel(self):
+        _ = self.cds._prepare_single_exon_window_for_scan_codon_locations(chunk_relative_coordinates=False)
+
+    def time__prepare_single_exon_window_for_scan_codon_locations_rel_window(self):
+        _ = self.cds._prepare_single_exon_window_for_scan_codon_locations(self.rel_window)
+
+
+class TestSingleExonOneFrameChunkParent:
+
+    def setup(self):
+        self.cds = CDSInterval.from_dict(SINGLE_EXON_CDS_ONE_FRAME, CHUNK_SEQ_PARENT)
+        self.rel_window = self.cds._convert_chromosome_start_end_to_relative_window(100, 200)
+
+    def time__prepare_single_exon_window_for_scan_codon_locations(self):
+        _ = self.cds._prepare_single_exon_window_for_scan_codon_locations()
+
+    def time__prepare_single_exon_window_for_scan_codon_locations_chrom_rel(self):
+        _ = self.cds._prepare_single_exon_window_for_scan_codon_locations(chunk_relative_coordinates=False)
+
+    def time__prepare_single_exon_window_for_scan_codon_locations_rel_window(self):
+        _ = self.cds._prepare_single_exon_window_for_scan_codon_locations(self.rel_window)
 
 
 class ParseGenBank:
