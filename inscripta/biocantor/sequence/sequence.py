@@ -243,6 +243,7 @@ class Sequence(AbstractSequence):
             type=self.sequence_type,
             parent=new_parent,
             validate_alphabet=False,
+            validate_parent=False,
         )
 
     def first_ancestor_of_type(self, sequence_type: str, include_self: bool = True) -> Parent:
