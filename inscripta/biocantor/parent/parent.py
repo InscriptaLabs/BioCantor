@@ -117,6 +117,8 @@ class Parent(AbstractParent):
         self.location = location
         self.sequence = sequence
 
+        self._strand_property = None
+
     def __eq__(self, other):
         if not self.equals_except_location(other):
             return False
@@ -166,11 +168,12 @@ class Parent(AbstractParent):
     def strand(self) -> Optional[Strand]:
         """Returns the Strand of this Parent. If this Parent has no explicit Strand, but has a Location,
         that Location's Strand is returned."""
-        if self._strand:
-            return self._strand
-        if self.location:
-            return self.location.strand
-        return None
+        if self._strand_property is None:
+            if self._strand:
+                self._strand_property = self._strand
+            if self.location:
+                self._strand_property = self.location.strand
+        return self._strand_property
 
     def strip_location_info(self) -> Parent:
         """Returns a new Parent object representing this Parent with information about child
