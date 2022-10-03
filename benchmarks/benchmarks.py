@@ -70,7 +70,6 @@ SINGLE_EXON_CDS_ONE_FRAME = dict(
 
 
 class TestSingleExonZeroFrameNoParent:
-
     def setup(self):
         self.cds = CDSInterval.from_dict(SINGLE_EXON_CDS_ZERO_FRAME)
         self.rel_window = self.cds._convert_chromosome_start_end_to_relative_window(100, 200)
@@ -86,7 +85,6 @@ class TestSingleExonZeroFrameNoParent:
 
 
 class TestSingleExonZeroFrameChromParent:
-
     def setup(self):
         self.cds = CDSInterval.from_dict(SINGLE_EXON_CDS_ZERO_FRAME, SEQ_PARENT)
         self.rel_window = self.cds._convert_chromosome_start_end_to_relative_window(100, 200)
@@ -102,7 +100,6 @@ class TestSingleExonZeroFrameChromParent:
 
 
 class TestSingleExonZeroFrameChunkParent:
-
     def setup(self):
         self.cds = CDSInterval.from_dict(SINGLE_EXON_CDS_ZERO_FRAME, CHUNK_SEQ_PARENT)
         self.rel_window = self.cds._convert_chromosome_start_end_to_relative_window(100, 200)
@@ -118,7 +115,6 @@ class TestSingleExonZeroFrameChunkParent:
 
 
 class TestSingleExonOneFrameNoParent:
-
     def setup(self):
         self.cds = CDSInterval.from_dict(SINGLE_EXON_CDS_ONE_FRAME)
         self.rel_window = self.cds._convert_chromosome_start_end_to_relative_window(100, 200)
@@ -134,7 +130,6 @@ class TestSingleExonOneFrameNoParent:
 
 
 class TestSingleExonOneFrameChromParent:
-
     def setup(self):
         self.cds = CDSInterval.from_dict(SINGLE_EXON_CDS_ONE_FRAME, SEQ_PARENT)
         self.rel_window = self.cds._convert_chromosome_start_end_to_relative_window(100, 200)
@@ -150,7 +145,6 @@ class TestSingleExonOneFrameChromParent:
 
 
 class TestSingleExonOneFrameChunkParent:
-
     def setup(self):
         self.cds = CDSInterval.from_dict(SINGLE_EXON_CDS_ONE_FRAME, CHUNK_SEQ_PARENT)
         self.rel_window = self.cds._convert_chromosome_start_end_to_relative_window(100, 200)
