@@ -70,7 +70,6 @@ SINGLE_EXON_CDS_ONE_FRAME = dict(
 
 
 class TestSingleExonZeroFrameNoParentPrepareWindow:
-
     def setup(self):
         self.cds = CDSInterval.from_dict(SINGLE_EXON_CDS_ZERO_FRAME)
         self.rel_window = self.cds._convert_chromosome_start_end_to_relative_window(100, 200)
@@ -86,7 +85,6 @@ class TestSingleExonZeroFrameNoParentPrepareWindow:
 
 
 class TestSingleExonZeroFrameChromParentPrepareWindow:
-
     def setup(self):
         self.cds = CDSInterval.from_dict(SINGLE_EXON_CDS_ZERO_FRAME, SEQ_PARENT)
         self.rel_window = self.cds._convert_chromosome_start_end_to_relative_window(100, 200)
@@ -102,7 +100,6 @@ class TestSingleExonZeroFrameChromParentPrepareWindow:
 
 
 class TestSingleExonZeroFrameChunkParentPrepareWindow:
-
     def setup(self):
         self.cds = CDSInterval.from_dict(SINGLE_EXON_CDS_ZERO_FRAME, CHUNK_SEQ_PARENT)
         self.rel_window = self.cds._convert_chromosome_start_end_to_relative_window(100, 200)
@@ -118,7 +115,6 @@ class TestSingleExonZeroFrameChunkParentPrepareWindow:
 
 
 class TestSingleExonOneFrameNoParentPrepareWindow:
-
     def setup(self):
         self.cds = CDSInterval.from_dict(SINGLE_EXON_CDS_ONE_FRAME)
         self.rel_window = self.cds._convert_chromosome_start_end_to_relative_window(100, 200)
@@ -134,7 +130,6 @@ class TestSingleExonOneFrameNoParentPrepareWindow:
 
 
 class TestSingleExonOneFrameChromParentPrepareWindow:
-
     def setup(self):
         self.cds = CDSInterval.from_dict(SINGLE_EXON_CDS_ONE_FRAME, SEQ_PARENT)
         self.rel_window = self.cds._convert_chromosome_start_end_to_relative_window(100, 200)
@@ -150,7 +145,6 @@ class TestSingleExonOneFrameChromParentPrepareWindow:
 
 
 class TestSingleExonOneFrameChunkParentPrepareWindow:
-
     def setup(self):
         self.cds = CDSInterval.from_dict(SINGLE_EXON_CDS_ONE_FRAME, CHUNK_SEQ_PARENT)
         self.rel_window = self.cds._convert_chromosome_start_end_to_relative_window(100, 200)
@@ -166,7 +160,6 @@ class TestSingleExonOneFrameChunkParentPrepareWindow:
 
 
 class TestSingleExonZeroFrameChromParentCodonLocations:
-
     def setup(self):
         self.cds = CDSInterval.from_dict(SINGLE_EXON_CDS_ZERO_FRAME, SEQ_PARENT)
 
@@ -175,7 +168,6 @@ class TestSingleExonZeroFrameChromParentCodonLocations:
 
 
 class TestSingleExonOneFrameChromParentCodonLocations:
-
     def setup(self):
         self.cds = CDSInterval.from_dict(SINGLE_EXON_CDS_ONE_FRAME, SEQ_PARENT)
 
@@ -184,7 +176,6 @@ class TestSingleExonOneFrameChromParentCodonLocations:
 
 
 class TestSingleExonZeroFrameChunkParentChromCodonLocations:
-
     def setup(self):
         self.cds = CDSInterval.from_dict(SINGLE_EXON_CDS_ZERO_FRAME, CHUNK_SEQ_PARENT)
 
@@ -193,7 +184,6 @@ class TestSingleExonZeroFrameChunkParentChromCodonLocations:
 
 
 class TestSingleExonZeroFrameChunkParentChunkCodonLocations:
-
     def setup(self):
         self.cds = CDSInterval.from_dict(SINGLE_EXON_CDS_ZERO_FRAME, CHUNK_SEQ_PARENT)
 
@@ -202,7 +192,6 @@ class TestSingleExonZeroFrameChunkParentChunkCodonLocations:
 
 
 class TestSingleExonOneFrameChunkParentCodonLocations:
-
     def setup(self):
         self.cds = CDSInterval.from_dict(SINGLE_EXON_CDS_ONE_FRAME, CHUNK_SEQ_PARENT)
 
