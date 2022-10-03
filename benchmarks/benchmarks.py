@@ -196,7 +196,7 @@ class TestSingleExonOneFrameChunkParentCodonLocations:
         self.cds = CDSInterval.from_dict(SINGLE_EXON_CDS_ONE_FRAME, CHUNK_SEQ_PARENT)
 
     def time_scan_chromosome_codon_locations(self):
-        _ = self.cds.chunk_relative_codon_locations
+        _ = self.cds.chromosome_codon_locations
 
     def time_scan_chunk_relative_codon_locations(self):
         _ = self.cds.chunk_relative_codon_locations
