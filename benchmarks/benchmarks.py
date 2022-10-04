@@ -69,6 +69,22 @@ SINGLE_EXON_CDS_ONE_FRAME = dict(
 )
 
 
+class TestScanWindow:
+    def setup(self):
+        self.location_no_parent = SingleInterval(0, 1000, Strand.PLUS)
+        self.location_chrom_parent = SingleInterval(0, 1000, Strand.PLUS, parent=SEQ_PARENT)
+        self.location_chunk_parent = SingleInterval(0, 1000, Strand.PLUS, parent=CHUNK_SEQ_PARENT)
+
+    def time_scan_windows_no_parent(self):
+        _ = list(self.location_no_parent.scan_windows(3, 3, 0))
+
+    def time_scan_windows_chrom_parent(self):
+        _ = list(self.location_chrom_parent.scan_windows(3, 3, 0))
+
+    def time_scan_windows_chunk_parent(self):
+        _ = list(self.location_chunk_parent.scan_windows(3, 3, 0))
+
+
 class TestSingleExonZeroFrameNoParentPrepareWindow:
     def setup(self):
         self.cds = CDSInterval.from_dict(SINGLE_EXON_CDS_ZERO_FRAME)
