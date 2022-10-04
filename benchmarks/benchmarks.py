@@ -69,7 +69,7 @@ SINGLE_EXON_CDS_ONE_FRAME = dict(
 )
 
 
-class TestSingleExonZeroFrameNoParent:
+class TestSingleExonZeroFrameNoParentPrepareWindow:
     def setup(self):
         self.cds = CDSInterval.from_dict(SINGLE_EXON_CDS_ZERO_FRAME)
         self.rel_window = self.cds._convert_chromosome_start_end_to_relative_window(100, 200)
@@ -84,7 +84,7 @@ class TestSingleExonZeroFrameNoParent:
         _ = self.cds._prepare_single_exon_window_for_scan_codon_locations(self.rel_window)
 
 
-class TestSingleExonZeroFrameChromParent:
+class TestSingleExonZeroFrameChromParentPrepareWindow:
     def setup(self):
         self.cds = CDSInterval.from_dict(SINGLE_EXON_CDS_ZERO_FRAME, SEQ_PARENT)
         self.rel_window = self.cds._convert_chromosome_start_end_to_relative_window(100, 200)
@@ -99,7 +99,7 @@ class TestSingleExonZeroFrameChromParent:
         _ = self.cds._prepare_single_exon_window_for_scan_codon_locations(self.rel_window)
 
 
-class TestSingleExonZeroFrameChunkParent:
+class TestSingleExonZeroFrameChunkParentPrepareWindow:
     def setup(self):
         self.cds = CDSInterval.from_dict(SINGLE_EXON_CDS_ZERO_FRAME, CHUNK_SEQ_PARENT)
         self.rel_window = self.cds._convert_chromosome_start_end_to_relative_window(100, 200)
@@ -114,7 +114,7 @@ class TestSingleExonZeroFrameChunkParent:
         _ = self.cds._prepare_single_exon_window_for_scan_codon_locations(self.rel_window)
 
 
-class TestSingleExonOneFrameNoParent:
+class TestSingleExonOneFrameNoParentPrepareWindow:
     def setup(self):
         self.cds = CDSInterval.from_dict(SINGLE_EXON_CDS_ONE_FRAME)
         self.rel_window = self.cds._convert_chromosome_start_end_to_relative_window(100, 200)
@@ -129,7 +129,7 @@ class TestSingleExonOneFrameNoParent:
         _ = self.cds._prepare_single_exon_window_for_scan_codon_locations(self.rel_window)
 
 
-class TestSingleExonOneFrameChromParent:
+class TestSingleExonOneFrameChromParentPrepareWindow:
     def setup(self):
         self.cds = CDSInterval.from_dict(SINGLE_EXON_CDS_ONE_FRAME, SEQ_PARENT)
         self.rel_window = self.cds._convert_chromosome_start_end_to_relative_window(100, 200)
@@ -144,7 +144,7 @@ class TestSingleExonOneFrameChromParent:
         _ = self.cds._prepare_single_exon_window_for_scan_codon_locations(self.rel_window)
 
 
-class TestSingleExonOneFrameChunkParent:
+class TestSingleExonOneFrameChunkParentPrepareWindow:
     def setup(self):
         self.cds = CDSInterval.from_dict(SINGLE_EXON_CDS_ONE_FRAME, CHUNK_SEQ_PARENT)
         self.rel_window = self.cds._convert_chromosome_start_end_to_relative_window(100, 200)
@@ -157,6 +157,49 @@ class TestSingleExonOneFrameChunkParent:
 
     def time__prepare_single_exon_window_for_scan_codon_locations_rel_window(self):
         _ = self.cds._prepare_single_exon_window_for_scan_codon_locations(self.rel_window)
+
+
+class TestSingleExonZeroFrameChromParentCodonLocations:
+    def setup(self):
+        self.cds = CDSInterval.from_dict(SINGLE_EXON_CDS_ZERO_FRAME, SEQ_PARENT)
+
+    def time_scan_chromosome_codon_locations(self):
+        _ = self.cds.chromosome_codon_locations
+
+
+class TestSingleExonOneFrameChromParentCodonLocations:
+    def setup(self):
+        self.cds = CDSInterval.from_dict(SINGLE_EXON_CDS_ONE_FRAME, SEQ_PARENT)
+
+    def time_scan_chromosome_codon_locations(self):
+        _ = self.cds.chromosome_codon_locations
+
+
+class TestSingleExonZeroFrameChunkParentChromCodonLocations:
+    def setup(self):
+        self.cds = CDSInterval.from_dict(SINGLE_EXON_CDS_ZERO_FRAME, CHUNK_SEQ_PARENT)
+
+    def time_scan_chromosome_codon_locations(self):
+        _ = self.cds.chromosome_codon_locations
+
+
+class TestSingleExonZeroFrameChunkParentChunkCodonLocations:
+    def setup(self):
+        self.cds = CDSInterval.from_dict(SINGLE_EXON_CDS_ZERO_FRAME, CHUNK_SEQ_PARENT)
+
+    def time_scan_chunk_relative_codon_locations(self):
+        _ = self.cds.chunk_relative_codon_locations
+
+
+class TestSingleExonOneFrameChunkParentCodonLocations:
+    def setup(self):
+        self.cds = CDSInterval.from_dict(SINGLE_EXON_CDS_ONE_FRAME, CHUNK_SEQ_PARENT)
+
+    def time_scan_chromosome_codon_locations(self):
+        _ = self.cds.chromosome_codon_locations
+
+    def time_scan_chunk_relative_codon_locations(self):
+        _ = self.cds.chunk_relative_codon_locations
 
 
 class ParseGenBank:
