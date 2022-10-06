@@ -830,6 +830,7 @@ class CDSInterval(AbstractFeatureInterval):
             codon_str = seq[i : i + 3]
             codon = Codon(codon_str)
             if truncate_at_in_frame_stop and codon.is_stop_codon and i != len(seq) - 3:
+                codons.append(codon.translate())
                 break
             if i == 0:
                 if codon.is_start_codon_in_specific_translation_table(translation_table):
