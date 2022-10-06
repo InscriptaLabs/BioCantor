@@ -838,8 +838,7 @@ class CDSInterval(AbstractFeatureInterval):
                     codons.append(codon.translate())
             else:
                 codons.append(codon.translate())
-        aa_seq_str = "".join(self._translate_iter(truncate_at_in_frame_stop, translation_table))
-        return Sequence(aa_seq_str, Alphabet.AA, validate_alphabet=False)
+        return Sequence("".join(codons), Alphabet.AA, validate_alphabet=False)
 
     @lru_cache(maxsize=1)
     @property
