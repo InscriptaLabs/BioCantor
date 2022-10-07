@@ -824,7 +824,7 @@ class CDSInterval(AbstractFeatureInterval):
             Codon is untranslatable and allow_unknown_translation is False
         """
         seq = str(self.extract_sequence()).upper()
-        codons = []
+        translated_seq = []
         for i in range(0, len(seq), 3):
             codon_str = seq[i : i + 3]
 
@@ -832,19 +832,19 @@ class CDSInterval(AbstractFeatureInterval):
                 codon = Codon(codon_str)
             except ValueError:
                 if allow_unknown_translation:
-                    codons.append("X")
+                    translated_seq.append("X")
                     continue
                 else:
                     raise
             if i == 0 and codon.is_start_codon_in_specific_translation_table(translation_table):
-                codons.append(Codon.ATG.translate())
+                translated_seq.append(Codon.ATG.translate())
             else:
-                codons.append(codon.translate())
+                translated_seq.append(codon.translate())
 
             if truncate_at_in_frame_stop and codon.is_stop_codon and i != len(seq) - 3:
                 break
         alphabet = Alphabet.AA_STRICT_UNKNOWN if allow_unknown_translation else Alphabet.AA
-        return Sequence("".join(codons), alphabet, validate_alphabet=False)
+        return Sequence("".join(translated_seq), alphabet, validate_alphabet=False)
 
     @lru_cache(maxsize=1)
     @property
