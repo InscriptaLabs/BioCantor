@@ -792,54 +792,59 @@ class CDSInterval(AbstractFeatureInterval):
         offset = phase.to_frame().value
         return offset
 
-    def _translate_iter(
-        self,
-        truncate_at_in_frame_stop: Optional[bool] = False,
-        translation_table: Optional[TranslationTable] = TranslationTable.DEFAULT,
-    ) -> Iterator[str]:
-        """
-        Iterator that handles alternative translation tables for the start codon.
-        """
-
-        for i, codon in enumerate(self.scan_codons(truncate_at_in_frame_stop)):
-            if i == 0:
-                if codon.is_start_codon_in_specific_translation_table(translation_table):
-                    yield Codon.ATG.translate()
-                else:
-                    yield codon.translate()
-            else:
-                yield codon.translate()
-
     @lru_cache(maxsize=2)
     def translate(
         self,
         truncate_at_in_frame_stop: Optional[bool] = False,
         translation_table: Optional[TranslationTable] = TranslationTable.DEFAULT,
+        allow_unknown_translation: bool = False,
     ) -> Sequence:
         """
-        Returns amino acid sequence of this CDS. If truncate_at_in_frame_stop is ``True``,
-        this will stop at the first in-frame stop.
+        Returns amino acid sequence of this CDS.
 
-        Currently the ``translation_table`` field only controls the start codon. Using non-standard
-        translation tables will change the set of start codons that code for Methionine,
-        and will not change any other codons.
+        Parameters
+        ----------
+        truncate_at_in_frame_stop
+            If truncate_at_in_frame_stop is ``True``, this will stop at the first in-frame stop.
+        translation_table
+            Currently the ``translation_table`` field only controls the start codon. Using non-standard
+            translation tables will change the set of start codons that code for Methionine,
+            and will not change any other codons.
+        allow_unknown_translation
+            If true, allows untranslatable codons to be represented by an X. Otherwise, throws ValueError.
+
+        Returns
+        -------
+        Sequence
+            The translated amino acid sequence
+
+        Raises
+        ------
+        ValueError
+            Codon is untranslatable and allow_unknown_translation is False
         """
         seq = str(self.extract_sequence()).upper()
         codons = []
         for i in range(0, len(seq), 3):
             codon_str = seq[i : i + 3]
-            codon = Codon(codon_str)
-            if truncate_at_in_frame_stop and codon.is_stop_codon and i != len(seq) - 3:
-                codons.append(codon.translate())
-                break
-            if i == 0:
-                if codon.is_start_codon_in_specific_translation_table(translation_table):
-                    codons.append(Codon.ATG.translate())
+
+            try:
+                codon = Codon(codon_str)
+            except ValueError:
+                if allow_unknown_translation:
+                    codons.append("X")
+                    continue
                 else:
-                    codons.append(codon.translate())
+                    raise
+            if i == 0 and codon.is_start_codon_in_specific_translation_table(translation_table):
+                codons.append(Codon.ATG.translate())
             else:
                 codons.append(codon.translate())
-        return Sequence("".join(codons), Alphabet.AA, validate_alphabet=False)
+
+            if truncate_at_in_frame_stop and codon.is_stop_codon and i != len(seq) - 3:
+                break
+        alphabet = Alphabet.AA_STRICT_UNKNOWN if allow_unknown_translation else Alphabet.AA
+        return Sequence("".join(codons), alphabet, validate_alphabet=False)
 
     @lru_cache(maxsize=1)
     @property

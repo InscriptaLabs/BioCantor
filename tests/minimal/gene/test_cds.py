@@ -2039,6 +2039,34 @@ class TestCDSInterval:
         # run again to ensure caching is not a problem
         assert str(cds.translate()) == expected
 
+    def test_translate_unknown_errors(self):
+        # Makes sure ValueError raised when not allowing ambiguous translation (default action)
+        cds = CDSInterval.from_location(
+            SingleInterval(
+                0,
+                12,
+                Strand.PLUS,
+                parent=Sequence("ATGCTCGTNACG", Alphabet.NT_STRICT_UNKNOWN, type=SequenceType.CHROMOSOME),
+            ),
+            [CDSFrame.ZERO],
+        )
+        with pytest.raises(ValueError):
+            cds.translate()
+
+    def test_translate_unknown(self):
+        # Makes sure translation works when allowing ambiguous translation
+        cds = CDSInterval.from_location(
+            SingleInterval(
+                0,
+                12,
+                Strand.PLUS,
+                parent=Sequence("ATGCTCGTNACG", Alphabet.NT_STRICT_UNKNOWN, type=SequenceType.CHROMOSOME),
+            ),
+            [CDSFrame.ZERO],
+        )
+        obs = cds.translate(allow_unknown_translation=True)
+        assert obs == Sequence("MLXT", alphabet=Alphabet.AA_STRICT_UNKNOWN)
+
     def test_accessors(self):
         cds = CDSInterval.from_location(SingleInterval(0, 10, Strand.PLUS), [CDSFrame.ZERO])
         assert cds.start == cds._location.start
