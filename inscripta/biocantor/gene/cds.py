@@ -797,7 +797,7 @@ class CDSInterval(AbstractFeatureInterval):
         self,
         truncate_at_in_frame_stop: Optional[bool] = False,
         translation_table: Optional[TranslationTable] = TranslationTable.DEFAULT,
-        allow_unknown_translation: bool = False,
+        strict_translation: bool = True,
     ) -> Sequence:
         """
         Returns amino acid sequence of this CDS.
@@ -810,8 +810,8 @@ class CDSInterval(AbstractFeatureInterval):
             Currently the ``translation_table`` field only controls the start codon. Using non-standard
             translation tables will change the set of start codons that code for Methionine,
             and will not change any other codons.
-        allow_unknown_translation
-            If true, allows untranslatable codons to be represented by an X. Otherwise, throws ValueError.
+        strict_translation
+            If False, allows untranslatable codons to be represented by an X. Otherwise, throws ValueError.
 
         Returns
         -------
@@ -831,11 +831,12 @@ class CDSInterval(AbstractFeatureInterval):
             try:
                 codon = Codon(codon_str)
             except ValueError:
-                if allow_unknown_translation:
-                    translated_seq.append("X")
-                    continue
-                else:
+                # TODO: Even smarter translation for IUPAC extended bases
+                if strict_translation:
                     raise
+                translated_seq.append("X")
+                continue
+
             if i == 0 and codon.is_start_codon_in_specific_translation_table(translation_table):
                 translated_seq.append(Codon.ATG.translate())
             else:
@@ -843,7 +844,7 @@ class CDSInterval(AbstractFeatureInterval):
 
             if truncate_at_in_frame_stop and codon.is_stop_codon and i != len(seq) - 3:
                 break
-        alphabet = Alphabet.AA_STRICT_UNKNOWN if allow_unknown_translation else Alphabet.AA
+        alphabet = Alphabet.AA if strict_translation else Alphabet.AA_STRICT_UNKNOWN
         return Sequence("".join(translated_seq), alphabet, validate_alphabet=False)
 
     @lru_cache(maxsize=1)

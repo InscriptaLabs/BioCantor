@@ -2064,7 +2064,7 @@ class TestCDSInterval:
             ),
             [CDSFrame.ZERO],
         )
-        obs = cds.translate(allow_unknown_translation=True)
+        obs = cds.translate(strict_translation=False)
         assert obs == Sequence("MLXT", alphabet=Alphabet.AA_STRICT_UNKNOWN)
 
     def test_accessors(self):
