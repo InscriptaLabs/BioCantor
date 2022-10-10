@@ -6,9 +6,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 ### Added
+- `AA_EXTENDED`, `AA_STRICT_GAPPED`, `AA_EXTENDED_GAPPED`, and `AA_STRICT_UNKNOWN` alphabets.
+- ASV tests created for benchmarking.
+
+### Changed
 - `AnnotationCollection.query_by_position()` will now perform faster queries when `cgranges` is installed.
 - `AnnotationCollection.query_by_interval_guids()`, `query_by_transcript_interval_guids()`, and `query_by_feature_interval_guids`() now operate on a cached map that will improve performance.
-- ASV tests created for benchmarking.
+- `CDSInterval().translate()` can now perform translations on unknown codons, using `X` for the unknown amino acid code.
 
 ## [0.18.1] 2022-08-29
 ### Fixed
