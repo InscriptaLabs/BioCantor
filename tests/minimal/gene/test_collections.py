@@ -982,38 +982,68 @@ class TestAnnotationCollection:
         obj = self.annot.to_annotation_collection()
         # only one isoform of gene1
         a = obj.query_by_interval_guids(UUID("043d7309-9036-7b27-d841-b7d6a2f70712"))
-        assert len(a.genes) == 1 and a.genes[0].identifiers == {"gene1"} and len(a.genes[0].transcripts) == 1
+        assert (
+            len(a.genes) == 1
+            and a.genes[0].identifiers == {"gene1"}
+            and a.genes[0].transcripts[0].guid == UUID("043d7309-9036-7b27-d841-b7d6a2f70712")
+        )
 
         # both isoforms of gene1
         b = obj.query_by_interval_guids(
             [UUID("043d7309-9036-7b27-d841-b7d6a2f70712"), UUID("2370657b-19cf-625f-566f-e1486d5dd163")]
         )
-        assert len(b.genes) == 1 and b.genes[0].identifiers == {"gene1"} and len(b.genes[0].transcripts) == 2
+        assert (
+            len(b.genes) == 1
+            and b.genes[0].identifiers == {"gene1"}
+            and [x.guid for x in b.genes[0].transcripts]
+            == [UUID("043d7309-9036-7b27-d841-b7d6a2f70712"), UUID("2370657b-19cf-625f-566f-e1486d5dd163")]
+        )
 
         # one isoform of gene1 and one isoform of featgrp2
         c = obj.query_by_interval_guids(
             [UUID("043d7309-9036-7b27-d841-b7d6a2f70712"), UUID("079c8c04-e2bd-590b-87f7-cb792ba67064")]
         )
-        assert len(c.genes) == 1 and c.genes[0].identifiers == {"gene1"} and len(c.genes[0].transcripts) == 1
-        assert len(c.feature_collections) == 1 and c.feature_collections[0].identifiers == {"featgrp2"}
+        assert (
+            len(c.genes) == 1
+            and c.genes[0].identifiers == {"gene1"}
+            and c.genes[0].transcripts[0].guid == UUID("043d7309-9036-7b27-d841-b7d6a2f70712")
+        )
+        assert (
+            len(c.feature_collections) == 1
+            and c.feature_collections[0].identifiers == {"featgrp2"}
+            and c.feature_collections[0].feature_intervals[0].guid == UUID("079c8c04-e2bd-590b-87f7-cb792ba67064")
+        )
 
     def test_query_by_transcript_interval_guids(self):
         obj = self.annot.to_annotation_collection()
         # only one isoform of gene1
         a = obj.query_by_transcript_interval_guids(UUID("043d7309-9036-7b27-d841-b7d6a2f70712"))
-        assert len(a.genes) == 1 and a.genes[0].identifiers == {"gene1"} and len(a.genes[0].transcripts) == 1
+        assert (
+            len(a.genes) == 1
+            and a.genes[0].identifiers == {"gene1"}
+            and a.genes[0].transcripts[0].guid == UUID("043d7309-9036-7b27-d841-b7d6a2f70712")
+        )
 
         # both isoforms of gene1
         b = obj.query_by_transcript_interval_guids(
             [UUID("043d7309-9036-7b27-d841-b7d6a2f70712"), UUID("2370657b-19cf-625f-566f-e1486d5dd163")]
         )
-        assert len(b.genes) == 1 and b.genes[0].identifiers == {"gene1"} and len(b.genes[0].transcripts) == 2
+        assert (
+            len(b.genes) == 1
+            and b.genes[0].identifiers == {"gene1"}
+            and [x.guid for x in b.genes[0].transcripts]
+            == [UUID("043d7309-9036-7b27-d841-b7d6a2f70712"), UUID("2370657b-19cf-625f-566f-e1486d5dd163")]
+        )
 
         # one isoform of gene1 and one isoform of featgrp2 -- feature gets ignored
         c = obj.query_by_transcript_interval_guids(
             [UUID("043d7309-9036-7b27-d841-b7d6a2f70712"), UUID("079c8c04-e2bd-590b-87f7-cb792ba67064")]
         )
-        assert len(c.genes) == 1 and c.genes[0].identifiers == {"gene1"} and len(c.genes[0].transcripts) == 1
+        assert (
+            len(c.genes) == 1
+            and c.genes[0].identifiers == {"gene1"}
+            and c.genes[0].transcripts[0].guid == UUID("043d7309-9036-7b27-d841-b7d6a2f70712")
+        )
         assert len(c.feature_collections) == 0
 
     def test_query_by_feature_interval_guids(self):
@@ -1027,17 +1057,29 @@ class TestAnnotationCollection:
             [UUID("043d7309-9036-7b27-d841-b7d6a2f70712"), UUID("079c8c04-e2bd-590b-87f7-cb792ba67064")]
         )
         assert len(c.genes) == 0
-        assert len(c.feature_collections) == 1 and c.feature_collections[0].identifiers == {"featgrp2"}
+        assert (
+            len(c.feature_collections) == 1
+            and c.feature_collections[0].identifiers == {"featgrp2"}
+            and c.feature_collections[0].feature_intervals[0].guid == UUID("079c8c04-e2bd-590b-87f7-cb792ba67064")
+        )
 
         # one isoform of featgrp2
         c = obj.query_by_feature_interval_guids([UUID("079c8c04-e2bd-590b-87f7-cb792ba67064")])
         assert len(c.genes) == 0
-        assert len(c.feature_collections) == 1 and c.feature_collections[0].identifiers == {"featgrp2"}
+        assert (
+            len(c.feature_collections) == 1
+            and c.feature_collections[0].identifiers == {"featgrp2"}
+            and c.feature_collections[0].feature_intervals[0].guid == UUID("079c8c04-e2bd-590b-87f7-cb792ba67064")
+        )
 
         # one isoform of featgrp1
         c = obj.query_by_feature_interval_guids([UUID("848cf6c7-6867-c46b-d60f-f5e248febba4")])
         assert len(c.genes) == 0
-        assert len(c.feature_collections) == 1 and c.feature_collections[0].identifiers == {"featgrp1"}
+        assert (
+            len(c.feature_collections) == 1
+            and c.feature_collections[0].identifiers == {"featgrp1"}
+            and c.feature_collections[0].feature_intervals[0].guid == UUID("848cf6c7-6867-c46b-d60f-f5e248febba4")
+        )
 
         # both isoforms of featgrp1
         c = obj.query_by_feature_interval_guids(
@@ -1049,6 +1091,10 @@ class TestAnnotationCollection:
             and c.feature_collections[0].identifiers == {"featgrp1"}
             and len(c.feature_collections[0].feature_intervals) == 2
         )
+        assert [x.guid for x in c.feature_collections[0].feature_intervals] == [
+            UUID("848cf6c7-6867-c46b-d60f-f5e248febba4"),
+            UUID("1e03f51a-5f3f-601c-1a27-2835c346d2bc"),
+        ]
 
     def test_interval_guids_to_collections(self):
         obj = self.annot.to_annotation_collection()
