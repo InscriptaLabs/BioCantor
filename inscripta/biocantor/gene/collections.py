@@ -145,7 +145,9 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
 
         self.completely_within = completely_within
 
-        self.guid_map: Dict[UUID, Union[GeneInterval, FeatureIntervalCollection]] = {x.guid: x for x in self.iter_children()}
+        self.guid_map: Dict[UUID, Union[GeneInterval, FeatureIntervalCollection]] = {
+            x.guid: x for x in self.iter_children()
+        }
 
         self.guid: UUID = digest_object(
             self._location, self.name, self.sequence_name, self.qualifiers, self.completely_within, self.children_guids
