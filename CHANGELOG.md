@@ -14,6 +14,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - `AnnotationCollection.query_by_interval_guids()`, `query_by_transcript_interval_guids()`, and `query_by_feature_interval_guids`() now operate on a cached map that will improve performance.
 - `CDSInterval().translate()` can now perform translations on unknown codons, using `X` for the unknown amino acid code.
 
+### Fixed
+- `AnnotationCollection.query_by_transcript_interval_guids` and `AnnotationCollection.query_by_feature_interval_guids` now properly returns only the requested TranscriptInterval or FeatureInterval
+as child of the GeneInterval or FeatureCollectionInterval objects. Fix bug introduced in 0.18.0 that was returning all children.
+
 ## [0.18.1] 2022-08-29
 ### Fixed
 - ParentModel.to_parent() is no longer case sensitive for type parameter, and will create sequence chunk parents correctly regardless of string casing.

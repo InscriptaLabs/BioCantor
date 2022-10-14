@@ -145,9 +145,11 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
 
         self.completely_within = completely_within
 
-        self.guid_map = {x.guid: x for x in self.iter_children()}
+        self.guid_map: Dict[UUID, Union[GeneInterval, FeatureIntervalCollection, VariantIntervalCollection]] = {
+            x.guid: x for x in self.iter_children()
+        }
 
-        self.guid = digest_object(
+        self.guid: UUID = digest_object(
             self._location, self.name, self.sequence_name, self.qualifiers, self.completely_within, self.children_guids
         )
 
@@ -894,7 +896,7 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
             if child.interval_type == IntervalType.TRANSCRIPT:
                 gene_guids_to_keep.add(child.guid)
 
-        genes_to_keep = [self.guid_map[x] for x in gene_guids_to_keep]
+        genes_to_keep = [self.guid_map[x].query_by_guids(ids) for x in gene_guids_to_keep]
         return self._return_collection_for_id_queries(genes_to_keep, [], [])
 
     def query_by_feature_interval_guids(self, id_or_ids: Union[UUID, List[UUID]]) -> "AnnotationCollection":
@@ -924,7 +926,7 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
             if child.interval_type == IntervalType.FEATURE:
                 features_collection_guids_to_keep.add(child.guid)
 
-        features_collections_to_keep = [self.guid_map[x] for x in features_collection_guids_to_keep]
+        features_collections_to_keep = [self.guid_map[x].query_by_guids(ids) for x in features_collection_guids_to_keep]
         return self._return_collection_for_id_queries([], features_collections_to_keep, [])
 
     def query_by_feature_identifiers(self, id_or_ids: Union[str, List[str]]) -> "AnnotationCollection":
