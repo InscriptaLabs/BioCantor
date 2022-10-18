@@ -27,10 +27,12 @@ class TestCodon:
 
     def test_singletons(self):
         obs1 = Codon("AAA")
-        obs2 = Codon("AAA")
+        obs2 = Codon("Aaa")
         obs3 = Codon("AAT")
+        obs4 = Codon("aaT")
         assert obs1 is obs2
         assert obs2 is not obs3
+        assert obs3 is obs4
 
     def test__repr__(self):
         assert repr(Codon("GcT")) == "<Codon.GCT: GCT>"
