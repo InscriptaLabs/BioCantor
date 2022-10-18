@@ -17,6 +17,8 @@ class TestCodon:
             ("AG", ValueError),
             ("AGTR", ValueError),
             ("TCCTA", ValueError),
+            ("GC-", ValueError),
+            ("FRT", ValueError),
         ],
     )
     def test__init__errors(self, codon_str, exp_err):

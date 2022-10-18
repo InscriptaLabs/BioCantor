@@ -53,6 +53,8 @@ class Codon:
         self._val = str(codon).upper()
         if len(self._val) != 3:
             raise ValueError("Codon not a multiple of 3")
+        if self._val.strip("ATUCGNWSMKRYBDHV") != "":
+            raise ValueError(f"Unknown, non-nucleotide bases given: '{self._val}'")
 
     def __eq__(self, other):
         return other is self
