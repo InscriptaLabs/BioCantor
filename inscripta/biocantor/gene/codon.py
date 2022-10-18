@@ -2,7 +2,8 @@ from enum import IntEnum
 from typing import List, Optional, Union
 
 from inscripta.biocantor.constants import gencode, extended_gencode, aacodons
-from inscripta.biocantor.sequence.sequence import Sequence, Alphabet,AlphabetError
+from inscripta.biocantor.sequence.sequence import Sequence, Alphabet, AlphabetError
+
 
 class TranslationTable(IntEnum):
     """
@@ -37,6 +38,7 @@ class TranslationTable(IntEnum):
 
 class Codon:
     """Enum-like class for dealing with Codons"""
+
     __slots__ = ["_val", "_seq"]
     _singletons_ = {}
 
@@ -65,7 +67,7 @@ class Codon:
 
     def __hash__(self):
         return hash(self._val)
-    
+
     @property
     def value(self):
         return self._val
@@ -97,11 +99,7 @@ class Codon:
         if aa == "X":
             return [self] if include_self else []
 
-        return [
-            Codon(codon_str)
-            for codon_str in aacodons[aa]
-            if include_self or codon_str != self._val
-        ]
+        return [Codon(codon_str) for codon_str in aacodons[aa] if include_self or codon_str != self._val]
 
     @property
     def is_stop_codon(self) -> bool:
@@ -128,5 +126,7 @@ class Codon:
 START_CODONS_BY_TRANSLATION_TABLE = {
     TranslationTable.DEFAULT: frozenset({Codon("ATG")}),
     TranslationTable.STANDARD: frozenset({Codon("ATG"), Codon("TTG"), Codon("CTG")}),
-    TranslationTable.PROKARYOTE: frozenset({Codon("ATG"), Codon("TTG"), Codon("CTG"), Codon("ATT"), Codon("ATC"), Codon("ATA"), Codon("GTG")}),
+    TranslationTable.PROKARYOTE: frozenset(
+        {Codon("ATG"), Codon("TTG"), Codon("CTG"), Codon("ATT"), Codon("ATC"), Codon("ATA"), Codon("GTG")}
+    ),
 }
