@@ -56,24 +56,30 @@ class Codon:
         if self._val.strip("ATUCGNWSMKRYBDHV") != "":
             raise ValueError(f"Unknown, non-nucleotide bases given: '{self._val}'")
 
-    def __eq__(self, other):
+    def __eq__(self, other) -> bool:
+        """Check equality through singleton comparison"""
         return other is self
 
-    def __repr__(self):
+    def __repr__(self) -> str:
+        """Representation string of codon, equal to what would come out of an Enum object"""
         return f"<Codon.{self._val}: {self._val}>"
 
-    def __str__(self):
+    def __str__(self) -> str:
+        """The codon as a string"""
         return self._val
 
-    def __hash__(self):
+    def __hash__(self) -> int:
+        """Hash of the codon string value"""
         return hash(self._val)
 
     @property
-    def value(self):
+    def value(self) -> str:
+        """The string value of the codon, to maintain enum-like functionality"""
         return self._val
 
     @property
-    def name(self):
+    def name(self) -> str:
+        """The string value of the codon, to maintain enum-like functionality"""
         return self._val
 
     def translate(self, strict: bool = True) -> str:
@@ -82,7 +88,8 @@ class Codon:
         Parameters
         ----------
         strict
-            Whether to only use strict ATGC codon translations, or allow translation using extended IUPAC sequence
+            Whether to only use strict ATGC codon translations, or allow translation using extended IUPAC sequence.
+            Untranslatable amino acids, whether through strict or simply unknown, will be represented with an "X"
             Default True (strict ATGC only translation)
         """
         try:
@@ -93,13 +100,24 @@ class Codon:
             else:
                 return "X"
 
-    def synonymous_codons(self, include_self=False) -> List["Codon"]:
+    def synonymous_codons(self, include_self: bool = False) -> List["Codon"]:
         """Returns list of synonymous codons
 
         Parameters
         ----------
         include_self
             Include this codon in returned list
+
+        Returns
+        -------
+        List[Codon]
+            The synonymous codons for the current codon.
+
+        Notes
+        -----
+        For extended IUPAC codons, this function will still try and translate the codon in an attempt to get
+        synonymous codons. If it can, the function will send out all strict ATGC codons for that amino acid.
+        If it can't, it will send out either no codons or just self, if include_self is True.
         """
         aa = self.translate(strict=False)
         if aa == "X":
@@ -109,21 +127,56 @@ class Codon:
 
     @property
     def is_stop_codon(self) -> bool:
+        """Whether the codon is a stop codon or not
+
+        Returns
+        -------
+        bool
+            Whether the codon is a stop codon (True) or not (False)
+        """
         return self._val in aacodons["*"]
 
     @property
     def is_strict_codon(self) -> bool:
+        """Whether the codon is a strict ATGC containing codon or not
+
+        Returns
+        -------
+        bool
+            Whether the codon is a strict ATGC codon (True) or not (False)
+        """
         return self._val in gencode
 
     @property
     def is_canonical_start_codon(self) -> bool:
-        """Is this a canonical start codon?"""
+        """Whether the codon is a canonical start codon or not
+
+        Returns
+        -------
+        bool
+            Whether the codon is a canonical start codon (True) or not (False)
+        """
         return self._val == "ATG"
 
     def is_start_codon_in_specific_translation_table(
         self, translation_table: Optional[TranslationTable] = TranslationTable.DEFAULT
     ) -> bool:
-        """Prokaryotes have a wider pool of valid start codons than eukaryotes who use the canonical ATG only"""
+        """Whether the codon is a start codon according to the given translation_table
+
+        Parameters
+        ----------
+        translation_table
+            What translation table to check for start codon validation.
+
+        Returns
+        -------
+        bool
+            Whether the codon is a start codon (True) or not (False)
+
+        Notes
+        -----
+        Prokaryotes have a wider pool of valid start codons than eukaryotes who use the canonical ATG only
+        """
         return self in START_CODONS_BY_TRANSLATION_TABLE[translation_table]
 
 
