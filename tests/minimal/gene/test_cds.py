@@ -2069,7 +2069,7 @@ class TestCDSInterval:
             ),
             [CDSFrame.ZERO],
         )
-        obs = cds.translate(strict_translation=False)
+        obs = cds.translate(strict=False)
         assert obs == Sequence(exp, alphabet=Alphabet.AA_STRICT_UNKNOWN)
 
     def test_accessors(self):

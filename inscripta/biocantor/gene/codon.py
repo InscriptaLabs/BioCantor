@@ -76,12 +76,22 @@ class Codon:
     def name(self):
         return self._val
 
-    def translate(self) -> str:
-        """Returns string symbol of translated amino acid"""
+    def translate(self, strict: bool = True) -> str:
+        """Returns string symbol of translated amino acid
+
+        Parameters
+        ----------
+        strict
+            Whether to only use strict ATGC codon translations, or allow translation using extended IUPAC sequence
+            Default True (strict ATGC only translation)
+        """
         try:
             return gencode[self._val]
         except KeyError:
-            return extended_gencode[self._val] if self._val in extended_gencode else "X"
+            if not strict and self._val in extended_gencode:
+                return extended_gencode[self._val]
+            else:
+                return "X"
 
     def synonymous_codons(self, include_self=False) -> List["Codon"]:
         """Returns list of synonymous codons
@@ -91,7 +101,7 @@ class Codon:
         include_self
             Include this codon in returned list
         """
-        aa = self.translate()
+        aa = self.translate(strict=False)
         if aa == "X":
             return [self] if include_self else []
 

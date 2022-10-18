@@ -47,7 +47,7 @@ class TestCodon:
             (Codon("AAA"), "K"),
             (Codon("TGA"), "*"),
             # Wobble base N but translatable
-            (Codon("GCN"), "A"),
+            (Codon("GCN"), "X"),
             # Untranslatable
             (Codon("NGC"), "X"),
             (Codon("NNN"), "X"),
@@ -55,6 +55,21 @@ class TestCodon:
     )
     def test_translate(self, codon, expected):
         assert codon.translate() is expected
+
+    @pytest.mark.parametrize(
+        "codon,expected",
+        [
+            (Codon("AAA"), "K"),
+            (Codon("TGA"), "*"),
+            # Wobble base N but translatable
+            (Codon("GCN"), "A"),
+            # Untranslatable
+            (Codon("NGC"), "X"),
+            (Codon("NNN"), "X"),
+        ],
+    )
+    def test_translate_not_strict(self, codon, expected):
+        assert codon.translate(strict=False) is expected
 
     @pytest.mark.parametrize(
         "codon, include_self, expected",
