@@ -23,7 +23,14 @@ class Alphabet(Enum):
             Alphabet.NT_STRICT_UNKNOWN,
         ]:
             return True
-        if self in [Alphabet.AA, Alphabet.GENERIC]:
+        if self in [
+            Alphabet.AA,
+            Alphabet.AA_EXTENDED,
+            Alphabet.AA_STRICT_GAPPED,
+            Alphabet.AA_EXTENDED_GAPPED,
+            Alphabet.AA_STRICT_UNKNOWN,
+            Alphabet.GENERIC,
+        ]:
             return False
         raise NotImplementedError("Not implemented for alphabet {}".format(self))
 
