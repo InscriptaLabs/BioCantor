@@ -1,8 +1,8 @@
-from enum import Enum, IntEnum
-from typing import List, Optional
+from enum import IntEnum
+from typing import List, Optional, Union
 
-from inscripta.biocantor.constants import gencode, aacodons
-
+from inscripta.biocantor.constants import gencode, extended_gencode, aacodons
+from inscripta.biocantor.sequence.sequence import Sequence, Alphabet,AlphabetError
 
 class TranslationTable(IntEnum):
     """
@@ -35,76 +35,55 @@ class TranslationTable(IntEnum):
     PROKARYOTE = 11
 
 
-class Codon(Enum):
+class Codon:
+    """Enum-like class for dealing with Codons"""
+    __slots__ = ["_val", "_seq"]
+    _singletons_ = {}
 
-    ATA = "ATA"
-    ATC = "ATC"
-    ATT = "ATT"
-    ATG = "ATG"
-    ACA = "ACA"
-    ACC = "ACC"
-    ACG = "ACG"
-    ACT = "ACT"
-    AAC = "AAC"
-    AAT = "AAT"
-    AAA = "AAA"
-    AAG = "AAG"
-    AGC = "AGC"
-    AGT = "AGT"
-    AGA = "AGA"
-    AGG = "AGG"
-    CTA = "CTA"
-    CTC = "CTC"
-    CTG = "CTG"
-    CTT = "CTT"
-    CCA = "CCA"
-    CCC = "CCC"
-    CCG = "CCG"
-    CCT = "CCT"
-    CAC = "CAC"
-    CAT = "CAT"
-    CAA = "CAA"
-    CAG = "CAG"
-    CGA = "CGA"
-    CGC = "CGC"
-    CGG = "CGG"
-    CGT = "CGT"
-    GTA = "GTA"
-    GTC = "GTC"
-    GTG = "GTG"
-    GTT = "GTT"
-    GCA = "GCA"
-    GCC = "GCC"
-    GCG = "GCG"
-    GCT = "GCT"
-    GAC = "GAC"
-    GAT = "GAT"
-    GAA = "GAA"
-    GAG = "GAG"
-    GGA = "GGA"
-    GGC = "GGC"
-    GGG = "GGG"
-    GGT = "GGT"
-    TCA = "TCA"
-    TCC = "TCC"
-    TCG = "TCG"
-    TCT = "TCT"
-    TTC = "TTC"
-    TTT = "TTT"
-    TTA = "TTA"
-    TTG = "TTG"
-    TAC = "TAC"
-    TAT = "TAT"
-    TAA = "TAA"
-    TAG = "TAG"
-    TGC = "TGC"
-    TGT = "TGT"
-    TGA = "TGA"
-    TGG = "TGG"
+    def __new__(cls, codon: Union[str, Sequence]):
+        clean_codon = str(codon).upper()
+        if clean_codon in cls._singletons_:
+            return cls._singletons_[clean_codon]
+        instance = cls(clean_codon)
+        cls._singletons_[clean_codon] = instance
+        return instance
+
+    def __init__(self, codon: Union[str, Sequence]):
+        self._val = str(codon).upper()
+        if len(self._val) != 3:
+            raise ValueError("Codon not a multiple of 3")
+        self._seq = Sequence(self._val, Alphabet.NT_EXTENDED)
+
+    def __eq__(self, other):
+        return other is self
+
+    def __repr__(self):
+        return f"<Codon.{self._val}: {self._val}>"
+
+    def __str__(self):
+        return self._val
+
+    def __hash__(self):
+        return hash(self._val)
+    
+    @property
+    def value(self):
+        return self._val
+
+    @property
+    def sequence(self):
+        return self._seq
+
+    @property
+    def name(self):
+        return self._val
 
     def translate(self) -> str:
         """Returns string symbol of translated amino acid"""
-        return gencode[self.value]
+        try:
+            return gencode[self._val]
+        except KeyError:
+            return extended_gencode[self._val] if self._val in extended_gencode else "X"
 
     def synonymous_codons(self, include_self=False) -> List["Codon"]:
         """Returns list of synonymous codons
@@ -114,21 +93,28 @@ class Codon(Enum):
         include_self
             Include this codon in returned list
         """
-        codons = [
+        aa = self.translate()
+        if aa == "X":
+            return [self] if include_self else []
+
+        return [
             Codon(codon_str)
-            for codon_str in aacodons[self.translate()]
-            if include_self is True or codon_str != self.value
+            for codon_str in aacodons[aa]
+            if include_self or codon_str != self._val
         ]
-        return codons
 
     @property
     def is_stop_codon(self) -> bool:
-        return self.value in aacodons["*"]
+        return self._val in aacodons["*"]
+
+    @property
+    def is_strict_codon(self) -> bool:
+        return self._val in gencode
 
     @property
     def is_canonical_start_codon(self) -> bool:
         """Is this a canonical start codon?"""
-        return self == Codon.ATG
+        return self._val == "ATG"
 
     def is_start_codon_in_specific_translation_table(
         self, translation_table: Optional[TranslationTable] = TranslationTable.DEFAULT
@@ -140,7 +126,7 @@ class Codon(Enum):
 # NCBI maintains a set of translation tables with integer indices
 # Index 1 is standard (vertebrate), while index 11 is prokaryotes
 START_CODONS_BY_TRANSLATION_TABLE = {
-    TranslationTable.DEFAULT: {Codon.ATG},
-    TranslationTable.STANDARD: {Codon.ATG, Codon.TTG, Codon.CTG},
-    TranslationTable.PROKARYOTE: {Codon.ATG, Codon.TTG, Codon.CTG, Codon.ATT, Codon.ATC, Codon.ATA, Codon.GTG},
+    TranslationTable.DEFAULT: frozenset({Codon("ATG")}),
+    TranslationTable.STANDARD: frozenset({Codon("ATG"), Codon("TTG"), Codon("CTG")}),
+    TranslationTable.PROKARYOTE: frozenset({Codon("ATG"), Codon("TTG"), Codon("CTG"), Codon("ATT"), Codon("ATC"), Codon("ATA"), Codon("GTG")}),
 }
