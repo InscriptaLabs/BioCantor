@@ -41,7 +41,7 @@ class Codon:
     __slots__ = ["_val"]
     _singletons_ = {}
 
-    def __new__(cls, codon: Union[str, "Sequence"]):
+    def __new__(cls, codon: Union[str, "Sequence"]):  # noqa: F821
         clean_codon = str(codon).upper()
         if clean_codon in cls._singletons_:
             return cls._singletons_[clean_codon]
@@ -49,7 +49,7 @@ class Codon:
         cls._singletons_[clean_codon] = instance
         return instance
 
-    def __init__(self, codon: Union[str, "Sequence"]):
+    def __init__(self, codon: Union[str, "Sequence"]):  # noqa: F821
         self._val = str(codon).upper()
         if len(self._val) != 3:
             raise ValueError("Codon not a multiple of 3")
