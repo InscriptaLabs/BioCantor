@@ -2051,20 +2051,26 @@ class TestCDSInterval:
         with pytest.raises(ValueError):
             cds.translate()
 
-    @pytest.mark.parametrize("seq, exp", [("ATGCTCGNACG", "MLVT")])
-    def test_translate_unknown(self):
+    @pytest.mark.parametrize(
+        "seq, exp",
+        [
+            ("ATGCTCGCNACG", "MLAT"),
+            ("ATGCTCGNNACG", "MLXT"),
+        ],
+    )
+    def test_translate_ambiguous(self, seq, exp):
         # Makes sure translation works when allowing ambiguous translation
         cds = CDSInterval.from_location(
             SingleInterval(
                 0,
                 12,
                 Strand.PLUS,
-                parent=Sequence("ATGCTCGNACG", Alphabet.NT_STRICT_UNKNOWN, type=SequenceType.CHROMOSOME),
+                parent=Sequence(seq, Alphabet.NT_STRICT_UNKNOWN, type=SequenceType.CHROMOSOME),
             ),
             [CDSFrame.ZERO],
         )
         obs = cds.translate(strict_translation=False)
-        assert obs == Sequence("MLXT", alphabet=Alphabet.AA_STRICT_UNKNOWN)
+        assert obs == Sequence(exp, alphabet=Alphabet.AA_STRICT_UNKNOWN)
 
     def test_accessors(self):
         cds = CDSInterval.from_location(SingleInterval(0, 10, Strand.PLUS), [CDSFrame.ZERO])
