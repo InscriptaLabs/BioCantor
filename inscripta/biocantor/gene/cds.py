@@ -828,18 +828,12 @@ class CDSInterval(AbstractFeatureInterval):
         for i in range(0, len(seq), 3):
             codon_str = seq[i : i + 3]
 
-            try:
-                codon = Codon(codon_str)
-            except ValueError:
-                # TODO: Even smarter translation for IUPAC extended bases
-                if strict_translation:
-                    raise
-                translated_seq.append("X")
-                continue
-
+            codon = Codon(codon_str)
             if i == 0 and codon.is_start_codon_in_specific_translation_table(translation_table):
-                translated_seq.append(Codon.ATG.translate())
+                translated_seq.append(Codon("ATG").translate())
             else:
+                if strict_translation and not codon.is_strict_codon:
+                    raise ValueError(f"Codon is not a strict codon: '{codon}'")
                 translated_seq.append(codon.translate())
 
             if truncate_at_in_frame_stop and codon.is_stop_codon and i != len(seq) - 3:

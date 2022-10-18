@@ -2,7 +2,6 @@ from enum import IntEnum
 from typing import List, Optional, Union
 
 from inscripta.biocantor.constants import gencode, extended_gencode, aacodons
-from inscripta.biocantor.sequence.sequence import Sequence, Alphabet, AlphabetError
 
 
 class TranslationTable(IntEnum):
@@ -39,22 +38,21 @@ class TranslationTable(IntEnum):
 class Codon:
     """Enum-like class for dealing with Codons"""
 
-    __slots__ = ["_val", "_seq"]
+    __slots__ = ["_val"]
     _singletons_ = {}
 
-    def __new__(cls, codon: Union[str, Sequence]):
+    def __new__(cls, codon: Union[str, "Sequence"]):
         clean_codon = str(codon).upper()
         if clean_codon in cls._singletons_:
             return cls._singletons_[clean_codon]
-        instance = cls(clean_codon)
+        instance = super().__new__(cls)
         cls._singletons_[clean_codon] = instance
         return instance
 
-    def __init__(self, codon: Union[str, Sequence]):
+    def __init__(self, codon: Union[str, "Sequence"]):
         self._val = str(codon).upper()
         if len(self._val) != 3:
             raise ValueError("Codon not a multiple of 3")
-        self._seq = Sequence(self._val, Alphabet.NT_EXTENDED)
 
     def __eq__(self, other):
         return other is self
@@ -71,10 +69,6 @@ class Codon:
     @property
     def value(self):
         return self._val
-
-    @property
-    def sequence(self):
-        return self._seq
 
     @property
     def name(self):
