@@ -1,7 +1,10 @@
 from enum import IntEnum
-from typing import List, Optional, Union
+from typing import TYPE_CHECKING, List, Optional, Union
 
 from inscripta.biocantor.constants import gencode, extended_gencode, aacodons
+
+if TYPE_CHECKING:
+    from inscripta.biocantor.sequence.sequence import Sequence
 
 
 class TranslationTable(IntEnum):
