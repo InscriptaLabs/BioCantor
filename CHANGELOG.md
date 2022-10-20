@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Fixed
 - `AnnotationCollection.query_by_transcript_interval_guids` and `AnnotationCollection.query_by_feature_interval_guids` now properly returns only the requested TranscriptInterval or FeatureInterval
 as child of the GeneInterval or FeatureCollectionInterval objects. Fix bug introduced in 0.18.0 that was returning all children.
+- Any of the identifier queries on `AnnotationCollection` would raise an exception if the collection was chunk-relative and the bounds of the returned genes exceeded the bounds of the chunk.
 
 ## [0.18.1] 2022-08-29
 ### Fixed
