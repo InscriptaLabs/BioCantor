@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.19.0] 2022-10-21
 ### Added
 - `AA_EXTENDED`, `AA_STRICT_GAPPED`, `AA_EXTENDED_GAPPED`, and `AA_STRICT_UNKNOWN` alphabets.
 - ASV tests created for benchmarking.
