@@ -474,6 +474,10 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
 
         chrom_ancestor = self.lift_over_to_first_ancestor_of_type(SequenceType.CHROMOSOME)
 
+        # if this subset operation is about to walk off the edge of the chunk this collection exists on,
+        # don't allow this
+        if self.is_chunk_relative and start < self.chromosome_location.start:
+            start = self.chromosome_location.start
         chunk_relative_start = chrom_ancestor.parent_to_relative_pos(start)
 
         # handle the edge case where the end is the end of the current chunk
@@ -482,6 +486,10 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
                 self.lift_over_to_first_ancestor_of_type(SequenceType.CHROMOSOME).parent_to_relative_pos(end - 1) + 1
             )
         else:
+            # if this subset operation is about to walk off the edge of the chunk this collection exists on,
+            # don't allow this
+            if self.is_chunk_relative and end > self.chromosome_location.end:
+                end = self.chromosome_location.end - 1
             chunk_relative_end = self.lift_over_to_first_ancestor_of_type(
                 SequenceType.CHROMOSOME
             ).parent_to_relative_pos(end)
