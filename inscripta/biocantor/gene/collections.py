@@ -751,17 +751,22 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
         features_collections_to_keep: List[FeatureIntervalCollection],
         variant_collections_to_keep: List[VariantIntervalCollection],
     ) -> "AnnotationCollection":
-        """Convenience function shared by all functions that query by identifiers or GUIDs."""
+        """Convenience function shared by all functions that query by identifiers or GUIDs.
+
+        The bounds of the new AnnotationCollection will be bounded by the larger start of the collection
+        itself and the constituent features. This prevents the bounds of the features exceeding the bounds
+        of the collection.
+        """
 
         if genes_to_keep or features_collections_to_keep or variant_collections_to_keep:
-            start = min(
+            start = max(
                 self.start,
                 min(
                     x.start
                     for x in itertools.chain(genes_to_keep, features_collections_to_keep, variant_collections_to_keep)
                 ),
             )
-            end = max(
+            end = min(
                 self.end,
                 max(
                     x.end
