@@ -2094,5 +2094,5 @@ class TestNegative:
         }
         ac = AnnotationCollection.from_dict(d)
         new_ac = ac.query_by_feature_identifiers("SIK1B")
-        assert new_ac.start == ac.start
-        assert new_ac.end == ac.end
+        assert new_ac.start == ac.start == 111933
+        assert new_ac.end == ac.end == 121669
