@@ -982,20 +982,119 @@ class TestAnnotationCollection:
         obj = self.annot.to_annotation_collection()
         # only one isoform of gene1
         a = obj.query_by_interval_guids(UUID("043d7309-9036-7b27-d841-b7d6a2f70712"))
-        assert len(a.genes) == 1 and a.genes[0].identifiers == {"gene1"} and len(a.genes[0].transcripts) == 1
+        assert (
+            len(a.genes) == 1
+            and a.genes[0].identifiers == {"gene1"}
+            and a.genes[0].transcripts[0].guid == UUID("043d7309-9036-7b27-d841-b7d6a2f70712")
+        )
 
         # both isoforms of gene1
         b = obj.query_by_interval_guids(
             [UUID("043d7309-9036-7b27-d841-b7d6a2f70712"), UUID("2370657b-19cf-625f-566f-e1486d5dd163")]
         )
-        assert len(b.genes) == 1 and b.genes[0].identifiers == {"gene1"} and len(b.genes[0].transcripts) == 2
+        assert (
+            len(b.genes) == 1
+            and b.genes[0].identifiers == {"gene1"}
+            and [x.guid for x in b.genes[0].transcripts]
+            == [UUID("043d7309-9036-7b27-d841-b7d6a2f70712"), UUID("2370657b-19cf-625f-566f-e1486d5dd163")]
+        )
 
         # one isoform of gene1 and one isoform of featgrp2
         c = obj.query_by_interval_guids(
             [UUID("043d7309-9036-7b27-d841-b7d6a2f70712"), UUID("079c8c04-e2bd-590b-87f7-cb792ba67064")]
         )
-        assert len(c.genes) == 1 and c.genes[0].identifiers == {"gene1"} and len(c.genes[0].transcripts) == 1
-        assert len(c.feature_collections) == 1 and c.feature_collections[0].identifiers == {"featgrp2"}
+        assert (
+            len(c.genes) == 1
+            and c.genes[0].identifiers == {"gene1"}
+            and c.genes[0].transcripts[0].guid == UUID("043d7309-9036-7b27-d841-b7d6a2f70712")
+        )
+        assert (
+            len(c.feature_collections) == 1
+            and c.feature_collections[0].identifiers == {"featgrp2"}
+            and c.feature_collections[0].feature_intervals[0].guid == UUID("079c8c04-e2bd-590b-87f7-cb792ba67064")
+        )
+
+    def test_query_by_transcript_interval_guids(self):
+        obj = self.annot.to_annotation_collection()
+        # only one isoform of gene1
+        a = obj.query_by_transcript_interval_guids(UUID("043d7309-9036-7b27-d841-b7d6a2f70712"))
+        assert (
+            len(a.genes) == 1
+            and a.genes[0].identifiers == {"gene1"}
+            and a.genes[0].transcripts[0].guid == UUID("043d7309-9036-7b27-d841-b7d6a2f70712")
+        )
+
+        # both isoforms of gene1
+        b = obj.query_by_transcript_interval_guids(
+            [UUID("043d7309-9036-7b27-d841-b7d6a2f70712"), UUID("2370657b-19cf-625f-566f-e1486d5dd163")]
+        )
+        assert (
+            len(b.genes) == 1
+            and b.genes[0].identifiers == {"gene1"}
+            and [x.guid for x in b.genes[0].transcripts]
+            == [UUID("043d7309-9036-7b27-d841-b7d6a2f70712"), UUID("2370657b-19cf-625f-566f-e1486d5dd163")]
+        )
+
+        # one isoform of gene1 and one isoform of featgrp2 -- feature gets ignored
+        c = obj.query_by_transcript_interval_guids(
+            [UUID("043d7309-9036-7b27-d841-b7d6a2f70712"), UUID("079c8c04-e2bd-590b-87f7-cb792ba67064")]
+        )
+        assert (
+            len(c.genes) == 1
+            and c.genes[0].identifiers == {"gene1"}
+            and c.genes[0].transcripts[0].guid == UUID("043d7309-9036-7b27-d841-b7d6a2f70712")
+        )
+        assert len(c.feature_collections) == 0
+
+    def test_query_by_feature_interval_guids(self):
+        obj = self.annot.to_annotation_collection()
+        # only one isoform of gene1 -- genes are ignored
+        a = obj.query_by_feature_interval_guids(UUID("043d7309-9036-7b27-d841-b7d6a2f70712"))
+        assert len(a.genes) == 0
+
+        # one isoform of gene1 and one isoform of featgrp2 (genes are ignored)
+        c = obj.query_by_feature_interval_guids(
+            [UUID("043d7309-9036-7b27-d841-b7d6a2f70712"), UUID("079c8c04-e2bd-590b-87f7-cb792ba67064")]
+        )
+        assert len(c.genes) == 0
+        assert (
+            len(c.feature_collections) == 1
+            and c.feature_collections[0].identifiers == {"featgrp2"}
+            and c.feature_collections[0].feature_intervals[0].guid == UUID("079c8c04-e2bd-590b-87f7-cb792ba67064")
+        )
+
+        # one isoform of featgrp2
+        c = obj.query_by_feature_interval_guids([UUID("079c8c04-e2bd-590b-87f7-cb792ba67064")])
+        assert len(c.genes) == 0
+        assert (
+            len(c.feature_collections) == 1
+            and c.feature_collections[0].identifiers == {"featgrp2"}
+            and c.feature_collections[0].feature_intervals[0].guid == UUID("079c8c04-e2bd-590b-87f7-cb792ba67064")
+        )
+
+        # one isoform of featgrp1
+        c = obj.query_by_feature_interval_guids([UUID("848cf6c7-6867-c46b-d60f-f5e248febba4")])
+        assert len(c.genes) == 0
+        assert (
+            len(c.feature_collections) == 1
+            and c.feature_collections[0].identifiers == {"featgrp1"}
+            and c.feature_collections[0].feature_intervals[0].guid == UUID("848cf6c7-6867-c46b-d60f-f5e248febba4")
+        )
+
+        # both isoforms of featgrp1
+        c = obj.query_by_feature_interval_guids(
+            [UUID("848cf6c7-6867-c46b-d60f-f5e248febba4"), UUID("1e03f51a-5f3f-601c-1a27-2835c346d2bc")]
+        )
+        assert len(c.genes) == 0
+        assert (
+            len(c.feature_collections) == 1
+            and c.feature_collections[0].identifiers == {"featgrp1"}
+            and len(c.feature_collections[0].feature_intervals) == 2
+        )
+        assert [x.guid for x in c.feature_collections[0].feature_intervals] == [
+            UUID("848cf6c7-6867-c46b-d60f-f5e248febba4"),
+            UUID("1e03f51a-5f3f-601c-1a27-2835c346d2bc"),
+        ]
 
     def test_interval_guids_to_collections(self):
         obj = self.annot.to_annotation_collection()
@@ -1773,3 +1872,227 @@ class TestNegative:
         new_obj = pickle.loads(obj_str)
         assert obj.to_dict() == new_obj.to_dict()
         assert obj.get_reference_sequence() == new_obj.get_reference_sequence()
+
+    def test_query_by_identifier_gene_exceeds_chunk_bounds(self):
+        """
+        Prior to this test, if an AnnotationCollection was chunk relative, with genes that exceed the chunk boundaries,
+        then querying by identifier would raise an exception because the collection was trying to exist outside
+        of its boundaries.
+        """
+        d = {
+            "genes": [
+                {
+                    "transcripts": [
+                        {
+                            "exon_starts": [
+                                111134,
+                                112069,
+                                112738,
+                                116223,
+                                116461,
+                                116893,
+                                117127,
+                                117803,
+                                118782,
+                                119023,
+                                119719,
+                                120486,
+                                121143,
+                            ],
+                            "exon_ends": [
+                                111252,
+                                112239,
+                                112855,
+                                116287,
+                                116623,
+                                117018,
+                                117251,
+                                118027,
+                                118908,
+                                119240,
+                                120001,
+                                120718,
+                                123752,
+                            ],
+                            "strand": "PLUS",
+                            "cds_starts": [
+                                112083,
+                                112738,
+                                116223,
+                                116461,
+                                116893,
+                                117127,
+                                117803,
+                                118782,
+                                119023,
+                                119719,
+                                120486,
+                                121143,
+                            ],
+                            "cds_ends": [
+                                112239,
+                                112855,
+                                116287,
+                                116623,
+                                117018,
+                                117251,
+                                118027,
+                                118908,
+                                119240,
+                                120001,
+                                120718,
+                                121519,
+                            ],
+                            "cds_frames": [
+                                "ZERO",
+                                "ZERO",
+                                "ZERO",
+                                "ONE",
+                                "ONE",
+                                "ZERO",
+                                "ONE",
+                                "ZERO",
+                                "ZERO",
+                                "ONE",
+                                "ONE",
+                                "TWO",
+                            ],
+                            "qualifiers": None,
+                            "is_primary_tx": False,
+                            "transcript_id": None,
+                            "transcript_symbol": "rna-XM_017028208.1",
+                            "transcript_type": "protein_coding",
+                            "sequence_name": "chr21:6000000-7000000",
+                            "sequence_guid": None,
+                            "protein_id": None,
+                            "product": "salt inducible kinase 1B (putative)",
+                            "transcript_guid": None,
+                            "transcript_interval_guid": UUID("f1027f34-b941-52de-5b7e-de1257e9235a"),
+                        },
+                        {
+                            "exon_starts": [
+                                111130,
+                                112069,
+                                112738,
+                                116223,
+                                116461,
+                                116893,
+                                117127,
+                                117803,
+                                118255,
+                                118782,
+                                119023,
+                                119719,
+                                120486,
+                                121143,
+                            ],
+                            "exon_ends": [
+                                111252,
+                                112239,
+                                112855,
+                                116287,
+                                116623,
+                                117018,
+                                117251,
+                                118027,
+                                118402,
+                                118908,
+                                119240,
+                                120001,
+                                120718,
+                                123778,
+                            ],
+                            "strand": "PLUS",
+                            "cds_starts": [
+                                112083,
+                                112738,
+                                116223,
+                                116461,
+                                116893,
+                                117127,
+                                117803,
+                                118255,
+                                118782,
+                                119023,
+                                119719,
+                                120486,
+                                121143,
+                            ],
+                            "cds_ends": [
+                                112239,
+                                112855,
+                                116287,
+                                116623,
+                                117018,
+                                117251,
+                                118027,
+                                118402,
+                                118908,
+                                119240,
+                                120001,
+                                120718,
+                                121519,
+                            ],
+                            "cds_frames": [
+                                "ZERO",
+                                "ZERO",
+                                "ZERO",
+                                "ONE",
+                                "ONE",
+                                "ZERO",
+                                "ONE",
+                                "ZERO",
+                                "ZERO",
+                                "ZERO",
+                                "ONE",
+                                "ONE",
+                                "TWO",
+                            ],
+                            "qualifiers": None,
+                            "is_primary_tx": False,
+                            "transcript_id": None,
+                            "transcript_symbol": "rna-NM_001320643.3",
+                            "transcript_type": "protein_coding",
+                            "sequence_name": "chr21:6000000-7000000",
+                            "sequence_guid": None,
+                            "protein_id": None,
+                            "product": "salt inducible kinase 1B (putative)",
+                            "transcript_guid": None,
+                            "transcript_interval_guid": UUID("50a31cc8-1d0e-9bf8-02ca-75c023007578"),
+                        },
+                    ],
+                    "gene_id": "1e783983-3f9f-dee9-c5d7-86a903c32045",
+                    "gene_symbol": "SIK1B",
+                    "gene_type": "protein_coding",
+                    "locus_tag": None,
+                    "qualifiers": None,
+                    "sequence_name": "chr21:6000000-7000000",
+                    "sequence_guid": None,
+                    "gene_guid": UUID("ebc74c11-fcef-3753-e3fc-a6923929ae08"),
+                }
+            ],
+            "feature_collections": [],
+            "variant_collections": [],
+            "name": "chr21:6000000-7000000",
+            "id": None,
+            "qualifiers": None,
+            "sequence_name": "chr21:6000000-7000000",
+            "sequence_guid": None,
+            "sequence_path": None,
+            "start": 111933,
+            "end": 121669,
+            "completely_within": False,
+            "parent_or_seq_chunk_parent": {
+                "seq": "GTGGATAGAGTGGGGGCGACAGGCGTGGGAGCAGGTCCCTGCGTCCCGTGGGGACTGGGGGCTCCGCGGGCACGGATGGAGCCGACCGCGGGCGGCGGGGGCGCTGGTGGGCTCTGAGCTCTGTGCGGCCCCGCAGGTGCGCGCGGAGCCATGGTTATCATGTCGGAGTTCAGCGCGGACCCCGCGGGCCAGGGTCAGGGCCAGCAGAAGCCCCTCCGGGTGGGTTTTTACGACATCGAGCGGACCCTGGGCAAAGGCAACTTCGCGGTGGTGAAGCTGGCGCGGCATCGAGTCACCAAAACGCAGGTGCGTGGGGGCGGTGGGACCCAGCCGGCGGGGCCTCCCCACTGGACCCGGGGCGACCCGACCTTTGGCGGGTGGACCCCATGCAGATTCACTGCTCCAGGCTTGATTGTCGTGGTGGGTAAATAGTAACCGTTTTTAGTTCGGTAAAGAAAAATAATGCTTTATATTATGTTGCTGCATAATTTGGACATATATTGGGAGAAAGCAGAGAGGATAATAGCAAAAAAAAGGACCAACCTAAGATTGCAGTGGTTCATGGACTCAGAGCTAAACCCTGTAAAGTGAGCCTGCAAATACTTAAGTCACTTACTTAACTCTGATTATTTTAAATAACATTAGTGGTTACTTTGGTTATGTTTTCCCAACTTCTTGTGACCTTCTGGAGACAGAGTGTTGAGAAATTAACTTGCAAAAAATGAAATGTGTAAATTAGGTTGAGGGTTTCTTTTCTTTTTTTAAAAAAACCCACAGAATATCCTTTTTCTTTTTAAATTTGTAGGTTGCAATAAAAATAATTGATAAAACACGATTAGATTCAAGCAATTTGGAGAAAATCTATCGTGAGGTTCAGCTGATGAAGCTTCTGAACCATCCACACATCATAAAGCTTTACCAGGTAAGGGGTCAGCTTGCCTTTCTCTGCTAATCCTGGCAAATGTGTTATATTTTATTTCCAACAGCATAAGTCTGCAATTTCTGAAGGTGGCTTCCCTTTTGGGGAGTGTGTGGAAGTTGGGCATTTGGTTGTATAAGGTAAATAGATTGATTTTTATAGGCTGTGCAGATATATTTACAATTATTTTATTGCTTTTGGATCATAATTGAGATTTGCTTCATTAGAATTTTATTTAGTATCCTAACCTGATCCAGTTTTAAATGTGTAGAAGTCTGTTGTAAATTTGCTTTACTATGAAAACAGACAAACTTATCTGTAGGTATTGCCACAGGTCACGCATTTAGTATAAAAGGACAAATTTGAGTGAAACTGGAAACTTCTGCCTTTGCAGATAATTATTAAACTTTAAAGCCAGCTGCTCTTACTGGTTTTCATTAGTTTATTTTTGCAAGGACAGTAGTGAGCATTTGTTTTCCCTATTTAAACTCTTCCATGAAAAACGGAGAGATGAAAATACTTTTCCATAGTAAGAGCAAGGAGCTTGTCATTTAATCCATGCTAGGAACATGGCTTGCCCTGTCTCTCTGTTGGTTTATTTTGTGACTTAATTTTTGTTCTCATGTTGAAATTAATAAATTATATCATCAGGAAATAAGTACTAATTTAATTAGAACAGCAAAGCAATCATTTACACCTCCCTAATGACAAATGACCACTTTTGCAAGGTGAAATCAAGTCTTCTTGCAGAAGAAGTTCTTTGCAGGTGCTATTTCATCCATTTGTGTTGGGTTGAAGTTCCTCGTAATGATTCTTATGAAATGGAATGTGAGATGACTCTGGGATGTTGTTGTGTGTGTTTGTGCAATTAGGACAGCTCGGTGTACAGTGTGGTAGGAGAGAGAATTATGATTCGAAATTATCCCCCAAAAGCCTCTGCACTAGATTGAAAATAAAAGTAGCAGTATTGGTGGAGCTTACGACAGTTTGCTCAGTGTCTTTAAGCACAGAATTCATGCCGTGTGCGCCTGGTTTGTGTTTTGTTTCTGTTGTCATTTTTAAGTTGTGTGCTCCATGGCCACTGGTGTACTGCCTGTGCAGCGTGCCCAGCCCATTTCCTCAGGAGTGGGCTGAGCTGGTTTTGTTTTTGACTTTGCTCAAGGGCTGAACCCTAATGGTAGTACCTTCCTTTTCTTCCTGTTCTTCTCCTTTGCCCATTGTGTGGAATTAGCTCCGTTAAAGAAACAAATTGCCCATGTGTTTGCTGCTGAGGTCTTTTCTGGAGGTGCATTTTCTTACTGCTGCTGTATGTGATTCTTAACTGTTGGGAGATGATAGAATTCAGTGGTGTAGCAATGACTTTTACTCCTCTGGTTTTGATGCTAATGTCTAATTTTCTTTCTTTTCTTTCTTTCTTCCTGTCTTTTTTTTTTTTTTCTTTTTTGAGACGGAGTCTCTGTCCGTCACCCAGGCTGGAGTGCAGTGGCGCGATTTCGGCTCACTGCAACTGCCGCCTCCTGGGTTCAAGCAATTCTTCTGCCTCAGCCTCCCAAGTAGCTGGGACTACAGGCGCCCGCCACAACACCCAGCTAATTTTTTGTATTTTTAGTAGAGACAGGGTTTCACCGTGTTAGCCAGGATAGTCTGGATCTCCTGACCTTGTGATCCGCCCGCCTCGGCCTCCCAAAGTGCTGGGATTACAGGCATGAACCACCGCGCCCGGCCACTAGTGTCTAATTTTCATTCCGCTGGCCGGGGCCCCAGAACCCTGCTGAGACACTTCCCTCTTTTTTTCAAGTTTTCAAAAAGTTCAAACACTTTGACTTTTAATTCTTTTCCTCCTCCTCCCTTTCTTCAGTTGGGGACGGGTCAGCAGTGGTCTTAGAGTTATTGTACCACCCACAGGGGCGGGGCAGTTAAAATTCTTGCCAAACTGCTAGAATTTATAGAACACTTTTCTTTTTAGATTTATAACTCAAAGCAGCAATCTTTGAAGCATCTTTTTTTTTTTTTTTTTTTTTGAGATGGAGTCTCACTGTCGCCCAGGCTGGAGTGCAGTGGCGCTATGGATCGTGACTCACTGCAACCTCCACCTCCTGGGTTCAAGCGATTCTCCTACCTCAGCCTCCCAAGTAGCTGGGACTACAGGCACGCGCCACCACACCTGGCTAATTTTTGTATTTTTAGTAGAGATGGGGTTTCACCATGTTGACCAGGCTGGTCTCGAACTCCTAACCTCAAGTGATCAGCCTGGGTGATCCCAAAGTACTGGGATTACAAGCATGAGCCACCACCTCCAGCACAAAGCATCTTTTTAAAGGAATAACTATATTTTGAACCCAAAAAAATCTTTTTTCATAAGAATATATTGCCTCATCCTCTCCAAAATTTTTCAATACTCACAGACATAAGTTATATTTTTAAATCTCTTTTTAAGTAAAATAAAGTTATTGATTAGTGAATGAACTTCAAAGGGCTATGTTGGCATGGCTGTTGTGTGGCTACATGCTGAGTGAATGGCTACATGCTGAGTGAATGAGGCTGGATTCTCACAGCCTCATTCATCCTGTCAATAAAGCTGGGTTCCCACAGCGTCATTCATCCTGTCAATCAAGCGAGTGGGAATGGGGTGTGCATTCTCTATTACCCAGGTGGCTCTGACCGTTGGCTGGAATCATCTGTTGCCTACTAGGCTTCTATAAAGCCCAGCAGACTTCCAGCAATCTCCTCCTCTGTAGCCTTCAGAATACTGTCTCTCCTTTTTTGAGATGGAGTCTCGCTCTGTCGCCCAAGTTGGAGTGCAGTGGTACGATCTCGGCTCACTGCAACCTCCGCCTTGCGGGTTCGAATGATCCTCTTGCCTCAGCCTCCTGAGTAGCTGGGATTACAGGTGCCCACCACCTCACCTAGCTAGTTTTTGTATTTTTTGTAGAGATGGGGTCTTGCCGTGTTGACCAGGCTGGTCTCGAACTCAAGCGATTCTCCTGCCTTGGCCTCCCGAAGTGCTGGGATTACAGGGCGTGAGCCACCATGCCCCGGCCTAAGCATTCTCAAATTGTATGTGAGGTGTCTTGAATTAAATATGACCACAGAGGGGAATTCTAATATATTTAGACCTTTTGTGAGAGCAAAGGTGTATCAGGATAGGCAAGTCAGTGAGGAATTCACCTCTGATTTTTCAAAGCTGTCTTTGTGAGTAGGAATCTCCTATTTTTTTTTTATTTGAGAAATTTTTCTTTTTCTTTGCATTTTTAAATGATGAATGCCTTTGTCCTAGAGAAGTTAGAAATTTCCTGGGGTTCTGGTGGATGGTTTGTAGCGCTGCCTTGTGCCTTTTTTGTGCGGTTAAATGTCAGGTCTTTCTTCTTTAGGTTATGGAAACAAAGGACATGCTTTACATCGTCACTGAATTTGCTAAAAATGGAGAAATGTTTGGTAAGCCACACTCGTTTTCAGTATCTGTTGAAAACCAATGGCACGAACGCGTCTGGATTTGCGCGGCCAGTGTCTGGGCCACACATCCCAGGACCCCGCGGTGTTCCCCAGGGCTCCATGGGTGGTGGGCAGGCTTTGCCCTGGGGGCTGTAGCTTTGTTTTGTGGCTCCTCAGATTATTTGACTTCCAACGGGCACCTGAGTGAGAACGAGGCGCGGAAGAAGTTCTGGCAAATCCTGTCGGCCGTGGAGTACTGTCACGACCATCACATCGTCCACCGGGACCTCAAGACCGAGAACCTCCTGCTGGATGGCAACATGGACATCAAGCTGGCAGGCACGGAGGGTCCGGGGTGGGAGCAGGGACATCAAGCTGGCAGGCACGGAGGGTCTGGGGTGGGAGCAGGGACATCAAGCTGGCAGGCACGGAGGGTCCGGGGTGGGAGCAGGGACATCAAGCTGGCAGGCACGGAGGCCCCGGGGTGGGAGTGTGCCCGCAAGCAGCCCCAGCTTCCCGGCATGTGCCGAAACCACAGCCCCTGTGCCGAAACCGCAGCCCCTTGCCATTTGCCGTTTAACCTCATCCATCTGTTTCTTTGCCGCTCAGATTTTGGATTTGGGAATTTCTACAAGTCAGGAGAGCCTCTGTCCACGTGGTGTGGGAGCCCCCCGTATGCCGCCCCGGAAGTCTTTGAGGGGAAGGAGTATGAAGGCCCCCAGCTGGACATCTGGGTAGGAGCCCTGTGCGCGCAGACCCCCTTCCCGAGGCCGCGTTCCCCGAGGGCGCCGTGTTCCCGGGGGCACCGCCCTGGCGCTGATGTGGCTCTGTGGTCCTCAACAGAGCCTGGGCGTGGTGCTGTACGTCCTGGTCTGCGGTTCTCTCCCCTTCGATGGGCCTAACCTGCCGACGCTGAGACAGCGGGTGCTGGAGGGCCGCTTCCGCATCCCCTTCTTCATGTCTCAAGGTGAGTCGTGTGGTCTCGCCTGGGCAGGGGCCTGTGTCTCCTGCAGCCCCTTCGTGGCTGGCTTCTGAGTCCTTGTTGAGTCTGGGAATCAGGCCCAGGTTACTGTGGGCTGCGGGAGAAACCCAGCCCATGGATGCCTTCTCAGTGCCCTATTTCGAGGGTGGACGGGTGCCCTTGCTGCACAGGCTTGTGCCTTGCGCCTGCCGTCCCCGCCCAGTACCCGCACCCAGGGTGCTGGCATCATCCCTGAGTCCAACCCACTGGCTGTGGCTCACCCGGCTTTTCTGTGTCATAAAGATGCCTGTCCACCTGGTGCTCAGGTGTGGGGCACGGCAGAAGGGTGAACCTAAGTGGTTCTCTGTGTGGTGGACACAAAGTGTGGCAGCCCCCAGGGTCTGGATCCCTGGCTGATGGCTCCCCTTGGGTGGCAGGACTGAGCCGATGGCCCGGCCCCTGCTCCTGGGCCCTGGCGTGTCAAACCACGTGGGGCGGTGGGTGGGAGCGCAGCCGAGGTCCCGGCCGCCCTGGCTCAGCCTCCTGGCCCCTCCACAGACTGTGAGAGCCTGATCCGCCGCATGCTGGTGGTGGACCCCGCCAGGCGCATCACCATCGCCCAGATCCGGCAGCACCGGTGGATGCGGGCTGAGCCCTGCTTGCCGGGACCCGCCTGCCCCGCCTTCTCCGCACACAGCTACACCTCCAACCTGGGCGACTACGATGAGCAGGCGCTGGGTATCATGCAGACCCTGGGCGTGGACCGGCAGAGGACGGTGGAGGTGAGCCTGGCCACACTTGCCCTGGCCTCACCCGCAGGGGCTAGGCAGCTGTCTCAGGGGAAGCAGGCACTCACCAGCTGAGTTAAAACGGGAGCACAGGCTAATTTAGGGGCCGGCTTGTCCACCCCACTAAAGGATATTCTCAGTCACCCAAGAATAACCTGGGATCGGGTGGGCCCTGGGGCTCCCCGCCATCCCCATGCTGATCTCTGCTCCTCTTGTTCCCAGTCACTGCAAAACAGCAGCTATAACCACTTTGCTGCCATTTATTACCTCCTCCTTGAGCGGCTCAAGGAGTATCGGAATGCCCAGTGCGCCCGCCCCGGGCCTGCCAGGCAGCCGCGGCCTCGGAGCTCGGACCTCAGTGGTTTGGAGGTGAGGGGGAGGAGTCTCCTCCCAGGCCCCAGGCTCCCTCCCCTGTCAGGCACCGGCTTGGAGGGCGGTTCCTTGCGTGGGCAGCGGGTCCCAGGCCTCGTGGGGAAGGGGGTGCCAGCTGCTGGGGGCTGGACTCTGCCCAGAGGCCACTTGTCCCTGACTCATCCCTGGGGCCGGCCTGTCACGCCACCTTCTGGCAGCGCAGCACCAGCACCTGGTCCTGAGCCCAGCCTGGCCAGCCAGTGTCCCTCCGTCAGCTGTCATGCCCACCAGCGAGGCAGCTTGCACTCCAGACAGAAGCCAGCTTGTTTCTTCTCTTGATGGCGCTGGTGGTCCGGAGTCGCTCCCCTGACAGCGTCTTTCCCGTCTGCCGGCCCCAGGTGCCTCAGGAAGGTCTTTCCACCGACCCTTTCCGACCTGCCTTGCTGTGCCCGCAGCCGCAGACCTTGGTGCAGTCCGTCCTCCAGGCCGAGATGGACTGTGAGCTCCAGAGCTCGCTGCAGTGGGTGAGTGCCCACAGCGGGTGTGCAGAGGGCTCGCCTCAGCCCAGCCCTGGTGCCCCCGGTGTGCCCGGGTCACCTGGAGTCCGAGAAGTCACTGGCTTGTGTCTCTCCAACGCAGCCCTTGTTCTTCCCGGTGGATGCCAGCTGCAGCGGAGTGTTCCGGCCCCGGCCCGTGTCCCCAAGCAGCCTGCTGGACACAGCCATCAGTGAGGAGGCCAGGCAGGGGCCGGGCCTAGAGGAGGAGCAGGACACGCAGGAGTCCCTGCCCAGCAGCACGGGCCGGAGGCACACCCTGGCCGAGGTCTCCACCCGCCTCTCCCCACTCACCGCGCCATGTAAGTGTCCCCGGGGGCCCAGGAGGACACCGGTGGATAGGCTTACGGTCGACGTGAGGGTGGGCTAATTTAGAATGGACGTTTTGCCCGGCAGCCTCTCAGGTTGGACTTCTCAGGATTTGCCATTTGTTTTAATCCCTGAGACCACACAGTTGATGTTTAGAGCCTGCCCTGCATGTGGTCGTTCCAGTGGAGGATACAGCATGGGGTCTGGCCTCCAGCAGGGTCCTCCCCAGGCCGCCCCTGGGTGCCGGGAGGGCAGCCCCTTGGCCTGAGGCCCACTATGACCTGCCCCCTGCAGCTGCACCGTGATGGTGGCTTGCCTTTGTGGCTCCCTGGGCTCTGGTGGCCTCGAGCCCTCTTCCCACCAGGTTGATGGTGGGGATGGGGAGGCCAGCGCAGCCATGTGTGCCCAGCAGTGGCCGGGGGAGCCTATTCCTTTGCACTGCAGCATCAAAAGCGCTGTCCTCCCCCCACAGGTATAGTCGTCTCCCCCTCCACCACGGCAAGTCCTGCAGAGGGAACCAGCTCTGACAGTTGTCTGACCTTCTCTGCGAGCAAAAGCCCCGCGGGGCTCAGTGGCACCCCGGCCACTCAGGGGCTGCTGGGCGCCTGCTCCCCGGTCAGGCTGGCCTCGCCCTTCCTGGGGTCGCAGTCCGCCACCCCAGTGCTGCAGGCTCAGGGGGGCTTGGGAGGAGCTGTTCTGCTCCCTGTCAGCTTCCAGGAGGGACGGCGGGCGTCGGACACCTCACTGACTCAAGGTGAGCCACGCTCCTCCCACACTTACCTCCACCTTCCCCAGGGGACCATGTGTGTCTCTGGCAGTACGTGACTTTGTCCGTGATGGCAGATGGCACCCCCTGTTCTCCACCGGGCCTGGGTGGGACCCTCAGTGCTCTGGGCAGGCTGGGGTGCTCAGTGCTCTGGTGGCTCGGGGCGTCACGGCCTGCTGGGATAGACACACATGGGTCCCTGAGCACGCGGCCTCCATGGCTGGTTCTGAAAGCACAGGAGACGACTCTGTGCTGGGCAGCACCTCCCGACTTGGAGGAGGGAGGGCCCCTGGCTGCCAGCTGCCTCCACGCCATCCTGGGGCTTAGGTGCCAGACTCCTGTCCAGACGTGCTTGTGTCACCCGTCCTTTCCTTACCCCCAACCTGAGGCTTGGAAACCCCTTAAGCCAAGGGCCGTGGATGCTGGGCTGAGAGCCGGGTGGCCGTTGACCTCCTGATTCATTCTCCCTGCAGGGCTGAAGGCCTTTCGGCAGCAGCTGAGGAAGACCACGCGGACCAAAGGGTTTCTGGGACTGAACAAAATCAAGGGGCTGGCTCGCCAGGTGTGCCAGGTCCCTGCCAGCCGGGCCAGCAGGGGCGGCCTGAGCCCCTTCCACGCCCCTGCACAGAGCCCAGGCCTGCACGGCGGCGCAGCCGGCAGCCGGGAGGGCTGGAGCCTGCTGGAGGAGGTGCTAGAGCAGCAGAGGTAGGGCCTGCCCCCGCCCTGGGACCCCGGGTGGGCACACGGCAGGTTATCTCCTCGAGGAACCTCATCTGCTAAGTGGTTCCCTCCTCTCTGTAGCCCAGTGCACACCCCCGCTCCCAGCCAGGGAGATGTGTGGGGCGTAGGTCCTAGGTGCTGAGCCATGGGGGTGCAGCAGGCGGGCGTGTCCTTTAAAGTCCCTGGGTGGGTGAGGGTGGCGGGGAGCGAGGGCGCCTTGTGGCCGCATCTCTGAGCTGCTGAGAAACCGGGTGGAGAATGAAAGGTGGGGCGCGGTCAGGGATCAGCCACGCACCTGCCCTCGGCAGCCGCGGCTGGCAGCTCCACGGGCGGGCCCTGCCACACGGGCACTCGGAAACCCGAGAACCCTGCGAGCCGGCGCAGTGACCACCTGTCCTCTGTTCCCACAGGCTGCTCCAGTTACAGCACCACCCGGCCGCTGCACCCGGCTGCTCCCAGGCCCCCCAGCCGGCCCCTGCCCCGTTTGTGATCGCCCCCTGTGATGGCCCTGGGGCTGCCCCGCTCCCCAGCACCCTCCTCACGTCGGGGCTCCCGCTGCTGCCGCCCCCACTCCTGCAGACCGGCGCGTCCCCGGTGGCCTCAGCGGCGCAGCTCCTGGACACACACCTGCACATTGGCACCGGCCCCACCGCCCTCCCCGCTGTGCCCCCACCACGCCTGGCCAGGCTGGCCCCAGGTTGTGAGCCCCTGGGGCTGCTGCAGGGGGACTGTGAGATGGAGGACCTGATGCCCTGCTCCCTAGGCACGTTTGTCCTGGTGCAGTGAGGGCAGCCCTGCATCCTGGCACGGACACTGACTCTTACAGCAATAACTTCAGAGGAGGTGAAGACATCTGGCCTCAAAGCCAAGAACTTTCTAGAAGCGAAATAAGCAATACGTTAGGTGTTTTGGCTTTTTAGTTTATTTTTGTTTTAT",  # noqa: E501
+                "sequence_name": "chr21:6000000-7000000",
+                "start": 111933,
+                "end": 121669,
+                "strand": "PLUS",
+                "alphabet": "NT_EXTENDED_GAPPED",
+                "type": "SEQUENCE_CHUNK",
+            },
+        }
+        ac = AnnotationCollection.from_dict(d)
+        new_ac = ac.query_by_feature_identifiers("SIK1B")
+        assert new_ac.start == 111130
+        assert new_ac.end == 123778

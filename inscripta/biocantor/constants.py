@@ -65,6 +65,17 @@ gencode = {
     "TGG": "W",
 }
 
+extended_gencode = {
+    "CTN": "L",
+    "GTN": "V",
+    "TCN": "S",
+    "CCN": "P",
+    "ACN": "T",
+    "GCN": "A",
+    "CGN": "R",
+    "GGN": "G",
+}
+
 aacodons = {
     "I": ["ATA", "ATC", "ATT"],
     "M": ["ATG"],

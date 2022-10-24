@@ -463,17 +463,34 @@ class CompoundInterval(Location):
         else:
             self.parent = None
         self.strand = strand
-        self._starts = tuple(sorted(starts))
-        self._ends = tuple(sorted(ends))
+        self._starts, self._ends = self._sort_starts_ends(starts, ends, strand)
         self._single_interval_store = None
         self._is_overlapping = None
 
-        if any(start > end for start, end in zip(self._starts, self._ends)):
-            raise InvalidPositionException("Block starts must be less than block ends")
+        length = 0
+        for start, end in zip(self._starts, self._ends):
+            if start > end:
+                raise InvalidPositionException("Block starts must be less than block ends")
+            length += end - start
+        self.length = length
 
         self.start = self._starts[0]
         self.end = self._ends[-1]
-        self.length = sum(end - start for start, end in zip(self._starts, self._ends))
+
+    @staticmethod
+    def _sort_starts_ends(
+        starts: List[int], ends: List[int], strand: Strand
+    ) -> Tuple[Tuple[int, ...], Tuple[int, ...]]:
+        """
+        Given an array of positions and an orientation, sort the positions such that they are in incrementing order
+        *relative to the orientation*.
+        """
+        blocks = ((start, end) for start, end in zip(starts, ends))
+        if strand == Strand.PLUS:
+            blocks = sorted(blocks, key=lambda x: (x[0], x[1]))
+        else:
+            blocks = sorted(blocks, key=lambda x: (x[0], -x[1]))
+        return tuple(zip(*blocks))
 
     @property
     def _single_intervals(self):
@@ -654,7 +671,7 @@ class CompoundInterval(Location):
 
         # only run reset_strand() if the strands are not the same to save object construction overhead
         new_strand = relative_strand.relative_to(self.strand)
-        relative_interval = CompoundInterval.from_single_intervals(new_blocks).optimize_blocks()
+        relative_interval = CompoundInterval._from_single_intervals_no_validation(new_blocks).optimize_blocks()
         if new_strand != self.strand:
             relative_interval = relative_interval.reset_strand(new_strand)
         return relative_interval

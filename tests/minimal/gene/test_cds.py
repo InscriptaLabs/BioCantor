@@ -1,6 +1,3 @@
-from contextlib import ExitStack
-from unittest.mock import patch
-
 import pytest
 from inscripta.biocantor.exc import NoSuchAncestorException, MismatchedFrameException, InvalidPositionException
 from inscripta.biocantor.gene.cds import CDSInterval, TranslationTable
@@ -176,7 +173,7 @@ class TestCDSInterval:
                     ),
                     [CDSFrame.ZERO],
                 ),
-                [Codon.ATA, Codon.CGA, Codon.TCA],
+                [Codon("ATA"), Codon("CGA"), Codon("TCA")],
             ),
             # 1 .Discontiguous CDS, plus strand, frame=1, codons don't reach end of CDS
             # Codon interval cleaning therefore removes the 1st codon entirely, because it is incomplete
@@ -197,7 +194,7 @@ class TestCDSInterval:
                     ),
                     [CDSFrame.ONE, CDSFrame.TWO],
                 ),
-                [Codon.CAG, Codon.GGA, Codon.CCC],
+                [Codon("CAG"), Codon("GGA"), Codon("CCC")],
             ),
             # 2. Discontiguous CDS, plus strand, frame=1, 1bp deletion at start of exon 2
             # Codon interval cleaning therefore removes the 1st codon entirely, because it is incomplete
@@ -221,7 +218,7 @@ class TestCDSInterval:
                     ),
                     [CDSFrame.ONE, CDSFrame.ZERO],
                 ),
-                [Codon.GGG, Codon.ACC, Codon.CAA],
+                [Codon("GGG"), Codon("ACC"), Codon("CAA")],
             ),
             # 3. Discontiguous CDS, plus strand, frame=1,
             # 1bp insertion inside exon 2 relative to some canonical genome and we want to maintain original frame
@@ -244,7 +241,7 @@ class TestCDSInterval:
                     ),
                     [CDSFrame.ONE, CDSFrame.TWO, CDSFrame.TWO],  # QGP
                 ),
-                [Codon.CAG, Codon.GGA, Codon.CCC],  # QGP
+                [Codon("CAG"), Codon("GGA"), Codon("CCC")],  # QGP
             ),
             # 4. Discontiguous CDS, minus strand, frame=2
             (
@@ -257,7 +254,7 @@ class TestCDSInterval:
                     ),
                     [CDSFrame.ONE, CDSFrame.TWO],
                 ),
-                [Codon.CAG, Codon.GGA, Codon.CCC],  # QGP
+                [Codon("CAG"), Codon("GGA"), Codon("CCC")],  # QGP
             ),
             # 5. Discontiguous CDS, minus strand, frame=2, with frameshift that leads to truncation
             (
@@ -270,7 +267,7 @@ class TestCDSInterval:
                     ),
                     [CDSFrame.TWO, CDSFrame.TWO],
                 ),
-                [Codon.CAG, Codon.GGA],  # QG
+                [Codon("CAG"), Codon("GGA")],  # QG
             ),
             # 6. Discontiguous CDS, plus strand, with -1 bp programmed frameshift (overlapping interval)
             (
@@ -283,7 +280,34 @@ class TestCDSInterval:
                     ),
                     [CDSFrame.ZERO, CDSFrame.ONE],
                 ),  # G gets repeated here
-                [Codon.AGG, Codon.AAA, Codon.GGT, Codon.CCC, Codon.TGA],
+                [Codon("AGG"), Codon("AAA"), Codon("GGT"), Codon("CCC"), Codon("TGA")],
+            ),
+            # N containing sequences now work
+            (
+                CDSInterval.from_location(
+                    SingleInterval(
+                        0,
+                        9,
+                        Strand.PLUS,
+                        parent=Sequence("ANACGATCA", Alphabet.NT_EXTENDED_GAPPED, type=SequenceType.CHROMOSOME),
+                    ),
+                    [CDSFrame.ZERO],
+                ),
+                [Codon("ANA"), Codon("CGA"), Codon("TCA")],
+            ),
+            (
+                CDSInterval.from_location(
+                    CompoundInterval(
+                        [2, 8],
+                        [5, 17],
+                        Strand.PLUS,
+                        parent=Sequence(
+                            "AANNNNAAGGGTACCCAAAAAA", Alphabet.NT_EXTENDED_GAPPED, type=SequenceType.CHROMOSOME
+                        ),
+                    ),
+                    [CDSFrame.ONE, CDSFrame.TWO],
+                ),
+                [Codon("NNG"), Codon("GGT"), Codon("ACC")],
             ),
         ],
     )
@@ -303,7 +327,7 @@ class TestCDSInterval:
                     ),
                     [CDSFrame.ZERO],
                 ),
-                [Codon.ATA, Codon.CGA, Codon.TCA],
+                [Codon("ATA"), Codon("CGA"), Codon("TCA")],
             ),
             # Discontiguous CDS, plus strand, frame=1, codons don't reach end of CDS
             (
@@ -316,7 +340,7 @@ class TestCDSInterval:
                     ),
                     [CDSFrame.ONE, CDSFrame.TWO],
                 ),
-                [Codon.CAG, Codon.GGA, Codon.CCC],  # QGP
+                [Codon("CAG"), Codon("GGA"), Codon("CCC")],  # QGP
             ),
         ],
     )
@@ -362,7 +386,7 @@ class TestCDSInterval:
                         ),
                     ),
                 ),
-                [Codon.ACA, Codon.AGG, Codon.GAC, Codon.CCA, Codon.AAA],
+                [Codon("ACA"), Codon("AGG"), Codon("GAC"), Codon("CCA"), Codon("AAA")],
             ),
             # chunk slices off first base of exon1
             # this removes the first codon
@@ -400,7 +424,7 @@ class TestCDSInterval:
                         ),
                     ),
                 ),
-                [Codon.AGG, Codon.GAC, Codon.CCA, Codon.AAA],
+                [Codon("AGG"), Codon("GAC"), Codon("CCA"), Codon("AAA")],
             ),
             # chunk slices off 1st exon
             # Index:      0 1 2 3 4 5 6 7 | 8 9 10 11 12 13 14 15 16 17 18 19 20
@@ -437,7 +461,7 @@ class TestCDSInterval:
                         ),
                     ),
                 ),
-                [Codon.GAC, Codon.CCA, Codon.AAA],
+                [Codon("GAC"), Codon("CCA"), Codon("AAA")],
             ),
             # chunk slices of 1st exon and 1bp of exon 2
             # Index:      0 1 2 3 4 5 6 7 8 | 9 10 11 12 13 14 15 16 17 18 19 20
@@ -474,7 +498,7 @@ class TestCDSInterval:
                         ),
                     ),
                 ),
-                [Codon.GAC, Codon.CCA, Codon.AAA],
+                [Codon("GAC"), Codon("CCA"), Codon("AAA")],
             ),
         ],
     )
@@ -520,7 +544,7 @@ class TestCDSInterval:
                         ),
                     ),
                 ),
-                [Codon.TTT, Codon.TGG, Codon.GTC, Codon.CCT, Codon.TGT],
+                [Codon("TTT"), Codon("TGG"), Codon("GTC"), Codon("CCT"), Codon("TGT")],
             ),
             # chunk slices off first base of exon1
             # this removes the first codon
@@ -555,7 +579,7 @@ class TestCDSInterval:
                         ),
                     ),
                 ),
-                [Codon.TGG, Codon.GTC, Codon.CCT, Codon.TGT],
+                [Codon("TGG"), Codon("GTC"), Codon("CCT"), Codon("TGT")],
             ),
             # chunk slices off 1st exon
             # Index:      0 1 2 3 4 5 6 | 7 8 9 10 11 12 13 14 15 16 17 18 19 20
@@ -588,7 +612,7 @@ class TestCDSInterval:
                         ),
                     ),
                 ),
-                [Codon.TGT],
+                [Codon("TGT")],
             ),
             # chunk slices of 1st exon and 1bp of exon 2
             # Index:      0 1 2 3 4 | 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20
@@ -621,7 +645,7 @@ class TestCDSInterval:
                         ),
                     ),
                 ),
-                [Codon.TGT],
+                [Codon("TGT")],
             ),
         ],
     )
@@ -657,7 +681,7 @@ class TestCDSInterval:
                     [CDSFrame.ONE, CDSFrame.TWO],
                 ),
                 [CDSFrame.ONE, CDSFrame.TWO],
-                [Codon.CAG, Codon.GGA, Codon.CCC],
+                [Codon("CAG"), Codon("GGA"), Codon("CCC")],
             ),
             # chunk slices off only intergenic bases
             # frame for chunk should be same as frame for full
@@ -692,7 +716,7 @@ class TestCDSInterval:
                     ),
                 ),
                 [CDSFrame.ZERO, CDSFrame.ONE],
-                [Codon.ACA, Codon.AGG, Codon.GAC, Codon.CCA, Codon.AAA],
+                [Codon("ACA"), Codon("AGG"), Codon("GAC"), Codon("CCA"), Codon("AAA")],
             ),
             # chunk slices off first base of exon1
             # this removes the first codon
@@ -729,7 +753,7 @@ class TestCDSInterval:
                     ),
                 ),
                 [CDSFrame.TWO, CDSFrame.ONE],
-                [Codon.AGG, Codon.GAC, Codon.CCA, Codon.AAA],
+                [Codon("AGG"), Codon("GAC"), Codon("CCA"), Codon("AAA")],
             ),
             # chunk slices off 1st exon
             # Index:      0 1 2 3 4 5 6 7 | 8 9 10 11 12 13 14 15 16 17 18 19 20
@@ -763,7 +787,7 @@ class TestCDSInterval:
                     ),
                 ),
                 [CDSFrame.TWO],
-                [Codon.GAC, Codon.CCA, Codon.AAA],
+                [Codon("GAC"), Codon("CCA"), Codon("AAA")],
             ),
             # chunk slices of 1st exon and 1bp of exon 2; this does not change the translation from above
             # Index:      0 1 2 3 4 5 6 7 8 | 9 10 11 12 13 14 15 16 17 18 19 20
@@ -797,7 +821,7 @@ class TestCDSInterval:
                     ),
                 ),
                 [CDSFrame.ONE],
-                [Codon.GAC, Codon.CCA, Codon.AAA],
+                [Codon("GAC"), Codon("CCA"), Codon("AAA")],
             ),
             # The frame produced by chunk_relative_frames will be incorrect when the transcript has overlaps and
             # is chunk relative
@@ -824,7 +848,7 @@ class TestCDSInterval:
                     ),
                 ),
                 [CDSFrame.ZERO, CDSFrame.TWO],
-                [Codon.AGG, Codon.AAA, Codon.GTT, Codon.CCC, Codon.TGA],
+                [Codon("AGG"), Codon("AAA"), Codon("GTT"), Codon("CCC"), Codon("TGA")],
             ),
             # Now take the same interval and make it chunk relative, where the chunk only removes intergenic bases
             # this does not change the frames
@@ -853,7 +877,7 @@ class TestCDSInterval:
                     ),
                 ),
                 [CDSFrame.ZERO, CDSFrame.TWO],
-                [Codon.AGG, Codon.AAA, Codon.GTT, Codon.CCC, Codon.TGA],
+                [Codon("AGG"), Codon("AAA"), Codon("GTT"), Codon("CCC"), Codon("TGA")],
             ),
             # slicing off the last exon and 1bp of the 1st exon (removing the double T)
             # Index:      0 1 2 3 4 5 6 7 8 | 9 10 11 12 13 14 15 16 17 18 19 20
@@ -891,7 +915,7 @@ class TestCDSInterval:
                     ),
                 ),
                 [CDSFrame.ZERO],
-                [Codon.AGG, Codon.AAA],
+                [Codon("AGG"), Codon("AAA")],
             ),
             # transcript starts in 1 frame
             # chunk slices off only intergenic bases
@@ -927,7 +951,7 @@ class TestCDSInterval:
                     ),
                 ),
                 [CDSFrame.ONE, CDSFrame.ZERO],
-                [Codon.CAA, Codon.GGG, Codon.ACC, Codon.CAA],
+                [Codon("CAA"), Codon("GGG"), Codon("ACC"), Codon("CAA")],
             ),
         ],
     )
@@ -968,7 +992,7 @@ class TestCDSInterval:
                     [CDSFrame.ONE, CDSFrame.ONE],
                 ),
                 [CDSFrame.ONE, CDSFrame.ONE],
-                [Codon.TTG, Codon.GGT, Codon.CCC, Codon.TTG],
+                [Codon("TTG"), Codon("GGT"), Codon("CCC"), Codon("TTG")],
             ),
             # chunk slices off only intergenic bases
             # frame for chunk should be same as frame for full
@@ -1003,7 +1027,7 @@ class TestCDSInterval:
                     ),
                 ),
                 [CDSFrame.ONE, CDSFrame.ONE],
-                [Codon.TTG, Codon.GGT, Codon.CCC, Codon.TTG],
+                [Codon("TTG"), Codon("GGT"), Codon("CCC"), Codon("TTG")],
             ),
             # chunk slices off 3 last bases of exon2
             # this removes the first codon
@@ -1040,7 +1064,7 @@ class TestCDSInterval:
                     ),
                 ),
                 [CDSFrame.ONE, CDSFrame.ONE],
-                [Codon.GGT, Codon.CCC, Codon.TTG],
+                [Codon("GGT"), Codon("CCC"), Codon("TTG")],
             ),
             # chunk slices off 1st exon (in coding orientation)
             # no translation at all because the last codon is only 2 bases
@@ -1109,7 +1133,7 @@ class TestCDSInterval:
                     ),
                 ),
                 [CDSFrame.ONE, CDSFrame.TWO],
-                [Codon.TTG],
+                [Codon("TTG")],
             ),
         ],
     )
@@ -1123,35 +1147,6 @@ class TestCDSInterval:
             ),
         )
         assert list(new_cds.scan_codons()) == exp_codons
-
-    @pytest.mark.parametrize(
-        "cds",
-        [
-            CDSInterval.from_location(
-                SingleInterval(
-                    0,
-                    9,
-                    Strand.PLUS,
-                    parent=Sequence("ANACGATCA", Alphabet.NT_EXTENDED_GAPPED, type=SequenceType.CHROMOSOME),
-                ),
-                [CDSFrame.ZERO],
-            ),
-            CDSInterval.from_location(
-                CompoundInterval(
-                    [2, 8],
-                    [5, 17],
-                    Strand.PLUS,
-                    parent=Sequence(
-                        "AANNNNAAGGGTACCCAAAAAA", Alphabet.NT_EXTENDED_GAPPED, type=SequenceType.CHROMOSOME
-                    ),
-                ),
-                [CDSFrame.ONE, CDSFrame.TWO],
-            ),
-        ],
-    )
-    def test_scan_codons_exception(self, cds):
-        with pytest.raises(ValueError):
-            _ = list(cds.scan_codons())
 
     @pytest.mark.parametrize(
         "cds,expected",
@@ -2042,6 +2037,41 @@ class TestCDSInterval:
         # run again to ensure caching is not a problem
         assert str(cds.translate()) == expected
 
+    def test_translate_unknown_errors(self):
+        # Makes sure ValueError raised when not allowing ambiguous translation (default action)
+        cds = CDSInterval.from_location(
+            SingleInterval(
+                0,
+                12,
+                Strand.PLUS,
+                parent=Sequence("ATGCTCGTNACG", Alphabet.NT_STRICT_UNKNOWN, type=SequenceType.CHROMOSOME),
+            ),
+            [CDSFrame.ZERO],
+        )
+        with pytest.raises(ValueError):
+            cds.translate()
+
+    @pytest.mark.parametrize(
+        "seq, exp",
+        [
+            ("ATGCTCGCNACG", "MLAT"),
+            ("ATGCTCGNNACG", "MLXT"),
+        ],
+    )
+    def test_translate_ambiguous(self, seq, exp):
+        # Makes sure translation works when allowing ambiguous translation
+        cds = CDSInterval.from_location(
+            SingleInterval(
+                0,
+                12,
+                Strand.PLUS,
+                parent=Sequence(seq, Alphabet.NT_STRICT_UNKNOWN, type=SequenceType.CHROMOSOME),
+            ),
+            [CDSFrame.ZERO],
+        )
+        obs = cds.translate(strict=False)
+        assert obs == Sequence(exp, alphabet=Alphabet.AA_STRICT_UNKNOWN)
+
     def test_accessors(self):
         cds = CDSInterval.from_location(SingleInterval(0, 10, Strand.PLUS), [CDSFrame.ZERO])
         assert cds.start == cds._location.start
@@ -2382,7 +2412,7 @@ class TestCDSInterval:
                     ),
                     [CDSFrame.ZERO, CDSFrame.TWO],
                 ),
-                [Codon.TAT],
+                [Codon("TAT")],
             ),
             # Discontiguous CDS, plus strand, with +1 programmed frameshift that skips over a 1nt exon
             # last frame gets shifted as a result
@@ -2396,7 +2426,7 @@ class TestCDSInterval:
                     ),
                     [CDSFrame.ZERO, CDSFrame.ZERO, CDSFrame.ZERO],
                 ),
-                [Codon.ACA, Codon.AGG, Codon.ACC, Codon.CAA],
+                [Codon("ACA"), Codon("AGG"), Codon("ACC"), Codon("CAA")],
             ),
             # Discontiguous CDS, plus strand, frame=2,
             # 1bp insertion inside exon 2 relative to some canonical genome and we want(ed) to maintain original frame
@@ -2411,7 +2441,7 @@ class TestCDSInterval:
                     ),
                     [CDSFrame.TWO, CDSFrame.ONE, CDSFrame.ONE],
                 ),
-                [Codon.AGG, Codon.GAC, Codon.CCA],
+                [Codon("AGG"), Codon("GAC"), Codon("CCA")],
             ),
         ],
     )
@@ -2432,7 +2462,7 @@ class TestCDSInterval:
                     ),
                     [CDSFrame.ZERO, CDSFrame.ONE],
                 ),
-                [Codon.AGG, Codon.AAA, Codon.GTC, Codon.CCT, Codon.GAA],
+                [Codon("AGG"), Codon("AAA"), Codon("GTC"), Codon("CCT"), Codon("GAA")],
             ),
             # this overlapping interval gets merged into [2,5], [8,18] with 0bp offset
             (
@@ -2445,7 +2475,7 @@ class TestCDSInterval:
                     ),
                     [CDSFrame.ZERO, CDSFrame.ONE, CDSFrame.ZERO],
                 ),
-                [Codon.AGG, Codon.GTC, Codon.CCT, Codon.GAA],
+                [Codon("AGG"), Codon("GTC"), Codon("CCT"), Codon("GAA")],
             ),
             # this overlapping interval gets merged into [2,5], [8,18] with 1bp offset
             (
@@ -2458,7 +2488,7 @@ class TestCDSInterval:
                     ),
                     [CDSFrame.ONE, CDSFrame.ONE, CDSFrame.ZERO],
                 ),
-                [Codon.GGG, Codon.TCC, Codon.CTG, Codon.AAA],
+                [Codon("GGG"), Codon("TCC"), Codon("CTG"), Codon("AAA")],
             ),
         ],
     )
@@ -2487,7 +2517,7 @@ class TestCDSInterval:
             ),
             [CDSFrame.ONE.to_phase(), CDSFrame.ONE.to_phase(), CDSFrame.ZERO.to_phase()],
         )
-        assert list(cds.scan_codons()) == [Codon.TCC, Codon.CTG, Codon.AAA]
+        assert list(cds.scan_codons()) == [Codon("TCC"), Codon("CTG"), Codon("AAA")]
 
     def test_frame_to_phase_mixed_exception(self):
         with pytest.raises(MismatchedFrameException):
@@ -2872,7 +2902,7 @@ class TestCDSInterval:
             #                               0 1  2  0  1  2  0  1  2
             (
                 Sequence("AAAGGAAAGTCCCTGAAAAAA", Alphabet.NT_EXTENDED_GAPPED, type=SequenceType.CHROMOSOME),
-                [Codon.AGG, Codon.AAA, Codon.GTT, Codon.CCC, Codon.TGA],
+                [Codon("AGG"), Codon("AAA"), Codon("GTT"), Codon("CCC"), Codon("TGA")],
             ),
             # sequence subset that removes 1bp of exon
             (
@@ -2893,7 +2923,7 @@ class TestCDSInterval:
                         ),
                     ),
                 ),
-                [Codon.AAA, Codon.GTT, Codon.CCC, Codon.TGA],
+                [Codon("AAA"), Codon("GTT"), Codon("CCC"), Codon("TGA")],
             ),
             # sequence subset that removes 1st exon
             (
@@ -2915,7 +2945,7 @@ class TestCDSInterval:
                     ),
                 ),
                 # translation doesn't change because the original 1st exon is sliced off in codon iteration
-                [Codon.CCC, Codon.TGA],
+                [Codon("CCC"), Codon("TGA")],
             ),
             # sequence subset that removes last exon and 1bp of 2nd exon
             (
@@ -2936,7 +2966,7 @@ class TestCDSInterval:
                         ),
                     ),
                 ),
-                [Codon.AGG, Codon.AAA],
+                [Codon("AGG"), Codon("AAA")],
             ),
         ],
     )
@@ -2965,7 +2995,7 @@ class TestCDSInterval:
             # Two Frame:      - -     0       1  2  0     1  2  0
             (
                 Sequence("AAAGGAAAGTCCCTGAAAAAA", Alphabet.NT_EXTENDED_GAPPED, type=SequenceType.CHROMOSOME),
-                [Codon.AGA, Codon.CCC, Codon.GAA],
+                [Codon("AGA"), Codon("CCC"), Codon("GAA")],
             ),
             # sequence subset that removes 1st exon
             # Index:      0 1 2 3 4 | 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20
@@ -2996,7 +3026,7 @@ class TestCDSInterval:
                         ),
                     ),
                 ),
-                [Codon.CCC, Codon.GAA],
+                [Codon("CCC"), Codon("GAA")],
             ),
             # sequence subset that removes last block
             (
@@ -3017,7 +3047,7 @@ class TestCDSInterval:
                         ),
                     ),
                 ),
-                [Codon.AGA, Codon.CCC],
+                [Codon("AGA"), Codon("CCC")],
             ),
         ],
     )
@@ -3050,6 +3080,53 @@ class TestCDSInterval:
         )
         assert str(cds.get_spliced_sequence()) == "AGGGTCCCCTGAAA"
         assert str(cds.extract_sequence()) == "AGGGTCCCCTGA"
+
+    def test_negative_strand_overlapping_codon_iterator(self):
+        """
+        This CDS has a 2bp overlap. In chunk relative coordinates, it looks like this:
+
+        A T C G A T C G A T C  G
+        0 1 2 3 4 5 6 7 8 9 10 11
+                8 7 6 5 4 3 2  1
+             1110 9
+
+        which reverse complements into:
+        CGATCGATATCGAT
+                ^^        << duplicated "AT"
+         GATCGATATCGA     << ORF is taken into account, these are actual codons in the chunk frame
+        """
+        cds = CDSInterval(
+            **dict(
+                cds_starts=[9, 202],
+                cds_ends=[204, 587],
+                strand=Strand.MINUS,
+                frames_or_phases=[CDSFrame.ONE, CDSFrame.ZERO],
+                parent_or_seq_chunk_parent=Parent(
+                    id="chrVI.0:198-210",
+                    sequence=Sequence(
+                        "ATCGATCGATCG",
+                        Alphabet.NT_EXTENDED_GAPPED,
+                        id="chrVI.0:198-210",
+                        type=SequenceType.SEQUENCE_CHUNK,
+                        parent=Parent(
+                            location=SingleInterval(
+                                198,
+                                210,
+                                Strand.PLUS,
+                                parent=Parent(id="test", sequence_type=SequenceType.CHROMOSOME),
+                            )
+                        ),
+                    ),
+                ),
+            )
+        )
+        orf = "GATCGATATCGA"
+        assert str(cds.chunk_relative_location.extract_sequence()) == "CGATCGATATCGAT"
+        assert str(cds.extract_sequence()) == orf
+        # using codon iterator still produces the same result
+        codons = (str(codon_location.extract_sequence()) for codon_location in cds.chunk_relative_codon_locations)
+        old_seq = "".join(codons)
+        assert old_seq == orf
 
     def test_equality_different_parents(self):
         cds1 = CDSInterval(
@@ -3102,11 +3179,6 @@ class TestCDSInterval:
                 ),
             ),
         )
-        # show that calling translate() calls _scan_codon_locations()
-        with ExitStack() as stack:
-            overlapping = stack.enter_context(patch("inscripta.biocantor.gene.cds.CDSInterval._scan_codon_locations"))
-            _ = list(cds.translate())
-        overlapping.assert_called()
         # show that the function returns a sensible translation that starts from the 1st in-frame codon
         # need to re-build the CDS because the cache now contains the empty version caused by the mock
         cds = CDSInterval.from_dict(cds.to_dict(), parent_or_seq_chunk_parent=cds.chunk_relative_location.parent)
@@ -3141,11 +3213,6 @@ class TestCDSInterval:
                 ),
             ),
         )
-        # show that calling translate() calls _scan_codon_locations()
-        with ExitStack() as stack:
-            overlapping = stack.enter_context(patch("inscripta.biocantor.gene.cds.CDSInterval._scan_codon_locations"))
-            _ = list(cds.translate())
-        overlapping.assert_called()
         # show that the function returns a sensible translation that starts from the 1st in-frame codon
         # need to re-build the CDS because the cache now contains the empty version caused by the mock
         cds = CDSInterval.from_dict(cds.to_dict(), parent_or_seq_chunk_parent=cds.chunk_relative_location.parent)

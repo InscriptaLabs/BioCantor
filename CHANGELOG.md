@@ -4,6 +4,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [0.19.0] 2022-10-21
+### Added
+- `AA_EXTENDED`, `AA_STRICT_GAPPED`, `AA_EXTENDED_GAPPED`, and `AA_STRICT_UNKNOWN` alphabets.
+- ASV tests created for benchmarking.
+- `extended_gencode` dictionary in constants, holding codon translations for N-containing codons.
+
+### Changed
+- `AnnotationCollection.query_by_position()` will now perform faster queries when `cgranges` is installed.
+- `AnnotationCollection.query_by_interval_guids()`, `query_by_transcript_interval_guids()`, and `query_by_feature_interval_guids`() now operate on a cached map that will improve performance.
+- `CDSInterval().translate()` can now perform translations on unknown codons, using `X` for the unknown amino acid code.
+- `Codons` object now promoted from Enum to full object, and can handle ambiguous IUPAC sequences.
+- `Codons` object can now translate some N-containing codons if the N is a wobble base.
+
+### Fixed
+- `AnnotationCollection.query_by_transcript_interval_guids` and `AnnotationCollection.query_by_feature_interval_guids` now properly returns only the requested TranscriptInterval or FeatureInterval
+as child of the GeneInterval or FeatureCollectionInterval objects. Fix bug introduced in 0.18.0 that was returning all children.
+- Any of the identifier queries on `AnnotationCollection` would raise an exception if the collection was chunk-relative and the bounds of the returned genes exceeded the bounds of the chunk.
+
 ## [0.18.1] 2022-08-29
 ### Fixed
 - ParentModel.to_parent() is no longer case sensitive for type parameter, and will create sequence chunk parents correctly regardless of string casing.

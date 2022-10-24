@@ -701,7 +701,7 @@ class TestCompoundInterval:
                 Strand.PLUS,
                 SingleInterval(4, 8, Strand.PLUS),
             ),
-            # 13. Overlapping blocks, requested interval contains both repeats of same base at position 4
+            # 14. Overlapping blocks, requested interval contains both repeats of same base at position 4
             (
                 CompoundInterval([0, 4], [5, 10], Strand.PLUS),
                 4,
@@ -709,10 +709,46 @@ class TestCompoundInterval:
                 Strand.PLUS,
                 CompoundInterval([4, 4], [5, 8], Strand.PLUS),
             ),
+            # 15. 2bp overlapping blocks on negative strand
+            (
+                CompoundInterval([0, 4], [6, 12], Strand.MINUS),
+                7,
+                10,
+                Strand.PLUS,
+                CompoundInterval([4, 4], [5, 6], Strand.MINUS),
+            ),
         ],
     )
     def test_relative_interval_to_parent_location(self, location, start, end, strand, expected):
         assert location.relative_interval_to_parent_location(start, end, strand) == expected
+
+    @pytest.mark.parametrize(
+        "location,start,end,strand,expected_sequence",
+        [
+            #  SEQ    A  T  C  G A T C G A T C  G
+            #  POS    0  1  2  3 4 5 6 7 8 9 10 11
+            # TX_POS             7 6 5 4 3 2 1  0
+            #        13 12 11 10 9 8
+            #
+            #         which reverse complements into:
+            #         CGATCGATATCGAT
+            #                 ^^        << duplicated "AT"
+            # pulling down the region from 7-10 should grab the bases at 4-5-4, which reverse complements into
+            # "TAT"
+            (
+                CompoundInterval([0, 4], [6, 12], Strand.MINUS, parent=Sequence("ATCGATCGATCG", Alphabet.NT_STRICT)),
+                7,
+                10,
+                Strand.PLUS,
+                "TAT",
+            )
+        ],
+    )
+    def test_relative_interval_to_parent_location_sequence(self, location, start, end, strand, expected_sequence):
+        assert (
+            str(location.relative_interval_to_parent_location(start, end, strand).extract_sequence())
+            == expected_sequence
+        )
 
     @pytest.mark.parametrize(
         "location,start,end,strand,expected_exception",
@@ -3507,3 +3543,29 @@ class TestCompoundInterval:
         assert ci1.contains(ci2, full_span=True) == contains
         ci1.strand = Strand.MINUS
         assert ci1.contains(ci2, full_span=True, match_strand=False) == contains
+
+    @pytest.mark.parametrize(
+        "starts,ends,strand,expected",
+        [
+            # single block intervals behave normally
+            ([0], [10], Strand.PLUS, ((0,), (10,))),
+            ([0], [10], Strand.MINUS, ((0,), (10,))),
+            # single block intervals instantiated 'backwards' come out 'backwards'
+            ([10], [0], Strand.PLUS, ((10,), (0,))),
+            ([10], [0], Strand.MINUS, ((10,), (0,))),
+            # [0-3], [5-10] is a normal interval on both strands
+            ([0, 5], [3, 10], Strand.PLUS, ((0, 5), (3, 10))),
+            ([0, 5], [3, 10], Strand.MINUS, ((0, 5), (3, 10))),
+            # [0-6], [4-12], overlaps on + strand are oriented from left to right
+            ([0, 4], [6, 12], Strand.PLUS, ((0, 4), (6, 12))),
+            # [0-6], [4-12] overlaps on - strand are oriented from left to right
+            ([0, 4], [6, 12], Strand.MINUS, ((0, 4), (6, 12))),
+            # when the overlapping intervals share start positions, then the orientation affects the ordering
+            # [4-5], [4-6] on plus strand remains as-is
+            # [4-5], [4-6] on minus strand becomes [4-6], [4-5]
+            ([4, 4], [5, 6], Strand.PLUS, ((4, 4), (5, 6))),
+            ([4, 4], [5, 6], Strand.MINUS, ((4, 4), (6, 5))),
+        ],
+    )
+    def test__sort_starts_ends(self, starts, ends, strand, expected):
+        assert CompoundInterval._sort_starts_ends(starts, ends, strand) == expected

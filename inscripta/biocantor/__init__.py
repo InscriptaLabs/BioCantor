@@ -1,4 +1,4 @@
-__version__ = "0.18.1"
+__version__ = "0.19.0"
 
 from abc import ABC, abstractmethod
 from enum import Enum
@@ -442,7 +442,7 @@ class AbstractSequence(ABC):
 class AbstractParent(ABC):
     """Shared AbstractParent base class simplifies imports for type checking"""
 
-    __slots__ = ["parent", "id", "sequence_type", "_strand", "location", "sequence"]
+    __slots__ = ["parent", "id", "sequence_type", "_strand", "location", "sequence", "_strand_property"]
 
     id: Optional[str]
     sequence_type: Optional[SequenceType]

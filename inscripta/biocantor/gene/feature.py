@@ -695,15 +695,20 @@ class FeatureIntervalCollection(AbstractFeatureIntervalCollection):
             qualifiers[BioCantorQualifiers.FEATURE_TYPE.value] = self.feature_types
         return qualifiers
 
-    def query_by_guids(self, ids: List[UUID]) -> Optional["FeatureIntervalCollection"]:
+    def query_by_guids(self, id_or_ids: Union[UUID, List[UUID]]) -> Optional["FeatureIntervalCollection"]:
         """Filter this feature collection object by a list of unique IDs.
 
         Args:
-            ids: List of GUIDs, or unique IDs.
+            id_or_ids: List of GUIDs, or unique IDs. Can also be a single ID.
 
         Returns:
            :class:`FeatureIntervalCollection`, or None if there are no matching GUIDs.
         """
+        if isinstance(id_or_ids, UUID):
+            ids = [id_or_ids]
+        else:
+            ids = id_or_ids
+
         features = [self.guid_map[i] for i in ids if i in self.guid_map]
         if features:
             return FeatureIntervalCollection(

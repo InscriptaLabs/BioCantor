@@ -814,11 +814,11 @@ class AbstractFeatureIntervalCollection(AbstractInterval, ABC):
         """
 
     @abstractmethod
-    def query_by_guids(self, ids: List[UUID]) -> "AbstractFeatureIntervalCollection":
+    def query_by_guids(self, id_or_ids: Union[UUID, List[UUID]]) -> "AbstractFeatureIntervalCollection":
         """Filter this collection object by a list of unique IDs.
 
         Args:
-            ids: List of GUIDs, or unique IDs.
+            id_or_ids: List of GUIDs, or unique IDs. Can also be a single ID.
         """
 
     def _reset_parent(self, parent: Optional[Parent] = None) -> None:

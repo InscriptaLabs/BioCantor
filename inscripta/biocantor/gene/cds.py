@@ -97,6 +97,8 @@ class CDSInterval(AbstractFeatureInterval):
         else:
             self.guid = guid
 
+        self._chunk_relative_codon_locations_cached = False
+
     def __str__(self):
         frame_str = ", ".join([str(p) for p in self.frames])
         return f"CDS(({self.chromosome_location}), ({frame_str})"
@@ -446,10 +448,21 @@ class CDSInterval(AbstractFeatureInterval):
         Incomplete internal codons are determined by comparing the CDSFrame of each exon
         as annotated, to the expected value of the CDSFrame. This allows for an annotation
         to model things like programmed frameshifts and indels that may be assembly errors.
+
+        This function has been optimized to run as fast as possible. The original implementation iterated
+        over every codon, but this is slower because it has a lot of object instantiation overhead. However,
+        if those objects have already been instantiated and cached, then it is faster to just re-use them.
         """
-        codons = (str(codon_location.extract_sequence()) for codon_location in self.chunk_relative_codon_locations)
-        seq = "".join(codons)
-        assert len(seq) % 3 == 0
+        if self._chunk_relative_codon_locations_cached is True:
+            codons = (str(codon_location.extract_sequence()) for codon_location in self.chunk_relative_codon_locations)
+            seq = "".join(codons)
+            return seq
+        if self.num_blocks > 1:
+            window_fn = self._prepare_multi_exon_window_for_scan_codon_locations
+        else:
+            window_fn = self._prepare_single_exon_window_for_scan_codon_locations
+        location, offset = window_fn(relative_window=None, chunk_relative_coordinates=True)
+        seq = str(location.extract_sequence())[offset : len(location) - ((len(location) - offset) % 3)]
         return Sequence(seq, Alphabet.NT_EXTENDED, validate_alphabet=False)
 
     @property
@@ -498,6 +511,7 @@ class CDSInterval(AbstractFeatureInterval):
         This function calls ``scan_codon_locations`` and stores the full result as a cached
         tuple.
         """
+        self._chunk_relative_codon_locations_cached = True
         return tuple(self.scan_chunk_relative_codon_locations())
 
     @lru_cache(maxsize=1)
@@ -778,40 +792,54 @@ class CDSInterval(AbstractFeatureInterval):
         offset = phase.to_frame().value
         return offset
 
-    def _translate_iter(
-        self,
-        truncate_at_in_frame_stop: Optional[bool] = False,
-        translation_table: Optional[TranslationTable] = TranslationTable.DEFAULT,
-    ) -> Iterator[str]:
-        """
-        Iterator that handles alternative translation tables for the start codon.
-        """
-
-        for i, codon in enumerate(self.scan_codons(truncate_at_in_frame_stop)):
-            if i == 0:
-                if codon.is_start_codon_in_specific_translation_table(translation_table):
-                    yield Codon.ATG.translate()
-                else:
-                    yield codon.translate()
-            else:
-                yield codon.translate()
-
     @lru_cache(maxsize=2)
     def translate(
         self,
         truncate_at_in_frame_stop: Optional[bool] = False,
         translation_table: Optional[TranslationTable] = TranslationTable.DEFAULT,
+        strict: bool = True,
     ) -> Sequence:
         """
-        Returns amino acid sequence of this CDS. If truncate_at_in_frame_stop is ``True``,
-        this will stop at the first in-frame stop.
+        Returns amino acid sequence of this CDS.
 
-        Currently the ``translation_table`` field only controls the start codon. Using non-standard
-        translation tables will change the set of start codons that code for Methionine,
-        and will not change any other codons.
+        Parameters
+        ----------
+        truncate_at_in_frame_stop
+            If truncate_at_in_frame_stop is ``True``, this will stop at the first in-frame stop.
+        translation_table
+            Currently the ``translation_table`` field only controls the start codon. Using non-standard
+            translation tables will change the set of start codons that code for Methionine,
+            and will not change any other codons.
+        strict
+            If False, allows untranslatable codons to be represented by an X. Otherwise, throws ValueError.
+
+        Returns
+        -------
+        Sequence
+            The translated amino acid sequence
+
+        Raises
+        ------
+        ValueError
+            Codon is untranslatable and allow_unknown_translation is False
         """
-        aa_seq_str = "".join(self._translate_iter(truncate_at_in_frame_stop, translation_table))
-        return Sequence(aa_seq_str, Alphabet.AA, validate_alphabet=False)
+        seq = str(self.extract_sequence()).upper()
+        translated_seq = []
+        for i in range(0, len(seq), 3):
+            codon_str = seq[i : i + 3]
+
+            codon = Codon(codon_str)
+            if i == 0 and codon.is_start_codon_in_specific_translation_table(translation_table):
+                translated_seq.append(Codon("ATG").translate())
+            else:
+                if strict and not codon.is_strict_codon:
+                    raise ValueError(f"Codon is not a strict codon: '{codon}'")
+                translated_seq.append(codon.translate(strict=strict))
+
+            if truncate_at_in_frame_stop and codon.is_stop_codon and i != len(seq) - 3:
+                break
+        alphabet = Alphabet.AA if strict else Alphabet.AA_STRICT_UNKNOWN
+        return Sequence("".join(translated_seq), alphabet, validate_alphabet=False)
 
     @lru_cache(maxsize=1)
     @property
