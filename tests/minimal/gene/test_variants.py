@@ -2,8 +2,8 @@ from uuid import UUID
 
 import pytest
 
-from inscripta.biocantor.exc import LocationOverlapException, NullSequenceException
-from inscripta.biocantor.gene import (
+from biocantor.exc import LocationOverlapException, NullSequenceException
+from biocantor.gene import (
     GeneInterval,
     AnnotationCollection,
     TranscriptInterval,
@@ -12,10 +12,10 @@ from inscripta.biocantor.gene import (
     CDSInterval,
     CDSFrame,
 )
-from inscripta.biocantor.gene.variants import VariantInterval, VariantIntervalCollection
-from inscripta.biocantor.location import SingleInterval, Strand
-from inscripta.biocantor.parent import Parent
-from inscripta.biocantor.sequence.sequence import SequenceType, Sequence, Alphabet
+from biocantor.gene.variants import VariantInterval, VariantIntervalCollection
+from biocantor.location import SingleInterval, Strand
+from biocantor.parent import Parent
+from biocantor.sequence.sequence import SequenceType, Sequence, Alphabet
 
 snp_1 = VariantInterval(start=1, end=2, sequence="G", variant_type="SNV")
 insertion_5 = VariantInterval(start=5, end=6, sequence="GGC", variant_type="insertion")

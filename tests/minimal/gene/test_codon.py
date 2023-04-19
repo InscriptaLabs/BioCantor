@@ -1,6 +1,6 @@
 import pytest
 
-from inscripta.biocantor.gene.codon import Codon, TranslationTable
+from biocantor.gene.codon import Codon, TranslationTable
 
 
 class TestCodon:

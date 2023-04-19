@@ -17,7 +17,7 @@ import sys
 
 sys.path.insert(0, os.path.abspath(os.path.join("..", "..")))
 
-from inscripta.biocantor import __version__
+from biocantor import __version__
 
 
 # -- Project information -----------------------------------------------------

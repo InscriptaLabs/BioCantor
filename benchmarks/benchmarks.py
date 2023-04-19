@@ -1,11 +1,11 @@
 from pathlib import Path
 
-from inscripta.biocantor.gene import CDSInterval
-from inscripta.biocantor.io.genbank.parser import parse_genbank, ParsedAnnotationRecord
-from inscripta.biocantor.io.gff3.parser import parse_standard_gff3
-from inscripta.biocantor.location import Strand, SingleInterval
-from inscripta.biocantor.parent import Parent, SequenceType
-from inscripta.biocantor.sequence import Sequence, Alphabet
+from biocantor.gene import CDSInterval
+from biocantor.io.genbank.parser import parse_genbank, ParsedAnnotationRecord
+from biocantor.io.gff3.parser import parse_standard_gff3
+from biocantor.location import Strand, SingleInterval
+from biocantor.parent import Parent, SequenceType
+from biocantor.sequence import Sequence, Alphabet
 
 DATA_DIR = Path(__file__).parent.parent / "tests/data"
 

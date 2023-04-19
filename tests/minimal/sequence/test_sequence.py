@@ -1,18 +1,18 @@
 import pytest
 from Bio.Seq import Seq
 
-from inscripta.biocantor.exc import (
+from biocantor.exc import (
     AlphabetError,
     NoSuchAncestorException,
     EmptySequenceFastaError,
     InvalidStrandException,
     ParentException,
 )
-from inscripta.biocantor.location.location_impl import SingleInterval, CompoundInterval
-from inscripta.biocantor.parent import Parent
-from inscripta.biocantor.sequence import Sequence
-from inscripta.biocantor.sequence.alphabet import Alphabet
-from inscripta.biocantor.location.strand import Strand
+from biocantor.location.location_impl import SingleInterval, CompoundInterval
+from biocantor.parent import Parent
+from biocantor.sequence import Sequence
+from biocantor.sequence.alphabet import Alphabet
+from biocantor.location.strand import Strand
 
 
 class TestAlphabet:

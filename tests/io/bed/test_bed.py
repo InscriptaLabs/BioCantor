@@ -4,14 +4,14 @@ FeatureIntervals have the ability to write to BED.
 """
 import pytest
 
-from inscripta.biocantor.gene.cds_frame import CDSFrame
-from inscripta.biocantor.io.bed import RGB
-from inscripta.biocantor.io.models import (
+from biocantor.gene.cds_frame import CDSFrame
+from biocantor.io.bed import RGB
+from biocantor.io.models import (
     TranscriptIntervalModel,
     FeatureIntervalModel,
 )
-from inscripta.biocantor.location.strand import Strand
-from inscripta.biocantor.util.hashing import digest_object
+from biocantor.location.strand import Strand
+from biocantor.util.hashing import digest_object
 
 
 class TestBedWriter:

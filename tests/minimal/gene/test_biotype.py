@@ -1,4 +1,4 @@
-from inscripta.biocantor.gene.biotype import Biotype
+from biocantor.gene.biotype import Biotype
 import pytest
 
 

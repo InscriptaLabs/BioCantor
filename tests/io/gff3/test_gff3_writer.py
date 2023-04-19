@@ -3,11 +3,11 @@ Test writing GFF3 files.
 """
 import pytest
 
-from inscripta.biocantor.io.genbank.parser import parse_genbank
-from inscripta.biocantor.io.gff3.parser import parse_standard_gff3
-from inscripta.biocantor.io.gff3.writer import collection_to_gff3
-from inscripta.biocantor.io.parser import ParsedAnnotationRecord
-from inscripta.biocantor.io.gff3.exc import GFF3ExportException, ReservedKeyWarning
+from biocantor.io.genbank.parser import parse_genbank
+from biocantor.io.gff3.parser import parse_standard_gff3
+from biocantor.io.gff3.writer import collection_to_gff3
+from biocantor.io.parser import ParsedAnnotationRecord
+from biocantor.io.gff3.exc import GFF3ExportException, ReservedKeyWarning
 
 
 class TestGff3Writer:

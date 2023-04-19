@@ -1,14 +1,14 @@
 import pytest
-from inscripta.biocantor.exc import NoSuchAncestorException, MismatchedFrameException, InvalidPositionException
-from inscripta.biocantor.gene.cds import CDSInterval, TranslationTable
-from inscripta.biocantor.gene.cds_frame import CDSPhase, CDSFrame
-from inscripta.biocantor.gene.codon import Codon
-from inscripta.biocantor.location.location_impl import CompoundInterval, SingleInterval
-from inscripta.biocantor.location.strand import Strand
-from inscripta.biocantor.parent import SequenceType
-from inscripta.biocantor.parent.parent import Parent
-from inscripta.biocantor.sequence import Sequence
-from inscripta.biocantor.sequence.alphabet import Alphabet
+from biocantor.exc import NoSuchAncestorException, MismatchedFrameException, InvalidPositionException
+from biocantor.gene.cds import CDSInterval, TranslationTable
+from biocantor.gene.cds_frame import CDSPhase, CDSFrame
+from biocantor.gene.codon import Codon
+from biocantor.location.location_impl import CompoundInterval, SingleInterval
+from biocantor.location.strand import Strand
+from biocantor.parent import SequenceType
+from biocantor.parent.parent import Parent
+from biocantor.sequence import Sequence
+from biocantor.sequence.alphabet import Alphabet
 
 
 class TestCDSPhase:

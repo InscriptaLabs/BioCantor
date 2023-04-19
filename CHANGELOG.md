@@ -166,7 +166,7 @@ as child of the GeneInterval or FeatureCollectionInterval objects. Fix bug intro
 ## [0.7.0]
 ### Changed
 - GenBank position-sorted parser can now handle CDS records that are not directly following a gene record.
-- Refactor `Location`, `Parent` and `Sequence` to have base classes `AbstractLocation`, `AbstractParent` and `AbstractSequence` that are in the base of the `inscripta.biocantor.location` module. This greatly helps with resolving circular imports.
+- Refactor `Location`, `Parent` and `Sequence` to have base classes `AbstractLocation`, `AbstractParent` and `AbstractSequence` that are in the base of the `biocantor.location` module. This greatly helps with resolving circular imports.
 - Optimized checking `sequence` and `location` members to explicitly check for `None`. This avoids a call to `__len__`.
 - `CompoundInterval._single_intervals` is now lazily evaluated, because it is expensive to generate many `SingleInterval` objects.
 - `CompoundInterval` now stores the positions as two sorted integer lists.

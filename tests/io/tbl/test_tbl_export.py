@@ -5,10 +5,10 @@ All of these TBL files have been validated to pass the tbl2asn error validator t
 to acquire and so is not packaged for these unit tests.
 """
 import pytest
-from inscripta.biocantor.io.genbank.parser import parse_genbank
-from inscripta.biocantor.io.gff3.parser import parse_gff3_embedded_fasta
-from inscripta.biocantor.io.ncbi.tbl_writer import collection_to_tbl, GenbankFlavor
-from inscripta.biocantor.io.parser import ParsedAnnotationRecord
+from biocantor.io.genbank.parser import parse_genbank
+from biocantor.io.gff3.parser import parse_gff3_embedded_fasta
+from biocantor.io.ncbi.tbl_writer import collection_to_tbl, GenbankFlavor
+from biocantor.io.parser import ParsedAnnotationRecord
 
 
 @pytest.mark.parametrize(

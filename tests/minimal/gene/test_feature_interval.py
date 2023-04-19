@@ -2,7 +2,7 @@ from uuid import UUID
 
 import pytest
 
-from inscripta.biocantor.exc import (
+from biocantor.exc import (
     ValidationException,
     EmptyLocationException,
     NoSuchAncestorException,
@@ -10,15 +10,15 @@ from inscripta.biocantor.exc import (
     MismatchedParentException,
     NoncodingTranscriptError,
 )
-from inscripta.biocantor.gene.feature import FeatureInterval
-from inscripta.biocantor.io.gff3.exc import GFF3MissingSequenceNameError
-from inscripta.biocantor.io.models import FeatureIntervalModel
-from inscripta.biocantor.location.location_impl import SingleInterval, CompoundInterval, EmptyLocation
-from inscripta.biocantor.location.strand import Strand
-from inscripta.biocantor.parent.parent import Parent, SequenceType
-from inscripta.biocantor.sequence.alphabet import Alphabet
-from inscripta.biocantor.sequence.sequence import Sequence
-from inscripta.biocantor.util.object_validation import ObjectValidation
+from biocantor.gene.feature import FeatureInterval
+from biocantor.io.gff3.exc import GFF3MissingSequenceNameError
+from biocantor.io.models import FeatureIntervalModel
+from biocantor.location.location_impl import SingleInterval, CompoundInterval, EmptyLocation
+from biocantor.location.strand import Strand
+from biocantor.parent.parent import Parent, SequenceType
+from biocantor.sequence.alphabet import Alphabet
+from biocantor.sequence.sequence import Sequence
+from biocantor.util.object_validation import ObjectValidation
 
 # these features will be shared across all tests
 genome = "GTATTCTTGGACCTAATT"
