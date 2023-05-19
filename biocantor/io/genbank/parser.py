@@ -106,7 +106,7 @@ class Feature(ABC):
 
     @property
     def start(self) -> int:
-        return self._seq_feature.location.nofuzzy_start
+        return int(self._seq_feature.location.start)
 
 
 class FeatureIntervalGenBankCollection:
@@ -131,7 +131,7 @@ class FeatureIntervalGenBankCollection:
 
     @property
     def start(self) -> int:
-        return min(x.location.nofuzzy_start for x in self._seq_features)
+        return min(int(x.location.start) for x in self._seq_features)
 
     @staticmethod
     def to_feature_model(cls: "FeatureIntervalGenBankCollection") -> Dict[str, Any]:
@@ -155,8 +155,8 @@ class FeatureIntervalGenBankCollection:
             interval_starts = []
             interval_ends = []
             for loc in sorted(feature.location.parts, key=lambda p: p.start):
-                interval_starts.append(loc.nofuzzy_start)
-                interval_ends.append(loc.nofuzzy_end)
+                interval_starts.append(int(loc.start))
+                interval_ends.append(int(loc.end))
             strand = Strand.from_int(feature.location.strand)
 
             # extract feature types, including the base type
@@ -400,8 +400,8 @@ class TranscriptFeature(Feature):
         exon_starts = []
         exon_ends = []
         for part in sorted(self._seq_feature.location.parts, key=lambda p: p.start):
-            exon_starts.append(int(part.nofuzzy_start))
-            exon_ends.append(int(part.nofuzzy_end))
+            exon_starts.append(int(part.start))
+            exon_ends.append(int(part.end))
         self._exon_interval = CompoundInterval(
             exon_starts,
             exon_ends,
@@ -430,8 +430,8 @@ class TranscriptFeature(Feature):
         cds_starts = []
         cds_ends = []
         for part in sorted(self.cds_feature._seq_feature.location.parts, key=lambda p: p.start):
-            cds_starts.append(int(part.nofuzzy_start))
-            cds_ends.append(int(part.nofuzzy_end))
+            cds_starts.append(int(part.start))
+            cds_ends.append(int(part.end))
             cds_interval = CompoundInterval(
                 cds_starts,
                 cds_ends,
@@ -580,7 +580,7 @@ class BaseGenBankParser(ABC):
         return sorted(
             features,
             key=lambda x: (
-                x.location.nofuzzy_start,
+                int(x.location.start),
                 x.type != GeneFeatures.GENE.value,
                 x.type != TranscriptFeatures.CODING_TRANSCRIPT.value,
                 x.type != GeneIntervalFeatures.CDS.value,
