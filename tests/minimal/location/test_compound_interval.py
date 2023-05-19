@@ -1,7 +1,7 @@
 import pytest
 from Bio.SeqFeature import FeatureLocation, CompoundLocation, ExactPosition
 
-from inscripta.biocantor.exc import (
+from biocantor.exc import (
     NoSuchAncestorException,
     InvalidStrandException,
     InvalidPositionException,
@@ -11,16 +11,16 @@ from inscripta.biocantor.exc import (
     NullSequenceException,
     LocationException,
 )
-from inscripta.biocantor import DistanceType
-from inscripta.biocantor.location.location_impl import (
+from biocantor import DistanceType
+from biocantor.location.location_impl import (
     SingleInterval,
     CompoundInterval,
     EmptyLocation,
 )
-from inscripta.biocantor.location.strand import Strand
-from inscripta.biocantor.parent import Parent
-from inscripta.biocantor.sequence import Sequence
-from inscripta.biocantor.sequence.alphabet import Alphabet
+from biocantor.location.strand import Strand
+from biocantor.parent import Parent
+from biocantor.sequence import Sequence
+from biocantor.sequence.alphabet import Alphabet
 
 
 class TestCompoundInterval:

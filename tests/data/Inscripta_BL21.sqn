@@ -18,7 +18,7 @@ Seq-submit ::= {
             sub "CO" ,
             country "USA" ,
             street "5500 Central Ave" ,
-            email "content-inscripta@inscripta.com" ,
+            email "content-inscripta@com" ,
             postal-code "80301" } } } ,
     cit {
       authors {
@@ -119,7 +119,7 @@ Seq-submit ::= {
                 label
                   str "AdditionalComment" ,
                 data
-                  str "ALT EMAIL:content-inscripta@inscripta.com" } } } ,
+                  str "ALT EMAIL:content-inscripta@com" } } } ,
           user {
             type
               str "Submission" ,

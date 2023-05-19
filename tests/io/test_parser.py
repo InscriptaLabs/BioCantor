@@ -1,9 +1,9 @@
 import pytest
-from inscripta.biocantor.location.location_impl import SingleInterval
-from inscripta.biocantor.parent import Parent, SequenceType
-from inscripta.biocantor.sequence.alphabet import Alphabet
-from inscripta.biocantor.sequence.sequence import Sequence, Strand
-from inscripta.biocantor.io.parser import seq_chunk_to_parent, seq_to_parent
+from biocantor.location.location_impl import SingleInterval
+from biocantor.parent import Parent, SequenceType
+from biocantor.sequence.alphabet import Alphabet
+from biocantor.sequence.sequence import Sequence, Strand
+from biocantor.io.parser import seq_chunk_to_parent, seq_to_parent
 
 
 def test_seq_to_parent():

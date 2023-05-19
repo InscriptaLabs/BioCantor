@@ -1,9 +1,9 @@
 """
 Test exporting FASTA files from various kinds of collections.
 """
-from inscripta.biocantor.io.fasta.fasta import collection_to_fasta
-from inscripta.biocantor.io.genbank.parser import parse_genbank
-from inscripta.biocantor.io.parser import ParsedAnnotationRecord
+from biocantor.io.fasta.fasta import collection_to_fasta
+from biocantor.io.genbank.parser import parse_genbank
+from biocantor.io.parser import ParsedAnnotationRecord
 
 
 def test_collection_to_fasta_from_genbank(test_data_dir, tmp_path):

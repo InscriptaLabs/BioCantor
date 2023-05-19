@@ -1,6 +1,6 @@
 import pytest
 
-from inscripta.biocantor.exc import (
+from biocantor.exc import (
     InvalidCDSIntervalError,
     EmptyLocationException,
     NullParentException,
@@ -9,14 +9,14 @@ from inscripta.biocantor.exc import (
     NullSequenceException,
     NoSuchAncestorException,
 )
-from inscripta.biocantor.gene.cds_frame import CDSFrame
-from inscripta.biocantor.gene.transcript import TranscriptInterval
-from inscripta.biocantor.io.models import TranscriptIntervalModel
-from inscripta.biocantor.location.location_impl import SingleInterval, CompoundInterval, EmptyLocation
-from inscripta.biocantor.location.strand import Strand
-from inscripta.biocantor.parent.parent import Parent, SequenceType
-from inscripta.biocantor.sequence.alphabet import Alphabet
-from inscripta.biocantor.sequence.sequence import Sequence
+from biocantor.gene.cds_frame import CDSFrame
+from biocantor.gene.transcript import TranscriptInterval
+from biocantor.io.models import TranscriptIntervalModel
+from biocantor.location.location_impl import SingleInterval, CompoundInterval, EmptyLocation
+from biocantor.location.strand import Strand
+from biocantor.parent.parent import Parent, SequenceType
+from biocantor.sequence.alphabet import Alphabet
+from biocantor.sequence.sequence import Sequence
 
 # these features will be shared across all tests
 genome = "GTATTCTTGGACCTAATT"

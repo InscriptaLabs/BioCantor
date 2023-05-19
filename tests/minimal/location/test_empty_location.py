@@ -1,12 +1,12 @@
 import pytest
 
-from inscripta.biocantor.exc import EmptyLocationException, MismatchedParentException
-from inscripta.biocantor.location.location_impl import (
+from biocantor.exc import EmptyLocationException, MismatchedParentException
+from biocantor.location.location_impl import (
     EmptyLocation,
     SingleInterval,
     CompoundInterval,
 )
-from inscripta.biocantor.location.strand import Strand
+from biocantor.location.strand import Strand
 
 
 class TestEmptyLocation:

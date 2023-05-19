@@ -2,16 +2,16 @@
 Tests for writing and reading feature intervals.
 """
 import pytest
-from inscripta.biocantor.gene.biotype import Biotype
-from inscripta.biocantor.gene.cds_frame import CDSFrame
-from inscripta.biocantor.io.gff3.exc import GFF3LocusTagError, GFF3ChildParentMismatchError
-from inscripta.biocantor.io.gff3.parser import parse_standard_gff3
-from inscripta.biocantor.io.gff3.writer import collection_to_gff3
-from inscripta.biocantor.io.models import AnnotationCollectionModel
-from inscripta.biocantor.location.strand import Strand
-from inscripta.biocantor.parent.parent import Parent
-from inscripta.biocantor.sequence.alphabet import Alphabet
-from inscripta.biocantor.sequence.sequence import Sequence
+from biocantor.gene.biotype import Biotype
+from biocantor.gene.cds_frame import CDSFrame
+from biocantor.io.gff3.exc import GFF3LocusTagError, GFF3ChildParentMismatchError
+from biocantor.io.gff3.parser import parse_standard_gff3
+from biocantor.io.gff3.writer import collection_to_gff3
+from biocantor.io.models import AnnotationCollectionModel
+from biocantor.location.strand import Strand
+from biocantor.parent.parent import Parent
+from biocantor.sequence.alphabet import Alphabet
+from biocantor.sequence.sequence import Sequence
 
 genome = "AAGTATTCTTGGACCTAATTAAAAAAAAAAAAAAAAAAA"
 parent_genome = Parent(sequence=Sequence(genome, Alphabet.NT_STRICT))

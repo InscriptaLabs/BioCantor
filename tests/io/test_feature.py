@@ -1,8 +1,8 @@
 """
-The inscripta.biocantor.io.feature module contains some functions and enums in the __init__.py that are shared between
+The biocantor.io.feature module contains some functions and enums in the __init__.py that are shared between
 GFF3 and GenBank parsing. These functions try to extract FeatureInterval information.
 """
-from inscripta.biocantor.io.features import extract_feature_types, extract_feature_name_id, merge_qualifiers
+from biocantor.io.features import extract_feature_types, extract_feature_name_id, merge_qualifiers
 import pytest
 
 

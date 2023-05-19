@@ -1,18 +1,18 @@
 import pytest
 
-from inscripta.biocantor.exc import (
+from biocantor.exc import (
     LocationOverlapException,
     LocationException,
     NullParentException,
     MismatchedParentException,
     NullSequenceException,
 )
-from inscripta.biocantor.location.location_impl import SingleInterval, CompoundInterval
-from inscripta.biocantor.location.strand import Strand
-from inscripta.biocantor.sequence.alphabet import Alphabet
-from inscripta.biocantor.parent import Parent
-from inscripta.biocantor.sequence import Sequence
-from inscripta.biocantor.util.object_validation import ObjectValidation
+from biocantor.location.location_impl import SingleInterval, CompoundInterval
+from biocantor.location.strand import Strand
+from biocantor.sequence.alphabet import Alphabet
+from biocantor.parent import Parent
+from biocantor.sequence import Sequence
+from biocantor.util.object_validation import ObjectValidation
 
 
 class TestObjectValidation:

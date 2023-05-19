@@ -5,19 +5,19 @@ from pathlib import Path
 import gffutils
 import pytest
 from Bio import SeqIO
-from inscripta.biocantor.gene.biotype import Biotype
-from inscripta.biocantor.gene.cds_frame import CDSFrame
-from inscripta.biocantor.io.exc import DuplicateSequenceException, InvalidInputError
-from inscripta.biocantor.io.gff3.exc import GFF3FastaException
-from inscripta.biocantor.io.gff3.parser import (
+from biocantor.gene.biotype import Biotype
+from biocantor.gene.cds_frame import CDSFrame
+from biocantor.io.exc import DuplicateSequenceException, InvalidInputError
+from biocantor.io.gff3.exc import GFF3FastaException
+from biocantor.io.gff3.parser import (
     parse_gff3_embedded_fasta,
     parse_gff3_fasta,
     ParsedAnnotationRecord,
     parse_standard_gff3,
     extract_seqrecords_from_gff3_fasta,
 )
-from inscripta.biocantor.io.models import AnnotationCollectionModel
-from inscripta.biocantor.location.strand import Strand
+from biocantor.io.models import AnnotationCollectionModel
+from biocantor.location.strand import Strand
 
 
 class TestGff3Parser:

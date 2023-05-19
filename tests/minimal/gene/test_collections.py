@@ -4,7 +4,7 @@ from uuid import UUID
 
 import pytest
 
-from inscripta.biocantor.exc import (
+from biocantor.exc import (
     InvalidAnnotationError,
     NoncodingTranscriptError,
     InvalidQueryError,
@@ -12,21 +12,21 @@ from inscripta.biocantor.exc import (
     ValidationException,
     NullSequenceException,
 )
-from inscripta.biocantor.gene.biotype import Biotype
-from inscripta.biocantor.gene.cds_frame import CDSFrame
-from inscripta.biocantor.gene.collections import AnnotationCollection
-from inscripta.biocantor.io.models import (
+from biocantor.gene.biotype import Biotype
+from biocantor.gene.cds_frame import CDSFrame
+from biocantor.gene.collections import AnnotationCollection
+from biocantor.io.models import (
     GeneIntervalModel,
     AnnotationCollectionModel,
     FeatureIntervalCollectionModel,
     TranscriptIntervalModel,
 )
-from inscripta.biocantor.io.parser import seq_chunk_to_parent
-from inscripta.biocantor.location.location_impl import SingleInterval
-from inscripta.biocantor.location.strand import Strand
-from inscripta.biocantor.parent.parent import Parent, SequenceType
-from inscripta.biocantor.sequence.alphabet import Alphabet
-from inscripta.biocantor.sequence.sequence import Sequence
+from biocantor.io.parser import seq_chunk_to_parent
+from biocantor.location.location_impl import SingleInterval
+from biocantor.location.strand import Strand
+from biocantor.parent.parent import Parent, SequenceType
+from biocantor.sequence.alphabet import Alphabet
+from biocantor.sequence.sequence import Sequence
 
 genome = "TTTTTTTTTTAAGTATTCTTGGACCTAATTAAAAAAAAAAAAAAAAAAACCCCC"
 parent_genome = Parent(

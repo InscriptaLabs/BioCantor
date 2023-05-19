@@ -2,7 +2,7 @@
 Test GFF3 attribute export.
 """
 import pytest
-from inscripta.biocantor.io.gff3.rows import GFFAttributes, GFF3ExportException, ReservedKeyWarning
+from biocantor.io.gff3.rows import GFFAttributes, GFF3ExportException, ReservedKeyWarning
 
 
 class TestAttributes:

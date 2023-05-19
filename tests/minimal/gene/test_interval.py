@@ -3,15 +3,15 @@ Test static methods on the base classes in biocantor.gene.interval
 """
 import pytest
 
-from inscripta.biocantor.exc import (
+from biocantor.exc import (
     NoSuchAncestorException,
     NullSequenceException,
     MismatchedParentException,
 )
-from inscripta.biocantor.gene.interval import AbstractInterval
-from inscripta.biocantor.location.location_impl import SingleInterval, Strand
-from inscripta.biocantor.parent.parent import Parent
-from inscripta.biocantor.sequence.sequence import SequenceType, Sequence, Alphabet
+from biocantor.gene.interval import AbstractInterval
+from biocantor.location.location_impl import SingleInterval, Strand
+from biocantor.parent.parent import Parent
+from biocantor.sequence.sequence import SequenceType, Sequence, Alphabet
 
 
 class TestAbstractInterval:
