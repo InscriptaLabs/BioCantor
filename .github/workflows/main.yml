@@ -1,0 +1,15 @@
+name: Python package
+
+on: [push]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install dependencies
+        run: |
+          pip install tox tox-conda
+      - name: Test with tox
+        run: |
+          tox
