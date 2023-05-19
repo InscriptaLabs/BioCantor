@@ -293,7 +293,12 @@ class SingleInterval(Location):
         raise NotImplementedError(f"Distance type not implemented: {distance_type.value}")
 
     def intersection(
-        self, other: Location, match_strand: bool = True, full_span: bool = False, strict_parent_compare: bool = False
+        self,
+        other: Location,
+        match_strand: bool = True,
+        full_span: bool = False,
+        strict_parent_compare: bool = False,
+        optimize_blocks: bool = True,
     ) -> Location:
         """Intersects this SingleInterval with another Location.
 
@@ -302,6 +307,8 @@ class SingleInterval(Location):
             match_strand: Match strand or ignore strand?
             full_span: Perform comparison on the full span of the other interval? Trivial for this SingleInterval,
                 but relevant if ``other`` is a CompoundInterval.
+            strict_parent_compare: Raise MismatchedParentException if parents do not match
+            optimize_blocks: Should the resulting blocks be optimized? Defaults to True.
 
         """
         if strict_parent_compare:
@@ -310,7 +317,9 @@ class SingleInterval(Location):
             return EmptyLocation()
         if type(other) is SingleInterval:
             return self._intersection_single_interval(other)
-        intersect_other_strand = other.intersection(self, match_strand=match_strand, full_span=full_span)
+        intersect_other_strand = other.intersection(
+            self, match_strand=match_strand, full_span=full_span, optimize_blocks=optimize_blocks
+        )
         if intersect_other_strand.strand != self.strand:
             return intersect_other_strand.reset_strand(self.strand)
         else:
@@ -830,7 +839,12 @@ class CompoundInterval(Location):
             raise NotImplementedError(f"Unknown distance type {distance_type.value}")
 
     def intersection(
-        self, other: Location, match_strand: bool = True, full_span: bool = False, strict_parent_compare: bool = False
+        self,
+        other: Location,
+        match_strand: bool = True,
+        full_span: bool = False,
+        strict_parent_compare: bool = False,
+        optimize_blocks: bool = True,
     ) -> Location:
         """Intersects this CompoundInterval with another Location.
 
@@ -841,6 +855,7 @@ class CompoundInterval(Location):
                 is performed on the full span.
             strict_parent_compare: If True, parents will be compared and an exception raised if they are not equal.
                 If False, mismatched parents will result in an EmptyLocation return.
+            optimize_blocks: Should the resulting blocks be optimized? Defaults to True.
 
         """
         if strict_parent_compare:
@@ -848,12 +863,22 @@ class CompoundInterval(Location):
         if not self.has_overlap(other, match_strand=match_strand, full_span=full_span):
             return EmptyLocation()
         if type(other) is SingleInterval:
-            return self._intersection_single_interval(other, match_strand=match_strand, full_span=full_span)
+            return self._intersection_single_interval(
+                other, match_strand=match_strand, full_span=full_span, optimize_blocks=optimize_blocks
+            )
         if type(other) is CompoundInterval:
-            return self._intersection_compound_interval(other, match_strand=match_strand, full_span=full_span)
+            return self._intersection_compound_interval(
+                other, match_strand=match_strand, full_span=full_span, optimize_blocks=optimize_blocks
+            )
         raise UnsupportedOperationException(f"Not implemented for type {type(other)}")
 
-    def _intersection_single_interval(self, other: Location, match_strand: bool, full_span: bool = False) -> Location:
+    def _intersection_single_interval(
+        self,
+        other: Location,
+        match_strand: bool,
+        full_span: bool = False,
+        optimize_blocks: bool = True,
+    ) -> Location:
         """Intersections with full span are always symmetric full span (both are considered as full span)"""
         ObjectValidation.require_object_has_type(other, SingleInterval)
         interval_intersections = []
@@ -863,11 +888,21 @@ class CompoundInterval(Location):
                     interval_intersections.append(
                         single_interval.intersection(other, match_strand=match_strand, full_span=False)
                     )
-            return CompoundInterval._from_single_intervals_no_validation(interval_intersections).optimize_blocks()
+            interval = CompoundInterval._from_single_intervals_no_validation(interval_intersections)
+            if optimize_blocks:
+                return interval.optimize_blocks()
+            else:
+                return interval
         else:
             return self._full_span_interval.intersection(other, match_strand, full_span=True)
 
-    def _intersection_compound_interval(self, other: Location, match_strand: bool, full_span: bool = False) -> Location:
+    def _intersection_compound_interval(
+        self,
+        other: Location,
+        match_strand: bool,
+        full_span: bool = False,
+        optimize_blocks: bool = True,
+    ) -> Location:
         ObjectValidation.require_object_has_type(other, CompoundInterval)
         if full_span is True:
             fs = SingleInterval(self.start, self.end, self.strand, parent=self.parent)
@@ -888,7 +923,11 @@ class CompoundInterval(Location):
                                         other_single_interval, match_strand=match_strand, full_span=False
                                     )
                                 )
-                return CompoundInterval._from_single_intervals_no_validation(interval_intersections).optimize_blocks()
+                interval = CompoundInterval._from_single_intervals_no_validation(interval_intersections)
+                if optimize_blocks:
+                    return interval.optimize_blocks()
+                else:
+                    return interval
             else:
                 # construct a tree from self
                 tree = cgranges.cgranges()
@@ -903,7 +942,11 @@ class CompoundInterval(Location):
                                 other_single_interval, match_strand=match_strand, full_span=False
                             )
                         )
-                return CompoundInterval._from_single_intervals_no_validation(interval_intersections).optimize_blocks()
+                interval = CompoundInterval._from_single_intervals_no_validation(interval_intersections)
+                if optimize_blocks:
+                    return interval.optimize_blocks()
+                else:
+                    return interval
 
     def union(self, other: Location) -> Location:
         if self.strand != other.strand:

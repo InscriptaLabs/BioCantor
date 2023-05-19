@@ -322,6 +322,7 @@ class AbstractLocation(ABC):
         match_strand: bool = True,
         full_span: bool = False,
         strict_parent_compare: bool = False,
+        optimize_blocks: bool = True,
     ) -> "AbstractLocation":
         """Returns a new Location representing the intersection of this Location with the other Location.
         Returned Location, if nonempty, has the same Strand as this Location. This operation is commutative
@@ -338,6 +339,8 @@ class AbstractLocation(ABC):
             If set to True, compare the full span of this Location to the full span of the other Location.
         strict_parent_compare
             Raise MismatchedParentException if parents do not match
+        optimize_blocks
+            Should the resulting blocks be optimized? Defaults to True.
 
         """
 

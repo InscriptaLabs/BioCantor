@@ -94,7 +94,6 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
         completely_within: Optional[bool] = None,
         parent_or_seq_chunk_parent: Optional[Parent] = None,
     ):
-
         self.feature_collections = feature_collections if feature_collections else []
         self.genes = genes if genes else []
         self.variant_collections = variant_collections if variant_collections else []
@@ -732,7 +731,6 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
         features_collections_to_keep = []
         variant_collections_to_keep = []
         for child in self.iter_children():
-
             if coding_only and not child.is_coding:
                 continue
 

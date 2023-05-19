@@ -46,7 +46,6 @@ class TestCDSFrame:
 
 
 class TestCDSInterval:
-
     alphabet = Alphabet.NT_STRICT
 
     seq = "AAAGGAAAGTCCCTGAAAAAA"

@@ -80,7 +80,6 @@ def collection_to_genbank(
 
     seqrecords = []
     for i, collection in enumerate(collections):
-
         if collection.sequence is None:
             raise GenBankExportError("Cannot export GenBank if collections do not have sequence information")
 

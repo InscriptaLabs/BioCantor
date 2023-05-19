@@ -400,7 +400,6 @@ class FeatureInterval(AbstractFeatureInterval):
             blocks = [[x.start, x.end] for x in self.relative_blocks]
 
         for i, (start, end) in enumerate(blocks, 1):
-
             attributes = GFFAttributes(
                 id=f"feature-{feature_id}-{i}",
                 qualifiers=qualifiers,

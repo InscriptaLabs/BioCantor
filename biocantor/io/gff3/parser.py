@@ -182,7 +182,6 @@ def _parse_genes(chrom: str, db: FeatureDB) -> List[Dict]:
         direct_cds = []
 
         for i, putative_transcript in enumerate(db.children(gene_or_feature, level=1)):
-
             # direct CDS/exon descendants are allowed, but they will all become one transcript
             if putative_transcript.featuretype == GFF3GeneFeatureTypes.CDS.value:
                 direct_cds.append(putative_transcript)

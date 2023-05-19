@@ -567,7 +567,6 @@ def collection_to_tbl(
             raise TblExportException("Must have a sequence name for tbl export.")
 
         for gene in collection.genes:
-
             locus_tag_offset += locus_tag_jump_size
             locus_tag = f"{locus_tag_prefix}_{locus_tag_offset}"
 

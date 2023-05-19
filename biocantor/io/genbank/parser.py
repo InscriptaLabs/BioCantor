@@ -432,17 +432,14 @@ class TranscriptFeature(Feature):
         for part in sorted(self.cds_feature._seq_feature.location.parts, key=lambda p: p.start):
             cds_starts.append(int(part.nofuzzy_start))
             cds_ends.append(int(part.nofuzzy_end))
-        # must use SingleInterval here because otherwise the optimization step of cds_interval.intersection below
-        # will return a SingleInterval, and the equality comparison will raise a spurious InvalidCDSIntervalWarning
-        if len(cds_starts) == 1:
-            cds_interval = SingleInterval(cds_starts[0], cds_ends[0], Strand.from_int(self.strand))
-        else:
             cds_interval = CompoundInterval(
                 cds_starts,
                 cds_ends,
                 Strand.from_int(self.strand),
             )
-        cds_interval_intersection_with_exons = cds_interval.intersection(self.find_transcript_interval())
+        cds_interval_intersection_with_exons = cds_interval.intersection(
+            self.find_transcript_interval(), optimize_blocks=False
+        )
         if cds_interval_intersection_with_exons != cds_interval:
             warnings.warn(
                 InvalidCDSIntervalWarning(

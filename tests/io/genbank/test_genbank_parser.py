@@ -392,6 +392,14 @@ class TestGenbank:
             with pytest.warns(DuplicateFeatureWarning):
                 _ = list(ParsedAnnotationRecord.parsed_annotation_records_to_model(parse_genbank(fh)))[0]
 
+    def test_adjacent_interval(self, test_data_dir):
+        gbk = test_data_dir / "INSC1003_adjacent_interval.gb"
+        with open(gbk, "r") as fh:
+            annot_collection = list(ParsedAnnotationRecord.parsed_annotation_records_to_model(parse_genbank(fh)))[0]
+            assert annot_collection.genes[0].transcripts[0].cds.chromosome_location.reset_parent(
+                None
+            ) == CompoundInterval([334, 1000], [1000, 2797], Strand.PLUS)
+
 
 class TestSplicedGenbank:
     """Test Spliced GenBank Parsing"""

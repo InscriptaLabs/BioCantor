@@ -51,7 +51,6 @@ class CDSInterval(AbstractFeatureInterval):
         guid: Optional[UUID] = None,
         parent_or_seq_chunk_parent: Optional[Parent] = None,
     ):
-
         self._location = self.initialize_location(cds_starts, cds_ends, strand, parent_or_seq_chunk_parent)
         self._genomic_starts = cds_starts
         self._genomic_ends = cds_ends
@@ -141,7 +140,6 @@ class CDSInterval(AbstractFeatureInterval):
         distance_from_start = fivep_phase
 
         for genomic_exon in self._exon_iter(chunk_relative_exon=False):
-
             # chromosome location has overlapping blocks merged, so that the intersection always has one block
             # this is OK to do here since the original genomic intervals retain the overlapping information
             if isinstance(self._chunk_relative_bounded_chromosome_location, SingleInterval):
@@ -717,7 +715,6 @@ class CDSInterval(AbstractFeatureInterval):
         loc = self.chromosome_location
         # zip_longest is used here to ensure that the two iterators are always actually in sync
         for exon, frame in zip_longest(self._exon_iter(False), self._frame_iter(False)):
-
             if exon is None or frame is None:
                 raise MismatchedFrameException("Frame iterator is not in sync with exon iterator")
 
