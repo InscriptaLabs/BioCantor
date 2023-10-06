@@ -3456,6 +3456,18 @@ class TestCDSInterval:
     def test__calculate_frame_offset(self, cds, cleaned_location, loc_on_chrom, expected_offset):
         assert cds._calculate_frame_offset(cleaned_location, loc_on_chrom) == expected_offset
 
+    @pytest.mark.parametrize(
+        "cds,expected",
+        [
+            (
+                CDSInterval([0], [10], Strand.MINUS, [CDSFrame.ZERO]),
+                ["None\tBioCantor\tCDS\t1\t10\t.\t-\t0\tID=072cb87f-e347-8702-ada3-20b519aa31e0-1"],
+            )
+        ],
+    )
+    def test_to_gff(self, cds, expected):
+        assert [str(x) for x in cds.to_gff()] == expected
+
 
 @pytest.mark.parametrize(
     "sequence,translation_table,expected",

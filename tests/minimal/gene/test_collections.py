@@ -12,6 +12,7 @@ from biocantor.exc import (
     ValidationException,
     NullSequenceException,
 )
+from biocantor.io.gff3.exc import GTFExportException
 from biocantor.gene.biotype import Biotype
 from biocantor.gene.cds_frame import CDSFrame
 from biocantor.gene.collections import AnnotationCollection
@@ -1345,6 +1346,76 @@ class TestAnnotationCollection:
                     subitem.cds.sequence_name = "chr1"
         with open(test_data_dir / "collection_gff3_export_chromosome_coordinates.gff") as fh:
             assert fh.read() == "\n".join(str(x) for x in obj.to_gff())
+
+    def test_gtf_export_with_feature(self, test_data_dir):
+        obj = self.annot.to_annotation_collection()
+        obj.sequence_name = "chr1"
+        for item in obj:
+            item.sequence_name = "chr1"
+            for subitem in item:
+                subitem.sequence_name = "chr1"
+                if hasattr(subitem, "cds"):
+                    subitem.cds.sequence_name = "chr1"
+        with pytest.raises(NotImplementedError):
+            _ = "\n".join(str(x) for x in obj.to_gtf())
+        # populate sequence names; normally this is done via the model constructors
+
+    def test_gtf_export_no_transcript_id(self, test_data_dir):
+        obj = self.annot_no_features.to_annotation_collection()
+        obj.sequence_name = "chr1"
+        for item in obj:
+            item.sequence_name = "chr1"
+            for subitem in item:
+                subitem.sequence_name = "chr1"
+                if hasattr(subitem, "cds"):
+                    subitem.cds.sequence_name = "chr1"
+        with pytest.raises(GTFExportException):
+            _ = "\n".join(str(x) for x in obj.to_gtf())
+        # populate sequence names; normally this is done via the model constructors
+
+    def test_gtf_export(self, test_data_dir):
+        tx1 = dict(
+            exon_starts=[12],
+            exon_ends=[28],
+            strand=Strand.PLUS.name,
+            cds_starts=[15],
+            cds_ends=[19],
+            cds_frames=[CDSFrame.ZERO.name],
+            transcript_symbol="tx1",
+            transcript_id="id_1",
+        )
+        tx2 = dict(
+            exon_starts=[12, 17, 22],
+            exon_ends=[16, 20, 25],
+            strand=Strand.PLUS.name,
+            cds_starts=[14, 17, 22],
+            cds_ends=[16, 20, 23],
+            cds_frames=[CDSFrame.ZERO.name, CDSFrame.TWO.name, CDSFrame.TWO.name],
+            transcript_symbol="tx2",
+            transcript_id="id_2",
+        )
+
+        annot = (
+            AnnotationCollectionModel.Schema()
+            .load(
+                dict(
+                    genes=[dict(transcripts=[tx1, tx2], gene_id="gene1")],
+                    start=2,
+                    end=40,
+                )
+            )
+            .to_annotation_collection()
+        )
+
+        annot.sequence_name = "chr1"
+        for item in annot:
+            item.sequence_name = "chr1"
+            for subitem in item:
+                subitem.sequence_name = "chr1"
+                if hasattr(subitem, "cds"):
+                    subitem.cds.sequence_name = "chr1"
+        with open(test_data_dir / "collection_gtf_export_chromosome_coordinates.gtf") as fh:
+            assert fh.read() == "\n".join(str(x) for x in annot.to_gtf())
 
     def test_gff3_export_chunk_relative(self, test_data_dir):
         obj = self.annot.to_annotation_collection(parent_genome_10_49)

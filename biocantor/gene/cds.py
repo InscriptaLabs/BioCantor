@@ -1,6 +1,6 @@
 import warnings
 from itertools import count, zip_longest
-from typing import Iterator, List, Union, Optional, Dict, Hashable, Any, Set, Tuple, TYPE_CHECKING
+from typing import Iterator, List, Union, Optional, Dict, Hashable, Any, Set, Tuple, TYPE_CHECKING, Type
 from uuid import UUID
 
 from methodtools import lru_cache
@@ -17,7 +17,7 @@ from biocantor.gene.codon import Codon, TranslationTable
 from biocantor.gene.interval import AbstractFeatureInterval, QualifierValue
 from biocantor.io.bed import RGB, BED12
 from biocantor.io.gff3.constants import GFF_SOURCE, NULL_COLUMN, BioCantorFeatureTypes, BioCantorQualifiers
-from biocantor.io.gff3.rows import GFFAttributes, GFFRow
+from biocantor.io.gff3.rows import GFFAttributes, GFFRow, GTFRow, GTFAttributes
 from biocantor.location import Location, Strand, SingleInterval, CompoundInterval
 from biocantor.parent import Parent, SequenceType
 from biocantor.sequence import Sequence, Alphabet
@@ -320,6 +320,53 @@ class CDSInterval(AbstractFeatureInterval):
             qualifiers[key].add(val)
         return qualifiers
 
+    def _to_gff_or_gtf(
+        self,
+        parent: Optional[str] = None,
+        parent_qualifiers: Optional[Dict[Hashable, Set[str]]] = None,
+        chromosome_relative_coordinates: bool = True,
+        raise_on_reserved_attributes: Optional[bool] = True,
+        row_type: Union[Type[GFFRow], Type[GTFRow]] = GFFRow,
+        attribute_type: Union[Type[GFFAttributes], Type[GTFAttributes]] = GFFAttributes,
+    ) -> Iterator[Union[GFFRow, GTFRow]]:
+        if not chromosome_relative_coordinates and not self.has_ancestor_of_type(SequenceType.SEQUENCE_CHUNK):
+            raise NoSuchAncestorException(
+                "Cannot export GFF in relative coordinates without a sequence_chunk ancestor."
+            )
+
+        qualifiers = self.export_qualifiers(parent_qualifiers)
+
+        cds_guid = str(self.guid)
+
+        if chromosome_relative_coordinates:
+            cds_blocks = zip(self._genomic_starts, self._genomic_ends)
+            frames = self.frames
+        else:
+            cds_blocks = [[x.start, x.end] for x in self.chunk_relative_blocks]
+            frames = self.chunk_relative_frames
+
+        for i, block, frame in zip(count(1), cds_blocks, frames):
+            start, end = block
+            attributes = attribute_type(
+                id=f"{cds_guid}-{i}",
+                qualifiers=qualifiers,
+                name=self.protein_id,
+                parent=parent,
+                raise_on_reserved_attributes=raise_on_reserved_attributes,
+            )
+            row = row_type(
+                self.sequence_name,
+                GFF_SOURCE,
+                BioCantorFeatureTypes.CDS,
+                start + 1,
+                end,
+                NULL_COLUMN,
+                self.strand,
+                frame.to_phase(),
+                attributes,
+            )
+            yield row
+
     def to_gff(
         self,
         parent: Optional[str] = None,
@@ -348,44 +395,48 @@ class CDSInterval(AbstractFeatureInterval):
             ``sequence_chunk`` ancestor type.
             GFF3MissingSequenceNameError: If there are no sequence names associated with this transcript.
         """
+        yield from self._to_gff_or_gtf(
+            parent,
+            parent_qualifiers,
+            chromosome_relative_coordinates,
+            raise_on_reserved_attributes,
+            GFFRow,
+            GFFAttributes,
+        )
 
-        if not chromosome_relative_coordinates and not self.has_ancestor_of_type(SequenceType.SEQUENCE_CHUNK):
-            raise NoSuchAncestorException(
-                "Cannot export GFF in relative coordinates without a sequence_chunk ancestor."
-            )
+    def to_gtf(
+        self,
+        parent: Optional[str] = None,
+        parent_qualifiers: Optional[Dict[Hashable, Set[str]]] = None,
+        chromosome_relative_coordinates: bool = True,
+    ) -> Iterator[GTFRow]:
+        """Writes a GTF format list of lists for this CDS.
 
-        qualifiers = self.export_qualifiers(parent_qualifiers)
+        The additional qualifiers are used when writing a hierarchical relationship back to files. GTF files
+        are easier to work with if the children features have the qualifiers of their parents.
 
-        cds_guid = str(self.guid)
+        Args:
+            parent: ID of the Parent of this transcript.
+            parent_qualifiers: Directly pull qualifiers in from this dictionary.
+            chromosome_relative_coordinates: Output GFF in chromosome-relative coordinates? Will raise an exception
+                if there is not a ``sequence_chunk`` ancestor type.
 
-        if chromosome_relative_coordinates:
-            cds_blocks = zip(self._genomic_starts, self._genomic_ends)
-            frames = self.frames
-        else:
-            cds_blocks = [[x.start, x.end] for x in self.chunk_relative_blocks]
-            frames = self.chunk_relative_frames
+        Yields:
+            :class:`~biocantor.io.gff3.rows.GFFRow`
 
-        for i, block, frame in zip(count(1), cds_blocks, frames):
-            start, end = block
-            attributes = GFFAttributes(
-                id=f"{cds_guid}-{i}",
-                qualifiers=qualifiers,
-                name=self.protein_id,
-                parent=parent,
-                raise_on_reserved_attributes=raise_on_reserved_attributes,
-            )
-            row = GFFRow(
-                self.sequence_name,
-                GFF_SOURCE,
-                BioCantorFeatureTypes.CDS,
-                start + 1,
-                end,
-                NULL_COLUMN,
-                self.strand,
-                frame.to_phase(),
-                attributes,
-            )
-            yield row
+        Raises:
+            NoSuchAncestorException: If ``chromosome_relative_coordinates`` is ``False`` but there is no
+            ``sequence_chunk`` ancestor type.
+            GFF3MissingSequenceNameError: If there are no sequence names associated with this transcript.
+        """
+        yield from self._to_gff_or_gtf(
+            parent,
+            parent_qualifiers,
+            chromosome_relative_coordinates,
+            False,
+            GTFRow,
+            GTFAttributes,
+        )
 
     @property
     def has_canonical_start_codon(self) -> bool:

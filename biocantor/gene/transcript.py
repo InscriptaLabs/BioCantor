@@ -3,7 +3,7 @@ Object representation of Transcripts.
 
 Each object is capable of exporting itself to BED and GFF3.
 """
-from typing import Optional, Any, Dict, Iterable, Iterator, Hashable, Set, List, Union, TYPE_CHECKING
+from typing import Optional, Any, Dict, Iterable, Iterator, Hashable, Set, List, Union, TYPE_CHECKING, Type
 from uuid import UUID
 
 from methodtools import lru_cache
@@ -23,7 +23,7 @@ from biocantor.gene.interval import AbstractFeatureInterval, QualifierValue, Int
 from biocantor.io.bed import BED12, RGB
 from biocantor.io.gff3.constants import GFF_SOURCE, NULL_COLUMN, BioCantorQualifiers, BioCantorFeatureTypes
 from biocantor.io.gff3.exc import GFF3MissingSequenceNameError
-from biocantor.io.gff3.rows import GFFAttributes, GFFRow
+from biocantor.io.gff3.rows import GFFAttributes, GFFRow, GTFAttributes, GTFRow
 from biocantor.location.location import Location
 from biocantor.location.location_impl import SingleInterval, EmptyLocation
 from biocantor.location.strand import Strand
@@ -683,6 +683,93 @@ class TranscriptInterval(AbstractFeatureInterval):
             qualifiers[key].add(val)
         return qualifiers
 
+    def _to_gff_or_gtf(
+        self,
+        parent: Optional[str] = None,
+        parent_qualifiers: Optional[Dict[Hashable, Set[str]]] = None,
+        chromosome_relative_coordinates: bool = True,
+        raise_on_reserved_attributes: Optional[bool] = True,
+        row_type: Union[Type[GFFRow], Type[GTFRow]] = GFFRow,
+        attribute_type: Union[Type[GFFAttributes], Type[GTFAttributes]] = GFFAttributes,
+    ) -> Iterator[Union[GFFRow, GTFRow]]:
+        if not self.sequence_name:
+            raise GFF3MissingSequenceNameError("Must have sequence names to export to GFF3.")
+
+        if not chromosome_relative_coordinates and not self.has_ancestor_of_type(SequenceType.SEQUENCE_CHUNK):
+            raise NoSuchAncestorException(
+                "Cannot export GFF in relative coordinates without a sequence_chunk ancestor."
+            )
+
+        qualifiers = self.export_qualifiers(parent_qualifiers)
+
+        tx_guid = str(self.guid)
+
+        attributes = attribute_type(
+            id=tx_guid,
+            qualifiers=qualifiers,
+            name=self.transcript_symbol,
+            parent=parent,
+            raise_on_reserved_attributes=raise_on_reserved_attributes,
+        )
+
+        if row_type == GFFRow:
+            # transcript feature
+            row = row_type(
+                self.sequence_name,
+                GFF_SOURCE,
+                BioCantorFeatureTypes.TRANSCRIPT,
+                (self.start if chromosome_relative_coordinates else self.chunk_relative_start) + 1,
+                self.end if chromosome_relative_coordinates else self.chunk_relative_end,
+                NULL_COLUMN,
+                self.strand,
+                CDSPhase.NONE,
+                attributes,
+            )
+            yield row
+
+        # start adding exon features
+        # re-use qualifiers, updating ID each time
+        if chromosome_relative_coordinates:
+            blocks = zip(self._genomic_starts, self._genomic_ends)
+        else:
+            blocks = [[x.start, x.end] for x in self.relative_blocks]
+
+        for i, (start, end) in enumerate(blocks, 1):
+            attributes = attribute_type(
+                id=f"exon-{tx_guid}-{i}",
+                qualifiers=qualifiers,
+                name=self.transcript_symbol,
+                parent=tx_guid,
+                raise_on_reserved_attributes=raise_on_reserved_attributes,
+            )
+            row = row_type(
+                self.sequence_name,
+                GFF_SOURCE,
+                BioCantorFeatureTypes.EXON,
+                start + 1,
+                end,
+                NULL_COLUMN,
+                self.strand,
+                CDSPhase.NONE,
+                attributes,
+            )
+            yield row
+
+        if self.cds:
+            if row_type == GFFRow:
+                yield from self.cds.to_gff(
+                    chromosome_relative_coordinates=chromosome_relative_coordinates,
+                    parent_qualifiers=qualifiers,
+                    parent=tx_guid,
+                    raise_on_reserved_attributes=raise_on_reserved_attributes,
+                )
+            else:
+                yield from self.cds.to_gtf(
+                    chromosome_relative_coordinates=chromosome_relative_coordinates,
+                    parent_qualifiers=qualifiers,
+                    parent=tx_guid,
+                )
+
     def to_gff(
         self,
         parent: Optional[str] = None,
@@ -711,76 +798,48 @@ class TranscriptInterval(AbstractFeatureInterval):
             ``sequence_chunk`` ancestor type.
             GFF3MissingSequenceNameError: If there are no sequence names associated with this transcript.
         """
-
-        if not self.sequence_name:
-            raise GFF3MissingSequenceNameError("Must have sequence names to export to GFF3.")
-
-        if not chromosome_relative_coordinates and not self.has_ancestor_of_type(SequenceType.SEQUENCE_CHUNK):
-            raise NoSuchAncestorException(
-                "Cannot export GFF in relative coordinates without a sequence_chunk ancestor."
-            )
-
-        qualifiers = self.export_qualifiers(parent_qualifiers)
-
-        tx_guid = str(self.guid)
-
-        attributes = GFFAttributes(
-            id=tx_guid,
-            qualifiers=qualifiers,
-            name=self.transcript_symbol,
-            parent=parent,
-            raise_on_reserved_attributes=raise_on_reserved_attributes,
+        yield from self._to_gff_or_gtf(
+            parent,
+            parent_qualifiers,
+            chromosome_relative_coordinates,
+            raise_on_reserved_attributes,
+            GFFRow,
+            GFFAttributes,
         )
 
-        # transcript feature
-        row = GFFRow(
-            self.sequence_name,
-            GFF_SOURCE,
-            BioCantorFeatureTypes.TRANSCRIPT,
-            (self.start if chromosome_relative_coordinates else self.chunk_relative_start) + 1,
-            self.end if chromosome_relative_coordinates else self.chunk_relative_end,
-            NULL_COLUMN,
-            self.strand,
-            CDSPhase.NONE,
-            attributes,
+    def to_gtf(
+        self,
+        parent: Optional[str] = None,
+        parent_qualifiers: Optional[Dict[Hashable, Set[str]]] = None,
+        chromosome_relative_coordinates: bool = True,
+    ) -> Iterator[GFFRow]:
+        """Writes a GTF format list of lists for this CDS.
+
+        The additional qualifiers are used when writing a hierarchical relationship back to files. GTF files
+        are easier to work with if the children features have the qualifiers of their parents.
+
+        Args:
+            parent: ID of the Parent of this transcript.
+            parent_qualifiers: Directly pull qualifiers in from this dictionary.
+            chromosome_relative_coordinates: Output GFF in chromosome-relative coordinates? Will raise an exception
+                if there is not a ``sequence_chunk`` ancestor type.
+
+        Yields:
+            :class:`~biocantor.io.gff3.rows.GFFRow`
+
+        Raises:
+            NoSuchAncestorException: If ``chromosome_relative_coordinates`` is ``False`` but there is no
+            ``sequence_chunk`` ancestor type.
+            GFF3MissingSequenceNameError: If there are no sequence names associated with this transcript.
+        """
+        yield from self._to_gff_or_gtf(
+            parent,
+            parent_qualifiers,
+            chromosome_relative_coordinates,
+            False,
+            GTFRow,
+            GTFAttributes,
         )
-        yield row
-
-        # start adding exon features
-        # re-use qualifiers, updating ID each time
-        if chromosome_relative_coordinates:
-            blocks = zip(self._genomic_starts, self._genomic_ends)
-        else:
-            blocks = [[x.start, x.end] for x in self.relative_blocks]
-
-        for i, (start, end) in enumerate(blocks, 1):
-            attributes = GFFAttributes(
-                id=f"exon-{tx_guid}-{i}",
-                qualifiers=qualifiers,
-                name=self.transcript_symbol,
-                parent=tx_guid,
-                raise_on_reserved_attributes=raise_on_reserved_attributes,
-            )
-            row = GFFRow(
-                self.sequence_name,
-                GFF_SOURCE,
-                BioCantorFeatureTypes.EXON,
-                start + 1,
-                end,
-                NULL_COLUMN,
-                self.strand,
-                CDSPhase.NONE,
-                attributes,
-            )
-            yield row
-
-        if self.cds:
-            yield from self.cds.to_gff(
-                chromosome_relative_coordinates=chromosome_relative_coordinates,
-                parent_qualifiers=qualifiers,
-                parent=tx_guid,
-                raise_on_reserved_attributes=raise_on_reserved_attributes,
-            )
 
     def to_bed12(
         self,

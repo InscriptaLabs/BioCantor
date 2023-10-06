@@ -144,6 +144,14 @@ class VariantInterval(AbstractFeatureInterval):
     ) -> BED12:
         raise NotImplementedError
 
+    def to_gtf(
+        self,
+        parent: Optional[str] = None,
+        parent_qualifiers: Optional[Dict] = None,
+        chromosome_relative_coordinates: bool = True,
+    ) -> Iterator[GFFRow]:
+        raise NotImplementedError
+
     def to_gff(
         self,
         parent: Optional[str] = None,
@@ -453,6 +461,9 @@ class VariantIntervalCollection(AbstractFeatureIntervalCollection):
 
     def to_gff(self, chromosome_relative_coordinates: bool = True) -> Iterator[GFFRow]:
         raise NotImplementedError("Cannot export Variants to GFF")
+
+    def to_gtf(self, chromosome_relative_coordinates: bool = True) -> Iterator[GFFRow]:
+        raise NotImplementedError("Cannot export Variants to GTF")
 
     @property
     def id(self) -> str:

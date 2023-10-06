@@ -16,7 +16,7 @@ from biocantor.exc import (
     LocationOverlapException,
 )
 from biocantor.io.bed import RGB, BED12
-from biocantor.io.gff3.rows import GFFRow
+from biocantor.io.gff3.rows import GFFRow, GTFRow
 from biocantor.location import Location, Strand
 from biocantor.location.location_impl import SingleInterval, CompoundInterval, EmptyLocation
 from biocantor.parent import Parent, SequenceType
@@ -173,6 +173,25 @@ class AbstractInterval(ABC):
 
         Yields:
             :class:`~biocantor.io.gff3.rows.GFFRow`
+
+        Raises:
+            NoSuchAncestorException: If ``chromosome_relative_coordinates`` is ``False`` but there is no
+            ``sequence_chunk`` ancestor type.
+        """
+
+    @abstractmethod
+    def to_gtf(
+        self,
+        chromosome_relative_coordinates: bool = True,
+    ) -> Iterator[GTFRow]:
+        """Writes a GTF format list of lists for this feature.
+
+        Args:
+            chromosome_relative_coordinates: Output GTF in chromosome-relative coordinates? Will raise an exception
+                if there is not a ``sequence_chunk`` ancestor type.
+
+        Yields:
+            :class:`~biocantor.io.gff3.rows.GTFRow`
 
         Raises:
             NoSuchAncestorException: If ``chromosome_relative_coordinates`` is ``False`` but there is no
@@ -681,6 +700,32 @@ class AbstractFeatureInterval(AbstractInterval, ABC):
 
         Return:
             A :class:`~biocantor.io.bed.BED12` object.
+
+        Raises:
+            NoSuchAncestorException: If ``chromosome_relative_coordinates`` is ``False`` but there is no
+            ``sequence_chunk`` ancestor type.
+        """
+
+    @abstractmethod
+    def to_gtf(
+        self,
+        parent: Optional[str] = None,
+        parent_qualifiers: Optional[Dict] = None,
+        chromosome_relative_coordinates: bool = True,
+    ) -> Iterator[GTFRow]:
+        """Writes a GTF format list of lists for this feature.
+
+        The additional qualifiers are used when writing a hierarchical relationship back to files. GTF files
+        are easier to work with if the children features have the qualifiers of their parents.
+
+        Args:
+            parent: ID of the Parent of this transcript.
+            parent_qualifiers: Directly pull qualifiers in from this dictionary.
+            chromosome_relative_coordinates: Output GTF in chromosome-relative coordinates? Will raise an exception
+                if there is not a ``sequence_chunk`` ancestor type.
+
+        Yields:
+            :class:`~biocantor.io.gff3.rows.GTFRow`
 
         Raises:
             NoSuchAncestorException: If ``chromosome_relative_coordinates`` is ``False`` but there is no

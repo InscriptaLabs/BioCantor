@@ -18,6 +18,14 @@ class GFF3ExportException(BioCantorException):
     pass
 
 
+class GTFExportException(BioCantorException):
+    """
+    Raised for any generic error when exporting a GTF.
+    """
+
+    pass
+
+
 class GFF3MissingSequenceNameError(GFF3ExportException):
     """
     Raised if GFF3 is being exported without a sequence identifier.

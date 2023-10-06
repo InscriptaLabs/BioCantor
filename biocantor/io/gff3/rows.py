@@ -1,9 +1,10 @@
 """
 Contains information on how to manage GFF row data. Enforces GFF3 specification rules.
 """
+from abc import ABC
 import re
 from warnings import warn
-from typing import Union, Optional, Any, Hashable, Set, Dict
+from typing import Union, Optional, Any, Hashable, Set, Dict, List
 from dataclasses import dataclass
 
 from biocantor.io.gff3.constants import (
@@ -15,13 +16,62 @@ from biocantor.io.gff3.constants import (
     BioCantorGFF3ReservedQualifiers,
     GFF3ReservedQualifiers,
     BioCantorFeatureTypes,
+    BioCantorGTFReservedQualifiers,
 )
 from biocantor.location import Strand
 from biocantor.gene.cds_frame import CDSPhase
-from biocantor.io.gff3.exc import GFF3ExportException, ReservedKeyWarning
+from biocantor.io.gff3.exc import GFF3ExportException, ReservedKeyWarning, GTFExportException
 
 
-class GFFAttributes:
+class BaseAttributes(ABC):
+    def __init__(
+        self,
+        id: str,
+        qualifiers: Dict[Hashable, Set[Hashable]],
+        *,
+        name: Optional[str] = None,
+        parent: Optional[str] = None,
+        raise_on_reserved_attributes: Optional[bool] = True,
+    ):
+        self.id = id
+        self.name = name
+        self.parent = parent
+        self.attributes = qualifiers
+        self.raise_on_reserved_attributes = raise_on_reserved_attributes
+
+        for val in self.attributes.values():
+            if not isinstance(val, set):
+                raise GFF3ExportException("Attributes dictionary must be a dictionary of sets.")
+
+    @staticmethod
+    def _escape_str(item: str) -> str:
+        return re.sub(ENCODING_PATTERN, lambda m: ENCODING_MAP.get(m.group(0)), item)
+
+    @staticmethod
+    def _escape_str_with_comma(item: str) -> str:
+        return re.sub(ENCODING_PATTERN_WITH_COMMA, lambda m: ENCODING_MAP_WITH_COMMA.get(m.group(0)), item)
+
+    @staticmethod
+    def escape_key(key: str, lower: Optional[bool] = False) -> str:
+        """Key must be escaped for ``[=;\t]``"""
+        r = BaseAttributes._escape_str(key)
+        return r.lower() if lower else r
+
+    @staticmethod
+    def escape_value(value: Any, escape_comma: Optional[bool] = False) -> str:
+        """
+        Value must be escaped for ``[=;\t]``; make sure value is also not empty.
+
+        Commas must be escaped for reserved attributes like ID and Name.
+        """
+        value_str = str(value)
+        if escape_comma:
+            return BaseAttributes._escape_str_with_comma(value_str) if len(value_str) > 0 else "nan"
+        else:
+            return BaseAttributes._escape_str(value_str) if len(value_str) > 0 else "nan"
+
+
+class GFFAttributes(BaseAttributes):
     """
     Stores the attributes (column 9) of a GFF row. These attributes are an arbitrary key-value store, but a few rules
     must be enforced. See below for the documentation from the GFF3 spec.
@@ -77,25 +127,6 @@ class GFFAttributes:
     using one or more unreserved (lowercase) tags.
     """
 
-    def __init__(
-        self,
-        id: str,
-        qualifiers: Dict[Hashable, Set[Hashable]],
-        *,
-        name: Optional[str] = None,
-        parent: Optional[str] = None,
-        raise_on_reserved_attributes: Optional[bool] = True,
-    ):
-        self.id = id
-        self.name = name
-        self.parent = parent
-        self.attributes = qualifiers
-        self.raise_on_reserved_attributes = raise_on_reserved_attributes
-
-        for val in self.attributes.values():
-            if not isinstance(val, set):
-                raise GFF3ExportException("Attributes dictionary must be a dictionary of sets.")
-
     def __str__(self):
         """
         Builds a string representation. Handles fixing case where applicable.
@@ -107,20 +138,20 @@ class GFFAttributes:
         and for integration with downstream tools we escape all of them equally here.
         """
         attrs_list = [
-            [BioCantorGFF3ReservedQualifiers.ID.value, GFFAttributes.escape_value(self.id, escape_comma=True)]
+            [BioCantorGFF3ReservedQualifiers.ID.value, BaseAttributes.escape_value(self.id, escape_comma=True)]
         ]
 
         if self.parent is not None:
             attrs_list.append(
                 [
                     BioCantorGFF3ReservedQualifiers.PARENT.value,
-                    GFFAttributes.escape_value(self.parent, escape_comma=True),
+                    BaseAttributes.escape_value(self.parent, escape_comma=True),
                 ]
             )
 
         if self.name is not None:
             attrs_list.append(
-                [BioCantorGFF3ReservedQualifiers.NAME.value, GFFAttributes.escape_value(self.name, escape_comma=True)]
+                [BioCantorGFF3ReservedQualifiers.NAME.value, BaseAttributes.escape_value(self.name, escape_comma=True)]
             )
 
         for key, value_set in sorted(self.attributes.items()):
@@ -140,40 +171,38 @@ class GFFAttributes:
                 continue
             elif GFF3ReservedQualifiers.has_value(key):
                 warn(f"Attribute {key} was seen in the qualifiers, which is a reserved GFF3 key.", ReservedKeyWarning)
-                escaped_key = GFFAttributes.escape_key(str(key), lower=False)
+                escaped_key = BaseAttributes.escape_key(str(key), lower=False)
             else:
-                escaped_key = GFFAttributes.escape_key(str(key), lower=True)
-            escaped_vals = [GFFAttributes.escape_value(value, escape_comma=False) for value in value_set]
+                escaped_key = BaseAttributes.escape_key(str(key), lower=True)
+            escaped_vals = [BaseAttributes.escape_value(value, escape_comma=False) for value in value_set]
             escaped_val = ATTRIBUTE_SEPARATOR.join(sorted(escaped_vals))
             attrs_list.append([escaped_key, escaped_val])
         return ";".join(["=".join(pair) for pair in attrs_list])
 
-    @staticmethod
-    def _escape_str(item: str) -> str:
-        return re.sub(ENCODING_PATTERN, lambda m: ENCODING_MAP.get(m.group(0)), item)
 
-    @staticmethod
-    def _escape_str_with_comma(item: str) -> str:
-        return re.sub(ENCODING_PATTERN_WITH_COMMA, lambda m: ENCODING_MAP_WITH_COMMA.get(m.group(0)), item)
-
-    @staticmethod
-    def escape_key(key: str, lower: Optional[bool] = False) -> str:
-        """Key must be escaped for ``[=;\t]``"""
-        r = GFFAttributes._escape_str(key)
-        return r.lower() if lower else r
-
-    @staticmethod
-    def escape_value(value: Any, escape_comma: Optional[bool] = False) -> str:
+class GTFAttributes(GFFAttributes):
+    def __str__(self):
         """
-        Value must be escaped for ``[=;\t]``; make sure value is also not empty.
+        Builds a string representation. Handles fixing case where applicable.
 
-        Commas must be escaped for reserved attributes like ID and Name.
+        This means joining the key-value pairs with a semicolon and a space,
+        joining the key-values themselves with a space, wrapping the values in double-quotes,
+        and escaping semicolons, equal signs and tabs in the key or value.
+
         """
-        value_str = str(value)
-        if escape_comma:
-            return GFFAttributes._escape_str_with_comma(value_str) if len(value_str) > 0 else "nan"
-        else:
-            return GFFAttributes._escape_str(value_str) if len(value_str) > 0 else "nan"
+        if BioCantorGTFReservedQualifiers.TRANSCRIPT_ID.value not in self.attributes:
+            raise GTFExportException("GTF export must have a transcript_id value for each item")
+        attrs_list = []
+
+        for key, value_set in sorted(self.attributes.items()):
+            if not value_set:
+                continue
+            escaped_key = BaseAttributes.escape_key(str(key), lower=True)
+            escaped_vals = [BaseAttributes.escape_value(value, escape_comma=False) for value in value_set]
+            escaped_val = ATTRIBUTE_SEPARATOR.join(sorted(escaped_vals))
+            attrs_list.append([escaped_key, escaped_val])
+
+        return "; ".join([f'{key} "{attr}"' for key, attr in attrs_list])
 
 
 @dataclass
@@ -262,3 +291,12 @@ class GFFRow:
                 ]
             )
         )
+
+
+@dataclass
+class GTFRow(GFFRow):
+    """
+    Subclasses GFFRow to replace the ``attributes`` field with ``GTFAttributes``
+    """
+
+    attributes: GTFAttributes

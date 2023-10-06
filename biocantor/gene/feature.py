@@ -4,7 +4,7 @@ Object representation of features. Includes an abstract feature class that is al
 Each object is capable of exporting itself to BED and GFF3.
 """
 from functools import reduce
-from typing import Optional, Any, Dict, List, Set, Iterable, Iterator, Hashable, Union, TYPE_CHECKING
+from typing import Optional, Any, Dict, List, Set, Iterable, Iterator, Hashable, Union, TYPE_CHECKING, Type
 from uuid import UUID
 
 from biocantor.exc import (
@@ -24,7 +24,7 @@ from biocantor.gene.interval import (
 from biocantor.io.bed import BED12, RGB
 from biocantor.io.gff3.constants import GFF_SOURCE, NULL_COLUMN, BioCantorFeatureTypes, BioCantorQualifiers
 from biocantor.io.gff3.exc import GFF3MissingSequenceNameError
-from biocantor.io.gff3.rows import GFFAttributes, GFFRow
+from biocantor.io.gff3.rows import GFFAttributes, GFFRow, GTFAttributes, GTFRow
 from biocantor.location.location import Location
 from biocantor.location.strand import Strand
 from biocantor.parent.parent import Parent, SequenceType
@@ -329,6 +329,77 @@ class FeatureInterval(AbstractFeatureInterval):
             qualifiers[BioCantorQualifiers.FEATURE_TYPE.value] = self.feature_types
         return qualifiers
 
+    def _to_gff_or_gtf(
+        self,
+        parent: Optional[str] = None,
+        parent_qualifiers: Optional[Dict[Hashable, Set[str]]] = None,
+        chromosome_relative_coordinates: bool = True,
+        raise_on_reserved_attributes: Optional[bool] = True,
+        row_type: Union[Type[GFFRow], Type[GTFRow]] = GFFRow,
+        attribute_type: Union[Type[GFFAttributes], Type[GTFAttributes]] = GFFAttributes,
+    ) -> Iterator[Union[GFFRow, GTFRow]]:
+        if not self.sequence_name:
+            raise GFF3MissingSequenceNameError("Must have sequence names to export to GFF3.")
+
+        if not chromosome_relative_coordinates and not self.has_ancestor_of_type(SequenceType.SEQUENCE_CHUNK):
+            raise NoSuchAncestorException(
+                "Cannot export GFF in relative coordinates without a sequence_chunk ancestor."
+            )
+
+        qualifiers = self.export_qualifiers(parent_qualifiers)
+
+        feature_id = str(self.guid)
+
+        attributes = attribute_type(
+            id=feature_id,
+            qualifiers=qualifiers,
+            name=self.feature_name,
+            parent=parent,
+            raise_on_reserved_attributes=raise_on_reserved_attributes,
+        )
+
+        # "transcript" (feature interval) feature
+        row = row_type(
+            self.sequence_name,
+            GFF_SOURCE,
+            BioCantorFeatureTypes.FEATURE_INTERVAL,
+            (self.start if chromosome_relative_coordinates else self.chunk_relative_start) + 1,
+            self.end if chromosome_relative_coordinates else self.chunk_relative_end,
+            NULL_COLUMN,
+            self.strand,
+            CDSPhase.NONE,
+            attributes,
+        )
+        yield row
+
+        # start adding exon features
+        # re-use qualifiers, updating ID each time
+        if chromosome_relative_coordinates:
+            blocks = zip(self._genomic_starts, self._genomic_ends)
+        else:
+            blocks = [[x.start, x.end] for x in self.relative_blocks]
+
+        for i, (start, end) in enumerate(blocks, 1):
+            attributes = attribute_type(
+                id=f"feature-{feature_id}-{i}",
+                qualifiers=qualifiers,
+                name=self.feature_name,
+                parent=feature_id,
+                raise_on_reserved_attributes=raise_on_reserved_attributes,
+            )
+            row = row_type(
+                self.sequence_name,
+                GFF_SOURCE,
+                BioCantorFeatureTypes.FEATURE_INTERVAL_REGION,
+                start + 1,
+                end,
+                NULL_COLUMN,
+                self.strand,
+                CDSPhase.NONE,
+                attributes,
+            )
+            yield row
+
     def to_gff(
         self,
         parent: Optional[str] = None,
@@ -358,67 +429,22 @@ class FeatureInterval(AbstractFeatureInterval):
             GFF3MissingSequenceNameError: If there are no sequence names associated with this feature.
         """
 
-        if not self.sequence_name:
-            raise GFF3MissingSequenceNameError("Must have sequence names to export to GFF3.")
-
-        if not chromosome_relative_coordinates and not self.has_ancestor_of_type(SequenceType.SEQUENCE_CHUNK):
-            raise NoSuchAncestorException(
-                "Cannot export GFF in relative coordinates without a sequence_chunk ancestor."
-            )
-
-        qualifiers = self.export_qualifiers(parent_qualifiers)
-
-        feature_id = str(self.guid)
-
-        attributes = GFFAttributes(
-            id=feature_id,
-            qualifiers=qualifiers,
-            name=self.feature_name,
-            parent=parent,
-            raise_on_reserved_attributes=raise_on_reserved_attributes,
+        yield from self._to_gff_or_gtf(
+            parent,
+            parent_qualifiers,
+            chromosome_relative_coordinates,
+            raise_on_reserved_attributes,
+            GFFRow,
+            GFFAttributes,
         )
 
-        # "transcript" (feature interval) feature
-        row = GFFRow(
-            self.sequence_name,
-            GFF_SOURCE,
-            BioCantorFeatureTypes.FEATURE_INTERVAL,
-            (self.start if chromosome_relative_coordinates else self.chunk_relative_start) + 1,
-            self.end if chromosome_relative_coordinates else self.chunk_relative_end,
-            NULL_COLUMN,
-            self.strand,
-            CDSPhase.NONE,
-            attributes,
-        )
-        yield row
-
-        # start adding exon features
-        # re-use qualifiers, updating ID each time
-        if chromosome_relative_coordinates:
-            blocks = zip(self._genomic_starts, self._genomic_ends)
-        else:
-            blocks = [[x.start, x.end] for x in self.relative_blocks]
-
-        for i, (start, end) in enumerate(blocks, 1):
-            attributes = GFFAttributes(
-                id=f"feature-{feature_id}-{i}",
-                qualifiers=qualifiers,
-                name=self.feature_name,
-                parent=feature_id,
-                raise_on_reserved_attributes=raise_on_reserved_attributes,
-            )
-            row = GFFRow(
-                self.sequence_name,
-                GFF_SOURCE,
-                BioCantorFeatureTypes.FEATURE_INTERVAL_REGION,
-                start + 1,
-                end,
-                NULL_COLUMN,
-                self.strand,
-                CDSPhase.NONE,
-                attributes,
-            )
-            yield row
+    def to_gtf(
+        self,
+        parent: Optional[str] = None,
+        parent_qualifiers: Optional[Dict[Hashable, Set[str]]] = None,
+        chromosome_relative_coordinates: bool = True,
+    ) -> Iterator[GFFRow]:
+        raise NotImplementedError("Cannot export features to GTF")
 
     def to_bed12(
         self,
@@ -723,27 +749,13 @@ class FeatureIntervalCollection(AbstractFeatureIntervalCollection):
                 parent_or_seq_chunk_parent=self.chunk_relative_location.parent,
             )
 
-    def to_gff(
+    def _to_gff_or_gtf(
         self,
         chromosome_relative_coordinates: bool = True,
         raise_on_reserved_attributes: Optional[bool] = True,
-    ) -> Iterator[GFFRow]:
-        """Produces iterable of :class:`~biocantor.io.gff3.rows.GFFRow` for this feature collection and its
-        children.
-
-        Args:
-            chromosome_relative_coordinates: Output GFF in chromosome-relative coordinates? Will raise an exception
-                if there is not a ``sequence_chunk`` ancestor type.
-            raise_on_reserved_attributes: If ``True``, then GFF3 reserved attributes such as ``ID`` and ``Name`` present
-                in the qualifiers will lead to an exception and not a warning.
-
-        Yields:
-            :class:`~biocantor.io.gff3.rows.GFFRow`
-
-        Raises:
-            NoSuchAncestorException: If ``chromosome_relative_coordinates`` is ``False`` but there is no
-            ``sequence_chunk`` ancestor type.
-        """
+        row_type: Union[Type[GFFRow], Type[GTFRow]] = GFFRow,
+        attribute_type: Union[Type[GFFAttributes], Type[GTFAttributes]] = GFFAttributes,
+    ) -> Iterator[Union[GFFRow, GTFRow]]:
         if not self.sequence_name:
             raise GFF3MissingSequenceNameError("Must have sequence names to export to GFF3.")
 
@@ -778,12 +790,53 @@ class FeatureIntervalCollection(AbstractFeatureIntervalCollection):
         yield row
 
         for feature in self.feature_intervals:
-            yield from feature.to_gff(
-                feat_group_id,
-                qualifiers,
-                chromosome_relative_coordinates=chromosome_relative_coordinates,
-                raise_on_reserved_attributes=raise_on_reserved_attributes,
-            )
+            if row_type == GFFRow:
+                yield from feature.to_gff(
+                    feat_group_id,
+                    qualifiers,
+                    chromosome_relative_coordinates=chromosome_relative_coordinates,
+                    raise_on_reserved_attributes=raise_on_reserved_attributes,
+                )
+            else:
+                yield from feature.to_gtf(
+                    feat_group_id,
+                    qualifiers,
+                    chromosome_relative_coordinates=chromosome_relative_coordinates,
+                )
+
+    def to_gff(
+        self,
+        chromosome_relative_coordinates: bool = True,
+        raise_on_reserved_attributes: Optional[bool] = True,
+    ) -> Iterator[GFFRow]:
+        """Produces iterable of :class:`~biocantor.io.gff3.rows.GFFRow` for this feature collection and its
+        children.
+
+        Args:
+            chromosome_relative_coordinates: Output GFF in chromosome-relative coordinates? Will raise an exception
+                if there is not a ``sequence_chunk`` ancestor type.
+            raise_on_reserved_attributes: If ``True``, then GFF3 reserved attributes such as ``ID`` and ``Name`` present
+                in the qualifiers will lead to an exception and not a warning.
+
+        Yields:
+            :class:`~biocantor.io.gff3.rows.GFFRow`
+
+        Raises:
+            NoSuchAncestorException: If ``chromosome_relative_coordinates`` is ``False`` but there is no
+            ``sequence_chunk`` ancestor type.
+        """
+        yield from self._to_gff_or_gtf(
+            chromosome_relative_coordinates,
+            raise_on_reserved_attributes,
+            GFFRow,
+            GFFAttributes,
+        )
+
+    def to_gtf(
+        self,
+        chromosome_relative_coordinates: bool = True,
+    ) -> Iterator[GTFRow]:
+        raise NotImplementedError("Cannot export features to GTF")
 
     def incorporate_variants(
         self, variants: Union["VariantInterval", "VariantIntervalCollection"]

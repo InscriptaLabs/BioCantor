@@ -27,7 +27,7 @@ from biocantor.gene.gene import GeneInterval
 from biocantor.gene.interval import QualifierValue, IntervalType, AbstractFeatureIntervalCollection
 from biocantor.gene.transcript import TranscriptInterval
 from biocantor.gene.variants import VariantIntervalCollection, VariantInterval
-from biocantor.io.gff3.rows import GFFRow
+from biocantor.io.gff3.rows import GFFRow, GTFRow
 from biocantor.location import SingleInterval, EmptyLocation, Strand
 from biocantor.parent import Parent, SequenceType
 from biocantor.sequence import Alphabet
@@ -1029,6 +1029,48 @@ class AnnotationCollection(AbstractFeatureIntervalCollection):
         """
         yield from sorted(
             self._unsorted_gff_iter(chromosome_relative_coordinates, raise_on_reserved_attributes),
+            key=lambda x: x.start,
+        )
+
+    def _unsorted_gtf_iter(self, chromosome_relative_coordinates: bool = True) -> Iterator[GTFRow]:
+        """Produces iterable of :class:`~biocantor.io.gff3.rows.GTFRow` for this annotation collection and its
+        children.
+
+        The positions of the genes will be ordered by genomic position, but may not be globally position sorted
+        because it could be the case that children gene/features will overlap. This private function
+        exists to provide an iterator to sort in the main ``to_gtf()`` function.
+
+        Args:
+            chromosome_relative_coordinates: Output GTF in chromosome-relative coordinates? Will raise an exception
+                if there is not a ``sequence_chunk`` ancestor type.
+            raise_on_reserved_attributes: If ``True``, then GFF3 reserved attributes such as ``ID`` and ``Name`` present
+                in the qualifiers will lead to an exception and not a warning.
+
+        Yields:
+            :class:`~biocantor.io.gff3.rows.GTFRow`
+        """
+        for item in self.iter_children():
+            yield from item.to_gtf(
+                chromosome_relative_coordinates=chromosome_relative_coordinates,
+            )
+
+    def to_gtf(self, chromosome_relative_coordinates: bool = True) -> Iterator[GTFRow]:
+        """Produces iterable of :class:`~biocantor.io.gff3.rows.GTFRow` for this annotation collection and its
+        children.
+
+        Args:
+            chromosome_relative_coordinates: Output GTF in chromosome-relative coordinates? Will raise an exception
+                if there is not a ``sequence_chunk`` ancestor type.
+
+        Yields:
+            :class:`~biocantor.io.gff3.rows.GTFRow`
+
+        Raises:
+            NoSuchAncestorException: If ``chromosome_relative_coordinates`` is ``False`` but there is no
+            ``sequence_chunk`` ancestor type.
+        """
+        yield from sorted(
+            self._unsorted_gtf_iter(chromosome_relative_coordinates),
             key=lambda x: x.start,
         )
 

@@ -46,6 +46,12 @@ class _GFF3ReservedQualifiers(HasMemberMixin):
     ONTOLOGY_TERM = "Ontology_term"
 
 
+class BioCantorGTFReservedQualifiers(HasMemberMixin):
+    """transcript_id is a GTF required field"""
+
+    TRANSCRIPT_ID = "transcript_id"
+
+
 class BioCantorGFF3ReservedQualifiers(HasMemberMixin):
     """This is the subset of GFF3 reserved qualifiers that BioCantor currently reserves"""
 
