@@ -4,7 +4,7 @@ Contains information on how to manage GFF row data. Enforces GFF3 specification 
 from abc import ABC
 import re
 from warnings import warn
-from typing import Union, Optional, Any, Hashable, Set, Dict, List
+from typing import Union, Optional, Any, Hashable, Set, Dict
 from dataclasses import dataclass
 
 from biocantor.io.gff3.constants import (

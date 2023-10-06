@@ -572,6 +572,6 @@ def collection_to_tbl(
 
             tblgene = TblGene(gene, submitter_lab_name, locus_tag, translation_table)
             for obj in tblgene:
-                if genbank_flavor == GenbankFlavor.PROKARYOTIC and type(obj) == MRNATblFeature:
+                if genbank_flavor == GenbankFlavor.PROKARYOTIC and isinstance(obj, MRNATblFeature):
                     continue
                 print(str(obj), file=tbl_file_handle)
