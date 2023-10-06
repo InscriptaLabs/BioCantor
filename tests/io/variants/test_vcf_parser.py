@@ -2,9 +2,9 @@ import json
 
 import pytest
 
-from inscripta.biocantor.io.genbank.parser import ParsedAnnotationRecord, parse_genbank
-from inscripta.biocantor.io.models import VariantIntervalCollectionModel
-from inscripta.biocantor.io.vcf.parser import parse_vcf_file
+from biocantor.io.genbank.parser import ParsedAnnotationRecord, parse_genbank
+from biocantor.io.models import VariantIntervalCollectionModel
+from biocantor.io.vcf.parser import parse_vcf_file
 
 
 @pytest.mark.parametrize(

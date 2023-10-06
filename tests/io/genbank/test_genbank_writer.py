@@ -4,12 +4,12 @@ Test GenBank writing.
 
 import pytest
 
-from inscripta.biocantor.io.genbank.parser import parse_genbank, GenBankParserType
-from inscripta.biocantor.io.genbank.writer import collection_to_genbank, GenbankFlavor
-from inscripta.biocantor.io.parser import ParsedAnnotationRecord
-from inscripta.biocantor.gene import AnnotationCollection, GeneInterval, TranscriptInterval
-from inscripta.biocantor.location import Strand
-from inscripta.biocantor.sequence import Sequence, Parent, Alphabet
+from biocantor.io.genbank.parser import parse_genbank, GenBankParserType
+from biocantor.io.genbank.writer import collection_to_genbank, GenbankFlavor
+from biocantor.io.parser import ParsedAnnotationRecord
+from biocantor.gene import AnnotationCollection, GeneInterval, TranscriptInterval
+from biocantor.location import Strand
+from biocantor.sequence import Sequence, Parent, Alphabet
 
 
 @pytest.mark.parametrize(

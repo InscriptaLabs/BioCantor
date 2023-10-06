@@ -1,6 +1,6 @@
 import pytest
 
-from inscripta.biocantor.exc import (
+from biocantor.exc import (
     NoSuchAncestorException,
     InvalidStrandException,
     InvalidPositionException,
@@ -9,15 +9,15 @@ from inscripta.biocantor.exc import (
     ParentException,
     LocationException,
 )
-from inscripta.biocantor.location.location_impl import (
+from biocantor.location.location_impl import (
     SingleInterval,
     CompoundInterval,
     EmptyLocation,
 )
-from inscripta.biocantor.location.strand import Strand
-from inscripta.biocantor.parent import Parent, make_parent
-from inscripta.biocantor.sequence.alphabet import Alphabet
-from inscripta.biocantor.sequence import Sequence
+from biocantor.location.strand import Strand
+from biocantor.parent import Parent, make_parent
+from biocantor.sequence.alphabet import Alphabet
+from biocantor.sequence import Sequence
 
 
 class TestParent:

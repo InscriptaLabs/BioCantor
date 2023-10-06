@@ -1,7 +1,7 @@
 import pytest
 
-from inscripta.biocantor.exc import InvalidStrandException
-from inscripta.biocantor.location.strand import Strand
+from biocantor.exc import InvalidStrandException
+from biocantor.location.strand import Strand
 
 
 class TestStrand:

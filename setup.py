@@ -6,7 +6,7 @@ from setuptools import find_namespace_packages, setup
 
 dependencies = ["biopython", "marshmallow_dataclass[enum,union]", "marshmallow", "methodtools"]
 
-with open(os.path.join(os.path.dirname(__file__), "inscripta", "biocantor", "__init__.py")) as v_file:
+with open(os.path.join(os.path.dirname(__file__), "biocantor", "__init__.py")) as v_file:
     VERSION = re.compile(r""".*__version__ = ["'](.*?)['"]""", re.S).match(v_file.read()).group(1)
 
 extra_dependencies = {
@@ -37,10 +37,10 @@ setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     author="Inscripta, Inc.",
-    python_requires=">=3.7,<3.10",
+    python_requires=">=3.7",
     url="https://github.com/InscriptaLabs/BioCantor",
     test_suite="pytest",
-    packages=find_namespace_packages(include=["inscripta.*"]),
+    packages=find_namespace_packages(include=["*"]),
     include_package_data=True,
     tests_require=extra_dependencies["test"],
     extras_require=extra_dependencies,

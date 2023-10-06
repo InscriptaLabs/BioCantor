@@ -6,7 +6,7 @@ All of these tests are based on the INSC1003.gbk file.
 import pytest
 import json
 from uuid import UUID
-from inscripta.biocantor.io.models import (
+from biocantor.io.models import (
     AnnotationCollectionModel,
     TranscriptIntervalModel,
     GeneIntervalModel,

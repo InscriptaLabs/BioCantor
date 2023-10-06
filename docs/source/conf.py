@@ -17,7 +17,7 @@ import sys
 
 sys.path.insert(0, os.path.abspath(os.path.join("..", "..")))
 
-from inscripta.biocantor import __version__
+from biocantor import __version__
 
 
 # -- Project information -----------------------------------------------------
@@ -199,5 +199,5 @@ todo_include_todos = True
 # Autoapi
 
 autoapi_type = "python"
-autoapi_dirs = [os.path.abspath("../../inscripta/biocantor/")]
+autoapi_dirs = [os.path.abspath("../../biocantor/")]
 nbsphinx_allow_errors = True

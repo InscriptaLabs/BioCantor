@@ -1,14 +1,14 @@
 import pytest
-from inscripta.biocantor.exc import NoSuchAncestorException, MismatchedFrameException, InvalidPositionException
-from inscripta.biocantor.gene.cds import CDSInterval, TranslationTable
-from inscripta.biocantor.gene.cds_frame import CDSPhase, CDSFrame
-from inscripta.biocantor.gene.codon import Codon
-from inscripta.biocantor.location.location_impl import CompoundInterval, SingleInterval
-from inscripta.biocantor.location.strand import Strand
-from inscripta.biocantor.parent import SequenceType
-from inscripta.biocantor.parent.parent import Parent
-from inscripta.biocantor.sequence import Sequence
-from inscripta.biocantor.sequence.alphabet import Alphabet
+from biocantor.exc import NoSuchAncestorException, MismatchedFrameException, InvalidPositionException
+from biocantor.gene.cds import CDSInterval, TranslationTable
+from biocantor.gene.cds_frame import CDSPhase, CDSFrame
+from biocantor.gene.codon import Codon
+from biocantor.location.location_impl import CompoundInterval, SingleInterval
+from biocantor.location.strand import Strand
+from biocantor.parent import SequenceType
+from biocantor.parent.parent import Parent
+from biocantor.sequence import Sequence
+from biocantor.sequence.alphabet import Alphabet
 
 
 class TestCDSPhase:
@@ -46,7 +46,6 @@ class TestCDSFrame:
 
 
 class TestCDSInterval:
-
     alphabet = Alphabet.NT_STRICT
 
     seq = "AAAGGAAAGTCCCTGAAAAAA"
@@ -3456,6 +3455,18 @@ class TestCDSInterval:
     )
     def test__calculate_frame_offset(self, cds, cleaned_location, loc_on_chrom, expected_offset):
         assert cds._calculate_frame_offset(cleaned_location, loc_on_chrom) == expected_offset
+
+    @pytest.mark.parametrize(
+        "cds,expected",
+        [
+            (
+                CDSInterval([0], [10], Strand.MINUS, [CDSFrame.ZERO]),
+                ["None\tBioCantor\tCDS\t1\t10\t.\t-\t0\tID=072cb87f-e347-8702-ada3-20b519aa31e0-1"],
+            )
+        ],
+    )
+    def test_to_gff(self, cds, expected):
+        assert [str(x) for x in cds.to_gff()] == expected
 
 
 @pytest.mark.parametrize(

@@ -1,0 +1,8 @@
+chr1	BioCantor	exon	13	28	.	+	.	gene_biotype "unspecified"; gene_id "gene1"; transcript_biotype "unspecified"; transcript_id "id_1"; transcript_name "tx1"
+chr1	BioCantor	exon	13	16	.	+	.	gene_biotype "unspecified"; gene_id "gene1"; transcript_biotype "unspecified"; transcript_id "id_2"; transcript_name "tx2"
+chr1	BioCantor	CDS	15	16	.	+	0	gene_biotype "unspecified"; gene_id "gene1"; transcript_biotype "unspecified"; transcript_id "id_2"; transcript_name "tx2"
+chr1	BioCantor	CDS	16	19	.	+	0	gene_biotype "unspecified"; gene_id "gene1"; transcript_biotype "unspecified"; transcript_id "id_1"; transcript_name "tx1"
+chr1	BioCantor	exon	18	20	.	+	.	gene_biotype "unspecified"; gene_id "gene1"; transcript_biotype "unspecified"; transcript_id "id_2"; transcript_name "tx2"
+chr1	BioCantor	CDS	18	20	.	+	1	gene_biotype "unspecified"; gene_id "gene1"; transcript_biotype "unspecified"; transcript_id "id_2"; transcript_name "tx2"
+chr1	BioCantor	exon	23	25	.	+	.	gene_biotype "unspecified"; gene_id "gene1"; transcript_biotype "unspecified"; transcript_id "id_2"; transcript_name "tx2"
+chr1	BioCantor	CDS	23	23	.	+	1	gene_biotype "unspecified"; gene_id "gene1"; transcript_biotype "unspecified"; transcript_id "id_2"; transcript_name "tx2"
